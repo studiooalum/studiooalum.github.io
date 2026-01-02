@@ -1,4 +1,4 @@
-import { Thread } from "/src/scripts/canvas/Thread.js";
+import { Thread } from "./Thread.js";
 
 export function initThreadScene() {
   const canvas = document.getElementById("canvas");

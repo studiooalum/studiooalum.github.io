@@ -1,4 +1,4 @@
-import { Point } from "/src/scripts/canvas/Point.js";
+import { Point } from "./Point.js";
 
 export class Thread {
   constructor(canvas, ctx, x, options) {

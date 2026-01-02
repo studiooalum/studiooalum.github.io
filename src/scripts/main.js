@@ -1,3 +1,3 @@
-import { initThreadScene } from "/src/scripts/canvas/threadScene.js";
+import { initThreadScene } from "./canvas/threadScene.js";
 
 initThreadScene();
