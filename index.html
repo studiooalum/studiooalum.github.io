@@ -1,205 +1,209 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>스튜디오 오알룸 공사중 — studiooalum</title>
-  <style>
-    :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --accent:#ffb020;
-      --muted:#9aa4b2;
-      --glass: rgba(255,255,255,0.04);
-      --maxw:920px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(255,176,32,0.06), transparent 8%),
-        linear-gradient(180deg, #071028 0%, #081226 50%, #04101a 100%);
-      color:#e6eef6;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:2rem;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      line-height:1.4;
-    }
+<meta charset="UTF-8" />
+<title>Single Thread Menu</title>
 
-    .wrap{
-      width:100%;
-      max-width:var(--maxw);
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:14px;
-      padding:2.4rem;
-      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-      border: 1px solid rgba(255,255,255,0.03);
-      display:flex;
-      gap:2rem;
-      align-items:center;
-    }
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-    .art{
-      width:220px;
-      min-width:160px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      position:relative;
-      padding:1rem;
-    }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+    font-family: 'Lighter Helvetica', sans-serif;
+  }
 
-    .cone{
-      width:120px;
-      height:120px;
-      background: linear-gradient(180deg, #ffcc80 0%, #ff9f1c 60%);
-      border-radius: 14px;
-      position:relative;
-      transform: rotate(-20deg);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.45);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:44px;
-    }
+  canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
 
-    /* animated tape */
-    .tape {
-      position:absolute;
-      top: -14px;
-      left: -18px;
-      right: -18px;
-      height:28px;
-      background: repeating-linear-gradient(90deg, var(--accent), var(--accent) 26px, transparent 26px, transparent 52px);
-      background-size: 200% 100%;
-      animation: slide 2.5s linear infinite;
-      border-radius: 8px;
-      opacity:0.95;
-    }
-    @keyframes slide {
-      from { background-position: 0 0; }
-      to   { background-position: -100% 0; }
-    }
+  /* 전체 묶음 */
+  .menu-wrap {
+    position: fixed;
+    right: 54.5%;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    z-index: 2;
+  }
 
-    .content{
-      flex:1;
-      min-width:0;
-    }
+  nav.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    text-align: left;
+  }
 
-    h1{
-      margin:0 0 .4rem 0;
-      font-weight:700;
-      font-size:clamp(20px, 3.2vw, 34px);
-      letter-spacing:-0.02em;
-      color:#fff;
-      display:flex;
-      gap:.6rem;
-      align-items:center;
-    }
-
-    .subtitle{
-      color:var(--muted);
-      margin:0 0 1rem 0;
-      font-size:clamp(13px, 1.6vw, 15px);
-    }
-
-    .card{
-      background: var(--glass);
-      border: 1px solid rgba(255,255,255,0.03);
-      padding:1rem;
-      border-radius:10px;
-      color:#dbe9ff;
-      overflow:hidden;
-    }
-
-    .progress{
-      height:12px;
-      background: rgba(255,255,255,0.03);
-      border-radius:8px;
-      overflow:hidden;
-      margin-top:1rem;
-      box-shadow: inset 0 -2px 6px rgba(0,0,0,0.45);
-    }
-    .progress > i{
-      display:block;
-      height:100%;
-      width:40%;
-      background: linear-gradient(90deg, rgba(255,176,32,0.95), rgba(255,110,0,0.95));
-      border-radius:8px;
-      position:relative;
-      transform-origin:left center;
-      animation: prog 3.5s ease-in-out infinite;
-    }
-    @keyframes prog{
-      0%{ width:2% }
-      50%{ width:82% }
-      100%{ width:12% }
-    }
-
-    .meta{
-      margin-top:.9rem;
-      display:flex;
-      gap:1.2rem;
-      flex-wrap:wrap;
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .meta a{
-      color:var(--accent);
-      text-decoration:none;
-      font-weight:600;
-    }
-
-    footer{
-      text-align:center;
-      margin-top:1rem;
-      font-size:12px;
-      color:rgba(255,255,255,0.45);
-    }
-
-    /* responsive */
-    @media(max-width:720px){
-      .wrap{ flex-direction:column; align-items:stretch; padding:1.2rem; gap:1rem }
-      .art{ order: -1; width:100%; justify-content:flex-start }
-    }
-  </style>
+  nav.menu a {
+    font-size: 17px;
+    text-decoration: none;
+    color: #111;
+    cursor: pointer;
+    user-select: none;
+  }
+</style>
 </head>
+
 <body>
-  <main class="wrap" role="main" aria-labelledby="title">
-    <div class="art" aria-hidden="true">
-      <div class="tape" title="공사중"></div>
-      <div class="cone">🚧</div>
-    </div>
 
-    <section class="content">
-      <h1 id="title">스튜디오 오알룸 공사중</h1>
-      <p class="subtitle">더 나은 모습으로 곧 돌아오겠습니다. 불편을 드려 죄송합니다 — 잠시만 기다려 주세요.</p>
+<div class="menu-wrap">
+  <nav class="menu">
+    <a href="#">About</a>
+    <a href="#">Gallery</a>
+    <a href="#">Shop</a>
+    <a href="#">News Letter</a>
+    <a href="#">Q&amp;A</a>
+  </nav>
+</div>
 
-      <div class="card" role="status" aria-live="polite">
-        <strong>진행 상황</strong>
-        <div class="progress" aria-hidden="true"><i></i></div>
+<canvas id="canvas"></canvas>
 
-        <div class="meta">
-          <div>예상 완료: <strong>2025년 12월 9일 (December 9th)</strong></div>
-          <div>문의: <a href="mailto:studio.oalum@gmail.com">studio.oalum@gmail.com</a></div>
-          <div>Instagram: <a href="https://www.instagram.com/studio_oalum/" target="_blank" rel="noopener noreferrer">@studio_oalum</a></div>
-        </div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-        <p style="margin-top:0.9rem;color:var(--muted);font-size:13px;">
-          이 페이지는 임시 안내 페이지입니다. 개발 중인 콘텐츠는 곧 공개될 예정입니다.
-        </p>
-      </div>
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
-      <footer>
-        © studiooalum — 제작 중 (공사중)
-      </footer>
-    </section>
-  </main>
+/* ===== 물리 상수 ===== */
+const GRAVITY = 0.5;
+const FRICTION = 0.995;
+const SEGMENTS = 100;
+
+/* 실 스타일 */
+const THREAD_COLOR = '#B11226';
+const THREAD_WIDTH = 2;
+
+/* ===== Point ===== */
+class Point {
+  constructor(x, y, fixed = false) {
+    this.x = x;
+    this.y = y;
+    this.oldX = x;
+    this.oldY = y;
+    this.fixed = fixed;
+  }
+
+  update() {
+    if (this.fixed) return;
+
+    const vx = (this.x - this.oldX) * FRICTION;
+    const vy = (this.y - this.oldY) * FRICTION;
+
+    this.oldX = this.x;
+    this.oldY = this.y;
+
+    this.x += vx;
+    this.y += vy + GRAVITY;
+  }
+}
+
+/* ===== Thread ===== */
+class Thread {
+  constructor(x) {
+    this.segmentLength = canvas.height / (SEGMENTS - 1);
+    this.points = [];
+
+    for (let i = 0; i < SEGMENTS; i++) {
+      this.points.push(
+        new Point(x, i * this.segmentLength, i === 0)
+      );
+    }
+  }
+
+  applyForce(strength = 8) {
+    for (let i = 6; i < this.points.length; i++) {
+      this.points[i].x +=
+        (Math.random() - 0.5) * strength * (i / this.points.length);
+    }
+  }
+
+  constrain() {
+    for (let i = 0; i < this.points.length - 1; i++) {
+      const p1 = this.points[i];
+      const p2 = this.points[i + 1];
+
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const diff = (dist - this.segmentLength) / dist;
+
+      if (!p1.fixed) {
+        p1.x += dx * diff * 0.5;
+        p1.y += dy * diff * 0.5;
+      }
+      if (!p2.fixed) {
+        p2.x -= dx * diff * 0.5;
+        p2.y -= dy * diff * 0.5;
+      }
+    }
+  }
+
+  update() {
+    this.points.forEach(p => p.update());
+    for (let i = 0; i < 6; i++) this.constrain();
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length; i++) {
+      ctx.lineTo(this.points[i].x, this.points[i].y);
+    }
+    ctx.strokeStyle = THREAD_COLOR;
+    ctx.lineWidth = THREAD_WIDTH;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+}
+
+/* ===== 실 위치: 메뉴 기준 ===== */
+const menuWrap = document.querySelector('.menu-wrap');
+const rect = menuWrap.getBoundingClientRect();
+const threadX = rect.left + rect.width + 50;
+
+/* 한 가닥 실 */
+const thread = new Thread(threadX);
+
+/* 메뉴 hover → 실 반응 */
+document.querySelectorAll('.menu a').forEach(link => {
+  link.addEventListener('mouseenter', () => {
+    thread.applyForce(10);
+  });
+});
+
+/* 마우스 근접 반응 */
+window.addEventListener('mousemove', e => {
+  const p = thread.points[thread.points.length - 1];
+  const dx = e.clientX - p.x;
+  if (Math.abs(dx) < 50) {
+    p.x += dx * 0.07;
+  }
+});
+
+/* ===== 애니메이션 ===== */
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  thread.update();
+  thread.draw();
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+
 </body>
 </html>
