@@ -36,14 +36,41 @@ export function initThreadScene({ mobile = false } = {}) {
 
   // debug exports removed
 
-  // 💻 데스크탑 전용
-  if (!mobile) {
-    document.querySelectorAll(".menu a").forEach(link => {
-      link.addEventListener("mouseenter", () => {
-        thread.applyForce(10);
-      });
+  // Menu interactions (hover on desktop, press on mobile) — sync menu color with thread
+  document.querySelectorAll('.menu a').forEach(link => {
+    const origColor = getComputedStyle(link).color;
+
+    const applyThreadColor = () => { try { link.style.color = thread.color } catch (e) {} };
+    const restoreColor = () => { link.style.color = origColor };
+
+    // mouse hover
+    link.addEventListener('mouseenter', () => {
+      thread.applyForce(10);
+      applyThreadColor();
+    });
+    link.addEventListener('mouseleave', () => {
+      restoreColor();
     });
 
+    // pointer/touch interactions
+    link.addEventListener('pointerdown', () => {
+      thread.applyForce(10);
+      applyThreadColor();
+    });
+    link.addEventListener('pointerup', () => {
+      restoreColor();
+    });
+    link.addEventListener('touchstart', () => {
+      thread.applyForce(10);
+      applyThreadColor();
+    }, { passive: true });
+    link.addEventListener('touchend', () => {
+      restoreColor();
+    });
+  });
+
+  // 💻 데스크탑-only pointer smoothing for thread following cursor
+  if (!mobile) {
     window.addEventListener("mousemove", e => {
       const p = thread.points[thread.points.length - 1];
       const dx = e.clientX - p.x;
