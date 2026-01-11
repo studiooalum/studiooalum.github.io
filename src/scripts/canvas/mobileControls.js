@@ -32,20 +32,12 @@ export function initMobileControls(thread, canvas) {
 
   function dragPoint(point, x, y) {
     const strength = 0.12; // gentler pull on mobile
-    const follow = 0.35; // direct follow amount toward finger
     // limit maximum instant adjustment to avoid huge impulses
-    const dxRaw = x - point.x;
-    const dyRaw = y - point.y;
-    const dx = Math.max(-60, Math.min(60, dxRaw));
-    const dy = Math.max(-60, Math.min(60, dyRaw));
-
-    // move the point's position slightly toward the touch (not fixed)
-    point.x += dx * follow;
-    point.y += dy * follow;
-
-    // small velocity nudge so physics carries movement naturally
-    point.oldX -= dx * (strength * 0.5);
-    point.oldY -= dy * (strength * 0.5);
+    const dx = Math.max(-60, Math.min(60, x - point.x));
+    const dy = Math.max(-60, Math.min(60, y - point.y));
+    // subtract so old position is nudged opposite, producing velocity toward target
+    point.oldX -= dx * strength;
+    point.oldY -= dy * strength;
   }
 
   // Prefer Pointer Events when available to avoid duplicate touch+pointer handling
