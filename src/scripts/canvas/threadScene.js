@@ -11,18 +11,19 @@ export function initThreadScene({ mobile = false } = {}) {
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    // if thread exists, keep its fixed anchor centered horizontally
+    if (typeof thread !== 'undefined' && thread && thread.points && thread.points.length) {
+      const cx = Math.round(canvas.width * 0.5);
+      const p0 = thread.points[0];
+      p0.x = cx;
+      p0.oldX = cx;
+    }
   }
   window.addEventListener("resize", resize);
   resize();
 
-  // ✅ 안전한 X 위치 계산
-  let threadX;
-  if (!mobile && menuWrap) {
-    const rect = menuWrap.getBoundingClientRect();
-    threadX = rect.left + rect.width + 50;
-  } else {
-    threadX = canvas.width * 0.5;
-  }
+  // place thread anchor at horizontal center of the canvas
+  const threadX = canvas.width * 0.5;
 
   const thread = new Thread(canvas, ctx, threadX, {
     gravity: mobile ? 0.9 : 0.5,
@@ -53,15 +54,13 @@ export function initThreadScene({ mobile = false } = {}) {
 
   // debug exports removed
 
-  // Menu interactions: desktop-only hover that syncs menu color with thread
-  if (!mobile) {
+  // Menu interactions: attach hover color-sync when device has a fine pointer (desktop-like)
+  const pointerFine = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+  if (pointerFine) {
     document.querySelectorAll('.menu a').forEach(link => {
-      const origColor = getComputedStyle(link).color;
-
       const applyThreadColor = () => { try { link.style.color = thread.color } catch (e) {} };
-      const restoreColor = () => { link.style.color = origColor };
+      const restoreColor = () => { try { link.style.color = '' } catch (e) {} };
 
-      // mouse hover only on desktop
       link.addEventListener('mouseenter', () => {
         thread.applyForce(10);
         applyThreadColor();
