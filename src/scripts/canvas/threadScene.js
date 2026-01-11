@@ -6,10 +6,7 @@ export function initThreadScene({ mobile = false } = {}) {
   const ctx = canvas.getContext("2d");
   const menuWrap = document.querySelector(".menu-wrap");
 
-  console.log("canvas:", canvas);
-  console.log("ctx:", ctx);
-  console.log("menuWrap:", menuWrap);
-  console.log("mobile:", mobile);
+  // debug logs removed for production
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -35,9 +32,7 @@ export function initThreadScene({ mobile = false } = {}) {
     width: mobile ? 2.5 : 2
   });
 
-  // Expose for debugging in browser console
-  window.thread = thread;
-  window.canvas = canvas;
+  // debug exports removed
 
   // 💻 데스크탑 전용
   if (!mobile) {
