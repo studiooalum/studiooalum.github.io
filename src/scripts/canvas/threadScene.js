@@ -15,14 +15,8 @@ export function initThreadScene({ mobile = false } = {}) {
   window.addEventListener("resize", resize);
   resize();
 
-  // ✅ 안전한 X 위치 계산
-  let threadX;
-  if (!mobile && menuWrap) {
-    const rect = menuWrap.getBoundingClientRect();
-    threadX = rect.left + rect.width + 50;
-  } else {
-    threadX = canvas.width * 0.5;
-  }
+  // always place thread anchor at horizontal center of the canvas
+  const threadX = canvas.width * 0.5;
 
   const thread = new Thread(canvas, ctx, threadX, {
     gravity: mobile ? 0.9 : 0.5,
@@ -30,6 +24,26 @@ export function initThreadScene({ mobile = false } = {}) {
     segments: mobile ? 70 : 100,
     color: "#B11226",
     width: mobile ? 2.5 : 2
+  });
+
+  // keep thread horizontally centered when viewport changes
+  function centerThreadHorizontally() {
+    if (!thread || !thread.points || !thread.points.length) return;
+    const cx = Math.round(canvas.width * 0.5);
+    const p0 = thread.points[0];
+    const delta = cx - p0.x;
+    if (delta === 0) return;
+    for (let i = 0; i < thread.points.length; i++) {
+      const p = thread.points[i];
+      p.x += delta;
+      p.oldX += delta;
+    }
+  }
+  // run once to ensure initial centering and after resize
+  centerThreadHorizontally();
+  window.addEventListener('resize', () => {
+    resize();
+    centerThreadHorizontally();
   });
 
   // no DOM test markers in production
