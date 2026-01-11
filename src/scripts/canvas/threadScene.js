@@ -57,14 +57,6 @@ export function initThreadScene({ mobile = false } = {}) {
         thread.applyForce(10);
       });
     });
-
-    window.addEventListener("mousemove", e => {
-      const p = thread.points[thread.points.length - 1];
-      const dx = e.clientX - p.x;
-      if (Math.abs(dx) < 50) {
-        p.x += dx * 0.07;
-      }
-    });
   }
 
   // 📱 모바일 전용
