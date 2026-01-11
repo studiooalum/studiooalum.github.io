@@ -11,13 +11,6 @@ export function initThreadScene({ mobile = false } = {}) {
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    // if thread exists, keep its fixed anchor centered horizontally
-    if (typeof thread !== 'undefined' && thread && thread.points && thread.points.length) {
-      const cx = Math.round(canvas.width * 0.5);
-      const p0 = thread.points[0];
-      p0.x = cx;
-      p0.oldX = cx;
-    }
   }
   window.addEventListener("resize", resize);
   resize();
@@ -31,6 +24,25 @@ export function initThreadScene({ mobile = false } = {}) {
     segments: mobile ? 70 : 100,
     color: "#B11226",
     width: mobile ? 2.5 : 2
+  });
+
+  // center the fixed anchor of the thread (first point) on init/resize
+  function centerThread() {
+    if (!thread || !thread.points || !thread.points.length) return;
+    const cx = Math.round(canvas.width * 0.5);
+    const cy = Math.round(canvas.height * 0.5); // anchor at vertical center
+    const p0 = thread.points[0];
+    p0.x = cx;
+    p0.oldX = cx;
+    p0.y = cy;
+    p0.oldY = cy;
+  }
+  centerThread();
+  // ensure thread stays centered when viewport resizes
+  window.addEventListener('resize', () => {
+    resize();
+    centerThread();
+    positionMenu();
   });
 
   // Position menu centered vertically and fixed at the middle-left of the viewport
@@ -54,32 +66,21 @@ export function initThreadScene({ mobile = false } = {}) {
 
   // debug exports removed
 
-  // Menu interactions: hover color-sync on non-mobile environments (works on all PCs)
-  if (!mobile) {
-    document.querySelectorAll('.menu a').forEach(link => {
-      const applyThreadColor = () => { try { link.style.color = thread.color } catch (e) {} };
-      const restoreColor = () => { try { link.style.color = '' } catch (e) {} };
+  // Menu interactions: hover color-sync (attach on all environments for preview/PC)
+  document.querySelectorAll('.menu a').forEach(link => {
+    const applyThreadColor = () => { try { link.style.color = thread.color } catch (e) {} };
+    const restoreColor = () => { try { link.style.color = '' } catch (e) {} };
 
-      link.addEventListener('mouseenter', () => {
-        thread.applyForce(10);
-        applyThreadColor();
-      });
-      link.addEventListener('mouseleave', () => {
-        restoreColor();
-      });
+    link.addEventListener('mouseenter', () => {
+      thread.applyForce(10);
+      applyThreadColor();
     });
-  }
+    link.addEventListener('mouseleave', () => {
+      restoreColor();
+    });
+  });
 
-  // 💻 데스크탑-only pointer smoothing for thread following cursor
-  if (!mobile) {
-    window.addEventListener("mousemove", e => {
-      const p = thread.points[thread.points.length - 1];
-      const dx = e.clientX - p.x;
-      if (Math.abs(dx) < 50) {
-        p.x += dx * 0.07;
-      }
-    });
-  }
+  // remove cursor-driven motion so thread stays centered and predictable
 
   // 📱 모바일 전용
   if (mobile) {
@@ -95,3 +96,4 @@ export function initThreadScene({ mobile = false } = {}) {
 
   animate();
 }
+
