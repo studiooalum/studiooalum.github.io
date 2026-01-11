@@ -54,8 +54,9 @@ export function initThreadScene({ mobile = false } = {}) {
 
   // debug exports removed
 
-  // Menu interactions: hover color-sync on non-mobile environments (works on all PCs)
-  if (!mobile) {
+  // Menu interactions: attach hover color-sync when device has a fine pointer (desktop-like)
+  const pointerFine = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+  if (pointerFine) {
     document.querySelectorAll('.menu a').forEach(link => {
       const applyThreadColor = () => { try { link.style.color = thread.color } catch (e) {} };
       const restoreColor = () => { try { link.style.color = '' } catch (e) {} };
