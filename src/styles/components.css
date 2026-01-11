@@ -23,16 +23,3 @@ nav.menu a {
   cursor: pointer;
   user-select: none;
 }
-
-/* ensure mobile tap highlight and focus outline are removed */
-nav.menu a {
-  -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
-  user-select: none;
-  outline: none;
-  box-shadow: none;
-}
-nav.menu a:focus, nav.menu a:active {
-  outline: none !important;
-  box-shadow: none !important;
-}
