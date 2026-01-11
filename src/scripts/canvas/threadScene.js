@@ -30,20 +30,26 @@ export function initThreadScene({ mobile = false } = {}) {
   function centerThread() {
     if (!thread || !thread.points || !thread.points.length) return;
     const cx = Math.round(canvas.width * 0.5);
-    // place the anchor above the visible frame so the thread hangs into view
-    const top = -Math.round(Math.max(100, thread.segmentLength * 3));
+    const cy = Math.round(canvas.height * 0.5); // anchor at vertical center
+    // shift whole thread so its midpoint aligns with canvas center
     const pts = thread.points;
-    // layout points so the first point is the anchor at top center and
-    // subsequent points extend downward by segmentLength
+    let sumY = 0;
+    for (let i = 0; i < pts.length; i++) sumY += pts[i].y;
+    const avgY = sumY / pts.length;
+    const delta = cy - avgY;
     for (let i = 0; i < pts.length; i++) {
-      const y = top + i * thread.segmentLength;
-      pts[i].x = cx;
-      pts[i].oldX = cx;
-      pts[i].y = y;
-      pts[i].oldY = y;
+      pts[i].y += delta;
+      pts[i].oldY += delta;
+      // also ensure x positions are initialized around center
+      pts[i].x = pts[i].x || cx;
+      pts[i].oldX = pts[i].oldX || pts[i].x;
     }
-    // make sure the anchor is fixed so the thread hangs from the top
-    if (pts[0]) pts[0].fixed = true;
+    // ensure the anchor (first point) is exactly centered
+    const p0 = pts[0];
+    p0.x = cx;
+    p0.oldX = cx;
+    p0.y = cy;
+    p0.oldY = cy;
   }
   centerThread();
   // ensure thread stays centered when viewport resizes
