@@ -22,10 +22,19 @@ export function initMobileControls(thread, canvas) {
     btn.className = "motion-btn";
 
     btn.addEventListener("click", async () => {
-      const permission = await DeviceOrientationEvent.requestPermission();
-      if (permission === "granted") {
+      // remove the button immediately so the UI reflects the click
+      btn.remove();
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === "granted") {
+          window.addEventListener("deviceorientation", handleOrientation);
+        } else {
+          console.log('deviceorientation permission denied:', permission);
+        }
+      } catch (e) {
+        // some browsers may throw; fall back to attaching listener
+        console.log('requestPermission error, attaching listener as fallback', e && e.message);
         window.addEventListener("deviceorientation", handleOrientation);
-        btn.remove();
       }
     });
 
@@ -91,10 +100,9 @@ export function initMobileControls(thread, canvas) {
   /* =========================
      3. 매 프레임 기울기 힘 적용
   ========================= */
+  // apply tilt by setting a horizontal gravity component used by the physics update
   thread.applyTilt = function () {
-    if (tiltForceX === 0) return;
-    for (let i = 3; i < this.points.length; i++) {
-      this.points[i].x += tiltForceX * (i / this.points.length);
-    }
+    // apply a scaled gravityX so physics integrates over frames
+    this.gravityX = tiltForceX;
   };
 }
