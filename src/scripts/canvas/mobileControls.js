@@ -2,9 +2,50 @@
 
 export function initMobileControls(thread, canvas) {
   let grabbedPoint = null;
-  let smoothX = 0;
-  let smoothY = 0;
+  let tiltForceX = 0;
 
+  /* =========================
+     1. 기울기 → 외력 (중력 방향 느낌)
+  ========================= */
+  function handleOrientation(e) {
+    const gamma = e.gamma ?? 0; // 좌우 기울기 (-90 ~ 90)
+    tiltForceX = gamma * 0.015; // 감각 조절용 계수
+  }
+
+  // iOS 권한 처리
+  if (
+    typeof DeviceOrientationEvent !== "undefined" &&
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  ) {
+    const btn = document.createElement("button");
+    btn.textContent = "Enable Motion";
+    btn.className = "motion-btn";
+
+    btn.addEventListener("click", async () => {
+      // remove the button immediately so the UI reflects the click
+      btn.remove();
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === "granted") {
+          window.addEventListener("deviceorientation", handleOrientation);
+        } else {
+          console.log('deviceorientation permission denied:', permission);
+        }
+      } catch (e) {
+        // some browsers may throw; fall back to attaching listener
+        console.log('requestPermission error, attaching listener as fallback', e && e.message);
+        window.addEventListener("deviceorientation", handleOrientation);
+      }
+    });
+
+    document.body.appendChild(btn);
+  } else {
+    window.addEventListener("deviceorientation", handleOrientation);
+  }
+
+  /* =========================
+     2. 손가락으로 실 집기
+  ========================= */
   function getTouchPos(touch) {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -13,7 +54,7 @@ export function initMobileControls(thread, canvas) {
     };
   }
 
-  function findNearestPoint(x, y, threshold = 40) {
+  function findNearestPoint(x, y, threshold = 30) {
     let nearest = null;
     let minDist = Infinity;
 
@@ -30,67 +71,38 @@ export function initMobileControls(thread, canvas) {
     return nearest;
   }
 
-  function dragPoint(point, x, y) {
-    const strength = 0.25; // lower is smoother
-    point.oldX += (x - point.x) * strength;
-    point.oldY += (y - point.y) * strength;
-  }
-
   canvas.addEventListener("touchstart", e => {
     const { x, y } = getTouchPos(e.touches[0]);
     const point = findNearestPoint(x, y);
 
     if (point) {
       grabbedPoint = point;
-      smoothX = x;
-      smoothY = y;
+      grabbedPoint.fixed = true;
+      grabbedPoint.x = x;
+      grabbedPoint.y = y;
     }
   }, { passive: false });
 
   canvas.addEventListener("touchmove", e => {
     if (!grabbedPoint) return;
     const { x, y } = getTouchPos(e.touches[0]);
-
-    // smoothing
-    smoothX += (x - smoothX) * 0.2;
-    smoothY += (y - smoothY) * 0.2;
-
-    dragPoint(grabbedPoint, smoothX, smoothY);
-    e.preventDefault();
+    grabbedPoint.x = x;
+    grabbedPoint.y = y;
   }, { passive: false });
 
   canvas.addEventListener("touchend", () => {
-    grabbedPoint = null;
-  });
-
-  // also support pointer events for broader device compatibility
-  let pointerActive = false;
-  canvas.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'mouse') return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const point = findNearestPoint(x, y);
-    if (point) {
-      grabbedPoint = point;
-      smoothX = x;
-      smoothY = y;
-      pointerActive = true;
+    if (grabbedPoint) {
+      grabbedPoint.fixed = false;
+      grabbedPoint = null;
     }
   });
 
-  canvas.addEventListener('pointermove', e => {
-    if (!pointerActive || !grabbedPoint) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    smoothX += (x - smoothX) * 0.2;
-    smoothY += (y - smoothY) * 0.2;
-    dragPoint(grabbedPoint, smoothX, smoothY);
-  });
-
-  canvas.addEventListener('pointerup', () => {
-    pointerActive = false;
-    grabbedPoint = null;
-  });
+  /* =========================
+     3. 매 프레임 기울기 힘 적용
+  ========================= */
+  // apply tilt by setting a horizontal gravity component used by the physics update
+  thread.applyTilt = function () {
+    // apply a scaled gravityX so physics integrates over frames
+    this.gravityX = tiltForceX;
+  };
 }

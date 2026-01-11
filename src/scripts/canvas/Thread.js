@@ -7,6 +7,7 @@ export class Thread {
 
     // 물리 옵션 (기본값 포함)
     this.gravity   = options.gravity   ?? 0.5;
+    this.gravityX  = options.gravityX  ?? 0;      // 모바일 기울기 대비
     this.friction  = options.friction  ?? 0.995;
 
     // 형태 옵션
@@ -53,38 +54,21 @@ export class Thread {
   }
 
   update() {
-    this.points.forEach((p, i) => {
-      p.update(this.gravity, this.friction);
-      // gentle end-tail damping to smooth wave propagation
-      const t = i / this.points.length;
-      p.oldX += (p.x - p.oldX) * t * 0.02;
-    });
-
+    this.points.forEach(p =>
+      p.update(this.gravity, this.friction, this.gravityX)
+    );
     for (let i = 0; i < 6; i++) this.constrain();
   }
 
   draw() {
-    const ctx = this.ctx;
-    const pts = this.points;
-
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-
-    for (let i = 1; i < pts.length - 1; i++) {
-      const midX = (pts[i].x + pts[i + 1].x) / 2;
-      const midY = (pts[i].y + pts[i + 1].y) / 2;
-
-      ctx.quadraticCurveTo(
-        pts[i].x,
-        pts[i].y,
-        midX,
-        midY
-      );
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length; i++) {
+      this.ctx.lineTo(this.points[i].x, this.points[i].y);
     }
-
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = this.width;
-    ctx.lineCap = "round";
-    ctx.stroke();
+    this.ctx.strokeStyle = this.color;
+    this.ctx.lineWidth = this.width;
+    this.ctx.lineCap = "round";
+    this.ctx.stroke();
   }
 }
