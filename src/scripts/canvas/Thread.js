@@ -9,10 +9,6 @@ export class Thread {
     this.gravity   = options.gravity   ?? 0.5;
     this.friction  = options.friction  ?? 0.995;
 
-    // Constraint/solver options
-    this.iterations = options.iterations ?? 12; // more passes -> stiffer/less elastic
-    this.tailDamping = options.tailDamping ?? 0.02; // smoothing along the tail
-
     // 형태 옵션
     this.segments  = options.segments  ?? 100;
     this.color     = options.color     ?? "#B11226";
@@ -61,11 +57,10 @@ export class Thread {
       p.update(this.gravity, this.friction);
       // gentle end-tail damping to smooth wave propagation
       const t = i / this.points.length;
-      p.oldX += (p.x - p.oldX) * t * this.tailDamping;
+      p.oldX += (p.x - p.oldX) * t * 0.02;
     });
 
-    // run constraint solver multiple times to reduce stretchiness
-    for (let i = 0; i < this.iterations; i++) this.constrain();
+    for (let i = 0; i < 6; i++) this.constrain();
   }
 
   draw() {

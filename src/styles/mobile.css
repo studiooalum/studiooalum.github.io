@@ -19,18 +19,4 @@
   nav.menu {
     gap: 72px; /* proportionally larger gap to match doubled text */
   }
-
-  /* Remove tap highlight and focus outline on mobile when tapping menu links */
-  nav.menu a {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-user-select: none;
-    user-select: none;
-    outline: none;
-    -webkit-touch-callout: none;
-  }
-  nav.menu a:focus,
-  nav.menu a:active {
-    outline: none;
-    box-shadow: none;
-  }
 }
