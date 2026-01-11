@@ -1,7 +1,7 @@
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .menu-wrap {
     position: absolute;
-    bottom: 15%;
+    bottom: 10%;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
@@ -11,13 +11,13 @@
     touch-action: none;
   }
 
-  /* Increase menu text size for mobile (2x) and maintain spacing proportionally */
+  /* Mobile adjustments: reduce from previous large increase for better fit */
   nav.menu a {
-    font-size: 34px; /* doubled from 17px */
+    font-size: 20px;
   }
 
   nav.menu {
-    gap: 72px; /* proportionally larger gap to match doubled text */
+    gap: 40px;
   }
 
   /* Remove tap highlight and focus outline on mobile when tapping menu links */

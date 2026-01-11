@@ -36,11 +36,3 @@ nav.menu a:focus, nav.menu a:active {
   outline: none !important;
   box-shadow: none !important;
 }
-
-/* prevent link color change on mobile after tap */
-nav.menu a,
-nav.menu a:visited,
-nav.menu a:focus,
-nav.menu a:active {
-  color: #111 !important;
-}
