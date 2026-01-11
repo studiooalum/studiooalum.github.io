@@ -4,6 +4,12 @@ import { initMobileControls } from "./mobileControls.js";
 export function initThreadScene({ mobile = false } = {}) {
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
+  const menuWrap = document.querySelector(".menu-wrap");
+
+  console.log("canvas:", canvas);
+  console.log("ctx:", ctx);
+  console.log("menuWrap:", menuWrap);
+  console.log("mobile:", mobile);
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -12,23 +18,24 @@ export function initThreadScene({ mobile = false } = {}) {
   window.addEventListener("resize", resize);
   resize();
 
-  const menuWrap = document.querySelector(".menu-wrap");
-
-  // 📱 모바일 / 💻 데스크탑 기준 위치 분기
-  const rect = menuWrap.getBoundingClientRect();
-  const threadX = mobile
-    ? canvas.width * 0.5     // 모바일: 중앙
-    : rect.left + rect.width + 50;
+  // ✅ 안전한 X 위치 계산
+  let threadX;
+  if (!mobile && menuWrap) {
+    const rect = menuWrap.getBoundingClientRect();
+    threadX = rect.left + rect.width + 50;
+  } else {
+    threadX = canvas.width * 0.5;
+  }
 
   const thread = new Thread(canvas, ctx, threadX, {
-    gravity: mobile ? 0.9 : 0.5,   // 모바일 중력 강화
+    gravity: mobile ? 0.9 : 0.5,
     friction: 0.995,
-    segments: mobile ? 70 : 100,   // 모바일은 조금 단순하게
+    segments: mobile ? 70 : 100,
     color: "#B11226",
     width: mobile ? 2.5 : 2
   });
 
-  // 💻 데스크탑 전용 인터랙션
+  // 💻 데스크탑 전용
   if (!mobile) {
     document.querySelectorAll(".menu a").forEach(link => {
       link.addEventListener("mouseenter", () => {
@@ -45,7 +52,7 @@ export function initThreadScene({ mobile = false } = {}) {
     });
   }
 
-  // 📱 모바일 전용 컨트롤 연결
+  // 📱 모바일 전용
   if (mobile) {
     initMobileControls(thread, canvas);
   }
