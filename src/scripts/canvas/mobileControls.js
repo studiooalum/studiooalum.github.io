@@ -35,8 +35,9 @@ export function initMobileControls(thread, canvas) {
     // limit maximum instant adjustment to avoid huge impulses
     const dx = Math.max(-60, Math.min(60, x - point.x));
     const dy = Math.max(-60, Math.min(60, y - point.y));
-    point.oldX += dx * strength;
-    point.oldY += dy * strength;
+    // subtract so old position is nudged opposite, producing velocity toward target
+    point.oldX -= dx * strength;
+    point.oldY -= dy * strength;
   }
 
   // Prefer Pointer Events when available to avoid duplicate touch+pointer handling
