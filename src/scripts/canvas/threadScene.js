@@ -32,6 +32,14 @@ export function initThreadScene({ mobile = false } = {}) {
     width: mobile ? 2.5 : 2
   });
 
+  // expose small DOM markers so automated tests can verify mobile branch
+  try {
+    canvas.dataset.threadSegments = String(thread.segments);
+    canvas.dataset.threadMobile = mobile ? 'true' : 'false';
+  } catch (e) {
+    // ignore
+  }
+
   // debug exports removed
 
   // 💻 데스크탑 전용
