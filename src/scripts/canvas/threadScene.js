@@ -35,6 +35,10 @@ export function initThreadScene({ mobile = false } = {}) {
     width: mobile ? 2.5 : 2
   });
 
+  // Expose for debugging in browser console
+  window.thread = thread;
+  window.canvas = canvas;
+
   // 💻 데스크탑 전용
   if (!mobile) {
     document.querySelectorAll(".menu a").forEach(link => {
