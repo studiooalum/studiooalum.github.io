@@ -13,7 +13,7 @@ export function initMobileControls(thread, canvas) {
     };
   }
 
-  function findNearestPoint(x, y, threshold = 40) {
+  function findNearestPoint(x, y, threshold = 30) {
     let nearest = null;
     let minDist = Infinity;
 
@@ -31,66 +31,72 @@ export function initMobileControls(thread, canvas) {
   }
 
   function dragPoint(point, x, y) {
-    const strength = 0.25; // lower is smoother
-    point.oldX += (x - point.x) * strength;
-    point.oldY += (y - point.y) * strength;
+    const strength = 0.12; // gentler pull on mobile
+    // limit maximum instant adjustment to avoid huge impulses
+    const dx = Math.max(-60, Math.min(60, x - point.x));
+    const dy = Math.max(-60, Math.min(60, y - point.y));
+    point.oldX += dx * strength;
+    point.oldY += dy * strength;
   }
 
-  canvas.addEventListener("touchstart", e => {
-    const { x, y } = getTouchPos(e.touches[0]);
-    const point = findNearestPoint(x, y);
+  // Prefer Pointer Events when available to avoid duplicate touch+pointer handling
+  if (window.PointerEvent) {
+    let pointerActive = false;
+    canvas.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse') return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const point = findNearestPoint(x, y);
+      if (point) {
+        grabbedPoint = point;
+        smoothX = x;
+        smoothY = y;
+        pointerActive = true;
+      }
+    });
 
-    if (point) {
-      grabbedPoint = point;
-      smoothX = x;
-      smoothY = y;
-    }
-  }, { passive: false });
+    canvas.addEventListener('pointermove', e => {
+      if (!pointerActive || !grabbedPoint) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      smoothX += (x - smoothX) * 0.2;
+      smoothY += (y - smoothY) * 0.2;
+      dragPoint(grabbedPoint, smoothX, smoothY);
+    });
 
-  canvas.addEventListener("touchmove", e => {
-    if (!grabbedPoint) return;
-    const { x, y } = getTouchPos(e.touches[0]);
+    canvas.addEventListener('pointerup', () => {
+      pointerActive = false;
+      grabbedPoint = null;
+    });
+  } else {
+    // fallback to touch events
+    canvas.addEventListener("touchstart", e => {
+      const { x, y } = getTouchPos(e.touches[0]);
+      const point = findNearestPoint(x, y);
 
-    // smoothing
-    smoothX += (x - smoothX) * 0.2;
-    smoothY += (y - smoothY) * 0.2;
+      if (point) {
+        grabbedPoint = point;
+        smoothX = x;
+        smoothY = y;
+      }
+    }, { passive: false });
 
-    dragPoint(grabbedPoint, smoothX, smoothY);
-    e.preventDefault();
-  }, { passive: false });
+    canvas.addEventListener("touchmove", e => {
+      if (!grabbedPoint) return;
+      const { x, y } = getTouchPos(e.touches[0]);
 
-  canvas.addEventListener("touchend", () => {
-    grabbedPoint = null;
-  });
+      // smoothing
+      smoothX += (x - smoothX) * 0.2;
+      smoothY += (y - smoothY) * 0.2;
 
-  // also support pointer events for broader device compatibility
-  let pointerActive = false;
-  canvas.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'mouse') return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const point = findNearestPoint(x, y);
-    if (point) {
-      grabbedPoint = point;
-      smoothX = x;
-      smoothY = y;
-      pointerActive = true;
-    }
-  });
+      dragPoint(grabbedPoint, smoothX, smoothY);
+      e.preventDefault();
+    }, { passive: false });
 
-  canvas.addEventListener('pointermove', e => {
-    if (!pointerActive || !grabbedPoint) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    smoothX += (x - smoothX) * 0.2;
-    smoothY += (y - smoothY) * 0.2;
-    dragPoint(grabbedPoint, smoothX, smoothY);
-  });
-
-  canvas.addEventListener('pointerup', () => {
-    pointerActive = false;
-    grabbedPoint = null;
-  });
+    canvas.addEventListener("touchend", () => {
+      grabbedPoint = null;
+    });
+  }
 }
