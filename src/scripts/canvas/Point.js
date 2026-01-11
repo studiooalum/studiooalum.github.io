@@ -7,7 +7,7 @@ export class Point {
     this.fixed = fixed;
   }
 
-  update(gravity, friction) {
+  update(gravity = 0.5, friction = 0.995) {
     if (this.fixed) return;
 
     const vx = (this.x - this.oldX) * friction;

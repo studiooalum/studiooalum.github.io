@@ -1,15 +1,19 @@
 import { Point } from "./Point.js";
 
 export class Thread {
-  constructor(canvas, ctx, x, options) {
+  constructor(canvas, ctx, x, options = {}) {
     this.canvas = canvas;
     this.ctx = ctx;
 
-    this.gravity = options.gravity;
-    this.friction = options.friction;
-    this.segments = options.segments;
-    this.color = options.color;
-    this.width = options.width;
+    // 물리 옵션 (기본값 포함)
+    this.gravity   = options.gravity   ?? 0.5;
+    this.gravityX  = options.gravityX  ?? 0;      // 모바일 기울기 대비
+    this.friction  = options.friction  ?? 0.995;
+
+    // 형태 옵션
+    this.segments  = options.segments  ?? 100;
+    this.color     = options.color     ?? "#B11226";
+    this.width     = options.width     ?? 2;
 
     this.segmentLength = canvas.height / (this.segments - 1);
     this.points = [];
@@ -51,7 +55,7 @@ export class Thread {
 
   update() {
     this.points.forEach(p =>
-      p.update(this.gravity, this.friction)
+      p.update(this.gravity, this.friction, this.gravityX)
     );
     for (let i = 0; i < 6; i++) this.constrain();
   }
