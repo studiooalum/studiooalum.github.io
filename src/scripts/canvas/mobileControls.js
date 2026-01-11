@@ -13,7 +13,7 @@ export function initMobileControls(thread, canvas) {
     };
   }
 
-  function findNearestPoint(x, y, threshold = 30) {
+  function findNearestPoint(x, y, threshold = 50) {
     let nearest = null;
     let minDist = Infinity;
 
@@ -59,6 +59,10 @@ export function initMobileControls(thread, canvas) {
       const point = findNearestPoint(x, y);
       if (point) {
         grabbedPoint = point;
+        // pin while touching
+        grabbedPoint.fixed = true;
+        grabbedPoint.x = x; grabbedPoint.y = y;
+        grabbedPoint.oldX = x; grabbedPoint.oldY = y;
         smoothX = x;
         smoothY = y;
         pointerActive = true;
@@ -70,13 +74,13 @@ export function initMobileControls(thread, canvas) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      smoothX += (x - smoothX) * 0.2;
-      smoothY += (y - smoothY) * 0.2;
-      dragPoint(grabbedPoint, smoothX, smoothY);
+      // immediate follow while touching
+      dragPoint(grabbedPoint, x, y);
     });
 
     canvas.addEventListener('pointerup', () => {
       pointerActive = false;
+      if (grabbedPoint) grabbedPoint.fixed = false;
       grabbedPoint = null;
     });
   } else {
@@ -87,6 +91,10 @@ export function initMobileControls(thread, canvas) {
 
       if (point) {
         grabbedPoint = point;
+        // pin while touching
+        grabbedPoint.fixed = true;
+        grabbedPoint.x = x; grabbedPoint.y = y;
+        grabbedPoint.oldX = x; grabbedPoint.oldY = y;
         smoothX = x;
         smoothY = y;
       }
@@ -96,15 +104,13 @@ export function initMobileControls(thread, canvas) {
       if (!grabbedPoint) return;
       const { x, y } = getTouchPos(e.touches[0]);
 
-      // smoothing
-      smoothX += (x - smoothX) * 0.2;
-      smoothY += (y - smoothY) * 0.2;
-
-      dragPoint(grabbedPoint, smoothX, smoothY);
+      // immediate follow while touching
+      dragPoint(grabbedPoint, x, y);
       e.preventDefault();
     }, { passive: false });
 
     canvas.addEventListener("touchend", () => {
+      if (grabbedPoint) grabbedPoint.fixed = false;
       grabbedPoint = null;
     });
   }
