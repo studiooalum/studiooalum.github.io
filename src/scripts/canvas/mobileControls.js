@@ -32,20 +32,20 @@ export function initMobileControls(thread, canvas) {
 
   function dragPoint(point, x, y) {
     const strength = 0.12; // gentler pull on mobile
-    const follow = 1.0; // immediate follow toward finger (no latency)
+    const follow = 0.95; // near-instant follow toward finger (low latency)
     // limit maximum instant adjustment to avoid huge impulses
     const dxRaw = x - point.x;
     const dyRaw = y - point.y;
     const dx = Math.max(-60, Math.min(60, dxRaw));
     const dy = Math.max(-60, Math.min(60, dyRaw));
 
-    // immediate follow: set position to touch
-    point.x = x;
-    point.y = y;
+    // move the point's position almost directly to the touch (minimize latency)
+    point.x += dx * follow;
+    point.y += dy * follow;
 
-    // reset previous position to avoid latency/overshoot
-    point.oldX = x;
-    point.oldY = y;
+    // slightly stronger velocity nudge to preserve kinetic continuity
+    point.oldX -= dx * (strength * 0.9);
+    point.oldY -= dy * (strength * 0.9);
   }
 
   // Prefer Pointer Events when available to avoid duplicate touch+pointer handling
