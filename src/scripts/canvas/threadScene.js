@@ -60,11 +60,6 @@ export function initThreadScene({ mobile = false } = {}) {
 
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (thread.applyTilt) {
-      thread.applyTilt();
-    }
-
     thread.update();
     thread.draw();
     requestAnimationFrame(animate);
