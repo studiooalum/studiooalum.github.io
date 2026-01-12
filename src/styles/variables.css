@@ -1,0 +1,24 @@
+@font-face {
+  font-family: "GothamBook";
+  src: url("../../public/fonts/GothamBook.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "GothamBook";
+  src: url("../../public/fonts/GothamBookItalic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+}
+
+:root {
+  --color-bg: #ffffff;
+  --color-text: #111111;
+  --color-accent: #000000;
+
+  --font-base: "GothamBook", system-ui, -apple-system, sans-serif;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 32px;
+}

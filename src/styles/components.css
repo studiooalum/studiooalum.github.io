@@ -1,0 +1,30 @@
+.menu-wrap {
+  position: fixed;
+  right: 54.5%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 2;
+}
+
+nav.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  text-align: left;
+}
+
+nav.menu a {
+  font-size: 17px;
+  text-decoration: none;
+  color: #111;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.3s ease;
+}
+
+nav.menu a:hover {
+  color: #B11226;
+}
