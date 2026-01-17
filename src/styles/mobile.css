@@ -1,0 +1,16 @@
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .menu-wrap {
+    right: 54.5%;
+    top: 50%;
+    gap: 30px;
+  }
+
+  nav.menu {
+    gap: 48px;
+  }
+
+  nav.menu a {
+    font-size: 22px;
+  }
+}

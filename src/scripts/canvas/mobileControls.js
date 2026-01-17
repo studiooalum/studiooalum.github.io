@@ -106,3 +106,4 @@ export function initMobileControls(thread, canvas) {
     this.gravityX = tiltForceX;
   };
 }
+

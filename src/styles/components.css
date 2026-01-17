@@ -23,8 +23,17 @@ nav.menu a {
   cursor: pointer;
   user-select: none;
   transition: color 0.3s ease;
+  outline: none;
 }
 
 nav.menu a:hover {
   color: #B11226;
+}
+
+nav.menu a:focus {
+  outline: none;
+}
+
+.motion-btn {
+  display: none;
 }

@@ -19,9 +19,9 @@ export function initThreadScene({ mobile = false } = {}) {
   const threadX = canvas.width * 0.5;
 
   const thread = new Thread(canvas, ctx, threadX, {
-    gravity: mobile ? 0.9 : 0.5,
+    gravity: mobile ? 0.54 : 0.3,
     friction: 0.995,
-    segments: mobile ? 280 : 400,
+    segments: mobile ? 140 : 220,
     color: "#B11226",
     width: mobile ? 2.5 : 2
   });
