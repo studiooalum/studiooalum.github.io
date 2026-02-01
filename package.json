@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@sanity/client": "^7.13.2",
+    "@sanity/client": "^7.14.1",
     "@sanity/image-url": "^2.0.2",
     "@shopify/storefront-api-client": "^1.0.9",
     "clsx": "^2.1.1",
