@@ -32,6 +32,16 @@ const textileColors = [
 ========================= */
 let rugPatches = [];
 
+// Fisher-Yates shuffle for proper randomization
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 function generateRugLayout() {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
@@ -53,8 +63,8 @@ function generateRugLayout() {
   // Track which columns are occupied in each row
   const occupiedSpaces = Array(4).fill(null).map(() => new Set());
   
-  // Shuffle products for random placement
-  const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
+  // Shuffle products for random placement using Fisher-Yates
+  const shuffledProducts = shuffleArray(products);
   let productIndex = 0;
   
   // First pass: fill with textile patches to establish base structure
@@ -90,10 +100,9 @@ function generateRugLayout() {
   // Second pass: randomly replace some middle-row textile patches with products
   const middleRowPatches = rugPatches.filter(p => p.row === 2 || p.row === 3);
   
-  // Shuffle and select random positions for products
-  const shuffledMiddleIndices = middleRowPatches
-    .map((_, i) => i)
-    .sort(() => Math.random() - 0.5)
+  // Shuffle and select random positions for products using Fisher-Yates
+  const middleIndices = middleRowPatches.map((_, i) => i);
+  const shuffledMiddleIndices = shuffleArray(middleIndices)
     .slice(0, Math.min(productCount, middleRowPatches.length));
   
   shuffledMiddleIndices.forEach((middleIdx, prodIdx) => {
@@ -191,7 +200,7 @@ function renderRug() {
         // Add title for debugging
         const label = document.createElement("span");
         label.textContent = patch.productData.title || patch.id;
-        label.style.cssText = "font-size: 0.8rem; color: #333; text-align: center;";
+        label.classList.add("product-label");
         el.appendChild(label);
       }
     }

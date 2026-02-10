@@ -131,6 +131,12 @@
   background-size: 20px 20px;
 }
 
+.product-label {
+  font-size: 0.8rem;
+  color: #333;
+  text-align: center;
+}
+
 /* =========================
    PATTERN PATCH
 ========================= */
