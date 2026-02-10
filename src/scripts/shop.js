@@ -1,50 +1,96 @@
+
 console.log("🔥 shop.js loaded");
 
+// Preview mode: when true, skip loading Sanity (avoids bundler/import issues)
+const PREVIEW_MODE = true;
 
-import client from "./sanity/client.js";
-import { PATCHWORK_GLOVES_QUERY } from "./sanity/queries.js";
-import { urlFor } from "./sanity/image.js";
+// Sanity imports are loaded dynamically only when PREVIEW_MODE is false
+// (this prevents import errors for @sanity packages in unbundled environments)
+
+const previewPalette = [
+  '#FF6B6B', // vivid red
+  '#4ECDC4', // teal
+  '#FFD93D', // yellow
+  '#FF6F00', // orange
+  '#9B5DE5', // purple
+  '#00B4D8', // cyan
+  '#F94144', // strong coral
+  '#277DA1'  // deep blue
+];
 
 const rugPatches = Array.from({ length: 24 }, (_, i) => ({
   kind: "solid",
-  color: i % 2 ? "#e0ddd3" : "#cfcabf",
+  color: previewPalette[i % previewPalette.length],
   span: 1,
   height: 1
 }));
 
-// Replace the first patch with a product patch from Sanity
-client.fetch(PATCHWORK_GLOVES_QUERY).then(product => {
-  if (product) {
-    rugPatches[0] = {
-      kind: "product",
-      id: product._id,
-      productData: {
-        title: product.title,
-        image: product.images && product.images.length > 0 ? urlFor(product.images[0]).width(300).url() : product.image,
-        slug: product.slug,
-        description: product.description
-      },
-      span: 1,
-      height: 2
-    };
-    // Re-render with the product patch
-    renderRug();
-  }
-});
+// Render initial 24 patches immediately
+// (will be replaced when Sanity data arrives)
+const track = document.getElementById("rugTrack");
+function renderInitial() {
+  track.innerHTML = "";
+  rugPatches.forEach(patch => {
+    const el = document.createElement("div");
+    el.classList.add("patch", `kind-${patch.kind}`);
+    el.style.gridColumn = `span ${patch.span || 1}`;
+    el.style.gridRow = `span ${patch.height || 1}`;
+    if (patch.kind === "solid" && patch.color) {
+      // set inline background to ensure vivid preview colors are visible
+      el.style.backgroundColor = patch.color;
+    }
+    track.appendChild(el);
+  });
+}
+renderInitial();
+
+// Replace the first patch with a product patch from Sanity (dynamically loaded)
+if (!PREVIEW_MODE) {
+  Promise.all([
+    import('./sanity/client.js'),
+    import('./sanity/queries.js'),
+    import('./sanity/image.js')
+  ])
+    .then(([clientMod, queriesMod, imageMod]) => {
+      const client = clientMod.default;
+      const PATCHWORK_GLOVES_QUERY = queriesMod.PATCHWORK_GLOVES_QUERY;
+      const urlFor = imageMod.urlFor;
+
+      return client.fetch(PATCHWORK_GLOVES_QUERY).then(product => {
+        if (product) {
+          rugPatches[0] = {
+            kind: "product",
+            id: product._id,
+            productData: {
+              title: product.title,
+              image: product.images && product.images.length > 0 ? urlFor(product.images[0]).width(300).url() : product.image,
+              slug: product.slug,
+              description: product.description
+            },
+            span: 1,
+            height: 2
+          };
+          // Re-render with the product patch
+          renderRug();
+        }
+      });
+    })
+    .catch(err => {
+      console.error('Sanity load/fetch failed', err);
+    });
+}
 
 // import { rugPatches } from "../data/rugPatches.js";
 
 /* =========================
-   PREVIEW MODE
-   true  : 이미지 없이 구조만 확인
-   false : 실제 상품 / 이미지 렌더링
+  PREVIEW MODE (defined at top)
+  true  : 이미지 없이 구조만 확인
+  false : 실제 상품 / 이미지 렌더링
 ========================= */
-const PREVIEW_MODE = true;
 
 /* =========================
-   DOM
+   DOM (already declared above in renderInitial)
 ========================= */
-const track = document.getElementById("rugTrack");
 
 /* =========================
    RENDER
@@ -75,7 +121,8 @@ function renderRug() {
 
     /* 1. SOLID (단색 원단) */
     if (patch.kind === "solid" && patch.color) {
-      el.style.setProperty("--patch-color", patch.color);
+      // set inline background to ensure vivid preview colors are visible
+      el.style.backgroundColor = patch.color;
     }
 
     /* 2. PATTERN (원단 패턴) */
