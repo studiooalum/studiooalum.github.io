@@ -1,45 +1,131 @@
 console.log("🔥 shop.js loaded");
 
-
-import client from "./sanity/client.js";
-import { PATCHWORK_GLOVES_QUERY } from "./sanity/queries.js";
-import { urlFor } from "./sanity/image.js";
-
-const rugPatches = Array.from({ length: 24 }, (_, i) => ({
-  kind: "solid",
-  color: i % 2 ? "#e0ddd3" : "#cfcabf",
-  span: 1,
-  height: 1
-}));
-
-// Replace the first patch with a product patch from Sanity
-client.fetch(PATCHWORK_GLOVES_QUERY).then(product => {
-  if (product) {
-    rugPatches[0] = {
-      kind: "product",
-      id: product._id,
-      productData: {
-        title: product.title,
-        image: product.images && product.images.length > 0 ? urlFor(product.images[0]).width(300).url() : product.image,
-        slug: product.slug,
-        description: product.description
-      },
-      span: 1,
-      height: 2
-    };
-    // Re-render with the product patch
-    renderRug();
-  }
-});
-
-// import { rugPatches } from "../data/rugPatches.js";
-
 /* =========================
    PREVIEW MODE
    true  : 이미지 없이 구조만 확인
    false : 실제 상품 / 이미지 렌더링
 ========================= */
 const PREVIEW_MODE = true;
+
+/* =========================
+   PRODUCT DATASET STUB
+   (4-6 items until Sanity integration)
+========================= */
+const products = [
+  { id: 'prod-1', title: 'Patchwork Gloves A', slug: 'gloves-a' },
+  { id: 'prod-2', title: 'Patchwork Gloves B', slug: 'gloves-b' },
+  { id: 'prod-3', title: 'Patchwork Gloves C', slug: 'gloves-c' },
+  { id: 'prod-4', title: 'Patchwork Gloves D', slug: 'gloves-d' },
+  { id: 'prod-5', title: 'Patchwork Gloves E', slug: 'gloves-e' }
+];
+
+/* =========================
+   TEXTILE PATCH COLORS
+========================= */
+const textileColors = [
+  "#e0ddd3", "#cfcabf", "#d4cfc5", "#e8e4d9",
+  "#c9c4ba", "#dad5cb", "#e5e1d6", "#ccc7bd"
+];
+
+/* =========================
+   LAYOUT GENERATION
+========================= */
+let rugPatches = [];
+
+function generateRugLayout() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const productCount = products.length;
+  
+  // 1. Calculate target rug width
+  const widthMultiplier = Math.max(2, 2 + 0.5 * Math.max(0, productCount - 4));
+  const targetRugWidth = viewportWidth * widthMultiplier;
+  
+  // 2. Base unit width = viewport height / 4 (for square patches)
+  const unitWidth = viewportHeight / 4;
+  
+  // 3. Calculate target columns
+  const targetColumns = Math.ceil(targetRugWidth / unitWidth);
+  
+  // 4. Generate patches array
+  rugPatches = [];
+  
+  // Track which columns are occupied in each row
+  const occupiedSpaces = Array(4).fill(null).map(() => new Set());
+  
+  // Shuffle products for random placement
+  const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
+  let productIndex = 0;
+  
+  // First pass: fill with textile patches to establish base structure
+  for (let col = 0; col < targetColumns; col++) {
+    for (let row = 0; row < 4; row++) {
+      // Skip if already occupied
+      if (occupiedSpaces[row].has(col)) continue;
+      
+      // Determine span (1-3) but ensure we don't exceed target width
+      const remainingCols = targetColumns - col;
+      const maxSpan = Math.min(3, remainingCols);
+      const span = Math.floor(Math.random() * maxSpan) + 1;
+      
+      // Mark occupied spaces
+      for (let i = 0; i < span; i++) {
+        occupiedSpaces[row].add(col + i);
+      }
+      
+      // Choose kind (70% solid, 30% pattern for textiles)
+      const kind = Math.random() > 0.7 ? 'pattern' : 'solid';
+      
+      rugPatches.push({
+        kind: kind,
+        color: textileColors[Math.floor(Math.random() * textileColors.length)],
+        patternType: kind === 'pattern' ? 'denim' : undefined,
+        span: span,
+        height: 1,
+        row: row + 1
+      });
+    }
+  }
+  
+  // Second pass: randomly replace some middle-row textile patches with products
+  const middleRowPatches = rugPatches.filter(p => p.row === 2 || p.row === 3);
+  
+  // Shuffle and select random positions for products
+  const shuffledMiddleIndices = middleRowPatches
+    .map((_, i) => i)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, Math.min(productCount, middleRowPatches.length));
+  
+  shuffledMiddleIndices.forEach((middleIdx, prodIdx) => {
+    if (prodIdx >= productCount) return;
+    
+    // Find the actual patch index in rugPatches
+    let actualIdx = 0;
+    let middleCount = 0;
+    for (let i = 0; i < rugPatches.length; i++) {
+      if (rugPatches[i].row === 2 || rugPatches[i].row === 3) {
+        if (middleCount === middleIdx) {
+          actualIdx = i;
+          break;
+        }
+        middleCount++;
+      }
+    }
+    
+    // Replace with product
+    const product = shuffledProducts[prodIdx];
+    rugPatches[actualIdx] = {
+      kind: 'product',
+      id: product.id,
+      productData: product,
+      span: 1,
+      height: 1,
+      row: rugPatches[actualIdx].row
+    };
+  });
+  
+  return { targetColumns, unitWidth };
+}
 
 /* =========================
    DOM
@@ -50,7 +136,13 @@ const track = document.getElementById("rugTrack");
    RENDER
 ========================= */
 function renderRug() {
-  // 혹시 모르니 초기화 (재렌더 대비)
+  // Generate layout
+  const { targetColumns, unitWidth } = generateRugLayout();
+  
+  // Update CSS grid columns
+  track.style.gridTemplateColumns = `repeat(${targetColumns}, ${unitWidth}px)`;
+  
+  // Clear and render patches
   track.innerHTML = "";
 
   rugPatches.forEach(patch => {
@@ -62,12 +154,7 @@ function renderRug() {
 
     /* --- Grid Span 설정 --- */
     el.style.gridColumn = `span ${patch.span || 1}`;
-    el.style.gridRow = `span ${patch.height || 1}`;
-
-    /* --- 상품 위치 보정 (중앙 줄 고정 예외) --- */
-    if (patch.kind === "product" && patch.height === 2) {
-      el.style.gridRowStart = "2";
-    }
+    el.style.gridRow = `${patch.row} / span 1`;
 
     /* =========================
        KIND별 처리
@@ -101,6 +188,11 @@ function renderRug() {
       // 🔥 PREVIEW MODE: 더미 표현
       else {
         el.classList.add("preview-product");
+        // Add title for debugging
+        const label = document.createElement("span");
+        label.textContent = patch.productData.title || patch.id;
+        label.style.cssText = "font-size: 0.8rem; color: #333; text-align: center;";
+        el.appendChild(label);
       }
     }
 
@@ -108,51 +200,19 @@ function renderRug() {
   });
 }
 
-/* =========================
-function renderRug() {
-  rugPatches.forEach(patch => {
-    const el = document.createElement("div");
-    
-    // 기본 클래스
-    el.classList.add("patch");
-    el.classList.add(`kind-${patch.kind}`);
-    
-    // Grid Span & Height 적용 (데이터 기반)
-    // span이 2면 가로 2칸, height가 2면 세로 2칸
-    el.style.gridColumn = `span ${patch.span || 1}`;
-    el.style.gridRow = `span ${patch.height || 1}`;
-
-    // ★ 핵심: 상품은 무조건 가운데 줄(2행)에서 시작하도록 강제
-    // (러그 디자인에 따라 이 부분은 조정 가능)
-    if (patch.kind === 'product' && patch.height === 2) {
-      el.style.gridRowStart = '2'; 
-    }
-
-    // 내용 채우기
-    if (patch.kind === 'product' && patch.image) {
-      const img = document.createElement('img');
-      img.src = patch.image;
-      img.draggable = false; // 이미지 자체 드래그 방지 (컨테이너 드래그 위해)
-      el.appendChild(img);
-      
-      // 클릭 이벤트 (드래그와 구분하기 위해 별도 처리 필요)
-      el.dataset.link = `/product.html?id=${patch.id}`; // 임시 링크 저장
-    } 
-    else if (patch.kind === 'text') {
-      el.textContent = patch.text;
-    } 
-    else if (patch.kind === 'pattern') {
-      if (patch.pattern) el.classList.add(`pattern-${patch.pattern}`);
-    }
-
-    track.appendChild(el);
-  });
-}
-
-========================= */
-
 // 초기 렌더링 실행
 renderRug();
+
+// 윈도우 리사이즈 시 재생성
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    renderRug();
+    // Update max scroll after regeneration
+    targetX = Math.max(0, Math.min(targetX, getMaxScroll()));
+  }, 250);
+});
 
 
 // --- 2. 물리 엔진 (Smooth Drag & Scroll) ---
