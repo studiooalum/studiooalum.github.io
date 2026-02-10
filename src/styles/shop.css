@@ -18,7 +18,7 @@
   height: 100vh;
 
   display: flex;
-  align-items: center;
+  align-items: stretch;
 
   cursor: grab;
   touch-action: pan-y;
@@ -41,14 +41,14 @@
   /* 4줄 고정 / 화면 기준 꽉 차는 러그 */
   grid-template-rows: repeat(4, 1fr);
 
-  /* 정사각형 기준 가로 패치 */
-  grid-auto-columns: 17.5vh;
+  /* Columns are set dynamically via JS based on viewport and product count */
   grid-auto-flow: column;
 
   gap: 0;
 
-  height: 70vh;
-  padding: 0 10vw;
+  /* 전체 viewport height 차지 */
+  height: 100vh;
+  padding: 0;
 
   will-change: transform;
 
@@ -131,21 +131,16 @@
   background-size: 20px 20px;
 }
 
+.product-label {
+  font-size: 0.8rem;
+  color: #333;
+  text-align: center;
+}
+
 /* =========================
    PATTERN PATCH
 ========================= */
 
-/*
-=========================
- ORIGINAL PATCH BORDER STYLES (for rollback)
-=========================
-.patch {
-  border: 1px solid rgba(0, 0, 0, 0.03);
-}
-.patch::after {
-  border: 1px dashed rgba(0, 0, 0, 0.06);
-}
-=========================
 .patch.kind-pattern {
   background-color: #dcd6c8;
 }
