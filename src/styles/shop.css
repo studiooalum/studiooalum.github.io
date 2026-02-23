@@ -1,9 +1,14 @@
 /* =========================
+   SHOP PAGE – Realistic Patchwork Rug
+   All textures rendered via CSS only (no image files)
+========================= */
+
+/* =========================
    BASE
 ========================= */
 
 .shop-page {
-  background: #f9f7f2;
+  background: #f5f1ea;
   height: 100vh;
   overflow: hidden;
   user-select: none;
@@ -16,15 +21,10 @@
 .rug-viewport {
   width: 100vw;
   height: 100vh;
-
   display: flex;
-  align-items: stretch;
-
+  align-items: center;
   cursor: grab;
   touch-action: pan-y;
-
-  /* 디버그용 */
-  background: rgba(0, 0, 255, 0.03);
 }
 
 .rug-viewport:active {
@@ -37,52 +37,85 @@
 
 .rug-track {
   display: grid;
-
-  /* 4줄 고정 / 화면 기준 꽉 차는 러그 */
   grid-template-rows: repeat(4, 1fr);
-
-  /* Columns are set dynamically via JS based on viewport and product count */
+  grid-auto-columns: 17.5vh;
   grid-auto-flow: column;
-
   gap: 0;
-
-  /* 전체 viewport height 차지 */
-  height: 100vh;
-  padding: 0;
-
+  height: 70vh;
+  padding: 0 10vw;
   will-change: transform;
+  transition: opacity 0.4s ease;
+}
 
-  /* 디버그용 */
-  background: rgba(255, 0, 0, 0.05);
+.rug-track.is-loading {
+  opacity: 0;
+}
+
+.rug-track.is-ready {
+  opacity: 1;
 }
 
 /* =========================
    PATCH BASE
 ========================= */
 
-
 .patch {
   position: relative;
   box-sizing: border-box;
-  border: 2px solid #888;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
   background-clip: padding-box;
+
+  /* Subtle depth – each patch looks slightly recessed/raised like real sewn fabric */
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.15),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.08),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06);
+
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
-/* 스티치 느낌 (전체 공통) */
+/* ---- Stitch border (realistic running stitch) ---- */
 .patch::after {
   content: "";
   position: absolute;
-  inset: 0;
-  border: 2px dashed #333;
+  inset: 3px;
+  border: 1.5px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 1px;
   pointer-events: none;
+  z-index: 2;
+}
+
+/* ---- Fabric grain overlay (universal woven texture) ---- */
+.patch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: multiply;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(0, 0, 0, 0.02) 1px,
+      rgba(0, 0, 0, 0.02) 2px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 1px,
+      rgba(0, 0, 0, 0.015) 1px,
+      rgba(0, 0, 0, 0.015) 2px
+    );
 }
 
 /* =========================
-   SOLID PATCH
+   SOLID PATCH – plain woven fabric
 ========================= */
 
 .patch.kind-solid {
@@ -90,20 +123,220 @@
 }
 
 /* =========================
+   FABRIC TEXTURE CLASSES
+   Applied via JS as .fabric-*
+   Each simulates a real textile weave pattern
+========================= */
+
+/* ---- Linen (loose, slightly irregular weave) ---- */
+.patch.fabric-linen {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 2px,
+      rgba(0, 0, 0, 0.025) 2px, rgba(0, 0, 0, 0.025) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent, transparent 3px,
+      rgba(0, 0, 0, 0.02) 3px, rgba(0, 0, 0, 0.02) 4px
+    ),
+    var(--patch-color, #e8e4d9);
+}
+
+/* ---- Canvas / Duck cloth (tight, visible grid) ---- */
+.patch.fabric-canvas {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 1px,
+      rgba(0, 0, 0, 0.04) 1px, rgba(0, 0, 0, 0.04) 2px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent, transparent 1px,
+      rgba(0, 0, 0, 0.03) 1px, rgba(0, 0, 0, 0.03) 2px
+    ),
+    var(--patch-color, #d6cfc3);
+}
+
+/* ---- Tweed (diagonal cross-weave) ---- */
+.patch.fabric-tweed {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent, transparent 3px,
+      rgba(0, 0, 0, 0.06) 3px, rgba(0, 0, 0, 0.06) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent, transparent 5px,
+      rgba(255, 255, 255, 0.05) 5px, rgba(255, 255, 255, 0.05) 6px
+    ),
+    var(--patch-color, #a89e8c);
+}
+
+/* ---- Corduroy (vertical ribs with light play) ---- */
+.patch.fabric-corduroy {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.06) 0px, transparent 1px,
+      transparent 4px, rgba(0, 0, 0, 0.04) 5px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.04) 100%
+    ),
+    var(--patch-color, #7a6e5d);
+}
+
+/* ---- Wool (soft, slightly mottled surface) ---- */
+.patch.fabric-wool {
+  background:
+    radial-gradient(
+      ellipse at 20% 50%,
+      rgba(255, 255, 255, 0.06) 0%, transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgba(0, 0, 0, 0.04) 0%, transparent 40%
+    ),
+    repeating-linear-gradient(
+      160deg,
+      transparent, transparent 2px,
+      rgba(0, 0, 0, 0.02) 2px, rgba(0, 0, 0, 0.02) 4px
+    ),
+    var(--patch-color, #b5aa96);
+}
+
+/* ---- Herringbone (V-shaped weave) ---- */
+.patch.fabric-herringbone {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent, transparent 4px,
+      rgba(0, 0, 0, 0.07) 4px, rgba(0, 0, 0, 0.07) 5px,
+      transparent 5px, transparent 9px,
+      rgba(0, 0, 0, 0.05) 9px, rgba(0, 0, 0, 0.05) 10px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent, transparent 4px,
+      rgba(0, 0, 0, 0.05) 4px, rgba(0, 0, 0, 0.05) 5px,
+      transparent 5px, transparent 9px,
+      rgba(0, 0, 0, 0.04) 9px, rgba(0, 0, 0, 0.04) 10px
+    ),
+    var(--patch-color, #8c7e6a);
+}
+
+/* ---- Denim (diagonal twill weave) ---- */
+.patch.fabric-denim {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.05) 0px, transparent 2px,
+      transparent 3px, rgba(255, 255, 255, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent, transparent 1px,
+      rgba(0, 0, 0, 0.04) 1px, rgba(0, 0, 0, 0.04) 2px
+    ),
+    var(--patch-color, #3b4d61);
+}
+
+/* ---- Satin / Silk (directional sheen) ---- */
+.patch.fabric-satin {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.03) 60%,
+      rgba(255, 255, 255, 0.06) 100%
+    ),
+    var(--patch-color, #c4b8a8);
+}
+
+/* ---- Flannel (soft crosshatch grid) ---- */
+.patch.fabric-flannel {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 6px,
+      rgba(0, 0, 0, 0.04) 6px, rgba(0, 0, 0, 0.04) 7px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent, transparent 6px,
+      rgba(0, 0, 0, 0.03) 6px, rgba(0, 0, 0, 0.03) 7px
+    ),
+    var(--patch-color, #c2b5a0);
+}
+
+/* ---- Knit (interlocking loop pattern) ---- */
+.patch.fabric-knit {
+  background:
+    radial-gradient(
+      ellipse 3px 5px at 3px 5px,
+      rgba(0, 0, 0, 0.06) 40%, transparent 40%
+    ),
+    radial-gradient(
+      ellipse 3px 5px at 0px 0px,
+      rgba(0, 0, 0, 0.04) 40%, transparent 40%
+    ),
+    var(--patch-color, #d1c4ae);
+  background-size: 6px 10px;
+}
+
+/* ---- Velvet (deep pile with directional sheen) ---- */
+.patch.fabric-velvet {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 30%,
+      rgba(0, 0, 0, 0.08) 100%
+    ),
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 60%
+    ),
+    var(--patch-color, #5a4e42);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06);
+}
+
+/* =========================
    PRODUCT PATCH
 ========================= */
 
 .patch.kind-product {
-  background-color: #fff;
+  background-color: #faf8f4;
   z-index: 2;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.35s ease;
+}
+
+/* Softer grain overlay on product patches so image stays clear */
+.patch.kind-product::before {
+  opacity: 0.1;
 }
 
 @media (hover: hover) {
   .patch.kind-product:hover {
-    transform: scale(0.96);
-    box-shadow: inset 0 0 0 1px #555;
+    transform: scale(0.97);
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.1);
     z-index: 10;
   }
 }
@@ -113,52 +346,89 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  position: relative;
+  z-index: 0;
 }
 
-/* PREVIEW MODE */
-.preview-product {
+/* ---- Product info overlay ---- */
+.patch__info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
+  color: #fff;
+  font-family: var(--font-base, sans-serif);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  z-index: 3;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.patch__info-title {
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.patch__info-price {
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.patch__sold-out {
+  display: inline-block;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-top: 3px;
+}
+
+@media (hover: hover) {
+  .patch.kind-product:hover .patch__info {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Shimmer loading placeholder ---- */
+.patch.kind-product.is-loading {
   background:
-    linear-gradient(
-      45deg,
-      rgba(0,0,0,0.06) 25%,
-      transparent 25%,
-      transparent 50%,
-      rgba(0,0,0,0.06) 50%,
-      rgba(0,0,0,0.06) 75%,
-      transparent 75%,
-      transparent
-    );
-  background-size: 20px 20px;
+    linear-gradient(110deg, #ece8df 8%, #f5f1ea 18%, #ece8df 33%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
-.product-label {
-  font-size: 0.8rem;
-  color: #333;
-  text-align: center;
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* =========================
-   PATTERN PATCH
+   PATTERN PATCHES (legacy support)
 ========================= */
 
 .patch.kind-pattern {
   background-color: #dcd6c8;
 }
 
-/* Denim */
 .patch.pattern-denim {
   background-color: #3b4d61;
   background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255,255,255,0.05) 0px,
-    transparent 2px
+    45deg, rgba(255, 255, 255, 0.05) 0px, transparent 2px
   );
 }
 
-/* (확장용) Checkered 예시 */
 .patch.pattern-checkered {
   background-image:
-    linear-gradient(90deg, rgba(0,0,0,0.05) 50%, transparent 50%),
-    linear-gradient(rgba(0,0,0,0.05) 50%, transparent 50%);
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 50%, transparent 50%),
+    linear-gradient(rgba(0, 0, 0, 0.05) 50%, transparent 50%);
   background-size: 20px 20px;
 }
