@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — Product</title>
+
+  <link rel="stylesheet" href="./styles/reset.css">
+  <link rel="stylesheet" href="./styles/variables.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/product.css">
+</head>
+<body class="product-page">
+
+  <!-- Back link -->
+  <a href="./shop.html" class="product-back" aria-label="Back to shop">← Shop</a>
+
+  <!-- Loading state -->
+  <div class="product-loading" id="productLoading">
+    <div class="product-loading__spinner"></div>
+  </div>
+
+  <!-- Main content (hidden until loaded) -->
+  <main class="product-layout" id="productLayout" style="display:none;">
+
+    <!-- Image gallery -->
+    <section class="product-gallery" id="productGallery">
+      <div class="product-gallery__main">
+        <img id="mainImage" src="" alt="" draggable="false" />
+      </div>
+      <div class="product-gallery__thumbs" id="thumbStrip"></div>
+    </section>
+
+    <!-- Product info -->
+    <section class="product-info">
+      <h1 class="product-info__title" id="productTitle"></h1>
+      <p class="product-info__price" id="productPrice"></p>
+      <span class="product-info__badge" id="productBadge" style="display:none;">Sold Out</span>
+      <div class="product-info__category" id="productCategory"></div>
+      <div class="product-info__divider"></div>
+      <p class="product-info__description" id="productDescription"></p>
+      <a href="./shop.html" class="product-info__back-link">← Back to Shop</a>
+    </section>
+
+  </main>
+
+  <script type="module" src="./scripts/product.js"></script>
+</body>
+</html>
