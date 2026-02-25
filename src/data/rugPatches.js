@@ -114,6 +114,16 @@ export const ALL_SWATCHES = [
 export const GRID_ROWS = 4;
 export const FILLER_COLS_AROUND_PRODUCT = 2;
 
+// Rug sizing rule (in "pages" of viewport width):
+// - Always at least 2 pages wide
+// - Add 0.5 page for each product beyond 4
+const MIN_PAGES_WIDE = 2;
+const PRODUCTS_BEFORE_EXTRA_WIDTH = 4;
+const EXTRA_PAGES_PER_PRODUCT = 0.5;
+
+// Keep in sync with CSS: .rug-track { grid-auto-columns: 17.5vh; }
+const PATCH_COL_VH = 17.5;
+
 /* =========================
    SEEDED RANDOM (consistent per session)
 ========================= */
@@ -154,8 +164,23 @@ export function buildRugPatches(products) {
   const patches = [];
   const ROWS = GRID_ROWS;
 
-  if (!products || products.length === 0) {
-    const cols = Math.max(8, Math.ceil(window.innerWidth / (window.innerHeight * 0.175)));
+  const safeProducts = Array.isArray(products) ? products : [];
+  const productCount = safeProducts.length;
+
+  const desiredPages = MIN_PAGES_WIDE +
+    Math.max(0, productCount - PRODUCTS_BEFORE_EXTRA_WIDTH) * EXTRA_PAGES_PER_PRODUCT;
+
+  const fallbackColWidthPx = 160;
+  const colWidthPx = window?.innerHeight
+    ? (window.innerHeight * (PATCH_COL_VH / 100))
+    : fallbackColWidthPx;
+  const minColsForPages = Math.max(
+    8,
+    Math.ceil((desiredPages * (window?.innerWidth || 0)) / (colWidthPx || fallbackColWidthPx))
+  );
+
+  if (productCount === 0) {
+    const cols = minColsForPages;
     for (let c = 0; c < cols; c++) {
       for (let r = 0; r < ROWS; r++) {
         patches.push(makeFillerPatch());
@@ -164,16 +189,29 @@ export function buildRugPatches(products) {
     return patches;
   }
 
-  const totalCols = products.length * (1 + FILLER_COLS_AROUND_PRODUCT) + FILLER_COLS_AROUND_PRODUCT;
+  const baseCols = productCount * (1 + FILLER_COLS_AROUND_PRODUCT) + FILLER_COLS_AROUND_PRODUCT;
+  const totalCols = Math.max(baseCols, minColsForPages);
   const grid = Array.from({ length: totalCols }, () => Array(ROWS).fill(null));
 
-  const spacing = Math.floor(totalCols / products.length);
-  products.forEach((product, i) => {
-    const col = FILLER_COLS_AROUND_PRODUCT + i * spacing;
-    if (col < totalCols) {
-      grid[col][1] = { ...product, _gridProduct: true };
-      grid[col][2] = "SKIP";
+  const minCol = FILLER_COLS_AROUND_PRODUCT;
+  const maxCol = Math.max(minCol, totalCols - 1 - FILLER_COLS_AROUND_PRODUCT);
+  const usedCols = new Set();
+
+  safeProducts.forEach((product, i) => {
+    let col;
+    if (productCount === 1) {
+      col = Math.round((minCol + maxCol) / 2);
+    } else {
+      const t = i / (productCount - 1);
+      col = Math.round(minCol + t * (maxCol - minCol));
     }
+
+    while (usedCols.has(col) && col < maxCol) col += 1;
+    while (usedCols.has(col) && col > minCol) col -= 1;
+    usedCols.add(col);
+
+    grid[col][1] = { ...product, _gridProduct: true };
+    grid[col][2] = "SKIP";
   });
 
   for (let c = 0; c < totalCols; c++) {

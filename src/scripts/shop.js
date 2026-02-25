@@ -20,6 +20,8 @@ function formatPrice(n) {
 const track = document.getElementById("rugTrack");
 track.classList.add("is-loading");
 
+let lastProducts = [];
+
 /* =========================
    RENDER
 ========================= */
@@ -114,13 +116,16 @@ client
   .fetch(ALL_PRODUCTS_QUERY)
   .then((products) => {
     console.log(`📦 Fetched ${products.length} product(s) from Sanity`);
-    if (products.length > 0) {
-      renderRug(buildRugPatches(products));
-    }
+    lastProducts = Array.isArray(products) ? products : [];
+    renderRug(buildRugPatches(lastProducts));
   })
   .catch((err) => {
     console.warn("⚠️ Sanity fetch failed, showing decorative rug:", err);
   });
+
+window.addEventListener("resize", () => {
+  renderRug(buildRugPatches(lastProducts));
+});
 
 /* =========================
    PHYSICS — Smooth Drag & Scroll + Mobile Momentum
