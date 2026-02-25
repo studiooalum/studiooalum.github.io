@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — 주문하기</title>
+
+  <link rel="stylesheet" href="./styles/reset.css">
+  <link rel="stylesheet" href="./styles/variables.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/checkout.css">
+</head>
+<body class="checkout-page">
+
+  <!-- Back link -->
+  <a href="../shop.html" class="checkout-back" aria-label="쇼핑으로 돌아가기">← Shop</a>
+
+  <main class="checkout-layout">
+
+    <!-- LEFT: Order summary -->
+    <section class="checkout-summary">
+      <h2 class="checkout-section-title">주문 내역</h2>
+      <div class="checkout-items" id="checkoutItems">
+        <!-- Filled by JS -->
+      </div>
+      <div class="checkout-totals">
+        <div class="checkout-totals__row">
+          <span>상품 합계</span>
+          <span id="checkoutSubtotal">₩0</span>
+        </div>
+        <div class="checkout-totals__row">
+          <span>배송비</span>
+          <span id="checkoutShipping">무료</span>
+        </div>
+        <div class="checkout-totals__row checkout-totals__row--total">
+          <span>총 결제금액</span>
+          <span id="checkoutTotal">₩0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Delivery info form -->
+    <section class="checkout-form-section">
+      <h2 class="checkout-section-title">배송 정보</h2>
+
+      <form id="checkoutForm" class="checkout-form" novalidate>
+        <div class="checkout-field">
+          <label for="name">이름 <span class="required">*</span></label>
+          <input type="text" id="name" name="name" required placeholder="홍길동" autocomplete="name" />
+        </div>
+
+        <div class="checkout-field">
+          <label for="phone">연락처 <span class="required">*</span></label>
+          <input type="tel" id="phone" name="phone" required placeholder="010-1234-5678" autocomplete="tel" />
+        </div>
+
+        <div class="checkout-field">
+          <label for="email">이메일 <span class="required">*</span></label>
+          <input type="email" id="email" name="email" required placeholder="example@email.com" autocomplete="email" />
+        </div>
+
+        <div class="checkout-field-row">
+          <div class="checkout-field checkout-field--zip">
+            <label for="zipcode">우편번호 <span class="required">*</span></label>
+            <div class="checkout-field__zip-row">
+              <input type="text" id="zipcode" name="zipcode" required placeholder="12345" readonly />
+              <button type="button" id="searchZipBtn" class="checkout-btn--outline">주소 검색</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-field">
+          <label for="address1">기본 주소 <span class="required">*</span></label>
+          <input type="text" id="address1" name="address1" required placeholder="주소 검색을 이용해주세요" readonly />
+        </div>
+
+        <div class="checkout-field">
+          <label for="address2">상세 주소</label>
+          <input type="text" id="address2" name="address2" placeholder="동/호수, 층 등" autocomplete="address-line2" />
+        </div>
+
+        <div class="checkout-field">
+          <label for="memo">배송 메모</label>
+          <select id="memo" name="memo">
+            <option value="">선택 안함</option>
+            <option value="문 앞에 놓아주세요">문 앞에 놓아주세요</option>
+            <option value="경비실에 맡겨주세요">경비실에 맡겨주세요</option>
+            <option value="배송 전 연락 바랍니다">배송 전 연락 바랍니다</option>
+            <option value="부재 시 연락 바랍니다">부재 시 연락 바랍니다</option>
+            <option value="custom">직접 입력</option>
+          </select>
+          <input type="text" id="memoCustom" name="memoCustom" class="checkout-field__memo-custom" placeholder="배송 메모를 입력해주세요" style="display:none;" />
+        </div>
+
+        <div class="checkout-divider"></div>
+
+        <h2 class="checkout-section-title">결제 수단</h2>
+
+        <div class="checkout-payment-methods" id="paymentMethods">
+          <label class="checkout-payment-option">
+            <input type="radio" name="payment" value="toss" checked />
+            <span>토스페이</span>
+          </label>
+          <label class="checkout-payment-option">
+            <input type="radio" name="payment" value="card" />
+            <span>신용/체크카드</span>
+          </label>
+          <label class="checkout-payment-option">
+            <input type="radio" name="payment" value="bank" />
+            <span>무통장 입금</span>
+          </label>
+        </div>
+
+        <div class="checkout-agree">
+          <label>
+            <input type="checkbox" id="agreeTerms" required />
+            <span>주문 내용을 확인했으며, <a href="#" class="checkout-link">이용약관</a> 및 <a href="#" class="checkout-link">개인정보 처리방침</a>에 동의합니다. <span class="required">*</span></span>
+          </label>
+        </div>
+
+        <button type="submit" class="checkout-submit-btn" id="submitOrderBtn">
+          결제하기
+        </button>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- Daum Postcode API for Korean address search -->
+  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script type="module" src="./scripts/checkout.js"></script>
+</body>
+</html>

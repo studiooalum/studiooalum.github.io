@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./src/styles/variables.css" />
   <link rel="stylesheet" href="./src/styles/layout.css" />
   <link rel="stylesheet" href="./src/styles/shop.css" />
+  <link rel="stylesheet" href="./src/styles/cart.css" />
 </head>
 
 <body class="shop-page">
@@ -18,5 +19,9 @@
   </main>
 
   <script type="module" src="./src/scripts/shop.js"></script>
+  <script type="module">
+    import { initCartUI } from "./src/scripts/cart.js";
+    initCartUI();
+  </script>
 </body>
 </html>

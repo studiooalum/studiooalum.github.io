@@ -3,6 +3,7 @@ console.log("📦 product.js loaded");
 import client from "./sanity/client.js";
 import { PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
+import { addToCart } from "./cart.js";
 
 /* =========================
    GET SLUG FROM URL
@@ -26,6 +27,7 @@ const priceEl       = document.getElementById("productPrice");
 const badgeEl       = document.getElementById("productBadge");
 const categoryEl    = document.getElementById("productCategory");
 const descriptionEl = document.getElementById("productDescription");
+const addToCartBtn  = document.getElementById("addToCartBtn");
 
 /* =========================
    HELPERS
@@ -85,6 +87,12 @@ function renderProduct(product) {
 
       thumbStripEl.appendChild(thumb);
     });
+  }
+
+  // Add to cart
+  if (!product.soldOut && addToCartBtn) {
+    addToCartBtn.style.display = "";
+    addToCartBtn.addEventListener("click", () => addToCart(product));
   }
 
   // Show content, hide loader

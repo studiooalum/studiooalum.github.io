@@ -3,7 +3,7 @@ console.log("🔥 shop.js loaded");
 import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
-import { buildRugPatches } from "../data/rugPatches.js";
+import { buildRugPatches, SESSION_STITCH_COLOR } from "../data/rugPatches.js";
 
 /* =========================
    HELPERS
@@ -19,6 +19,9 @@ function formatPrice(n) {
 ========================= */
 const track = document.getElementById("rugTrack");
 track.classList.add("is-loading");
+
+/* Apply session stitch color to the whole rug */
+document.documentElement.style.setProperty("--stitch-color", SESSION_STITCH_COLOR);
 
 let lastProducts = [];
 
@@ -89,14 +92,8 @@ function renderRug(patches) {
       el.style.gridColumn = `span ${patch.span || 1}`;
       el.style.gridRow = `span ${patch.height || 1}`;
 
-      if (patch.kind === "solid") {
-        el.style.setProperty("--patch-color", patch.color || "#e8e4d9");
-        if (patch.fabric) el.classList.add(`fabric-${patch.fabric}`);
-      }
-
-      if (patch.kind === "pattern") {
-        el.classList.add(`pattern-${patch.patternType || "default"}`);
-      }
+      el.style.setProperty("--patch-color", patch.color || "#e8e4d9");
+      if (patch.fabric) el.classList.add(`fabric-${patch.fabric}`);
     }
 
     track.appendChild(el);

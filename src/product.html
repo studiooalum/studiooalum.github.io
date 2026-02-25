@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./styles/variables.css">
   <link rel="stylesheet" href="./styles/layout.css">
   <link rel="stylesheet" href="./styles/product.css">
+  <link rel="stylesheet" href="./styles/cart.css">
 </head>
 <body class="product-page">
 
@@ -39,11 +40,16 @@
       <div class="product-info__category" id="productCategory"></div>
       <div class="product-info__divider"></div>
       <p class="product-info__description" id="productDescription"></p>
+      <button class="product-info__add-to-cart" id="addToCartBtn" style="display:none;">장바구니 담기</button>
       <a href="../shop.html" class="product-info__back-link">← Back to Shop</a>
     </section>
 
   </main>
 
   <script type="module" src="./scripts/product.js"></script>
+  <script type="module">
+    import { initCartUIFromSrc } from "./scripts/cart.js";
+    initCartUIFromSrc();
+  </script>
 </body>
 </html>

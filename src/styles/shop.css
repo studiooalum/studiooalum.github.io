@@ -77,12 +77,12 @@
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
-/* ---- Stitch border (realistic running stitch) ---- */
+/* ---- Stitch border (session stitch color) ---- */
 .patch::after {
   content: "";
   position: absolute;
   inset: 3px;
-  border: 1.5px dashed rgba(0, 0, 0, 0.12);
+  border: 1.5px dashed var(--stitch-color, rgba(0, 0, 0, 0.12));
   border-radius: 1px;
   pointer-events: none;
   z-index: 2;
@@ -120,6 +120,21 @@
 
 .patch.kind-solid {
   background-color: var(--patch-color, #e8e4d9);
+}
+
+/* =========================
+   CHECKERED PATCH – alternating session color + white
+========================= */
+
+.patch.kind-checkered {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, var(--patch-color) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--patch-color) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--patch-color) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--patch-color) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
 /* =========================
