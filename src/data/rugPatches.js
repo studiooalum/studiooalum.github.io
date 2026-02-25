@@ -121,8 +121,8 @@ const MIN_PAGES_WIDE = 2;
 const PRODUCTS_BEFORE_EXTRA_WIDTH = 4;
 const EXTRA_PAGES_PER_PRODUCT = 0.5;
 
-// Keep in sync with CSS: .rug-track { grid-auto-columns: 17.5vh; }
-const PATCH_COL_VH = 17.5;
+// Keep in sync with CSS: .rug-track { grid-auto-columns: 25vh; }
+const PATCH_COL_VH = 25;
 
 /* =========================
    SEEDED RANDOM (consistent per session)
