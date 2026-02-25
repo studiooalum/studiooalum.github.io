@@ -2,7 +2,7 @@ console.log("🔥 shop.js loaded");
 
 import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
-import { urlFor } from "./sanity/image.js";
+import { imageUrl } from "./sanity/image.js";
 import { buildRugPatches } from "../data/rugPatches.js";
 
 /* =========================
@@ -38,13 +38,13 @@ function renderRug(patches) {
       el.style.gridRowStart = "2";
       el.dataset.id = patch._id || "";
 
-      const imageUrl = patch.images && patch.images.length > 0
-        ? urlFor(patch.images[0]).width(400).url()
+      const imgUrl = patch.images && patch.images.length > 0
+        ? imageUrl(patch.images[0], { width: 400 })
         : null;
 
-      if (imageUrl) {
+      if (imgUrl) {
         const img = document.createElement("img");
-        img.src = imageUrl;
+        img.src = imgUrl;
         img.alt = patch.title || "";
         img.draggable = false;
         img.loading = "lazy";
@@ -78,7 +78,7 @@ function renderRug(patches) {
         el.classList.add("is-loading");
       }
 
-      el.dataset.link = `/src/product.html?slug=${patch.slug?.current || ""}`;
+      el.dataset.link = `./src/product.html?slug=${patch.slug?.current || ""}`;
     }
 
     /* ========================= SOLID / FILLER ========================= */

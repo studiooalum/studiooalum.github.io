@@ -12,8 +12,8 @@ export const ALL_PRODUCTS_QUERY = `
     price,
     soldOut,
     slug,
-    images[] {
-      asset->
+    images[]{
+      asset->{url}
     }
   }
 `;
@@ -28,8 +28,8 @@ export const PRODUCT_BY_SLUG_QUERY = `
     soldOut,
     slug,
     category,
-    images[] {
-      asset->
+    images[]{
+      asset->{url}
     }
   }
 `;

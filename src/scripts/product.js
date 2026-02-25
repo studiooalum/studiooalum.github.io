@@ -2,7 +2,7 @@ console.log("📦 product.js loaded");
 
 import client from "./sanity/client.js";
 import { PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
-import { urlFor } from "./sanity/image.js";
+import { imageUrl } from "./sanity/image.js";
 
 /* =========================
    GET SLUG FROM URL
@@ -11,7 +11,7 @@ const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
 
 if (!slug) {
-  window.location.href = "./shop.html";
+  window.location.href = "../shop.html";
 }
 
 /* =========================
@@ -61,13 +61,13 @@ function renderProduct(product) {
 
   // Images
   if (product.images && product.images.length > 0) {
-    const firstUrl = urlFor(product.images[0]).width(800).url();
+    const firstUrl = imageUrl(product.images[0], { width: 800 });
     mainImageEl.src = firstUrl;
     mainImageEl.alt = product.title;
 
     // Thumbnail strip
     product.images.forEach((img, i) => {
-      const thumbUrl = urlFor(img).width(160).height(160).url();
+      const thumbUrl = imageUrl(img, { width: 160, height: 160 });
       const thumb = document.createElement("img");
       thumb.src = thumbUrl;
       thumb.alt = `${product.title} image ${i + 1}`;
@@ -76,7 +76,7 @@ function renderProduct(product) {
       thumb.draggable = false;
 
       thumb.addEventListener("click", () => {
-        mainImageEl.src = urlFor(img).width(800).url();
+        mainImageEl.src = imageUrl(img, { width: 800 });
         thumbStripEl.querySelectorAll(".product-gallery__thumb").forEach((t) =>
           t.classList.remove("is-active")
         );
