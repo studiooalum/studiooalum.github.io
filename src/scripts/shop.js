@@ -36,8 +36,8 @@ function renderRug(patches) {
     if (patch._gridProduct) {
       el.classList.add("kind-product");
       el.style.gridColumn = "span 1";
-      el.style.gridRow = "span 2";
       el.style.gridRowStart = "2";
+      el.style.gridRowEnd = "span 2";
       el.dataset.id = patch._id || "";
 
       const imgUrl = patch.images && patch.images.length > 0
