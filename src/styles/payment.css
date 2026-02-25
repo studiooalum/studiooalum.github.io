@@ -1,0 +1,286 @@
+/* =========================
+   PAYMENT / SUCCESS / FAIL PAGES
+   Shared styles for the Toss payment flow.
+========================= */
+
+.payment-page {
+  background: #f5f1ea;
+  min-height: 100vh;
+  font-family: var(--font-base, sans-serif);
+  color: var(--color-text, #111);
+}
+
+/* ---- Back link ---- */
+.payment-back {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  z-index: 100;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: #555;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.payment-back:hover {
+  color: #111;
+}
+
+/* =========================
+   PAYMENT PAGE LAYOUT
+========================= */
+
+.payment-layout {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 60px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.payment-section-title {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* ---- Order brief (top of payment page) ---- */
+.payment-order-brief {
+  text-align: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.payment-order-name {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+
+.payment-order-total {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ---- Toss widget containers ---- */
+.payment-widget-area {
+  width: 100%;
+  min-height: 60px;
+}
+
+.payment-widget-section,
+.payment-agreement-section {
+  overflow: hidden;
+}
+
+/* ---- Pay button ---- */
+.payment-btn-wrapper {
+  padding: 8px 0 0;
+}
+
+.payment-submit-btn {
+  display: block;
+  width: 100%;
+  padding: 14px 0;
+  background: #111;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-base, sans-serif);
+  transition: background 0.2s;
+}
+
+.payment-submit-btn:hover {
+  background: #333;
+}
+
+.payment-submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* ---- Empty state ---- */
+.payment-empty {
+  text-align: center;
+  padding: 80px 0;
+  color: #888;
+  font-size: 14px;
+}
+
+.payment-empty a {
+  display: inline-block;
+  margin-top: 16px;
+  color: #111;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* =========================
+   RESULT PAGES (success / fail)
+========================= */
+
+.payment-result-layout {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 80px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.payment-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+}
+
+.payment-result img {
+  margin-bottom: 8px;
+}
+
+.payment-result__title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 16px 0 0;
+  color: #111;
+}
+
+.payment-result__desc {
+  font-size: 14px;
+  color: #666;
+  margin: 8px 0 24px;
+}
+
+/* ---- Detail rows ---- */
+.payment-result__details {
+  width: 100%;
+  margin: 32px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.payment-result__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.payment-result__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.payment-result__value {
+  font-size: 14px;
+  font-weight: 400;
+  color: #555;
+  text-align: right;
+  word-break: break-all;
+}
+
+/* ---- Action buttons ---- */
+.payment-result__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 32px;
+}
+
+.payment-btn--outline {
+  display: block;
+  width: 100%;
+  padding: 13px 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border: 1px solid #111;
+  border-radius: 6px;
+  background: transparent;
+  color: #111;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: var(--font-base, sans-serif);
+  transition: background 0.2s, color 0.2s;
+  box-sizing: border-box;
+}
+
+.payment-btn--outline:hover {
+  background: #111;
+  color: #fff;
+}
+
+.payment-btn--secondary {
+  display: block;
+  width: 100%;
+  padding: 13px 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border: none;
+  border-radius: 6px;
+  background: #e8e4dd;
+  color: #555;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: var(--font-base, sans-serif);
+  transition: background 0.2s;
+  box-sizing: border-box;
+}
+
+.payment-btn--secondary:hover {
+  background: #dbd6ce;
+}
+
+/* ---- Confirm states ---- */
+.confirm-loading {
+  gap: 8px;
+}
+
+.confirm-loading .payment-submit-btn {
+  margin-top: 24px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+  .payment-layout {
+    padding: 52px 16px 32px;
+  }
+
+  .payment-result-layout {
+    padding: 60px 16px 32px;
+  }
+
+  .payment-back {
+    top: 12px;
+    left: 16px;
+  }
+
+  .payment-order-total {
+    font-size: 20px;
+  }
+}

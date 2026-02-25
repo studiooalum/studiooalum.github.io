@@ -105,7 +105,6 @@ function setupForm() {
     const address1 = form.address1.value.trim();
     const address2 = form.address2.value.trim();
     const memo = form.memo.value === "custom" ? form.memoCustom.value.trim() : form.memo.value;
-    const payment = form.payment.value;
     const agreed = form.querySelector("#agreeTerms").checked;
 
     if (!name || !phone || !email || !zipcode || !address1) {
@@ -121,17 +120,15 @@ function setupForm() {
     const orderData = {
       items: getCart(),
       shipping: { name, phone, email, zipcode, address1, address2, memo },
-      payment,
       total: getCart().reduce((sum, i) => sum + i.price * i.qty, 0),
       createdAt: new Date().toISOString(),
     };
 
-    console.log("📦 Order data ready for payment:", orderData);
+    // Save order for the payment page to read
+    localStorage.setItem("studiooalum_pending_order", JSON.stringify(orderData));
 
-    // TODO: Integrate Toss Payments SDK here
-    // For now, store order and show confirmation
-    localStorage.setItem("studiooalum_last_order", JSON.stringify(orderData));
-    alert("주문이 접수되었습니다.\n결제 시스템 연동 후 실제 결제가 진행됩니다.");
+    // Redirect to Toss payment page
+    window.location.href = "./payment.html";
   });
 }
 

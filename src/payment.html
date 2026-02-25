@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — 결제</title>
+
+  <link rel="stylesheet" href="./styles/reset.css">
+  <link rel="stylesheet" href="./styles/variables.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/payment.css">
+</head>
+<body class="payment-page">
+
+  <!-- Back link -->
+  <a href="./checkout.html" class="payment-back" aria-label="주문서로 돌아가기">← 주문서</a>
+
+  <main class="payment-layout">
+
+    <!-- Brief order summary -->
+    <section class="payment-order-brief">
+      <h2 class="payment-section-title">주문 요약</h2>
+      <p class="payment-order-name" id="paymentOrderName">—</p>
+      <p class="payment-order-total" id="paymentOrderTotal">₩0</p>
+    </section>
+
+    <!-- Toss Payment Widget: payment methods -->
+    <section class="payment-widget-section">
+      <div id="payment-method" class="payment-widget-area"></div>
+    </section>
+
+    <!-- Toss Payment Widget: agreement -->
+    <section class="payment-agreement-section">
+      <div id="agreement" class="payment-widget-area"></div>
+    </section>
+
+    <!-- Pay button -->
+    <div class="payment-btn-wrapper">
+      <button id="payment-request-button" class="payment-submit-btn" disabled>
+        결제하기
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Toss Payments SDK v2 (CDN) -->
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <script type="module" src="./scripts/payment.js"></script>
+</body>
+</html>

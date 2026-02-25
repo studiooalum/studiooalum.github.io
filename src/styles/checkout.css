@@ -240,37 +240,6 @@
 }
 
 /* =========================
-   PAYMENT METHODS
-========================= */
-
-.checkout-payment-methods {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.checkout-payment-option {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.checkout-payment-option:hover {
-  border-color: #111;
-}
-
-.checkout-payment-option input[type="radio"] {
-  accent-color: #111;
-}
-
-/* =========================
    TERMS AGREEMENT
 ========================= */
 

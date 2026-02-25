@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — 결제 실패</title>
+
+  <link rel="stylesheet" href="./styles/reset.css">
+  <link rel="stylesheet" href="./styles/variables.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/payment.css">
+</head>
+<body class="payment-page">
+
+  <main class="payment-result-layout">
+
+    <section class="payment-result">
+      <img
+        src="https://static.toss.im/lotties/error-spot-no-loop-space-apng.png"
+        width="120" height="120" alt="error" />
+      <h2 class="payment-result__title">결제를 실패했어요</h2>
+
+      <div class="payment-result__details">
+        <div class="payment-result__row">
+          <span class="payment-result__label">에러 코드</span>
+          <span class="payment-result__value" id="errorCode">—</span>
+        </div>
+        <div class="payment-result__row">
+          <span class="payment-result__label">에러 메시지</span>
+          <span class="payment-result__value" id="errorMessage">—</span>
+        </div>
+      </div>
+
+      <div class="payment-result__actions">
+        <a href="./checkout.html" class="payment-btn--outline">주문서로 돌아가기</a>
+        <a href="../shop.html" class="payment-btn--secondary">쇼핑 계속하기</a>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="./scripts/fail.js"></script>
+</body>
+</html>
