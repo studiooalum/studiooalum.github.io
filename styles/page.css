@@ -1,0 +1,65 @@
+/* Studio OALUM – Section pages */
+
+body {
+    overflow-y: auto;
+    background: #fff;
+}
+
+.page-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #000;
+    font-family: 'GothamBook', 'Helvetica Neue', sans-serif;
+    font-size: 15px;
+    transition: opacity 0.2s;
+}
+.back-link:hover { opacity: 0.5; }
+
+.page-hero {
+    margin-top: 64px;
+    height: 45vh;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.page-hero h1 {
+    font-family: 'GothamBold', 'GothamBook', sans-serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+}
+
+.page-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 32px 120px;
+}
+.page-body p {
+    font-family: 'GothamBook', 'Helvetica Neue', sans-serif;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #555;
+}
+
+@media (max-width: 768px) {
+    .page-nav { padding: 0 16px; height: 52px; }
+    .page-hero { height: 35vh; min-height: 200px; margin-top: 52px; }
+    .page-body { padding: 40px 16px 80px; }
+}

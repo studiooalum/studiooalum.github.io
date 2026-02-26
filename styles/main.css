@@ -48,57 +48,6 @@ body {
     will-change: transform;
 }
 
-#page-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background-color: #f0f0f0;
-    z-index: 100;
-    transform: translateX(100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
-}
-
-.overlay-content {
-    opacity: 0;
-    transform: translateY(30px);
-    text-align: center;
-}
-
-#page-title {
-    font-size: 5rem;
-    margin: 0 0 20px 0;
-    font-weight: 900;
-    letter-spacing: -2px;
-    font-family: 'GothamBold', 'GothamBook', sans-serif;
-}
-
-p.desc {
-    font-size: 1.2rem;
-    margin-bottom: 40px;
-    font-family: 'GothamBook', sans-serif;
-}
-
-.close-btn {
-    padding: 15px 40px;
-    cursor: pointer;
-    border: none;
-    background: #000;
-    color: #fff;
-    font-size: 18px;
-    font-weight: bold;
-    font-family: 'GothamBook', sans-serif;
-    border-radius: 40px;
-    transition: transform 0.2s;
-}
-.close-btn:hover { transform: scale(1.05); }
-
 @media (max-width: 768px) {
     .yarn-text { font-size: 16px; }
-    #page-title { font-size: 2.5rem; }
-    p.desc { font-size: 1rem; padding: 0 20px; }
-    .close-btn { font-size: 16px; padding: 12px 30px; }
 }
