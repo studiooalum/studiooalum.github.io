@@ -6,7 +6,6 @@
     font-weight: normal;
     font-style: normal;
 }
-
 @font-face {
     font-family: 'GothamBold';
     src: url('/public/fonts/Gotham-Font/GothamBold.ttf') format('truetype');
@@ -14,34 +13,31 @@
     font-style: normal;
 }
 
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
-    margin: 0;
-    padding: 0;
     overflow: hidden;
-    background-color: #ffffff;
+    background: #ffffff;
     font-family: 'GothamBook', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-#svg-container {
-    width: 100vw;
-    height: 100vh;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 10;
+#yarn-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1;
 }
 
-.yarn {
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    pointer-events: none;          /* hit-area path handles mouse events */
-    filter: url(#rough-edge);
-    transition: stroke-width 0.3s ease;
+#svg-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 2;
+    overflow: visible;
 }
 
 .yarn-text {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
     font-family: 'GothamBold', 'GothamBook', 'Helvetica Neue', sans-serif;
     fill: #000;
@@ -49,14 +45,13 @@ body {
     text-anchor: middle;
     dominant-baseline: central;
     text-rendering: optimizeLegibility;
+    will-change: transform;
 }
 
 #page-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
     background-color: #f0f0f0;
     z-index: 100;
     transform: translateX(100%);
@@ -99,13 +94,10 @@ p.desc {
     border-radius: 40px;
     transition: transform 0.2s;
 }
-
-.close-btn:hover {
-    transform: scale(1.05);
-}
+.close-btn:hover { transform: scale(1.05); }
 
 @media (max-width: 768px) {
-    .yarn-text { font-size: 18px; }
+    .yarn-text { font-size: 16px; }
     #page-title { font-size: 2.5rem; }
     p.desc { font-size: 1rem; padding: 0 20px; }
     .close-btn { font-size: 16px; padding: 12px 30px; }
