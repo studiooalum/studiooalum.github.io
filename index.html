@@ -3,107 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Studio OALUM — String-driven Menu</title>
+  <title>Studio OALUM</title>
   <link rel="stylesheet" href="./styles/main.css">
 </head>
-<body class="menu-page">
+<body>
 
-  <div class="menu-container">
-    <!-- SVG Strings with floating letters -->
-    <svg class="strings-svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
-      
-      <!-- String 1: ABOUT (Red) -->
-      <g class="string-group" data-menu="about">
-        <path 
-          class="string" 
-          id="string-about" 
-          d="M 200,150 Q 300,300 200,450"
-          stroke="#FF4444" 
-          stroke-width="12" 
-          fill="none"
-          stroke-linecap="round"
-        />
-        <g class="letters" id="letters-about"></g>
-      </g>
+  <!-- SVG 컨테이너: 실과 글씨가 그려지는 공간 -->
+  <svg id="svg-container" preserveAspectRatio="none">
+    <defs>
+      <!-- 실의 거친 질감을 위한 필터 -->
+      <filter id="rough-edge" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+    <g id="yarn-group"></g>
+    <g id="text-group"></g>
+  </svg>
 
-      <!-- String 2: ARCHIVE (Yellow) -->
-      <g class="string-group" data-menu="archive">
-        <path 
-          class="string" 
-          id="string-archive" 
-          d="M 400,100 Q 500,350 400,550"
-          stroke="#FFD700" 
-          stroke-width="12" 
-          fill="none"
-          stroke-linecap="round"
-        />
-        <g class="letters" id="letters-archive"></g>
-      </g>
-
-      <!-- String 3: SHOP (Blue) -->
-      <g class="string-group" data-menu="shop">
-        <path 
-          class="string" 
-          id="string-shop" 
-          d="M 600,120 Q 700,320 600,520"
-          stroke="#4488FF" 
-          stroke-width="12" 
-          fill="none"
-          stroke-linecap="round"
-        />
-        <g class="letters" id="letters-shop"></g>
-      </g>
-
-      <!-- String 4: NEWSLETTER (Pink) -->
-      <g class="string-group" data-menu="newsletter">
-        <path 
-          class="string" 
-          id="string-newsletter" 
-          d="M 800,140 Q 900,340 800,540"
-          stroke="#FF69B4" 
-          stroke-width="12" 
-          fill="none"
-          stroke-linecap="round"
-        />
-        <g class="letters" id="letters-newsletter"></g>
-      </g>
-
-    </svg>
-
-    <!-- Hidden pages (to be pulled in) -->
-    <div class="pages-container">
-      <div class="page" id="page-about" data-menu="about">
-        <button class="back-button" onclick="returnToMenu()">← 메뉴로 돌아가기</button>
-        <div class="page-content">
-          <h1>About Studio OALUM</h1>
-          <p>이것은 어바웃 페이지입니다. 실로 당겨져 올 예정입니다.</p>
-        </div>
-      </div>
-
-      <div class="page" id="page-archive" data-menu="archive">
-        <button class="back-button" onclick="returnToMenu()">← 메뉴로 돌아가기</button>
-        <div class="page-content">
-          <h1>Archive</h1>
-          <p>이것은 아카이브 페이지입니다.</p>
-        </div>
-      </div>
-
-      <div class="page" id="page-shop" data-menu="shop">
-        <button class="back-button" onclick="returnToMenu()">← 메뉴로 돌아가기</button>
-        <div class="page-content">
-          <h1>Shop</h1>
-          <p>이것은 샵 페이지입니다.</p>
-        </div>
-      </div>
-
-      <div class="page" id="page-newsletter" data-menu="newsletter">
-        <button class="back-button" onclick="returnToMenu()">← 메뉴로 돌아가기</button>
-        <div class="page-content">
-          <h1>Newsletter</h1>
-          <p>이것은 뉴스레터 페이지입니다.</p>
-        </div>
-      </div>
-    </div>
+  <!-- 클릭 시 당겨져 올 페이지 오버레이 -->
+  <div id="page-overlay">
+    <h1 id="page-title" class="overlay-content">Page Title</h1>
+    <p class="desc overlay-content">실에 의해 당겨져 온 페이지입니다.</p>
+    <button id="close-btn" class="close-btn overlay-content" onclick="closePage()">← 돌아가기</button>
   </div>
 
   <!-- GSAP for smooth animations -->
