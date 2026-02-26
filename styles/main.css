@@ -48,6 +48,15 @@ body {
     will-change: transform;
 }
 
+#page-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 100;
+    transform: translateX(100%);
+    pointer-events: none;
+}
+
 @media (max-width: 768px) {
     .yarn-text { font-size: 16px; }
 }
