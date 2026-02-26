@@ -21,19 +21,25 @@ body {
     font-family: 'GothamBook', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-#yarn-canvas {
-    position: fixed;
+#svg-container {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
     top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: 1;
+    z-index: 10;
 }
 
-#svg-container {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: 2;
-    overflow: visible;
+.yarn {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    cursor: pointer;
+    filter: url(#rough-edge);
+    transition: stroke-width 0.3s ease;
+}
+
+.yarn:hover {
+    stroke-width: 60px !important;
 }
 
 .yarn-text {
@@ -45,7 +51,6 @@ body {
     text-anchor: middle;
     dominant-baseline: central;
     text-rendering: optimizeLegibility;
-    will-change: transform;
 }
 
 #page-overlay {
