@@ -1,273 +1,288 @@
-/* =========================
-   String Menu System - Main Logic
-========================= */
+const svgContainer = document.getElementById('svg-container');
+const yarnGroup = document.getElementById('yarn-group');
+const textGroup = document.getElementById('text-group');
 
-const MENUS = [
-  { id: 'about', word: 'ABOUT', color: '#FF4444' },
-  { id: 'archive', word: 'ARCHIVE', color: '#FFD700' },
-  { id: 'shop', word: 'SHOP', color: '#4488FF' },
-  { id: 'newsletter', word: 'NEWSLETTER', color: '#FF69B4' },
+let width = window.innerWidth;
+let height = window.innerHeight;
+
+const yarnsData = [
+    { word: "About", color: "#ffb6c1", strokeWidth: 45, yOffset: 0.2 },
+    { word: "Archive", color: "#ff1414", strokeWidth: 55, yOffset: 0.5 },
+    { word: "Shop", color: "#ffd700", strokeWidth: 35, yOffset: 0.7 },
+    { word: "Newsletter", color: "#d1e0e3", strokeWidth: 40, yOffset: 0.9 }
 ];
 
-let activeMenu = null;
-let hoveredMenu = null;
+const yarns = [];
+let isPageOpen = false;
+let activeYarn = null;
 
-/* =========================
-   INITIALIZE: Place letters on paths
-========================= */
+class Yarn {
+    constructor(data, index) {
+        this.word = data.word.toUpperCase();
+        this.color = data.color;
+        this.strokeWidth = data.strokeWidth;
+        this.baseY = height * data.yOffset;
 
-function initializeLetters() {
-  MENUS.forEach((menu) => {
-    const pathElement = document.getElementById(`string-${menu.id}`);
-    const lettersContainer = document.getElementById(`letters-${menu.id}`);
-    const word = menu.word;
+        this.points = [
+            { x: 0, y: this.baseY, angle: Math.random() * Math.PI * 2, speed: 0.01 + Math.random() * 0.01 },
+            { x: width * 0.25, y: this.baseY - 100 + Math.random() * 200, angle: Math.random() * Math.PI * 2, speed: 0.005 + Math.random() * 0.01 },
+            { x: width * 0.5, y: this.baseY - 100 + Math.random() * 200, angle: Math.random() * Math.PI * 2, speed: 0.008 + Math.random() * 0.01 },
+            { x: width * 0.75, y: this.baseY - 100 + Math.random() * 200, angle: Math.random() * Math.PI * 2, speed: 0.006 + Math.random() * 0.01 },
+            { x: width, y: this.baseY, angle: Math.random() * Math.PI * 2, speed: 0.01 + Math.random() * 0.01 }
+        ];
 
-    if (!pathElement || !lettersContainer) return;
+        this.points.forEach(p => {
+            p.currentX = p.x;
+            p.currentY = p.y;
+        });
 
-    const pathLength = pathElement.getTotalLength();
-    
-    // Create letters and distribute along path
-    // Repeat the word multiple times to fill the path
-    let allLetters = [];
-    const repetitions = Math.ceil(pathLength / (word.length * 25)); // Adjust spacing
-    const fullText = (word + ' ').repeat(repetitions);
+        this.pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        this.pathElement.setAttribute('class', 'yarn');
+        this.pathElement.setAttribute('stroke', this.color);
+        this.pathElement.setAttribute('stroke-width', this.strokeWidth);
+        yarnGroup.appendChild(this.pathElement);
 
-    fullText.split('').forEach((char, idx) => {
-      if (char === ' ') return;
+        this.letters = [];
+        this.isHovered = false;
+        this.isTransitioning = false;
+        this.hoverRatio = 0.5;
 
-      const tspanRatio = idx / fullText.length;
-      const distAlongPath = tspanRatio * pathLength;
-      const point = pathElement.getPointAtLength(distAlongPath);
+        this.initLetters();
+        this.addEventListeners();
+    }
 
-      const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      textEl.setAttribute('x', point.x);
-      textEl.setAttribute('y', point.y);
-      textEl.setAttribute('fill', menu.color);
-      textEl.textContent = char;
-      textEl.classList.add('letter');
-      textEl.dataset.charIndex = idx;
-      textEl.dataset.originalX = point.x;
-      textEl.dataset.originalY = point.y;
+    initLetters() {
+        const chars = this.word.split('');
+        const repeatCount = 10;
 
-      lettersContainer.appendChild(textEl);
-      allLetters.push({
-        element: textEl,
-        char: char,
-        originalX: point.x,
-        originalY: point.y,
-        currentX: point.x,
-        currentY: point.y,
-      });
+        for (let i = 0; i < chars.length * repeatCount; i++) {
+            const char = chars[i % chars.length];
+            const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textEl.textContent = char;
+            textEl.setAttribute('class', 'yarn-text');
+            textGroup.appendChild(textEl);
+
+            this.letters.push({
+                el: textEl,
+                char: char,
+                targetRatioIdle: Math.random(),
+                currentRatio: Math.random()
+            });
+        }
+    }
+
+    addEventListeners() {
+        this.pathElement.addEventListener('mouseenter', () => {
+            if (isPageOpen) return;
+            this.isHovered = true;
+            yarnGroup.appendChild(this.pathElement);
+        });
+
+        this.pathElement.addEventListener('mousemove', (e) => {
+            if (!this.isHovered || isPageOpen) return;
+            this.hoverRatio = e.clientX / width;
+        });
+
+        this.pathElement.addEventListener('mouseleave', () => {
+            this.isHovered = false;
+            this.letters.forEach(l => {
+                l.targetRatioIdle = Math.random();
+            });
+        });
+
+        this.pathElement.addEventListener('click', () => {
+            if (isPageOpen) return;
+            openPage(this);
+        });
+    }
+
+    updatePath() {
+        if (!this.isHovered && !this.isTransitioning) {
+            this.points.forEach((p, i) => {
+                if (i > 0 && i < this.points.length - 1) {
+                    p.angle += p.speed;
+                    p.currentY = p.y + Math.sin(p.angle) * 30;
+                    p.currentX = p.x + Math.cos(p.angle) * 15;
+                }
+            });
+        }
+
+        const p = this.points;
+        let d = `M ${p[0].x} ${p[0].currentY} `;
+
+        for (let i = 0; i < p.length - 1; i++) {
+            const x1 = p[i].currentX;
+            const y1 = p[i].currentY;
+            const x2 = p[i + 1].currentX;
+            const y2 = p[i + 1].currentY;
+
+            const cp1x = x1 + (x2 - x1) / 2;
+            const cp1y = y1;
+            const cp2x = x1 + (x2 - x1) / 2;
+            const cp2y = y2;
+
+            d += `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2} `;
+        }
+
+        this.pathElement.setAttribute('d', d);
+    }
+
+    updateLetters() {
+        const pathLength = this.pathElement.getTotalLength();
+        if (pathLength === 0) return;
+
+        const charSpacing = 0.02;
+        const wordSpacing = 0.06;
+        const totalWordLength = (this.word.length * charSpacing) + wordSpacing;
+
+        for (let i = 0; i < this.letters.length; i++) {
+            const letter = this.letters[i];
+            let targetRatio = letter.targetRatioIdle;
+
+            if (this.isHovered || this.isTransitioning) {
+                const wordGroupIndex = Math.floor(i / this.word.length);
+                const charInWordIndex = i % this.word.length;
+
+                targetRatio = this.hoverRatio
+                    + ((wordGroupIndex - 5) * totalWordLength)
+                    + (charInWordIndex * charSpacing);
+            }
+
+            const lerpSpeed = (this.isHovered || this.isTransitioning) ? 0.08 : 0.01;
+            letter.currentRatio += (targetRatio - letter.currentRatio) * lerpSpeed;
+
+            if (letter.currentRatio > 1.1) letter.currentRatio -= 1.2;
+            if (letter.currentRatio < -0.1) letter.currentRatio += 1.2;
+
+            const pointLength = Math.max(0, Math.min(1, letter.currentRatio)) * pathLength;
+
+            try {
+                const point = this.pathElement.getPointAtLength(pointLength);
+                const pointAhead = this.pathElement.getPointAtLength(Math.min(pathLength, pointLength + 2));
+                const angle = Math.atan2(pointAhead.y - point.y, pointAhead.x - point.x) * (180 / Math.PI);
+
+                letter.el.setAttribute('x', point.x);
+                letter.el.setAttribute('y', point.y);
+                letter.el.setAttribute('transform', `rotate(${angle}, ${point.x}, ${point.y})`);
+
+                letter.el.style.opacity = (this.isHovered || this.isTransitioning) ? 1 : 0.6;
+            } catch (e) {}
+        }
+    }
+}
+
+function init() {
+    yarnsData.forEach((data, index) => {
+        yarns.push(new Yarn(data, index));
     });
-
-    // Store for later use
-    lettersContainer.dataset.letters = JSON.stringify(
-      allLetters.map(l => ({ char: l.char, originalX: l.originalX, originalY: l.originalY }))
-    );
-  });
+    animate();
 }
 
-/* =========================
-   WOBBLE ANIMATION: Strings move slightly
-========================= */
-
-function startWobbleAnimation() {
-  const time = { value: 0 };
-
-  gsap.to(time, {
-    value: 1000,
-    duration: 1000,
-    repeat: -1,
-    ease: 'none',
-    onUpdate: function () {
-      const t = time.value;
-
-      MENUS.forEach((menu, idx) => {
-        const pathElement = document.getElementById(`string-${menu.id}`);
-        if (!pathElement || hoveredMenu === menu.id) return; // Don't wobble hovered string
-
-        const speed = 0.5 + idx * 0.1;
-        const offsetY = Math.sin(t * speed * 0.001) * 10;
-        const offsetX = Math.cos(t * speed * 0.0008) * 5;
-
-        pathElement.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-      });
-    },
-  });
-}
-
-/* =========================
-   HOVER: Letters gather into word
-========================= */
-
-function setupStringHover() {
-  MENUS.forEach((menu) => {
-    const stringGroup = document.querySelector(`.string-group[data-menu="${menu.id}"]`);
-    const lettersContainer = document.getElementById(`letters-${menu.id}`);
-
-    if (!stringGroup || !lettersContainer) return;
-
-    stringGroup.addEventListener('mouseenter', () => {
-      hoveredMenu = menu.id;
-      gatherLetters(menu.id);
+function animate() {
+    yarns.forEach(yarn => {
+        yarn.updatePath();
+        yarn.updateLetters();
     });
-
-    stringGroup.addEventListener('mouseleave', () => {
-      hoveredMenu = null;
-      scatterLetters(menu.id);
-    });
-
-    stringGroup.addEventListener('click', () => {
-      transitionToPage(menu.id);
-    });
-  });
+    requestAnimationFrame(animate);
 }
 
-function gatherLetters(menuId) {
-  const pathElement = document.getElementById(`string-${menuId}`);
-  const lettersContainer = document.getElementById(`letters-${menuId}`);
-
-  if (!pathElement || !lettersContainer) return;
-
-  const pathBox = pathElement.getBBox();
-  const centerX = pathBox.x + pathBox.width / 2;
-  const centerY = pathBox.y + pathBox.height / 2;
-
-  const letters = lettersContainer.querySelectorAll('text');
-  const letterCount = letters.length;
-
-  letters.forEach((letterEl, idx) => {
-    const angle = (idx / letterCount) * Math.PI * 2;
-    const radius = 60;
-
-    const targetX = centerX + Math.cos(angle) * radius;
-    const targetY = centerY + Math.sin(angle) * radius;
-
-    gsap.to(letterEl, {
-      attr: {
-        x: targetX,
-        y: targetY,
-      },
-      duration: 0.6,
-      ease: 'back.out',
-    });
-  });
-}
-
-function scatterLetters(menuId) {
-  const lettersContainer = document.getElementById(`letters-${menuId}`);
-
-  if (!lettersContainer) return;
-
-  const letters = lettersContainer.querySelectorAll('text');
-
-  letters.forEach((letterEl) => {
-    const originalX = parseFloat(letterEl.dataset.originalX);
-    const originalY = parseFloat(letterEl.dataset.originalY);
-
-    gsap.to(letterEl, {
-      attr: {
-        x: originalX,
-        y: originalY,
-      },
-      duration: 0.6,
-      ease: 'back.inOut',
-    });
-  });
-}
-
-/* =========================
-   PAGE TRANSITION: Pull page up with string
-========================= */
-
-function transitionToPage(menuId) {
-  const page = document.getElementById(`page-${menuId}`);
-  const pathElement = document.getElementById(`string-${menuId}`);
-
-  if (!page || !pathElement) return;
-
-  activeMenu = menuId;
-
-  // 1. Animate string path to expand upward (pulling motion)
-  gsap.to(pathElement, {
-    attr: { d: `M 600,0 Q 600,200 600,400` },
-    duration: 1.2,
-    ease: 'power2.inOut',
-  });
-
-  // 2. Slide page up into view
-  gsap.to(page, {
-    top: 0,
-    opacity: 1,
-    duration: 1.2,
-    ease: 'power2.inOut',
-    onComplete: () => {
-      page.classList.add('active');
-    },
-  });
-
-  // 3. Fade out strings menu
-  gsap.to('.strings-svg', {
-    opacity: 0.3,
-    duration: 1,
-    pointerEvents: 'none',
-  });
-}
-
-/* =========================
-   RETURN FROM PAGE: Pull page back down (back button functionality)
-========================= */
-
-function returnToMenu() {
-  if (!activeMenu) return;
-
-  const page = document.getElementById(`page-${activeMenu}`);
-  const pathElement = document.getElementById(`string-${activeMenu}`);
-
-  const initialPaths = {
-    about: "M 200,150 Q 300,300 200,450",
-    archive: "M 400,100 Q 500,350 400,550",
-    shop: "M 600,120 Q 700,320 600,520",
-    newsletter: "M 800,140 Q 900,340 800,540",
-  };
-
-  // 1. Restore string path
-  gsap.to(pathElement, {
-    attr: { d: initialPaths[activeMenu] },
-    duration: 1.2,
-    ease: 'power2.inOut',
-  });
-
-  // 2. Slide page back down
-  gsap.to(page, {
-    top: '100%',
-    opacity: 0,
-    duration: 1.2,
-    ease: 'power2.inOut',
-    onComplete: () => {
-      page.classList.remove('active');
-    },
-  });
-
-  // 3. Fade in strings menu
-  gsap.to('.strings-svg', {
-    opacity: 1,
-    duration: 1,
-    pointerEvents: 'auto',
-  });
-
-  activeMenu = null;
-}
-
-// Make returnToMenu global for onclick handlers
-window.returnToMenu = returnToMenu;
-
-/* =========================
-   INIT
-========================= */
-
-window.addEventListener('load', () => {
-  initializeLetters();
-  setupStringHover();
-  startWobbleAnimation();
+window.addEventListener('resize', () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    yarnGroup.innerHTML = '';
+    textGroup.innerHTML = '';
+    yarns.length = 0;
+    init();
 });
+
+const pageOverlay = document.getElementById('page-overlay');
+const pageTitle = document.getElementById('page-title');
+const closeBtn = document.getElementById('close-btn');
+const overlayContents = document.querySelectorAll('.overlay-content');
+
+function openPage(yarn) {
+    isPageOpen = true;
+    activeYarn = yarn;
+    yarn.isTransitioning = true;
+
+    pageTitle.textContent = yarn.word;
+    pageOverlay.style.backgroundColor = yarn.color;
+
+    const isDarkColor = (yarn.color === '#ff1414');
+    const textColor = isDarkColor ? '#ffffff' : '#000000';
+    const btnBgColor = isDarkColor ? '#ffffff' : '#000000';
+    const btnTextColor = isDarkColor ? '#000000' : '#ffffff';
+
+    pageOverlay.style.color = textColor;
+    closeBtn.style.backgroundColor = btnBgColor;
+    closeBtn.style.color = btnTextColor;
+
+    const tl = gsap.timeline();
+
+    tl.to(yarn.points, {
+        currentY: yarn.baseY,
+        currentX: (i, target) => target.x,
+        duration: 0.5,
+        ease: "back.out(1.5)"
+    }, 0);
+
+    tl.to(yarn.pathElement, {
+        attr: { 'stroke-width': yarn.strokeWidth * 0.4 },
+        duration: 0.5,
+        ease: "power2.out"
+    }, 0);
+
+    tl.to(pageOverlay, {
+        x: "0%",
+        duration: 1.2,
+        ease: "power4.inOut"
+    }, 0.2);
+
+    tl.to(overlayContents, {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: "power3.out"
+    }, 0.8);
+}
+
+function closePage() {
+    if (!isPageOpen) return;
+
+    const tl = gsap.timeline({
+        onComplete: () => {
+            isPageOpen = false;
+            if (activeYarn) {
+                gsap.to(activeYarn.pathElement, {
+                    attr: { 'stroke-width': activeYarn.strokeWidth },
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+
+                activeYarn.isTransitioning = false;
+                activeYarn.isHovered = false;
+                activeYarn = null;
+            }
+        }
+    });
+
+    tl.to(overlayContents, {
+        y: -30,
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.in"
+    }, 0);
+
+    tl.to(pageOverlay, {
+        x: "100%",
+        duration: 1,
+        ease: "power4.inOut"
+    }, 0.2);
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePage();
+});
+
+init();
