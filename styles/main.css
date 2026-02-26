@@ -35,13 +35,9 @@ body {
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
-    cursor: pointer;
+    pointer-events: none;          /* hit-area path handles mouse events */
     filter: url(#rough-edge);
     transition: stroke-width 0.3s ease;
-}
-
-.yarn:hover {
-    stroke-width: 60px !important;
 }
 
 .yarn-text {
