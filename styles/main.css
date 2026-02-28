@@ -34,12 +34,7 @@ body {
     stroke-linecap: round;
     stroke-linejoin: round;
     cursor: pointer;
-    filter: url(#rough-edge);
-    transition: stroke-width 0.3s ease;
-}
-
-.yarn:hover {
-    stroke-width: 60px !important;
+    transition: stroke-width 0.35s ease;
 }
 
 .yarn-text {
