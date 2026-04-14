@@ -11,6 +11,8 @@ export const ALL_PRODUCTS_QUERY = `
     description,
     price,
     soldOut,
+    editionTotal,
+    soldNumbers,
     slug,
     images[]{
       asset->{url}
@@ -26,6 +28,8 @@ export const PRODUCT_BY_SLUG_QUERY = `
     description,
     price,
     soldOut,
+    editionTotal,
+    soldNumbers,
     slug,
     category,
     images[]{

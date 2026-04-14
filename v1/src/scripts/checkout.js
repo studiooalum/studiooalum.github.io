@@ -37,11 +37,12 @@ function renderOrderSummary() {
 
   container.innerHTML = items.map((item) => {
     const imgSrc = item.image ? imageUrl(item.image, { width: 120 }) : "";
+    const editionLabel = item.editionNumber ? ` #${String(item.editionNumber).padStart(2, "0")}` : "";
     return `
       <div class="checkout-item">
         ${imgSrc ? `<img class="checkout-item__img" src="${imgSrc}" alt="${item.title}" />` : ""}
         <div class="checkout-item__info">
-          <div class="checkout-item__title">${item.title}</div>
+          <div class="checkout-item__title">${item.title}${editionLabel}</div>
           <div class="checkout-item__meta">${formatPrice(item.price)} × ${item.qty}</div>
         </div>
         <div class="checkout-item__subtotal">${formatPrice(item.price * item.qty)}</div>

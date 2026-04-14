@@ -22,15 +22,19 @@ function saveCart(items) {
 
 export function addToCart(product) {
   const items = getCart();
-  const existing = items.find((i) => i._id === product._id);
+  const editionNumber = Number(product.editionNumber) || null;
+  const lineId = `${product._id}:${editionNumber || "base"}`;
+  const existing = items.find((i) => i.lineId === lineId);
   if (existing) {
     existing.qty += 1;
   } else {
     items.push({
+      lineId,
       _id: product._id,
       title: product.title,
       price: product.price,
       slug: product.slug?.current || product.slug || "",
+      editionNumber,
       image: product.images?.[0] || null,
       qty: 1,
     });
@@ -41,14 +45,14 @@ export function addToCart(product) {
 }
 
 export function removeFromCart(id) {
-  const items = getCart().filter((i) => i._id !== id);
+  const items = getCart().filter((i) => (i.lineId || i._id) !== id);
   saveCart(items);
   renderCartPanel();
 }
 
 export function updateQty(id, delta) {
   const items = getCart();
-  const item = items.find((i) => i._id === id);
+  const item = items.find((i) => (i.lineId || i._id) === id);
   if (!item) return;
   item.qty = Math.max(1, item.qty + delta);
   saveCart(items);
@@ -157,18 +161,18 @@ export function renderCartPanel() {
     container.innerHTML = items.map((item) => {
       const imgSrc = item.image ? imageUrl(item.image, { width: 120 }) : "";
       return `
-        <div class="cart-item" data-id="${item._id}">
+        <div class="cart-item" data-id="${item.lineId || item._id}">
           ${imgSrc ? `<img class="cart-item__img" src="${imgSrc}" alt="${item.title}" />` : ""}
           <div class="cart-item__info">
-            <div class="cart-item__title">${item.title}</div>
+            <div class="cart-item__title">${item.title}${item.editionNumber ? ` #${String(item.editionNumber).padStart(2, "0")}` : ""}</div>
             <div class="cart-item__price">${formatPrice(item.price)}</div>
             <div class="cart-item__qty">
-              <button class="cart-item__qty-btn" data-action="dec" data-id="${item._id}">−</button>
+              <button class="cart-item__qty-btn" data-action="dec" data-id="${item.lineId || item._id}">−</button>
               <span>${item.qty}</span>
-              <button class="cart-item__qty-btn" data-action="inc" data-id="${item._id}">+</button>
+              <button class="cart-item__qty-btn" data-action="inc" data-id="${item.lineId || item._id}">+</button>
             </div>
           </div>
-          <button class="cart-item__remove" data-id="${item._id}" aria-label="삭제">&times;</button>
+          <button class="cart-item__remove" data-id="${item.lineId || item._id}" aria-label="삭제">&times;</button>
         </div>
       `;
     }).join("");
