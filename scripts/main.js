@@ -20,7 +20,7 @@
     var DATA = [
         { word: 'About',      color: '#ffccc3', sw: 45, yOff: 0.2,  url: 'about.html',      tex: 'brush'   },
         { word: 'Archive',    color: '#eb4029',  sw: 55, yOff: 0.45, url: 'archive.html',    tex: 'paint'   },
-        { word: 'Shop',       color: '#ffeb53',  sw: 35, yOff: 0.68, url: 'shop.html',       tex: 'circles' },
+        { word: 'Shop',       color: '#ffeb53',  sw: 35, yOff: 0.68, url: 'v1/shop.html',    tex: 'circles' },
         { word: 'Newsletter', color: '#cad5d8',  sw: 42, yOff: 0.88, url: 'newsletter.html', tex: 'pencil'  }
     ];
 

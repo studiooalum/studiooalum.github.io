@@ -10,6 +10,10 @@ function formatPrice(n) {
 const gridEl = document.getElementById("shopGrid");
 const introCountEl = document.getElementById("shopCount");
 
+if (!gridEl || !introCountEl) {
+  throw new Error("Shop DOM is missing required #shopGrid or #shopCount element.");
+}
+
 function createProductCard(product) {
   const slug = product?.slug?.current || "";
   const card = document.createElement("a");
