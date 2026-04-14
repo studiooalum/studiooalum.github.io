@@ -26,6 +26,7 @@ export const PRODUCT_BY_SLUG_QUERY = `
     _id,
     title,
     description,
+    size,
     price,
     soldOut,
     editionTotal,

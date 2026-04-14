@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — Edition</title>
+
+  <link rel="stylesheet" href="./styles/reset.css">
+  <link rel="stylesheet" href="./styles/variables.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/edition.css">
+  <link rel="stylesheet" href="./styles/cart.css">
+</head>
+<body class="edition-page">
+  <a href="#" class="edition-back" id="editionBack">← Editions</a>
+
+  <main class="edition-main" id="editionMain">
+    <section class="edition-media" id="editionMedia"></section>
+
+    <section class="edition-info">
+      <p class="edition-kicker">상품 정보</p>
+      <h1 class="edition-title" id="editionTitle">Loading...</h1>
+      <p class="edition-price" id="editionPrice">₩0</p>
+      <p class="edition-size" id="editionSize">Size: 정보 준비 중</p>
+      <p class="edition-desc" id="editionDesc">상세 설명을 불러오는 중입니다.</p>
+
+      <div class="edition-actions" id="editionActions">
+        <button class="edition-btn edition-btn--primary" id="addToCartBtn">장바구니 담기</button>
+        <button class="edition-btn edition-btn--secondary" id="buyNowBtn">바로 결제</button>
+      </div>
+      <p class="edition-note" id="editionNote">다른 제품도 둘러보면서 장바구니에 담아 한 번에 결제할 수 있어요.</p>
+    </section>
+  </main>
+
+  <script type="module" src="./scripts/edition.js"></script>
+  <script type="module">
+    import { initCartUIFromSrc } from "./scripts/cart.js";
+    initCartUIFromSrc();
+  </script>
+</body>
+</html>

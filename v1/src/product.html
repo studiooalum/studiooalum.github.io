@@ -12,38 +12,16 @@
   <link rel="stylesheet" href="./styles/cart.css">
 </head>
 <body class="product-page">
-
-  <!-- Back link -->
   <a href="../shop.html" class="product-back" aria-label="Back to shop">← Shop</a>
 
-  <!-- Loading state -->
-  <div class="product-loading" id="productLoading">
-    <div class="product-loading__spinner"></div>
-  </div>
+  <header class="product-header">
+    <h1 class="product-title" id="productTitle">상품 소개</h1>
+    <p class="product-intro" id="productIntro">넘버링 제품을 선택해 상세 페이지로 이동하세요.</p>
+    <p class="product-meta" id="productMeta">Loading...</p>
+  </header>
 
-  <!-- Main content (hidden until loaded) -->
-  <main class="product-layout" id="productLayout" style="display:none;">
-
-    <!-- Image gallery -->
-    <section class="product-gallery" id="productGallery">
-      <div class="product-gallery__main">
-        <img id="mainImage" src="" alt="" draggable="false" />
-      </div>
-      <div class="product-gallery__thumbs" id="thumbStrip"></div>
-    </section>
-
-    <!-- Product info -->
-    <section class="product-info">
-      <h1 class="product-info__title" id="productTitle"></h1>
-      <p class="product-info__price" id="productPrice"></p>
-      <span class="product-info__badge" id="productBadge" style="display:none;">Sold Out</span>
-      <div class="product-info__category" id="productCategory"></div>
-      <div class="product-info__divider"></div>
-      <p class="product-info__description" id="productDescription"></p>
-      <button class="product-info__add-to-cart" id="addToCartBtn" style="display:none;">장바구니 담기</button>
-      <a href="../shop.html" class="product-info__back-link">← Back to Shop</a>
-    </section>
-
+  <main class="product-main">
+    <section class="edition-grid" id="editionGrid" aria-live="polite"></section>
   </main>
 
   <script type="module" src="./scripts/product.js"></script>

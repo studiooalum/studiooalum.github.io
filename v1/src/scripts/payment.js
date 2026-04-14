@@ -40,6 +40,10 @@ function buildOrderName(items) {
   return `${first} 외 ${items.length - 1}건`;
 }
 
+function buildPageUrl(fileName) {
+  return new URL(`./${fileName}`, window.location.href).toString();
+}
+
 /* =========================
    INIT TOSS PAYMENT WIDGET
 ========================= */
@@ -105,8 +109,8 @@ async function initPayment() {
       await widgets.requestPayment({
         orderId: generateOrderId(),
         orderName,
-        successUrl: window.location.origin + "/src/success.html",
-        failUrl:    window.location.origin + "/src/fail.html",
+        successUrl: buildPageUrl("success.html"),
+        failUrl: buildPageUrl("fail.html"),
         customerEmail:       order.shipping.email,
         customerName:        order.shipping.name,
         customerMobilePhone: order.shipping.phone.replace(/-/g, ""),
