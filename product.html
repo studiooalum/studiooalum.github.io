@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — Product</title>
+
+  <link rel="stylesheet" href="./v1/src/styles/reset.css">
+  <link rel="stylesheet" href="./v1/src/styles/variables.css">
+  <link rel="stylesheet" href="./v1/src/styles/layout.css">
+  <link rel="stylesheet" href="./v1/src/styles/product.css">
+  <link rel="stylesheet" href="./v1/src/styles/cart.css">
+</head>
+<body class="product-page">
+  <a href="./shop.html" class="product-back" aria-label="Back to shop">← Shop</a>
+
+  <header class="product-header">
+    <h1 class="product-title" id="productTitle">상품 소개</h1>
+    <p class="product-intro" id="productIntro">넘버링 제품을 선택해 상세 페이지로 이동하세요.</p>
+    <p class="product-meta" id="productMeta">Loading...</p>
+  </header>
+
+  <main class="product-main">
+    <section class="edition-grid" id="editionGrid" aria-live="polite"></section>
+  </main>
+
+  <script type="module" src="./v1/src/scripts/product.js"></script>
+  <script type="module">
+    import { initCartUI } from "./v1/src/scripts/cart.js";
+    initCartUI();
+  </script>
+</body>
+</html>

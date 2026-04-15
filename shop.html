@@ -4,12 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Studio OALUM — Shop</title>
-    <meta http-equiv="refresh" content="0; url=./v1/shop.html">
+    <link rel="stylesheet" href="./v1/src/styles/reset.css">
+    <link rel="stylesheet" href="./v1/src/styles/variables.css">
+    <link rel="stylesheet" href="./v1/src/styles/layout.css">
+    <link rel="stylesheet" href="./v1/src/styles/shop.css">
+    <link rel="stylesheet" href="./v1/src/styles/cart.css">
 </head>
-<body>
-    <p>이동 중입니다... <a href="./v1/shop.html">Shop 바로가기</a></p>
-    <script>
-      window.location.replace("./v1/shop.html");
+<body class="shop-page">
+    <header class="shop-header">
+      <a href="./index.html" class="shop-back" aria-label="홈으로">← Home</a>
+      <h1 class="shop-title">Shop</h1>
+      <p class="shop-intro">작은 에디션 드롭. 제품을 눌러 넘버링 목록으로 이동하세요.</p>
+      <p class="shop-count" id="shopCount">0 products</p>
+    </header>
+
+    <main class="shop-main">
+      <section class="shop-grid" id="shopGrid" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="./v1/src/scripts/shop.js"></script>
+    <script type="module">
+      import { initCartUI } from "./v1/src/scripts/cart.js";
+      initCartUI();
     </script>
 </body>
 </html>

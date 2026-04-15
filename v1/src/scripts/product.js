@@ -3,8 +3,13 @@ import { PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
+const inV1Shell = window.location.pathname.includes("/v1/");
 
-if (!slug) window.location.href = "../shop.html";
+function getShopPath() {
+  return inV1Shell ? "../shop.html" : "./shop.html";
+}
+
+if (!slug) window.location.href = getShopPath();
 
 const titleEl = document.getElementById("productTitle");
 const introEl = document.getElementById("productIntro");

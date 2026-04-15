@@ -9,16 +9,31 @@ function formatPrice(n) {
 
 const gridEl = document.getElementById("shopGrid");
 const introCountEl = document.getElementById("shopCount");
+const inV1Shell = window.location.pathname.includes("/v1/");
+
+function getProductPath(slug) {
+  const encoded = encodeURIComponent(slug || "");
+  return inV1Shell
+    ? `./src/product.html?slug=${encoded}`
+    : `./product.html?slug=${encoded}`;
+}
+
+function pickSizeClass(product, index) {
+  const title = String(product?.title || "").toLowerCase();
+  if (title.includes("rug")) return "shop-card--hero";
+  const variants = ["shop-card--tall", "shop-card--square", "shop-card--wide", "shop-card--square"];
+  return variants[index % variants.length];
+}
 
 if (!gridEl || !introCountEl) {
   throw new Error("Shop DOM is missing required #shopGrid or #shopCount element.");
 }
 
-function createProductCard(product) {
+function createProductCard(product, index) {
   const slug = product?.slug?.current || "";
   const card = document.createElement("a");
-  card.className = "shop-card";
-  card.href = `./src/product.html?slug=${encodeURIComponent(slug)}`;
+  card.className = `shop-card ${pickSizeClass(product, index)}`;
+  card.href = getProductPath(slug);
 
   const thumb = document.createElement("div");
   thumb.className = "shop-card__thumb";
@@ -73,8 +88,8 @@ function renderProducts(products) {
   introCountEl.textContent = `${safeProducts.length} products`;
   gridEl.innerHTML = "";
 
-  safeProducts.forEach((product) => {
-    gridEl.appendChild(createProductCard(product));
+  safeProducts.forEach((product, index) => {
+    gridEl.appendChild(createProductCard(product, index));
   });
 }
 

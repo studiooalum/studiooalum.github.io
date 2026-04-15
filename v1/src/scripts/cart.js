@@ -44,6 +44,29 @@ export function addToCart(product) {
   openCart();
 }
 
+/** 장바구니에 담되 패널을 열지 않음 (바로 결제용) */
+export function addToCartSilent(product) {
+  const items = getCart();
+  const editionNumber = Number(product.editionNumber) || null;
+  const lineId = `${product._id}:${editionNumber || "base"}`;
+  const existing = items.find((i) => i.lineId === lineId);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    items.push({
+      lineId,
+      _id: product._id,
+      title: product.title,
+      price: product.price,
+      slug: product.slug?.current || product.slug || "",
+      editionNumber,
+      image: product.images?.[0] || null,
+      qty: 1,
+    });
+  }
+  saveCart(items);
+}
+
 export function removeFromCart(id) {
   const items = getCart().filter((i) => (i.lineId || i._id) !== id);
   saveCart(items);
@@ -83,6 +106,10 @@ function formatPrice(n) {
 let panelEl = null;
 let badgeEl = null;
 
+function getCheckoutPathForCurrentPage() {
+  return window.location.pathname.includes("/v1/") ? "./src/checkout.html" : "./checkout.html";
+}
+
 export function initCartUI() {
   // Cart toggle button (fixed, right side)
   const toggleBtn = document.createElement("button");
@@ -115,7 +142,7 @@ export function initCartUI() {
         <span>합계</span>
         <span id="cartTotal">₩0</span>
       </div>
-      <a href="./src/checkout.html" class="cart-panel__checkout-btn" id="cartCheckoutBtn">주문하기</a>
+      <a href="${getCheckoutPathForCurrentPage()}" class="cart-panel__checkout-btn" id="cartCheckoutBtn">주문하기</a>
     </div>
   `;
   document.body.appendChild(panelEl);

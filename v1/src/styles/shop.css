@@ -1,5 +1,5 @@
 .shop-page {
-  --shop-bg: #faf9f6;
+  --shop-bg: #ffffff;
   --shop-point: #e34234;
   min-height: 100vh;
   overflow-x: hidden;
@@ -51,7 +51,7 @@
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -64,8 +64,24 @@
 .shop-card__thumb {
   position: relative;
   aspect-ratio: 1 / 1;
-  background: #f0efe8;
+  background: #ffffff;
   overflow: hidden;
+}
+
+.shop-card--hero .shop-card__thumb {
+  aspect-ratio: 4 / 5;
+}
+
+.shop-card--tall .shop-card__thumb {
+  aspect-ratio: 3 / 4;
+}
+
+.shop-card--wide .shop-card__thumb {
+  aspect-ratio: 16 / 10;
+}
+
+.shop-card--square .shop-card__thumb {
+  aspect-ratio: 1 / 1;
 }
 
 .shop-card__thumb img {
@@ -124,13 +140,7 @@
   }
 
   .shop-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .shop-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

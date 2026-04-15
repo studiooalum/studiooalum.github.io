@@ -1,14 +1,19 @@
 import client from "./sanity/client.js";
 import { PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
-import { addToCart } from "./cart.js";
+import { addToCart, addToCartSilent } from "./cart.js";
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
 const editionNo = Number(params.get("no"));
+const inV1Shell = window.location.pathname.includes("/v1/");
+
+function getShopPath() {
+  return inV1Shell ? "../shop.html" : "./shop.html";
+}
 
 if (!slug || !Number.isInteger(editionNo) || editionNo < 1) {
-  window.location.href = "../shop.html";
+  window.location.href = getShopPath();
 }
 
 const mediaEl = document.getElementById("editionMedia");
@@ -66,7 +71,7 @@ function renderMedia(product, sold) {
 }
 
 function toCheckoutWith(product) {
-  addToCart(product);
+  addToCartSilent(product);
   window.location.href = "./checkout.html";
 }
 
