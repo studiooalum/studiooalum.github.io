@@ -95,7 +95,7 @@
         currentX: t * W,
         currentY: this.baseY + jy,
         angle: Math.random() * 6.283,
-        speed: (0.004 + Math.random() * 0.008) * (isMobile ? 2.0 : 15.0),
+        speed: (0.004 + Math.random() * 0.008) * (isMobile ? 2.0 : 9.0),
         ampX: edge ? 2 : 8 + Math.random() * 12,
         ampY: edge ? 10 : 16 + Math.random() * 24
       });
@@ -400,7 +400,7 @@
     // 1) Yarn wall coupling + frame rotation (curvature transfers vN↔vU naturally).
     for (var i = 0; i < count; i++) {
       var B = this.letters[i];
-      var tnB = fastTN(wrapArc(B.u, pathLen));
+      var tnB = fastTN(clamp(B.u, 0, pathLen));
 
       if (!isNaN(B.pax)) {
         // Frame rotation: as yarn curves, local frame rotates → naturally mixes vN into vU.
@@ -430,8 +430,12 @@
       L.vU = clamp(L.vU, -maxUSpeed, maxUSpeed);
       L.vN = clamp(L.vN, -maxNSpeed, maxNSpeed);
 
-      L.u = wrapArc(L.u + L.vU * dt, pathLen);
+      L.u = clamp(L.u + L.vU * dt, 0, pathLen);
       L.n += L.vN * dt;
+
+      // Reflect at arc endpoints instead of wrapping.
+      if (L.u <= 0) { L.u = 0; if (L.vU < 0) L.vU *= -restitution; }
+      if (L.u >= pathLen) { L.u = pathLen; if (L.vU > 0) L.vU *= -restitution; }
 
       var nearRatio = Math.abs(L.n) / Math.max(1e-6, L.maxN);
       if (nearRatio > nearWallBand) {
@@ -452,7 +456,7 @@
     // 3) Compute world pose.
     for (var p = 0; p < count; p++) {
       var P = this.letters[p];
-      var tnP = fastTN(wrapArc(P.u, pathLen));
+      var tnP = fastTN(clamp(P.u, 0, pathLen));
       P.tx = tnP.tx; P.ty = tnP.ty;
       P.nx = tnP.nx; P.ny = tnP.ny;
       P.wx = tnP.ax + tnP.nx * P.n;
@@ -503,9 +507,9 @@
         }
 
         var half = pen * 0.5;
-        A.u = wrapArc(A.u - (cnx * half * A.tx + cny * half * A.ty), pathLen);
+        A.u = clamp(A.u - (cnx * half * A.tx + cny * half * A.ty), 0, pathLen);
         A.n = clamp(A.n - (cnx * half * A.nx + cny * half * A.ny), -A.maxN, A.maxN);
-        B2.u = wrapArc(B2.u + (cnx * half * B2.tx + cny * half * B2.ty), pathLen);
+        B2.u = clamp(B2.u + (cnx * half * B2.tx + cny * half * B2.ty), 0, pathLen);
         B2.n = clamp(B2.n + (cnx * half * B2.nx + cny * half * B2.ny), -B2.maxN, B2.maxN);
         A.wx -= cnx * half; A.wy -= cny * half;
         B2.wx += cnx * half; B2.wy += cny * half;
@@ -536,7 +540,7 @@
       else if (S.wx > maxX) corrX = maxX - S.wx;
       if (!corrX) continue;
 
-      S.u = wrapArc(S.u + corrX * S.tx, pathLen);
+      S.u = clamp(S.u + corrX * S.tx, 0, pathLen);
       S.n = clamp(S.n + corrX * S.nx, -S.maxN, S.maxN);
       S.wx += corrX;
 
@@ -595,9 +599,9 @@
       if (DATA[j].sw > maxSw) maxSw = DATA[j].sw;
     }
     // Extend range for visible thickness variation.
-    maxSw *= isMobile ? 1.4 : 1.5;
+    maxSw *= isMobile ? 1.4 : 1.8;
     if (!fixedRandomWidths || fixedRandomWidths.length !== DATA.length) {
-      var minDiff = isMobile ? 8 : Math.max(4.5, (maxSw - minSw) / 5);
+      var minDiff = isMobile ? 8 : Math.max(8, (maxSw - minSw) / 4);
       fixedRandomWidths = createDistinctRandomWidths(DATA.length, minSw, maxSw, minDiff);
     }
 
