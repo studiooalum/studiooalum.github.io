@@ -296,7 +296,8 @@
           letterR: letterR,
           halfW: Math.max(2, el.getBBox().width * 0.5),
           halfH: Math.max(2, el.getBBox().height * 0.5),
-          maxN: maxN
+          maxN: maxN,
+          hoverU: u    // PC hover: spring back to initial rest position
         });
       }
     }
@@ -327,22 +328,21 @@
     this.points[0].currentX = 0;
     this.points[this.points.length - 1].currentX = W;
 
-  // Mobile drag: pull yarn into taut bow toward finger.
+  // Mobile drag: bend yarn into a parabola that passes exactly through finger.
     if (isMobile && this.dragActive) {
-      // Compute how straight/taut the pull is (sigmoid of tension)
-      var ddx = this.dragTargetX - this.dragStartX;
-      var ddy = this.dragTargetY - this.dragStartY;
-      var tension = Math.sqrt(ddx * ddx + ddy * ddy);
-      var taut = Math.min(1, tension / 120);  // 0→slack, 1→fully taut
-
-      // Pull ALL interior control points toward drag position,
-      // weighted by horizontal proximity to finger → creates bow shape.
+      var leftY = this.points[0].currentY;
+      var rightY = this.points[this.points.length - 1].currentY;
+      var fx = this.dragTargetX, fy = this.dragTargetY;
+      // Solve parabola y = ax^2 + bx + c passing through (0,leftY),(fx,fy),(W,rightY)
+      var pc = leftY;
+      var pdenom = fx * (fx - W);
+      var pa = Math.abs(pdenom) > 1 ? (fy - leftY - fx * (rightY - leftY) / W) / pdenom : 0;
+      var pb = (rightY - leftY) / W - pa * W;
       for (var pi = 1; pi < this.points.length - 1; pi++) {
         var pp = this.points[pi];
-        var normDist = Math.abs(pp.x - this.dragTargetX) / (W / (this.points.length - 1));
-        var influence = Math.max(0, 1 - normDist * 0.7) * taut;
-        pp.currentX += (this.dragTargetX - pp.currentX) * influence * 0.4;
-        pp.currentY += (this.dragTargetY - pp.currentY) * influence * 0.5;
+        var px = pp.x;
+        pp.currentX = px;
+        pp.currentY = pa * px * px + pb * px + pc;
       }
     }
 
@@ -379,20 +379,30 @@
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
 
-    // 0) Mobile drag: spring letters to evenly-spaced positions along yarn.
-    if (isMobile && this.dragActive && count > 0) {
-      var sortedIdx = [];
-      for (var si = 0; si < count; si++) sortedIdx.push(si);
-      sortedIdx.sort(function (a, b) { return this.letters[a].u - this.letters[b].u; }.bind(this));
-      for (var ai = 0; ai < count; ai++) {
-        var li = sortedIdx[ai];
-        var AL = this.letters[li];
-        var targetU = wrapArc((ai + 0.5) / count * pathLen, pathLen);
-        var du = shortestArcDelta(AL.u, targetU, pathLen);
-        AL.vU += du * 30 * dt;
-        AL.vU *= 0.76;
-        AL.vN += (-AL.n) * 22 * dt;
-        AL.vN *= 0.82;
+    // 0) Interaction springs: PC hover gather | mobile drag align.
+    if (canHover && this.hovered && !isMobile) {
+      // PC hover: spring each letter back toward its rest (evenly-spaced) position.
+      for (var gi = 0; gi < count; gi++) {
+        var GL = this.letters[gi];
+        var du = shortestArcDelta(GL.u, GL.hoverU, pathLen);
+        GL.vU += du * 28 * dt;
+        GL.vU *= 0.82;
+        GL.vN += (-GL.n) * 20 * dt;
+        GL.vN *= 0.86;
+      }
+    } else if (isMobile && this.dragActive && count > 0) {
+      // Mobile drag: center word (in original letter order) around finger arc position.
+      var letterSpacingU = pathLen / (count * 1.6);
+      var halfSpan = (count - 1) * 0.5 * letterSpacingU;
+      var fingerU = clamp(this.dragTargetX / W, 0.05, 0.95) * pathLen;
+      for (var ci = 0; ci < count; ci++) {
+        var DL = this.letters[ci];
+        var targetU = wrapArc(fingerU - halfSpan + ci * letterSpacingU, pathLen);
+        var du = shortestArcDelta(DL.u, targetU, pathLen);
+        DL.vU += du * 38 * dt;
+        DL.vU *= 0.72;
+        DL.vN += (-DL.n) * 25 * dt;
+        DL.vN *= 0.80;
       }
     }
 
