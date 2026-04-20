@@ -15,9 +15,9 @@
   var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   var DATA = [
-    { word: 'Archive',    color: '#eb4029', sw: 55, yOff: 0.2,  url: 'archive.html' },
-    { word: 'Shop',       color: '#ffeb53', sw: 42, yOff: 0.42, url: 'shop.html' },
-    { word: 'Class',      color: '#ffccc3', sw: 48, yOff: 0.66, url: 'class.html' },
+    { word: 'Archive',    color: '#ffccc3', sw: 55, yOff: 0.2,  url: 'archive.html' },
+    { word: 'Shop',       color: '#e34234', sw: 42, yOff: 0.42, url: 'shop.html' },
+    { word: 'Class',      color: '#ffeb53', sw: 48, yOff: 0.66, url: 'class.html' },
     { word: 'Newsletter', color: '#cad5d8', sw: 40, yOff: 0.86, url: 'newsletter.html' }
   ];
 
@@ -394,7 +394,7 @@
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
 
-    // 0) PC hover/unhover springs.
+    // 0a) PC hover/unhover springs.
     if (canHover && !isMobile) {
       if (this.hovered) {
         // Hover: spring to word-grouped positions (2n/0.7n)
@@ -413,6 +413,48 @@
           var du2 = shortestArcDelta(GL2.u, GL2.defaultU, pathLen);
           GL2.vU += du2 * 12 * dt;
           GL2.vU *= 0.90;
+        }
+      }
+    }
+
+    // 0b) Mobile drag: gather letters toward finger position with tight spacing.
+    if (isMobile) {
+      if (this.dragActive) {
+        // Find closest arc position to finger via path cache
+        var fingerX = this.dragTargetX;
+        var fingerY = this.dragTargetY;
+        var bestDist = Infinity, fingerU = pathLen * 0.5;
+        for (var fi = 0; fi <= SAMPLES; fi++) {
+          var fpx = pc[fi].x - fingerX, fpy = pc[fi].y - fingerY;
+          var fd2 = fpx * fpx + fpy * fpy;
+          if (fd2 < bestDist) { bestDist = fd2; fingerU = fi / SAMPLES * pathLen; }
+        }
+
+        // Tight word-grouped layout centered at finger position
+        var wordLen = this.word.length;
+        var repeatsM = count / wordLen;
+        var tightLetterGap = 0.5;  // tighter than 0.7n
+        var tightWordGap = 1.2;    // tighter than 2n
+        var tightBlock = wordLen * tightLetterGap + tightWordGap;
+        // Measure in path units using average letter size
+        var avgLetterR = this.letters[0].letterR;
+        var tightUnit = avgLetterR * 2.2;
+        var totalSpan = repeatsM * tightBlock * tightUnit;
+        var startU = fingerU - totalSpan * 0.5;
+
+        for (var mi = 0; mi < count; mi++) {
+          var ML = this.letters[mi];
+          var mGroup = Math.floor(mi / wordLen);
+          var mChar = mi % wordLen;
+          var targetU = startU + (mGroup * tightBlock + mChar * tightLetterGap + tightWordGap * 0.5) * tightUnit;
+          targetU = clamp(targetU, 0, pathLen);
+
+          var mdu = shortestArcDelta(ML.u, targetU, pathLen);
+          ML.vU += mdu * 32 * dt;
+          ML.vU *= 0.78;
+          // Pull to center line (n=0)
+          ML.vN += (-ML.n) * 24 * dt;
+          ML.vN *= 0.82;
         }
       }
     }
