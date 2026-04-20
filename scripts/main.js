@@ -1,6 +1,6 @@
 /* ======================================================
    Studio OALUM – Yarn Menu
-   Letters pushed by yarn boundary, 2D free physics
+   Letters in yarn-local (u, n) coordinates, always inside
 ====================================================== */
 (function () {
   'use strict';
@@ -25,14 +25,7 @@
   var isPageOpen = false;
   var lastTs = 0;
 
-  function clamp(v, min, max) {
-    return Math.max(min, Math.min(max, v));
-  }
-
-  function normalize(x, y) {
-    var len = Math.sqrt(x * x + y * y) || 1;
-    return { x: x / len, y: y / len };
-  }
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
   function Yarn(cfg) {
     this.word = cfg.word.toUpperCase();
@@ -41,6 +34,7 @@
     this.baseY = H * cfg.yOff;
     this.url = cfg.url;
 
+    // Yarn wave points
     this.points = [];
     for (var i = 0; i < 5; i++) {
       var t = i / 4;
@@ -52,7 +46,7 @@
         currentX: t * W,
         currentY: this.baseY + jy,
         angle: Math.random() * 6.283,
-        speed: (0.004 + Math.random() * 0.008) * 1.5,
+        speed: (0.004 + Math.random() * 0.008) * 3.0,  // 2x speed
         ampX: edge ? 2 : 8 + Math.random() * 12,
         ampY: edge ? 3 : 16 + Math.random() * 24
       });
@@ -74,7 +68,6 @@
 
     this.hovered = false;
     this.transitioning = false;
-    this.hoverRatio = 0.5;
     this.hoverAmt = 0;
     this.letters = [];
 
@@ -85,23 +78,19 @@
 
   Yarn.prototype._bind = function () {
     var self = this;
-
     if (canHover) {
       this.hitPathEl.addEventListener('mouseenter', function (e) {
         if (isPageOpen) return;
         self.hovered = true;
-        self.hoverRatio = clamp(e.clientX / Math.max(1, W), 0, 1);
       });
       this.hitPathEl.addEventListener('mouseleave', function () {
         self.hovered = false;
       });
     }
-
     function handleClick() {
       if (isPageOpen) return;
       openPage(self);
     }
-
     this.hitPathEl.addEventListener('click', handleClick);
     this.pathEl.addEventListener('click', handleClick);
   };
@@ -112,12 +101,11 @@
     var repeats = Math.max(1, Math.round(targetCount / this.word.length));
     var total = repeats * this.word.length;
     var spacing = pathLen / total;
+    var letterR = canHover ? 8.5 : 7;
+    var maxN = this.sw * 0.5 - letterR;
 
-    // Remove old elements
     for (var k = 0; k < this.letters.length; k++) {
-      if (this.letters[k].el.parentNode) {
-        this.letters[k].el.parentNode.removeChild(this.letters[k].el);
-      }
+      if (this.letters[k].el.parentNode) this.letters[k].el.parentNode.removeChild(this.letters[k].el);
     }
     this.letters = [];
 
@@ -128,52 +116,59 @@
       el.setAttribute('class', 'yarn-text');
       textGroup.appendChild(el);
 
-      // Arc anchor position
+      // u: arc position (fixed reference)
       var u = i * spacing + spacing * 0.5;
+      // Snap anchor coords
       var pt = this.pathEl.getPointAtLength(clamp(u, 0, pathLen));
-
-      // Scatter initial position randomly within yarn cross-section
-      var scatter = (Math.random() - 0.5) * this.sw * 0.5;
-      var scatterY = (Math.random() - 0.5) * this.sw * 0.5;
 
       this.letters.push({
         el: el,
-        u: u,           // arc anchor (fixed, used for rotation direction only)
-        x: pt.x + scatter,
-        y: pt.y + scatterY,
-        vx: 0,
-        vy: 0,
-        px: pt.x,      // previous anchor x (for anchor velocity)
-        py: pt.y,      // previous anchor y
-        r: canHover ? 8.5 : 7
+        u: u,           // arc anchor — stays fixed (read-only reference for rotation)
+        n: (Math.random() - 0.5) * maxN * 0.8,  // normal offset, starts near center
+        vN: 0,          // normal velocity
+        // world coords cache (set in render)
+        wx: pt.x,
+        wy: pt.y,
+        // previous anchor world position (to compute yarn motion)
+        pax: pt.x,
+        pay: pt.y,
+        letterR: letterR,
+        maxN: maxN
       });
     }
   };
 
+  // Get tangent & normal at arc position u on pathEl
+  Yarn.prototype._getTN = function (u, pathLen) {
+    var s  = clamp(u, 0, pathLen);
+    var s2 = clamp(u + 1.5, 0, pathLen);
+    var p  = this.pathEl.getPointAtLength(s);
+    var p2 = this.pathEl.getPointAtLength(s2);
+    var tdx = p2.x - p.x, tdy = p2.y - p.y;
+    var tl = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
+    var tx = tdx / tl, ty = tdy / tl;
+    return { ax: p.x, ay: p.y, tx: tx, ty: ty, nx: -ty, ny: tx };
+  };
+
   Yarn.prototype.updatePath = function () {
     var wScale = this.transitioning ? 0 : (1 - this.hoverAmt * 0.6);
-
     for (var i = 1; i < this.points.length - 1; i++) {
       var p = this.points[i];
       p.angle += p.speed;
       p.currentX = p.x + Math.cos(p.angle) * p.ampX * wScale;
       p.currentY = p.y + Math.sin(p.angle) * p.ampY * wScale;
     }
-
     this.points[0].currentX = 0;
     this.points[this.points.length - 1].currentX = W;
 
     var pts = this.points;
     var d = 'M ' + pts[0].currentX + ' ' + pts[0].currentY;
     for (var j = 0; j < pts.length - 1; j++) {
-      var x1 = pts[j].currentX;
-      var y1 = pts[j].currentY;
-      var x2 = pts[j + 1].currentX;
-      var y2 = pts[j + 1].currentY;
+      var x1 = pts[j].currentX, y1 = pts[j].currentY;
+      var x2 = pts[j+1].currentX, y2 = pts[j+1].currentY;
       var cpx = x1 + (x2 - x1) / 2;
       d += ' C ' + cpx + ' ' + y1 + ', ' + cpx + ' ' + y2 + ', ' + x2 + ' ' + y2;
     }
-
     this.pathEl.setAttribute('d', d);
     this.hitPathEl.setAttribute('d', d);
 
@@ -185,142 +180,107 @@
 
   Yarn.prototype.updateLetters = function (dt) {
     if (!this.letters.length) return;
-
     var pathLen = this.pathEl.getTotalLength();
     if (!pathLen) return;
 
     var count = this.letters.length;
-    var yarnRadius = this.sw * 0.5;  // half stroke-width = physical edge
-    var letterR = canHover ? 8.5 : 7;
-    var edgeDist = yarnRadius + letterR; // distance at which yarn boundary hits letter center
-    var minLetterGap = letterR * 2;
-    var maxSpeed = 280;
-    // Damping: time-constant ~0.6s → exp(-dt/0.6)
-    var damping = Math.exp(-dt / 0.6);
+    var damping = Math.exp(-dt / 0.5);
+    var maxSpeed = 400;
 
-    // ── 1. Yarn boundary pushes letters ──────────────────────
+    // ── 1. Yarn motion → normal impulse ──────────────────────
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
-      var u = clamp(L.u, 0, pathLen - 0.01);
+      var tn = this._getTN(L.u, pathLen);
 
-      // Current anchor point on path
-      var pt  = this.pathEl.getPointAtLength(u);
-      var pt2 = this.pathEl.getPointAtLength(clamp(u + 2, 0, pathLen));
-      var tLen = Math.sqrt((pt2.x - pt.x) * (pt2.x - pt.x) + (pt2.y - pt.y) * (pt2.y - pt.y)) || 1;
-      var tx = (pt2.x - pt.x) / tLen;
-      var ty = (pt2.y - pt.y) / tLen;
-      // Normal (perpendicular)
-      var nx = -ty, ny = tx;
+      // How much did the anchor point move along the normal axis?
+      var dax = tn.ax - L.pax;
+      var day = tn.ay - L.pay;
+      var dnorm = dax * tn.nx + day * tn.ny;  // displacement along normal
 
-      // Anchor velocity this frame
-      var anchorVx = (pt.x - L.px) / dt;
-      var anchorVy = (pt.y - L.py) / dt;
+      // Transfer that as velocity impulse (restitution-like)
+      L.vN += dnorm / dt * 0.6;
 
-      // Distance from letter to anchor
-      var dx = L.x - pt.x;
-      var dy = L.y - pt.y;
-      var dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-
-      // Push direction: away from anchor center
-      var pushX = dist > 0.01 ? dx / dist : nx;
-      var pushY = dist > 0.01 ? dy / dist : ny;
-
-      if (dist < edgeDist) {
-        // Relative velocity along push direction
-        var relVx = L.vx - anchorVx;
-        var relVy = L.vy - anchorVy;
-        var relVn = relVx * pushX + relVy * pushY;
-
-        // Only push if closing in
-        if (relVn < 0) {
-          var restitution = 0.3;
-          var impulse = -(1.0 + restitution) * relVn;
-          L.vx += impulse * pushX;
-          L.vy += impulse * pushY;
-        }
-
-        // Position correction (prevent overlap)
-        var correction = edgeDist - dist;
-        L.x += pushX * correction;
-        L.y += pushY * correction;
-      }
-
-      // Weak restoring: pull back when drifted too far
-      var restoreThresh = edgeDist + 40;
-      if (dist > restoreThresh) {
-        var pull = (dist - restoreThresh) * 4;
-        L.vx -= (dx / dist) * pull * dt;
-        L.vy -= (dy / dist) * pull * dt;
-      }
-
-      // Store anchor for next frame
-      L.px = pt.x;
-      L.py = pt.y;
+      // Save anchor for next frame
+      L.pax = tn.ax;
+      L.pay = tn.ay;
     }
 
-    // ── 2. Letter–letter collision ────────────────────────────
+    // ── 2. Integrate vN → n ──────────────────────────────────
+    for (var i = 0; i < count; i++) {
+      var L = this.letters[i];
+      // Clamp speed
+      if (L.vN > maxSpeed) L.vN = maxSpeed;
+      if (L.vN < -maxSpeed) L.vN = -maxSpeed;
+      L.n += L.vN * dt;
+      L.vN *= damping;
+
+      // Hard boundary: bounce off yarn edge
+      if (L.n > L.maxN) {
+        L.n = L.maxN;
+        if (L.vN > 0) L.vN *= -0.35;
+      } else if (L.n < -L.maxN) {
+        L.n = -L.maxN;
+        if (L.vN < 0) L.vN *= -0.35;
+      }
+    }
+
+    // ── 3. Compute world positions for collision ──────────────
+    for (var i = 0; i < count; i++) {
+      var L = this.letters[i];
+      var tn = this._getTN(L.u, pathLen);
+      L.wx = tn.ax + tn.nx * L.n;
+      L.wy = tn.ay + tn.ny * L.n;
+    }
+
+    // ── 4. Letter–letter collision (resolve in n) ─────────────
+    var minGap = (canHover ? 8.5 : 7) * 2;
     for (var a = 0; a < count; a++) {
       for (var b = a + 1; b < count; b++) {
         var A = this.letters[a];
         var B = this.letters[b];
-        var cdx = B.x - A.x;
-        var cdy = B.y - A.y;
+        var cdx = B.wx - A.wx;
+        var cdy = B.wy - A.wy;
         var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
-        if (cdist >= minLetterGap) continue;
+        if (cdist >= minGap) continue;
 
-        var cnx = cdx / cdist;
-        var cny = cdy / cdist;
-        var pen = minLetterGap - cdist;
+        var pen = (minGap - cdist) * 0.5;
+        var cnx = cdx / cdist, cny = cdy / cdist;
 
-        // Position correction
-        A.x -= cnx * pen * 0.5;
-        A.y -= cny * pen * 0.5;
-        B.x += cnx * pen * 0.5;
-        B.y += cny * pen * 0.5;
+        // Collision normal projected onto each letter's yarn normal
+        var tnA = this._getTN(A.u, pathLen);
+        var tnB = this._getTN(B.u, pathLen);
+        var projA = cnx * tnA.nx + cny * tnA.ny;
+        var projB = cnx * tnB.nx + cny * tnB.ny;
 
-        // Velocity response
-        var cRelVx = B.vx - A.vx;
-        var cRelVy = B.vy - A.vy;
-        var cRelVn = cRelVx * cnx + cRelVy * cny;
-        if (cRelVn < 0) {
-          var cImp = cRelVn * 0.6;
-          A.vx += cImp * cnx;
-          A.vy += cImp * cny;
-          B.vx -= cImp * cnx;
-          B.vy -= cImp * cny;
+        // Position correction in n
+        A.n -= pen * projA;
+        B.n += pen * projB;
+
+        // Velocity exchange
+        var relVn = (B.vN * projB) - (A.vN * projA);
+        if (relVn < 0) {
+          var imp = relVn * 0.5;
+          A.vN += imp * projA;
+          B.vN -= imp * projB;
         }
+
+        // Re-clamp n
+        A.n = clamp(A.n, -A.maxN, A.maxN);
+        B.n = clamp(B.n, -B.maxN, B.maxN);
       }
     }
 
-    // ── 3. Integrate + clamp + damp ───────────────────────────
-    for (var i = 0; i < count; i++) {
-      var L = this.letters[i];
-      var spd = Math.sqrt(L.vx * L.vx + L.vy * L.vy);
-      if (spd > maxSpeed) {
-        L.vx = (L.vx / spd) * maxSpeed;
-        L.vy = (L.vy / spd) * maxSpeed;
-      }
-      L.vx *= damping;
-      L.vy *= damping;
-      L.x += L.vx * dt;
-      L.y += L.vy * dt;
-    }
-
-    // ── 4. Render ─────────────────────────────────────────────
+    // ── 5. Render ─────────────────────────────────────────────
     for (var r = 0; r < count; r++) {
       var C = this.letters[r];
-      var u = clamp(C.u, 0, pathLen - 0.01);
-      var rpt  = this.pathEl.getPointAtLength(u);
-      var rpt2 = this.pathEl.getPointAtLength(clamp(u + 2, 0, pathLen));
-      var rtx = rpt2.x - rpt.x;
-      var rty = rpt2.y - rpt.y;
-      var rtLen = Math.sqrt(rtx * rtx + rty * rty) || 1;
-      rtx /= rtLen; rty /= rtLen;
-      var ang = Math.atan2(rty, rtx) * 180 / Math.PI;
+      var tn = this._getTN(C.u, pathLen);
+      var wx = tn.ax + tn.nx * C.n;
+      var wy = tn.ay + tn.ny * C.n;
+      var ang = Math.atan2(tn.ty, tn.tx) * 180 / Math.PI;
 
-      C.el.setAttribute('x', C.x);
-      C.el.setAttribute('y', C.y);
-      C.el.setAttribute('transform', 'rotate(' + ang + ',' + C.x + ',' + C.y + ')');
+      C.el.setAttribute('x', wx);
+      C.el.setAttribute('y', wy);
+      C.el.setAttribute('transform', 'rotate(' + ang + ',' + wx + ',' + wy + ')');
       C.el.style.opacity = 0.9;
     }
   };
@@ -336,25 +296,9 @@
     }
 
     var tl = gsap.timeline();
-    tl.to(yarn.points, {
-      currentY: yarn.baseY,
-      currentX: function (i, t) { return t.x; },
-      duration: 0.5,
-      ease: 'back.out(1.5)'
-    }, 0);
-
-    tl.to(yarn.pathEl, {
-      attr: { 'stroke-width': yarn.sw * 0.35 },
-      duration: 0.5,
-      ease: 'power2.out'
-    }, 0);
-
-    tl.to(overlay, {
-      x: '0%',
-      duration: 1.0,
-      ease: 'power4.inOut'
-    }, 0.2);
-
+    tl.to(yarn.points, { currentY: yarn.baseY, currentX: function (i, t) { return t.x; }, duration: 0.5, ease: 'back.out(1.5)' }, 0);
+    tl.to(yarn.pathEl, { attr: { 'stroke-width': yarn.sw * 0.35 }, duration: 0.5, ease: 'power2.out' }, 0);
+    tl.to(overlay, { x: '0%', duration: 1.0, ease: 'power4.inOut' }, 0.2);
     tl.call(function () { window.location.href = yarn.url; }, null, 1.3);
   }
 
@@ -365,13 +309,8 @@
     W = window.innerWidth;
     H = window.innerHeight;
     canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-
-    for (var i = 0; i < DATA.length; i++) {
-      yarns.push(new Yarn(DATA[i]));
-    }
-
+    for (var i = 0; i < DATA.length; i++) yarns.push(new Yarn(DATA[i]));
     lastTs = 0;
   }
 
@@ -379,12 +318,10 @@
     var dt = lastTs ? (ts - lastTs) / 1000 : 1 / 60;
     lastTs = ts;
     dt = clamp(dt, 1 / 120, 1 / 20);
-
     for (var i = 0; i < yarns.length; i++) {
       yarns[i].updatePath();
       yarns[i].updateLetters(dt);
     }
-
     requestAnimationFrame(loop);
   }
 
