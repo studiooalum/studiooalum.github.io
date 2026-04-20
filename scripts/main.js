@@ -148,8 +148,8 @@
           ty: 0,
           nx: 0,
           ny: 1,
-          pax: pt.x,
-          pay: pt.y,
+          pax: NaN,
+          pay: NaN,
           letterR: letterR,
           maxN: maxN
         });
@@ -205,47 +205,42 @@
     if (!pathLen) return;
 
     var count = this.letters.length;
-    var damping = Math.exp(-dt / 0.58);
-    var maxUSpeed = 280;
-    var maxNSpeed = 420;
+    var damping = Math.exp(-dt / 0.35);
+    var maxNSpeed = 350;
 
-    // ── 1. Yarn motion → local impulses (tangent + normal) ───
+    // ── 1. Yarn motion → normal impulse only (u stays fixed) ─
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
       var tn = this._getTN(L.u, pathLen);
 
-      var dax = tn.ax - L.pax;
-      var day = tn.ay - L.pay;
-      var dtan = dax * tn.tx + day * tn.ty;
-      var dnorm = dax * tn.nx + day * tn.ny;
-
-      L.vU += (dtan / dt) * 0.35;
-      L.vN += (dnorm / dt) * 0.62;
+      // Skip first frame (pax/pay not yet initialised)
+      if (!isNaN(L.pax)) {
+        var dax = tn.ax - L.pax;
+        var day = tn.ay - L.pay;
+        var dnorm = dax * tn.nx + day * tn.ny;
+        L.vN += (dnorm / dt) * 0.55;
+      }
 
       L.pax = tn.ax;
       L.pay = tn.ay;
     }
 
-    // ── 2. Integrate (u, n) with hard yarn boundary on n ─────
+    // ── 2. Integrate n with hard yarn boundary ────────────────
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
 
-      if (L.vU > maxUSpeed) L.vU = maxUSpeed;
-      if (L.vU < -maxUSpeed) L.vU = -maxUSpeed;
       if (L.vN > maxNSpeed) L.vN = maxNSpeed;
       if (L.vN < -maxNSpeed) L.vN = -maxNSpeed;
 
-      L.u = wrapArc(L.u + L.vU * dt, pathLen);
       L.n += L.vN * dt;
-      L.vU *= damping;
       L.vN *= damping;
 
       if (L.n > L.maxN) {
         L.n = L.maxN;
-        if (L.vN > 0) L.vN *= -0.35;
+        if (L.vN > 0) L.vN *= -0.4;
       } else if (L.n < -L.maxN) {
         L.n = -L.maxN;
-        if (L.vN < 0) L.vN *= -0.35;
+        if (L.vN < 0) L.vN *= -0.4;
       }
     }
 
@@ -261,7 +256,7 @@
       L.wy = tn.ay + tn.ny * L.n;
     }
 
-    // ── 4. Letter–letter collision (world impulse, local update)
+    // ── 4. Letter–letter collision resolved directly in n ─────
     for (var a = 0; a < count; a++) {
       for (var b = a + 1; b < count; b++) {
         var A = this.letters[a];
@@ -269,45 +264,28 @@
         var cdx = B.wx - A.wx;
         var cdy = B.wy - A.wy;
         var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
-        var minGap = (A.letterR + B.letterR) * 1.06;
+        var minGap = (A.letterR + B.letterR);
         if (cdist >= minGap) continue;
 
-        var pen = (minGap - cdist);
+        var pen = minGap - cdist;
         var cnx = cdx / cdist, cny = cdy / cdist;
 
-        // Position correction in world, then project to local (u,n)
-        var corrAx = -cnx * pen * 0.5;
-        var corrAy = -cny * pen * 0.5;
-        var corrBx = cnx * pen * 0.5;
-        var corrBy = cny * pen * 0.5;
+        // Project collision normal onto each letter's yarn normal
+        var projA = cnx * A.nx + cny * A.ny;
+        var projB = cnx * B.nx + cny * B.ny;
 
-        A.u = wrapArc(A.u + (corrAx * A.tx + corrAy * A.ty), pathLen);
-        A.n = clamp(A.n + (corrAx * A.nx + corrAy * A.ny), -A.maxN, A.maxN);
-        B.u = wrapArc(B.u + (corrBx * B.tx + corrBy * B.ty), pathLen);
-        B.n = clamp(B.n + (corrBx * B.nx + corrBy * B.ny), -B.maxN, B.maxN);
+        // Position correction directly in n
+        A.n -= pen * 0.5 * (Math.abs(projA) > 0.05 ? projA : (A.n < 0 ? -0.5 : 0.5));
+        B.n += pen * 0.5 * (Math.abs(projB) > 0.05 ? projB : (B.n > 0 ? 0.5 : -0.5));
+        A.n = clamp(A.n, -A.maxN, A.maxN);
+        B.n = clamp(B.n, -B.maxN, B.maxN);
 
-        // Velocity response in world, then project back to local
-        var aVx = A.tx * A.vU + A.nx * A.vN;
-        var aVy = A.ty * A.vU + A.ny * A.vN;
-        var bVx = B.tx * B.vU + B.nx * B.vN;
-        var bVy = B.ty * B.vU + B.ny * B.vN;
-
-        var relVx = bVx - aVx;
-        var relVy = bVy - aVy;
-        var relVn = relVx * cnx + relVy * cny;
+        // Velocity response in n
+        var relVn = B.vN * projB - A.vN * projA;
         if (relVn < 0) {
-          var restitution = 0.3;
-          var imp = -(1 + restitution) * relVn * 0.5;
-
-          aVx -= imp * cnx;
-          aVy -= imp * cny;
-          bVx += imp * cnx;
-          bVy += imp * cny;
-
-          A.vU = aVx * A.tx + aVy * A.ty;
-          A.vN = aVx * A.nx + aVy * A.ny;
-          B.vU = bVx * B.tx + bVy * B.ty;
-          B.vN = bVx * B.nx + bVy * B.ny;
+          var imp = -relVn * 0.65;
+          A.vN -= imp * (projA || 0.5);
+          B.vN += imp * (projB || 0.5);
         }
       }
     }
