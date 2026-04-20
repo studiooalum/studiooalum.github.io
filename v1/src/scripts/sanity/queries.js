@@ -3,16 +3,15 @@
    GROQ Queries for Sanity
    =========================== */
 
-/** Fetch ALL published products — the rug grid adapts to however many exist */
+/** Fetch ALL published products (each edition = one document) */
 export const ALL_PRODUCTS_QUERY = `
-  *[_type == "product"] | order(_createdAt asc) {
+  *[_type == "product"] | order(title asc) {
     _id,
     title,
     description,
     price,
+    discountRate,
     soldOut,
-    editionTotal,
-    soldNumbers,
     slug,
     images[]{
       asset->{url}
@@ -20,7 +19,7 @@ export const ALL_PRODUCTS_QUERY = `
   }
 `;
 
-/** Fetch a single product by slug (for product detail page) */
+/** Fetch a single product/edition by slug */
 export const PRODUCT_BY_SLUG_QUERY = `
   *[_type == "product" && slug.current == $slug][0] {
     _id,
@@ -28,9 +27,8 @@ export const PRODUCT_BY_SLUG_QUERY = `
     description,
     size,
     price,
+    discountRate,
     soldOut,
-    editionTotal,
-    soldNumbers,
     slug,
     category,
     images[]{

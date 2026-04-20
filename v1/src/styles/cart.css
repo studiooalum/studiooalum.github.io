@@ -14,7 +14,7 @@
   justify-content: center;
   width: 44px;
   height: 56px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(227, 66, 52, 0.75);
   color: #fff;
   border: none;
   border-radius: 6px 0 0 6px;
@@ -24,7 +24,7 @@
 }
 
 .cart-toggle:hover {
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(227, 66, 52, 0.9);
 }
 
 .cart-toggle__badge {

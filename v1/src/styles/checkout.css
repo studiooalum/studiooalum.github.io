@@ -9,23 +9,6 @@
   color: var(--color-text, #111);
 }
 
-/* ---- Back link ---- */
-.checkout-back {
-  position: fixed;
-  top: 20px;
-  left: 24px;
-  z-index: 100;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  color: #555;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.checkout-back:hover {
-  color: #111;
-}
-
 /* ---- Two-column layout ---- */
 .checkout-layout {
   display: grid;
@@ -35,6 +18,7 @@
   max-width: 1100px;
   margin: 0 auto;
   padding: 60px 32px 48px;
+  padding-top: calc(60px + var(--gnb-height, 40px));
 }
 
 /* =========================

@@ -1,49 +1,70 @@
 import client from "./sanity/client.js";
-import { PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
+import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
+
 const params = new URLSearchParams(window.location.search);
-const slug = params.get("slug");
+const productName = params.get("product");
 const inV1Shell = window.location.pathname.includes("/v1/");
 
 function getShopPath() {
   return inV1Shell ? "../shop.html" : "./shop.html";
 }
 
-if (!slug) window.location.href = getShopPath();
+function getEditionPath(slug) {
+  const encoded = encodeURIComponent(slug || "");
+  return `./edition.html?slug=${encoded}`;
+}
+
+if (!productName) window.location.href = getShopPath();
 
 const titleEl = document.getElementById("productTitle");
 const introEl = document.getElementById("productIntro");
 const metaEl = document.getElementById("productMeta");
 const gridEl = document.getElementById("editionGrid");
 
-function padNo(n) {
-  return String(n).padStart(2, "0");
+/** Split "Patchwork Cable Beanie (Cream #01)" → { baseName, editionLabel } */
+function parseProductTitle(title) {
+  const m = (title || "").match(/^(.+?)\s*\((.+)\)\s*$/);
+  if (m) return { baseName: m[1].trim(), editionLabel: m[2].trim() };
+  return { baseName: (title || "").trim(), editionLabel: null };
 }
 
-function renderEditionGrid(product) {
-  const title = product.title || "Product";
-  const price = Number(product.price) || 0;
-  const editionTotal = Number(product.editionTotal) > 0 ? Number(product.editionTotal) : 20;
-  const soldSet = new Set((Array.isArray(product.soldNumbers) ? product.soldNumbers : []).map((n) => Number(n)));
-  const allSold = !!product.soldOut;
+function formatPrice(n) {
+  if (n !== 0 && !n) return "";
+  return `₩${Number(n).toLocaleString("ko-KR")}`;
+}
 
-  document.title = `${title} Editions — Studio OALUM`;
-  titleEl.textContent = title;
-  introEl.textContent = product.description || "상품 소개";
-  metaEl.textContent = `총 ${editionTotal}개 · 개당 ₩${price.toLocaleString("ko-KR")}`;
+function renderEditionGrid(editions) {
+  const representative = editions[0];
+  const price = Number(representative.price) || 0;
+  const discountRate = Number(representative.discountRate) || 0;
+  const availableCount = editions.filter((e) => !e.soldOut).length;
 
-  const firstImage = Array.isArray(product.images) && product.images.length > 0
-    ? imageUrl(product.images[0], { width: 720, height: 720 })
-    : null;
+  document.title = `${productName} Editions — Studio OALUM`;
+  titleEl.textContent = productName;
+  introEl.textContent = representative.description || "상품 소개";
+
+  if (discountRate > 0) {
+    const discounted = Math.round(price * (1 - discountRate / 100));
+    metaEl.textContent = `총 ${editions.length}개 · 개당 ${formatPrice(discounted)} (${discountRate}% 할인)`;
+  } else {
+    metaEl.textContent = `총 ${editions.length}개 · 개당 ${formatPrice(price)}`;
+  }
+  if (availableCount === 0) {
+    metaEl.textContent += " · 전체 품절";
+  }
 
   gridEl.innerHTML = "";
 
-  for (let i = 1; i <= editionTotal; i += 1) {
-    const sold = allSold || soldSet.has(i);
+  for (const edition of editions) {
+    const { editionLabel } = parseProductTitle(edition.title);
+    const slug = edition.slug?.current || "";
+    const sold = !!edition.soldOut;
+
     const link = document.createElement("a");
     link.className = sold ? "edition-card is-sold" : "edition-card";
-    link.href = `./edition.html?slug=${encodeURIComponent(slug)}&no=${i}`;
-    link.setAttribute("aria-label", `${title} #${padNo(i)}`);
+    link.href = getEditionPath(slug);
+    link.setAttribute("aria-label", editionLabel || edition.title);
 
     const thumb = document.createElement("div");
     thumb.className = "edition-card__thumb";
@@ -53,23 +74,30 @@ function renderEditionGrid(product) {
       soldMark.className = "edition-card__sold";
       soldMark.textContent = "SOLD";
       thumb.appendChild(soldMark);
-    } else if (firstImage) {
-      const img = document.createElement("img");
-      img.src = firstImage;
-      img.alt = `${title} #${padNo(i)}`;
-      img.loading = "lazy";
-      img.draggable = false;
-      thumb.appendChild(img);
     } else {
-      const empty = document.createElement("span");
-      empty.className = "edition-card__sold";
-      empty.textContent = "IMAGE";
-      thumb.appendChild(empty);
+      const firstImage =
+        Array.isArray(edition.images) && edition.images.length > 0
+          ? imageUrl(edition.images[0], { width: 720, height: 720 })
+          : null;
+
+      if (firstImage) {
+        const img = document.createElement("img");
+        img.src = firstImage;
+        img.alt = editionLabel || edition.title;
+        img.loading = "lazy";
+        img.draggable = false;
+        thumb.appendChild(img);
+      } else {
+        const empty = document.createElement("span");
+        empty.className = "edition-card__sold";
+        empty.textContent = "IMAGE";
+        thumb.appendChild(empty);
+      }
     }
 
     const no = document.createElement("div");
     no.className = "edition-card__no";
-    no.textContent = `#${padNo(i)}`;
+    no.textContent = editionLabel || edition.title;
 
     link.appendChild(thumb);
     link.appendChild(no);
@@ -80,12 +108,17 @@ function renderEditionGrid(product) {
 async function init() {
   try {
     gridEl.innerHTML = `<p class="product-state">Loading editions...</p>`;
-    const product = await client.fetch(PRODUCT_BY_SLUG_QUERY, { slug });
-    if (!product) {
+    const allProducts = await client.fetch(ALL_PRODUCTS_QUERY);
+    const editions = (allProducts || []).filter((p) => {
+      const { baseName } = parseProductTitle(p.title);
+      return baseName === productName;
+    });
+
+    if (editions.length === 0) {
       gridEl.innerHTML = `<p class="product-state">상품을 찾을 수 없습니다.</p>`;
       return;
     }
-    renderEditionGrid(product);
+    renderEditionGrid(editions);
   } catch (err) {
     console.error("Failed to load product editions", err);
     gridEl.innerHTML = `<p class="product-state">상품을 불러오지 못했습니다.</p>`;

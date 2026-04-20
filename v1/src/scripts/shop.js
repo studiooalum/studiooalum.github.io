@@ -7,45 +7,57 @@ function formatPrice(n) {
   return `₩${Number(n).toLocaleString("ko-KR")}`;
 }
 
+/** Split "Patchwork Cable Beanie (Cream #01)" → { baseName, editionLabel } */
+function parseProductTitle(title) {
+  const m = (title || "").match(/^(.+?)\s*\((.+)\)\s*$/);
+  if (m) return { baseName: m[1].trim(), editionLabel: m[2].trim() };
+  return { baseName: (title || "").trim(), editionLabel: null };
+}
+
+/** Group products by base name. Returns Map<baseName, product[]> */
+function groupProducts(products) {
+  const groups = new Map();
+  for (const p of products) {
+    const { baseName } = parseProductTitle(p.title);
+    if (!groups.has(baseName)) groups.set(baseName, []);
+    groups.get(baseName).push(p);
+  }
+  return groups;
+}
+
 const gridEl = document.getElementById("shopGrid");
 const introCountEl = document.getElementById("shopCount");
 const inV1Shell = window.location.pathname.includes("/v1/");
 
-function getProductPath(slug) {
-  const encoded = encodeURIComponent(slug || "");
+function getProductPath(baseName) {
+  const encoded = encodeURIComponent(baseName);
   return inV1Shell
-    ? `./src/product.html?slug=${encoded}`
-    : `./product.html?slug=${encoded}`;
-}
-
-function pickSizeClass(product, index) {
-  const title = String(product?.title || "").toLowerCase();
-  if (title.includes("rug")) return "shop-card--hero";
-  const variants = ["shop-card--tall", "shop-card--square", "shop-card--wide", "shop-card--square"];
-  return variants[index % variants.length];
+    ? `./src/product.html?product=${encoded}`
+    : `./product.html?product=${encoded}`;
 }
 
 if (!gridEl || !introCountEl) {
   throw new Error("Shop DOM is missing required #shopGrid or #shopCount element.");
 }
 
-function createProductCard(product, index) {
-  const slug = product?.slug?.current || "";
+function createProductCard(baseName, editions, index) {
+  const representative = editions[0]; // first edition (#01) is the representative
   const card = document.createElement("a");
-  card.className = `shop-card ${pickSizeClass(product, index)}`;
-  card.href = getProductPath(slug);
+  card.className = "shop-card";
+  card.href = getProductPath(baseName);
 
   const thumb = document.createElement("div");
   thumb.className = "shop-card__thumb";
 
-  const firstImage = Array.isArray(product.images) && product.images.length > 0
-    ? imageUrl(product.images[0], { width: 720, height: 720 })
-    : null;
+  const firstImage =
+    Array.isArray(representative.images) && representative.images.length > 0
+      ? imageUrl(representative.images[0], { width: 720, height: 720 })
+      : null;
 
   if (firstImage) {
     const img = document.createElement("img");
     img.src = firstImage;
-    img.alt = product.title || "product";
+    img.alt = baseName;
     img.loading = "lazy";
     img.draggable = false;
     thumb.appendChild(img);
@@ -61,23 +73,43 @@ function createProductCard(product, index) {
 
   const title = document.createElement("h3");
   title.className = "shop-card__title";
-  title.textContent = product.title || "Untitled";
+  title.textContent = baseName;
 
   const meta = document.createElement("div");
   meta.className = "shop-card__meta";
 
-  const price = document.createElement("span");
-  price.textContent = formatPrice(product.price);
-  meta.appendChild(price);
+  // Price with discount
+  const price = representative.price;
+  const discountRate = Number(representative.discountRate) || 0;
 
-  const editionCount = Number(product.editionTotal) > 0 ? Number(product.editionTotal) : 20;
-  const edition = document.createElement("span");
-  edition.textContent = `${editionCount} editions`;
-  meta.appendChild(edition);
+  if (discountRate > 0) {
+    const discounted = Math.round(price * (1 - discountRate / 100));
+    const originalSpan = document.createElement("span");
+    originalSpan.className = "shop-card__price--original";
+    originalSpan.textContent = formatPrice(price);
+    meta.appendChild(originalSpan);
+
+    const discountedSpan = document.createElement("span");
+    discountedSpan.className = "shop-card__price";
+    discountedSpan.textContent = formatPrice(discounted);
+    meta.appendChild(discountedSpan);
+
+    const badge = document.createElement("span");
+    badge.className = "shop-card__discount";
+    badge.textContent = `-${discountRate}%`;
+    meta.appendChild(badge);
+  } else {
+    const priceSpan = document.createElement("span");
+    priceSpan.textContent = formatPrice(price);
+    meta.appendChild(priceSpan);
+  }
+
+  const editionSpan = document.createElement("span");
+  editionSpan.textContent = `${editions.length} editions`;
+  meta.appendChild(editionSpan);
 
   body.appendChild(title);
   body.appendChild(meta);
-
   card.appendChild(thumb);
   card.appendChild(body);
   return card;
@@ -85,12 +117,16 @@ function createProductCard(product, index) {
 
 function renderProducts(products) {
   const safeProducts = Array.isArray(products) ? products : [];
-  introCountEl.textContent = `${safeProducts.length} products`;
+  const groups = groupProducts(safeProducts);
+
+  introCountEl.textContent = `${groups.size} products`;
   gridEl.innerHTML = "";
 
-  safeProducts.forEach((product, index) => {
-    gridEl.appendChild(createProductCard(product, index));
-  });
+  let index = 0;
+  for (const [baseName, editions] of groups) {
+    gridEl.appendChild(createProductCard(baseName, editions, index));
+    index += 1;
+  }
 }
 
 async function init() {

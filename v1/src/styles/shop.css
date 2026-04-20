@@ -11,15 +11,7 @@
 
 .shop-header {
   padding: 22px 16px 12px;
-}
-
-.shop-back {
-  display: inline-block;
-  margin-bottom: 12px;
-  color: #111;
-  text-decoration: none;
-  font-size: 13px;
-  letter-spacing: 0.02em;
+  padding-top: calc(22px + var(--gnb-height, 40px));
 }
 
 .shop-title {
@@ -49,51 +41,36 @@
   padding: 8px 16px 28px;
 }
 
+/* Pinterest-style masonry: CSS columns */
 .shop-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 12px;
+  columns: 1;
+  column-gap: 12px;
 }
 
 .shop-card {
   display: block;
   text-decoration: none;
   color: inherit;
+  break-inside: avoid;
+  margin-bottom: 12px;
 }
 
 .shop-card__thumb {
   position: relative;
-  aspect-ratio: 1 / 1;
   background: #ffffff;
   overflow: hidden;
 }
 
-.shop-card--hero .shop-card__thumb {
-  aspect-ratio: 4 / 5;
-}
-
-.shop-card--tall .shop-card__thumb {
-  aspect-ratio: 3 / 4;
-}
-
-.shop-card--wide .shop-card__thumb {
-  aspect-ratio: 16 / 10;
-}
-
-.shop-card--square .shop-card__thumb {
-  aspect-ratio: 1 / 1;
-}
-
 .shop-card__thumb img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
 }
 
 .shop-card__fallback {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   display: grid;
   place-items: center;
   font-size: 11px;
@@ -114,10 +91,25 @@
 .shop-card__meta {
   margin-top: 4px;
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
   font-size: 12px;
   color: rgba(17, 17, 17, 0.82);
+}
+
+.shop-card__price--original {
+  text-decoration: line-through;
+  color: rgba(17, 17, 17, 0.4);
+}
+
+.shop-card__price {
+  font-weight: 600;
+}
+
+.shop-card__discount {
+  color: var(--shop-point, #e34234);
+  font-weight: 600;
 }
 
 .shop-state {
@@ -129,6 +121,7 @@
 @media (min-width: 800px) {
   .shop-header {
     padding: 32px 28px 10px;
+    padding-top: calc(32px + var(--gnb-height, 40px));
   }
 
   .shop-title {
@@ -140,7 +133,11 @@
   }
 
   .shop-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
+    columns: 2;
+    column-gap: 18px;
+  }
+
+  .shop-card {
+    margin-bottom: 18px;
   }
 }

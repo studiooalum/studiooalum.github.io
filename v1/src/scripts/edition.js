@@ -5,15 +5,21 @@ import { addToCart, addToCartSilent } from "./cart.js";
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
-const editionNo = Number(params.get("no"));
 const inV1Shell = window.location.pathname.includes("/v1/");
 
 function getShopPath() {
   return inV1Shell ? "../shop.html" : "./shop.html";
 }
 
-if (!slug || !Number.isInteger(editionNo) || editionNo < 1) {
+if (!slug) {
   window.location.href = getShopPath();
+}
+
+/** Split "Patchwork Cable Beanie (Cream #01)" → { baseName, editionLabel } */
+function parseProductTitle(title) {
+  const m = (title || "").match(/^(.+?)\s*\((.+)\)\s*$/);
+  if (m) return { baseName: m[1].trim(), editionLabel: m[2].trim() };
+  return { baseName: (title || "").trim(), editionLabel: null };
 }
 
 const mediaEl = document.getElementById("editionMedia");
@@ -31,10 +37,6 @@ function formatPrice(n) {
   return `₩${Number(n).toLocaleString("ko-KR")}`;
 }
 
-function padNo(n) {
-  return String(n).padStart(2, "0");
-}
-
 function resolveSize(product) {
   if (product.size) return product.size;
   if (product.dimensions) return product.dimensions;
@@ -45,11 +47,11 @@ function markSold() {
   document.body.classList.add("is-sold");
   mediaEl.classList.add("is-sold");
   mediaEl.innerHTML = `<span class="edition-media__sold">SOLD</span>`;
-  noteEl.textContent = "판매 완료된 넘버링입니다. 다른 넘버링을 확인해보세요.";
+  noteEl.textContent = "판매 완료된 에디션입니다. 다른 에디션을 확인해보세요.";
 }
 
-function renderMedia(product, sold) {
-  if (sold) {
+function renderMedia(product) {
+  if (product.soldOut) {
     markSold();
     return;
   }
@@ -65,7 +67,7 @@ function renderMedia(product, sold) {
 
   const img = document.createElement("img");
   img.src = firstImage;
-  img.alt = `${product.title} #${padNo(editionNo)}`;
+  img.alt = product.title;
   img.draggable = false;
   mediaEl.appendChild(img);
 }
@@ -76,8 +78,6 @@ function toCheckoutWith(product) {
 }
 
 async function init() {
-  backEl.href = `./product.html?slug=${encodeURIComponent(slug)}`;
-
   try {
     const product = await client.fetch(PRODUCT_BY_SLUG_QUERY, { slug });
     if (!product) {
@@ -87,33 +87,34 @@ async function init() {
       return;
     }
 
-    const editionTotal = Number(product.editionTotal) > 0 ? Number(product.editionTotal) : 20;
-    if (editionNo > editionTotal) {
-      titleEl.textContent = "유효하지 않은 넘버링입니다";
-      addBtn.style.display = "none";
-      buyBtn.style.display = "none";
-      noteEl.textContent = `이 상품은 #${String(editionTotal).padStart(2, "0")}까지 제공됩니다.`;
-      return;
-    }
+    const { baseName, editionLabel } = parseProductTitle(product.title);
+    const displayTitle = editionLabel || product.title;
+    const sold = !!product.soldOut;
 
-    const soldSet = new Set((Array.isArray(product.soldNumbers) ? product.soldNumbers : []).map((n) => Number(n)));
-    const sold = !!product.soldOut || soldSet.has(editionNo);
+    // Back link → product page for the base product
+    backEl.href = `./product.html?product=${encodeURIComponent(baseName)}`;
 
-    document.title = `${product.title} #${padNo(editionNo)} — Studio OALUM`;
-    titleEl.textContent = `${product.title} #${padNo(editionNo)}`;
-    priceEl.textContent = formatPrice(product.price);
+    document.title = `${product.title} — Studio OALUM`;
+    titleEl.textContent = displayTitle;
     sizeEl.textContent = `Size: ${resolveSize(product)}`;
     descEl.textContent = product.description || "제품 정보";
 
-    const cartItem = {
-      ...product,
-      editionNumber: editionNo,
-    };
+    // Price with discount
+    const price = Number(product.price) || 0;
+    const discountRate = Number(product.discountRate) || 0;
 
-    renderMedia(product, sold);
+    if (discountRate > 0) {
+      const discounted = Math.round(price * (1 - discountRate / 100));
+      priceEl.innerHTML = `<span class="price-original">${formatPrice(price)}</span> ${formatPrice(discounted)} <span class="discount-badge">-${discountRate}%</span>`;
+    } else {
+      priceEl.textContent = formatPrice(price);
+    }
+
+    renderMedia(product);
 
     if (sold) return;
 
+    const cartItem = { ...product };
     addBtn.addEventListener("click", () => addToCart(cartItem));
     buyBtn.addEventListener("click", () => toCheckoutWith(cartItem));
   } catch (err) {

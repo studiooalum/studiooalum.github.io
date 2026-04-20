@@ -1,0 +1,65 @@
+/* =========================
+   GNB — Slim fixed navigation bar
+   Color matches each menu's thread color from the main page.
+   Archive: #ffccc3 | Shop: #e34234 | Class: #ffeb53 | Newsletter: #cad5d8
+========================= */
+
+:root {
+  --gnb-height: 40px;
+}
+
+.gnb {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 950;
+  height: var(--gnb-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-family: var(--font-base, 'GothamBook', system-ui, sans-serif);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.gnb--shop       { background: rgba(227, 66, 52, 0.92); color: #fff; }
+.gnb--archive    { background: rgba(255, 204, 195, 0.92); color: #111; }
+.gnb--class      { background: rgba(255, 235, 83, 0.92); color: #111; }
+.gnb--newsletter { background: rgba(202, 213, 216, 0.92); color: #111; }
+
+.gnb__back {
+  text-decoration: none;
+  color: inherit;
+  font-size: 12px;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+.gnb__back:hover { opacity: 1; }
+
+.gnb__title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gnb__spacer {
+  width: 40px; /* balances the back link on the right side */
+}
+
+@media (max-width: 768px) {
+  :root {
+    --gnb-height: 36px;
+  }
+  .gnb {
+    font-size: 11px;
+    padding: 0 12px;
+  }
+}

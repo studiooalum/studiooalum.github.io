@@ -20,10 +20,15 @@ function saveCart(items) {
   localStorage.setItem(CART_KEY, JSON.stringify(items));
 }
 
+function computeFinalPrice(product) {
+  const price = Number(product.price) || 0;
+  const discountRate = Number(product.discountRate) || 0;
+  return discountRate > 0 ? Math.round(price * (1 - discountRate / 100)) : price;
+}
+
 export function addToCart(product) {
   const items = getCart();
-  const editionNumber = Number(product.editionNumber) || null;
-  const lineId = `${product._id}:${editionNumber || "base"}`;
+  const lineId = product._id;
   const existing = items.find((i) => i.lineId === lineId);
   if (existing) {
     existing.qty += 1;
@@ -32,9 +37,8 @@ export function addToCart(product) {
       lineId,
       _id: product._id,
       title: product.title,
-      price: product.price,
+      price: computeFinalPrice(product),
       slug: product.slug?.current || product.slug || "",
-      editionNumber,
       image: product.images?.[0] || null,
       qty: 1,
     });
@@ -47,8 +51,7 @@ export function addToCart(product) {
 /** 장바구니에 담되 패널을 열지 않음 (바로 결제용) */
 export function addToCartSilent(product) {
   const items = getCart();
-  const editionNumber = Number(product.editionNumber) || null;
-  const lineId = `${product._id}:${editionNumber || "base"}`;
+  const lineId = product._id;
   const existing = items.find((i) => i.lineId === lineId);
   if (existing) {
     existing.qty += 1;
@@ -57,9 +60,8 @@ export function addToCartSilent(product) {
       lineId,
       _id: product._id,
       title: product.title,
-      price: product.price,
+      price: computeFinalPrice(product),
       slug: product.slug?.current || product.slug || "",
-      editionNumber,
       image: product.images?.[0] || null,
       qty: 1,
     });
@@ -191,7 +193,7 @@ export function renderCartPanel() {
         <div class="cart-item" data-id="${item.lineId || item._id}">
           ${imgSrc ? `<img class="cart-item__img" src="${imgSrc}" alt="${item.title}" />` : ""}
           <div class="cart-item__info">
-            <div class="cart-item__title">${item.title}${item.editionNumber ? ` #${String(item.editionNumber).padStart(2, "0")}` : ""}</div>
+            <div class="cart-item__title">${item.title}</div>
             <div class="cart-item__price">${formatPrice(item.price)}</div>
             <div class="cart-item__qty">
               <button class="cart-item__qty-btn" data-action="dec" data-id="${item.lineId || item._id}">−</button>
