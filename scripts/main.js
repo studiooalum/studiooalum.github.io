@@ -7,7 +7,6 @@
 
   var svg = document.getElementById('svg-container');
   var yarnGroup = document.getElementById('yarn-group');
-  var textGroup = document.getElementById('text-group');
   var overlay = document.getElementById('page-overlay');
 
   var W = window.innerWidth;
@@ -58,14 +57,16 @@
       });
     }
 
-    // Flat DOM order: path, hitPath, then letter texts — all appended directly
-    // to yarnGroup. Yarns are built from last→first so Archive ends up on top.
-    // Final stacking (top→bottom): Archive text > Archive path > Shop text > Shop path …
+    // Each yarn gets its own <g>: path first (behind), letters on top.
+    // Yarn groups are appended Newsletter→Archive so Archive is last = on top.
+    this.groupEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    yarnGroup.appendChild(this.groupEl);
+
     this.pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     this.pathEl.setAttribute('class', 'yarn');
     this.pathEl.setAttribute('stroke', this.color);
     this.pathEl.setAttribute('stroke-width', this.sw);
-    yarnGroup.appendChild(this.pathEl);
+    this.groupEl.appendChild(this.pathEl);
 
     this.hitPathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     this.hitPathEl.setAttribute('fill', 'none');
@@ -73,7 +74,7 @@
     this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.sw * 1.8));
     this.hitPathEl.style.cursor = 'pointer';
     this.hitPathEl.style.pointerEvents = 'stroke';
-    yarnGroup.appendChild(this.hitPathEl);
+    this.groupEl.appendChild(this.hitPathEl);
 
     this.hovered = false;
     this.transitioning = false;
@@ -128,7 +129,7 @@
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         el.textContent = ch;
         el.setAttribute('class', 'yarn-text');
-        yarnGroup.appendChild(el);
+        this.groupEl.appendChild(el);
 
         // Default placement: ordered letters, 2n word gap / 1n letter gap
         var u = groupStart + (c * intraUnit + 0.5) * unit;
@@ -345,15 +346,14 @@
 
   function build() {
     yarnGroup.innerHTML = '';
-    textGroup.innerHTML = '';
     yarns = [];
     W = window.innerWidth;
     H = window.innerHeight;
     canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
-    // Build last→first: Newsletter appended first (bottom), Archive last (top).
-    // Within each yarn: path → hitPath → letters, so letters sit above the path.
+    // Build Newsletter→Archive so Archive group is last in DOM = on top.
+    // Within each group: path(behind) then letters(front).
     for (var i = DATA.length - 1; i >= 0; i--) yarns.push(new Yarn(DATA[i]));
     lastTs = 0;
   }
