@@ -72,7 +72,8 @@
     this.word = cfg.word.toUpperCase();
     this.color = cfg.color;
     this.sw = cfg.sw;
-    this.renderSw = isMobile ? this.sw : this.sw * 1.15;
+    // PC: previous 1.15x thickness, then +30% requested => 1.15 * 1.3 = 1.495
+    this.renderSw = isMobile ? this.sw : this.sw * 1.495;
     this.baseY = H * cfg.yOff;
     this.url = cfg.url;
 
@@ -88,7 +89,7 @@
         currentX: t * W,
         currentY: this.baseY + jy,
         angle: Math.random() * 6.283,
-        speed: (0.004 + Math.random() * 0.008) * 3.0,  // 2x speed
+        speed: (0.004 + Math.random() * 0.008) * (isMobile ? 3.0 : 15.0),
         ampX: edge ? 2 : 8 + Math.random() * 12,
         ampY: edge ? 10 : 16 + Math.random() * 24
       });
@@ -108,7 +109,7 @@
     this.hitPathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     this.hitPathEl.setAttribute('fill', 'none');
     this.hitPathEl.setAttribute('stroke', 'transparent');
-    this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.renderSw * 1.8));
+    this.hitPathEl.setAttribute('stroke-width', this.renderSw);
     this.hitPathEl.style.cursor = 'pointer';
     this.hitPathEl.style.pointerEvents = 'stroke';
     this.groupEl.appendChild(this.hitPathEl);
@@ -139,19 +140,19 @@
       openPage(self);
     }
     this.hitPathEl.addEventListener('click', handleClick);
-    this.pathEl.addEventListener('click', handleClick);
   };
 
   Yarn.prototype._buildLetters = function () {
     var pathLen = this.pathEl.getTotalLength() || W;
     var baseCount = Math.max(this.word.length * 2, Math.round(pathLen / 22));
-    var densityScale = isMobile ? 0.7 : 0.5;
+    var densityScale = isMobile ? 0.7 : 0.35;
     var targetCount = Math.max(this.word.length, Math.round(baseCount * densityScale));
-    var repeats = Math.max(1, Math.round(targetCount / this.word.length));
+    var repeats = isMobile ? 1 : Math.max(1, Math.round(targetCount / this.word.length));
     var intraUnit = 1;
     var interUnit = 2;
     var unit = pathLen / (repeats * (this.word.length * intraUnit + interUnit));
-    var letterR = canHover ? 12.75 : 10.5;
+    var letterSize = isMobile ? this.renderSw * 0.75 : 33 * 1.3;
+    var letterR = letterSize * 0.42;
     var maxN = this.renderSw * 0.5 - letterR;
 
     for (var k = 0; k < this.letters.length; k++) {
@@ -166,6 +167,7 @@
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         el.textContent = ch;
         el.setAttribute('class', 'yarn-text');
+        el.style.fontSize = letterSize + 'px';
         this.groupEl.appendChild(el);
 
         // Hover target: word gap 2n, letter gap 0.7n
@@ -236,8 +238,10 @@
 
     var goal = (this.hovered || this.transitioning) ? 1 : 0;
     this.hoverAmt += (goal - this.hoverAmt) * 0.08;
-    this.pathEl.setAttribute('stroke-width', this.renderSw * (1 + this.hoverAmt * 0.15));
-    this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.renderSw * 1.8));
+    var currentSw = this.renderSw * (1 + this.hoverAmt * 0.15);
+    this.pathEl.setAttribute('stroke-width', currentSw);
+    // Keep pointer hit area exactly on the visible yarn stroke.
+    this.hitPathEl.setAttribute('stroke-width', currentSw);
   };
 
   Yarn.prototype.updateLetters = function (dt) {
