@@ -132,6 +132,8 @@
     this.dragStartY = 0;
     this.dragTargetX = 0;
     this.dragTargetY = 0;
+    this.dragPrimed = false;
+    this.dragInfluence = 0;
     this.dragVelX = 0;
     this.dragVelY = 0;
     this._prevDragX = 0;
@@ -163,14 +165,14 @@
     if (isMobile) {
       this.hitPathEl.addEventListener('touchstart', function (e) {
         if (isPageOpen) return;
-        e.preventDefault();
         var touch = e.touches[0];
         var svgRect = svg.getBoundingClientRect();
         var scaleX = W / svgRect.width;
         var scaleY = H / svgRect.height;
         var tx = (touch.clientX - svgRect.left) * scaleX;
         var ty = (touch.clientY - svgRect.top) * scaleY;
-        self.dragActive = true;
+        self.dragPrimed = true;
+        self.dragActive = false;
         self.dragStartX = tx;
         self.dragStartY = ty;
         self.dragTargetX = tx;
@@ -199,6 +201,17 @@
         var scaleY = H / svgRect.height;
         var tx = (touch.clientX - svgRect.left) * scaleX;
         var ty = (touch.clientY - svgRect.top) * scaleY;
+        var dx0 = tx - self.dragStartX;
+        var dy0 = ty - self.dragStartY;
+        var moveDist = Math.sqrt(dx0 * dx0 + dy0 * dy0);
+        var DRAG_START_THRESHOLD = 16;
+
+        if (!self.dragActive && self.dragPrimed && moveDist >= DRAG_START_THRESHOLD) {
+          self.dragActive = true;
+          self.dragInfluence = Math.max(self.dragInfluence, 0.2);
+        }
+        if (!self.dragActive) return;
+
         self.dragVelX = tx - self._prevDragX;
         self.dragVelY = ty - self._prevDragY;
         self._prevDragX = tx;
@@ -212,32 +225,13 @@
       };
 
       var onTouchEnd = function () {
+        if (self.dragPrimed && !self.dragActive && !isPageOpen) {
+          openPage(self);
+        }
+        self.dragPrimed = false;
         if (!self.dragActive) return;
         self.dragActive = false;
-        var tension = self.dragTension;
-        var THRESHOLD = 35;  // min displacement to trigger burst
-        if (tension < THRESHOLD) return;  // not taut enough — no burst
-
-        var pathLen = self.pathEl.getTotalLength() || W;
-        // Burst magnitude proportional to tension (rubber band release)
-        var burstMag = Math.min(700, tension * 5.5);
-
-        // Compute rebound direction: opposite to pull direction
-        var pullDx = self.dragTargetX - self.dragStartX;
-        var pullDy = self.dragTargetY - self.dragStartY;
-        var pullLen = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
-        var reboundX = -pullDx / pullLen;
-        var reboundY = -pullDy / pullLen;
-
-        // All letters get same tangential component to preserve order;
-        // random only in normal axis.
-        var refL = self.letters[0];
-        var sharedVU = (reboundX * (refL ? refL.tx : 1) + reboundY * (refL ? refL.ty : 0)) * burstMag;
-        for (var li = 0; li < self.letters.length; li++) {
-          var L = self.letters[li];
-          L.vU += sharedVU;
-          L.vN += (reboundX * L.nx + reboundY * L.ny) * burstMag + (Math.random() - 0.5) * burstMag * 0.9;
-        }
+        // No sudden burst on release; let drag influence decay naturally.
         self.dragTension = 0;
       };
 
@@ -259,6 +253,10 @@
     var letterR = letterSize * 0.42;
     var maxN = this.renderSw * 0.5 - letterR;
     var totalLetters = repeats * this.word.length;
+    var blockUnits = this.word.length * 0.7 + 2;
+    var totalHoverUnits = repeats * blockUnits;
+    var totalHoverLen = totalHoverUnits * unit;
+    var hoverOffset = (pathLen - totalHoverLen) * 0.5;
 
     for (var k = 0; k < this.letters.length; k++) {
       if (this.letters[k].el.parentNode) this.letters[k].el.parentNode.removeChild(this.letters[k].el);
@@ -277,6 +275,9 @@
         // Evenly spread across full path length for all environments.
         var letterIndex = g * this.word.length + c;
         var u = wrapArc((letterIndex + 0.5) / totalLetters * pathLen, pathLen);
+        var hoverU = isMobile
+          ? u
+          : wrapArc(hoverOffset + g * blockUnits * unit + (c * 0.7 + 0.35) * unit, pathLen);
         var pt = this.pathEl.getPointAtLength(u);
 
         this.letters.push({
@@ -297,7 +298,7 @@
           halfW: Math.max(2, el.getBBox().width * 0.5),
           halfH: Math.max(2, el.getBBox().height * 0.5),
           maxN: maxN,
-          hoverU: u    // PC hover: spring back to initial rest position
+          hoverU: hoverU
         });
       }
     }
@@ -328,8 +329,14 @@
     this.points[0].currentX = 0;
     this.points[this.points.length - 1].currentX = W;
 
-  // Mobile drag: bend yarn into a parabola that passes exactly through finger.
-    if (isMobile && this.dragActive) {
+  // Mobile drag: blend finger parabola with base wave, then decay naturally.
+    if (isMobile && (this.dragActive || this.dragInfluence > 0.001)) {
+      if (this.dragActive) {
+        this.dragInfluence += (0.55 - this.dragInfluence) * 0.25;
+      } else {
+        this.dragInfluence *= 0.9;
+      }
+      var influence = clamp(this.dragInfluence, 0, 0.55);
       var leftY = this.points[0].currentY;
       var rightY = this.points[this.points.length - 1].currentY;
       var fx = this.dragTargetX, fy = this.dragTargetY;
@@ -341,8 +348,10 @@
       for (var pi = 1; pi < this.points.length - 1; pi++) {
         var pp = this.points[pi];
         var px = pp.x;
+        var baseY = pp.currentY;
+        var curveY = pa * px * px + pb * px + pc;
         pp.currentX = px;
-        pp.currentY = pa * px * px + pb * px + pc;
+        pp.currentY = baseY * (1 - influence) + curveY * influence;
       }
     }
 
@@ -381,7 +390,7 @@
 
     // 0) Interaction springs: PC hover gather | mobile drag align.
     if (canHover && this.hovered && !isMobile) {
-      // PC hover: spring each letter back toward its rest (evenly-spaced) position.
+      // PC hover: word gap=2n, letter gap=0.7n arranged around hoverU targets.
       for (var gi = 0; gi < count; gi++) {
         var GL = this.letters[gi];
         var du = shortestArcDelta(GL.u, GL.hoverU, pathLen);
@@ -392,17 +401,17 @@
       }
     } else if (isMobile && this.dragActive && count > 0) {
       // Mobile drag: center word (in original letter order) around finger arc position.
-      var letterSpacingU = pathLen / (count * 1.6);
+      var letterSpacingU = pathLen / (count * 2.4);
       var halfSpan = (count - 1) * 0.5 * letterSpacingU;
       var fingerU = clamp(this.dragTargetX / W, 0.05, 0.95) * pathLen;
       for (var ci = 0; ci < count; ci++) {
         var DL = this.letters[ci];
         var targetU = wrapArc(fingerU - halfSpan + ci * letterSpacingU, pathLen);
         var du = shortestArcDelta(DL.u, targetU, pathLen);
-        DL.vU += du * 38 * dt;
-        DL.vU *= 0.72;
+        DL.vU += du * 24 * dt;
+        DL.vU *= 0.82;
         DL.vN += (-DL.n) * 25 * dt;
-        DL.vN *= 0.80;
+        DL.vN *= 0.84;
       }
     }
 
