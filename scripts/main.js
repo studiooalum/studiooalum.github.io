@@ -95,7 +95,7 @@
         currentX: t * W,
         currentY: this.baseY + jy,
         angle: Math.random() * 6.283,
-        speed: (0.004 + Math.random() * 0.008) * (isMobile ? 2.0 : 9.0),
+        speed: (0.004 + Math.random() * 0.008) * 2.0,
         ampX: edge ? 2 : 8 + Math.random() * 12,
         ampY: edge ? 10 : 16 + Math.random() * 24
       });
@@ -219,7 +219,7 @@
   Yarn.prototype._buildLetters = function () {
     var pathLen = this.pathEl.getTotalLength() || W;
     var baseCount = Math.max(this.word.length * 2, Math.round(pathLen / 22));
-    var densityScale = isMobile ? 0.7 : 0.35;
+    var densityScale = isMobile ? 0.7 : 0.21;
     var targetCount = Math.max(this.word.length, Math.round(baseCount * densityScale));
     var repeats = isMobile ? 1 : Math.max(1, Math.round(targetCount / this.word.length));
     var letterSize = isMobile ? this.renderSw * 0.75 : this.renderSw * 0.7;
@@ -294,6 +294,8 @@
       p.angle += p.speed;
       p.currentX = p.x + Math.cos(p.angle) * p.ampX * wScale;
       p.currentY = p.y + Math.sin(p.angle) * p.ampY * wScale;
+      // On hover, lerp toward baseY for a perfectly horizontal line
+      p.currentY = p.currentY + (this.baseY - p.currentY) * this.hoverAmt;
     }
     this.points[0].currentX = 0;
     this.points[this.points.length - 1].currentX = W;
@@ -378,10 +380,10 @@
     }
 
     var count = this.letters.length;
-    var maxUSpeed = isMobile ? 140 : 260;
-    var maxNSpeed = isMobile ? 160 : 300;
+    var maxUSpeed = 140;
+    var maxNSpeed = 160;
     var restitution = 0.7;
-    var wallKickSpeed = isMobile ? 18 : 34;
+    var wallKickSpeed = 18;
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
 
