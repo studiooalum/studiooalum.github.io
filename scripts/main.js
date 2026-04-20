@@ -41,6 +41,11 @@
     return d;
   }
 
+  function normalize(x, y) {
+    var len = Math.sqrt(x * x + y * y) || 1;
+    return { x: x / len, y: y / len };
+  }
+
   function randomInRange(min, max) {
     return min + Math.random() * (max - min);
   }
@@ -159,6 +164,26 @@
     var totalHoverUnits = repeats * blockUnits;
     var totalHoverLen = totalHoverUnits * unit;
     var hoverOffset = (pathLen - totalHoverLen) * 0.5;
+    var mobileStartU = 0;
+
+    if (isMobile) {
+      var bestErr = Infinity;
+      var sampleCount = 64;
+      for (var s = 0; s < sampleCount; s++) {
+        var startU = pathLen * (s / sampleCount);
+        var sumX = 0;
+        for (var mc = 0; mc < this.word.length; mc++) {
+          var sampleU = wrapArc(startU + (mc * 0.7 + 0.35) * unit, pathLen);
+          sumX += this.pathEl.getPointAtLength(sampleU).x;
+        }
+        var avgX = sumX / this.word.length;
+        var err = Math.abs(avgX - W * 0.5);
+        if (err < bestErr) {
+          bestErr = err;
+          mobileStartU = startU;
+        }
+      }
+    }
 
     for (var k = 0; k < this.letters.length; k++) {
       if (this.letters[k].el.parentNode) this.letters[k].el.parentNode.removeChild(this.letters[k].el);
@@ -176,7 +201,9 @@
         this.groupEl.appendChild(el);
 
         // Hover target: centered word layout, word gap 2n / letter gap 0.7n
-        var hoverU = hoverOffset + g * blockUnits * unit + (c * 0.7 + 0.35) * unit;
+        var hoverU = isMobile
+          ? mobileStartU + (c * 0.7 + 0.35) * unit
+          : hoverOffset + g * blockUnits * unit + (c * 0.7 + 0.35) * unit;
         hoverU = wrapArc(hoverU, pathLen);
 
         // Default first layout: centered on yarn (n=0), ordered along arc.
@@ -198,6 +225,8 @@
           pax: NaN,
           pay: NaN,
           letterR: letterR,
+          halfW: Math.max(2, el.getBBox().width * 0.5),
+          halfH: Math.max(2, el.getBBox().height * 0.5),
           maxN: maxN,
           hoverU: hoverU
         });
@@ -359,13 +388,28 @@
 
           var cdx = B.wx - A.wx;
           var cdy = B.wy - A.wy;
-          var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
-          var minGap = (A.letterR + B.letterR);
-          if (cdist >= minGap) continue;
 
-          var cnx = cdx / cdist;
-          var cny = cdy / cdist;
-          var pen = minGap - cdist;
+          // Use averaged local axes and per-letter bbox extents so collision
+          // starts at the actual text boundary, not at an oversized circle radius.
+          var axisT = normalize(A.tx + B.tx, A.ty + B.ty);
+          var axisTx = axisT.x;
+          var axisTy = axisT.y;
+          var axisNx = -axisTy;
+          var axisNy = axisTx;
+
+          var sepT = cdx * axisTx + cdy * axisTy;
+          var sepN = cdx * axisNx + cdy * axisNy;
+          var limitT = A.halfW + B.halfW;
+          var limitN = A.halfH + B.halfH;
+          var absSepT = Math.abs(sepT);
+          var absSepN = Math.abs(sepN);
+          if (absSepT >= limitT || absSepN >= limitN) continue;
+
+          var penT = limitT - absSepT;
+          var penN = limitN - absSepN;
+          var cnx = penT < penN ? (sepT >= 0 ? axisTx : -axisTx) : (sepN >= 0 ? axisNx : -axisNx);
+          var cny = penT < penN ? (sepT >= 0 ? axisTy : -axisTy) : (sepN >= 0 ? axisNy : -axisNy);
+          var pen = penT < penN ? penT : penN;
 
           var corrAx = -cnx * pen * 0.5;
           var corrAy = -cny * pen * 0.5;
