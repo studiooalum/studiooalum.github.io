@@ -222,7 +222,7 @@
     var densityScale = isMobile ? 0.7 : 0.35;
     var targetCount = Math.max(this.word.length, Math.round(baseCount * densityScale));
     var repeats = isMobile ? 1 : Math.max(1, Math.round(targetCount / this.word.length));
-    var letterSize = isMobile ? this.renderSw * 0.75 : 33 * 1.3;
+    var letterSize = isMobile ? this.renderSw * 0.75 : this.renderSw * 0.7;
     var letterR = letterSize * 0.42;
     var maxN = this.renderSw * 0.5 - letterR;
 
@@ -287,6 +287,7 @@
   };
 
   Yarn.prototype.updatePath = function (dt) {
+    dt = dt || (1 / 60);
     var wScale = this.transitioning ? 0 : (1 - this.hoverAmt);
     for (var i = 0; i < this.points.length; i++) {
       var p = this.points[i];
@@ -347,6 +348,35 @@
     var pathLen = this.pathEl.getTotalLength();
     if (!pathLen) return;
 
+    // --- Path sample cache: O(1) lookups replace expensive getPointAtLength ---
+    var SAMPLES = 80;
+    if (!this._pc) {
+      this._pc = [];
+      for (var si = 0; si <= SAMPLES; si++) this._pc.push({ x: 0, y: 0 });
+    }
+    for (var si = 0; si <= SAMPLES; si++) {
+      var spt = this.pathEl.getPointAtLength(si / SAMPLES * pathLen);
+      this._pc[si].x = spt.x;
+      this._pc[si].y = spt.y;
+    }
+    var pc = this._pc;
+
+    function fastTN(u) {
+      var frac = u / pathLen;
+      if (frac < 0) frac = 0;
+      if (frac > 1) frac = 1;
+      var t = frac * SAMPLES;
+      var ti = t | 0;
+      if (ti >= SAMPLES) ti = SAMPLES - 1;
+      var tf = t - ti;
+      var p0 = pc[ti], p1 = pc[ti + 1];
+      var ax = p0.x + (p1.x - p0.x) * tf;
+      var ay = p0.y + (p1.y - p0.y) * tf;
+      var dx = p1.x - p0.x, dy = p1.y - p0.y;
+      var l = Math.sqrt(dx * dx + dy * dy) || 1;
+      return { ax: ax, ay: ay, tx: dx / l, ty: dy / l, nx: -dy / l, ny: dx / l };
+    }
+
     var count = this.letters.length;
     var maxUSpeed = isMobile ? 140 : 260;
     var maxNSpeed = isMobile ? 160 : 300;
@@ -367,42 +397,45 @@
       }
     }
 
-    // 1) Yarn wall coupling: inject BOTH tangential and normal velocity from yarn motion.
+    // 1) Yarn wall coupling + frame rotation (curvature transfers vN↔vU naturally).
     for (var i = 0; i < count; i++) {
       var B = this.letters[i];
-      var tnB = this._getTN(B.u, pathLen);
+      var tnB = fastTN(wrapArc(B.u, pathLen));
 
       if (!isNaN(B.pax)) {
+        // Frame rotation: as yarn curves, local frame rotates → naturally mixes vN into vU.
+        var cosD = B.tx * tnB.tx + B.ty * tnB.ty;
+        var sinD = B.tx * tnB.ty - B.ty * tnB.tx;
+        var rVU = B.vU * cosD + B.vN * sinD;
+        var rVN = -B.vU * sinD + B.vN * cosD;
+        B.vU = rVU;
+        B.vN = rVN;
+
+        // Normal wall velocity injection (yarn motion pushes letters).
         var dax = tnB.ax - B.pax;
         var day = tnB.ay - B.pay;
         var invDt = 1 / Math.max(dt, 1e-6);
-        var wallVn = (dax * tnB.nx + day * tnB.ny) * invDt;
-        var wallVt = (dax * tnB.tx + day * tnB.ty) * invDt;
-        B.vN += wallVn * 0.16;
-        B.vU += wallVt * 0.12;
+        B.vN += (dax * tnB.nx + day * tnB.ny) * invDt * 0.18;
       }
 
+      B.tx = tnB.tx; B.ty = tnB.ty;
+      B.nx = tnB.nx; B.ny = tnB.ny;
       B.pax = tnB.ax;
       B.pay = tnB.ay;
     }
 
-    // 3) Integrate and handle elastic yarn boundary response.
+    // 2) Integrate and handle elastic yarn boundary response.
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
-
-      if (L.vU > maxUSpeed) L.vU = maxUSpeed;
-      if (L.vU < -maxUSpeed) L.vU = -maxUSpeed;
-      if (L.vN > maxNSpeed) L.vN = maxNSpeed;
-      if (L.vN < -maxNSpeed) L.vN = -maxNSpeed;
+      L.vU = clamp(L.vU, -maxUSpeed, maxUSpeed);
+      L.vN = clamp(L.vN, -maxNSpeed, maxNSpeed);
 
       L.u = wrapArc(L.u + L.vU * dt, pathLen);
       L.n += L.vN * dt;
 
-      // Anti-stick: add a weak center pull only near the yarn walls.
       var nearRatio = Math.abs(L.n) / Math.max(1e-6, L.maxN);
       if (nearRatio > nearWallBand) {
-        var towardCenter = L.n > 0 ? -1 : 1;
-        L.vN += towardCenter * nearWallCenterPull * (nearRatio - nearWallBand) * dt;
+        L.vN += (L.n > 0 ? -1 : 1) * nearWallCenterPull * (nearRatio - nearWallBand) * dt;
       }
 
       if (L.n > L.maxN) {
@@ -416,139 +449,97 @@
       }
     }
 
-    // 4) Compute world pose.
+    // 3) Compute world pose.
     for (var p = 0; p < count; p++) {
       var P = this.letters[p];
-      var tnP = this._getTN(P.u, pathLen);
-      P.tx = tnP.tx;
-      P.ty = tnP.ty;
-      P.nx = tnP.nx;
-      P.ny = tnP.ny;
+      var tnP = fastTN(wrapArc(P.u, pathLen));
+      P.tx = tnP.tx; P.ty = tnP.ty;
+      P.nx = tnP.nx; P.ny = tnP.ny;
       P.wx = tnP.ax + tnP.nx * P.n;
       P.wy = tnP.ay + tnP.ny * P.n;
     }
 
-    // 5) Collision (optimized neighborhood pairs) to reduce PC latency.
+    // 4) Letter-letter collision (single pass, neighborhood).
     var order = [];
     for (var oi = 0; oi < count; oi++) order.push(oi);
     order.sort(function (ia, ib) { return this.letters[ia].u - this.letters[ib].u; }.bind(this));
 
-    var neighborWindow = isMobile ? 10 : 8;
-    var maxArcCheck = 120;
+    var neighborWindow = isMobile ? 8 : 6;
+    var maxArcCheck = 100;
 
-    for (var pass = 0; pass < 2; pass++) {
-      for (var ord = 0; ord < count; ord++) {
-        var a = order[ord];
-        var A = this.letters[a];
+    for (var ord = 0; ord < count; ord++) {
+      var a = order[ord];
+      var A = this.letters[a];
 
-        for (var step = 1; step <= neighborWindow && step < count; step++) {
-          var ordB = (ord + step) % count;
-          var b = order[ordB];
-          var B = this.letters[b];
+      for (var step = 1; step <= neighborWindow && step < count; step++) {
+        var ordB = (ord + step) % count;
+        var b = order[ordB];
+        var B2 = this.letters[b];
 
-          var arcDelta = B.u - A.u;
-          if (arcDelta < 0) arcDelta += pathLen;
-          if (arcDelta > maxArcCheck) break;
+        var arcDelta = B2.u - A.u;
+        if (arcDelta < 0) arcDelta += pathLen;
+        if (arcDelta > maxArcCheck) break;
 
-          var cdx = B.wx - A.wx;
-          var cdy = B.wy - A.wy;
+        var cdx = B2.wx - A.wx, cdy = B2.wy - A.wy;
+        var axisT = normalize(A.tx + B2.tx, A.ty + B2.ty);
+        var axisTx = axisT.x, axisTy = axisT.y;
+        var axisNx = -axisTy, axisNy = axisTx;
 
-          // Use averaged local axes and per-letter bbox extents so collision
-          // starts at the actual text boundary, not at an oversized circle radius.
-          var axisT = normalize(A.tx + B.tx, A.ty + B.ty);
-          var axisTx = axisT.x;
-          var axisTy = axisT.y;
-          var axisNx = -axisTy;
-          var axisNy = axisTx;
+        var sepT = cdx * axisTx + cdy * axisTy;
+        var sepN = cdx * axisNx + cdy * axisNy;
+        var limitT = A.halfW + B2.halfW, limitN = A.halfH + B2.halfH;
+        if (Math.abs(sepT) >= limitT || Math.abs(sepN) >= limitN) continue;
 
-          var sepT = cdx * axisTx + cdy * axisTy;
-          var sepN = cdx * axisNx + cdy * axisNy;
-          var limitT = A.halfW + B.halfW;
-          var limitN = A.halfH + B.halfH;
-          var absSepT = Math.abs(sepT);
-          var absSepN = Math.abs(sepN);
-          if (absSepT >= limitT || absSepN >= limitN) continue;
+        var penT = limitT - Math.abs(sepT), penN = limitN - Math.abs(sepN);
+        var cnx, cny, pen;
+        if (penT < penN) {
+          cnx = sepT >= 0 ? axisTx : -axisTx;
+          cny = sepT >= 0 ? axisTy : -axisTy;
+          pen = penT;
+        } else {
+          cnx = sepN >= 0 ? axisNx : -axisNx;
+          cny = sepN >= 0 ? axisNy : -axisNy;
+          pen = penN;
+        }
 
-          var penT = limitT - absSepT;
-          var penN = limitN - absSepN;
-          var cnx = penT < penN ? (sepT >= 0 ? axisTx : -axisTx) : (sepN >= 0 ? axisNx : -axisNx);
-          var cny = penT < penN ? (sepT >= 0 ? axisTy : -axisTy) : (sepN >= 0 ? axisNy : -axisNy);
-          var pen = penT < penN ? penT : penN;
+        var half = pen * 0.5;
+        A.u = wrapArc(A.u - (cnx * half * A.tx + cny * half * A.ty), pathLen);
+        A.n = clamp(A.n - (cnx * half * A.nx + cny * half * A.ny), -A.maxN, A.maxN);
+        B2.u = wrapArc(B2.u + (cnx * half * B2.tx + cny * half * B2.ty), pathLen);
+        B2.n = clamp(B2.n + (cnx * half * B2.nx + cny * half * B2.ny), -B2.maxN, B2.maxN);
+        A.wx -= cnx * half; A.wy -= cny * half;
+        B2.wx += cnx * half; B2.wy += cny * half;
 
-          var corrAx = -cnx * pen * 0.5;
-          var corrAy = -cny * pen * 0.5;
-          var corrBx = cnx * pen * 0.5;
-          var corrBy = cny * pen * 0.5;
-
-          A.u = wrapArc(A.u + corrAx * A.tx + corrAy * A.ty, pathLen);
-          A.n = clamp(A.n + corrAx * A.nx + corrAy * A.ny, -A.maxN, A.maxN);
-          B.u = wrapArc(B.u + corrBx * B.tx + corrBy * B.ty, pathLen);
-          B.n = clamp(B.n + corrBx * B.nx + corrBy * B.ny, -B.maxN, B.maxN);
-
-          var aVx = A.tx * A.vU + A.nx * A.vN;
-          var aVy = A.ty * A.vU + A.ny * A.vN;
-          var bVx = B.tx * B.vU + B.nx * B.vN;
-          var bVy = B.ty * B.vU + B.ny * B.vN;
-
-          var relVx = bVx - aVx;
-          var relVy = bVy - aVy;
-          var relVn = relVx * cnx + relVy * cny;
-          if (relVn < 0) {
-            var impulse = -(1 + restitution) * relVn * 0.5;
-            aVx -= impulse * cnx;
-            aVy -= impulse * cny;
-            bVx += impulse * cnx;
-            bVy += impulse * cny;
-
-            A.vU = aVx * A.tx + aVy * A.ty;
-            A.vN = aVx * A.nx + aVy * A.ny;
-            B.vU = bVx * B.tx + bVy * B.ty;
-            B.vN = bVx * B.nx + bVy * B.ny;
-          }
-
-          var tnA = this._getTN(A.u, pathLen);
-          A.tx = tnA.tx;
-          A.ty = tnA.ty;
-          A.nx = tnA.nx;
-          A.ny = tnA.ny;
-          A.wx = tnA.ax + tnA.nx * A.n;
-          A.wy = tnA.ay + tnA.ny * A.n;
-
-          var tnB = this._getTN(B.u, pathLen);
-          B.tx = tnB.tx;
-          B.ty = tnB.ty;
-          B.nx = tnB.nx;
-          B.ny = tnB.ny;
-          B.wx = tnB.ax + tnB.nx * B.n;
-          B.wy = tnB.ay + tnB.ny * B.n;
+        var aVx = A.tx * A.vU + A.nx * A.vN;
+        var aVy = A.ty * A.vU + A.ny * A.vN;
+        var bVx = B2.tx * B2.vU + B2.nx * B2.vN;
+        var bVy = B2.ty * B2.vU + B2.ny * B2.vN;
+        var relVn = (bVx - aVx) * cnx + (bVy - aVy) * cny;
+        if (relVn < 0) {
+          var impulse = -(1 + restitution) * relVn * 0.5;
+          aVx -= impulse * cnx; aVy -= impulse * cny;
+          bVx += impulse * cnx; bVy += impulse * cny;
+          A.vU = aVx * A.tx + aVy * A.ty;
+          A.vN = aVx * A.nx + aVy * A.ny;
+          B2.vU = bVx * B2.tx + bVy * B2.ty;
+          B2.vN = bVx * B2.nx + bVy * B2.ny;
         }
       }
     }
 
-    // 6) Screen boundary collision (left/right viewport walls)
-    // Keep letters inside [letterR, W - letterR] and bounce with restitution.
+    // 5) Screen boundary collision (reuse stored pose).
     for (var w = 0; w < count; w++) {
       var S = this.letters[w];
-      var tnS = this._getTN(S.u, pathLen);
-      S.tx = tnS.tx;
-      S.ty = tnS.ty;
-      S.nx = tnS.nx;
-      S.ny = tnS.ny;
-      S.wx = tnS.ax + tnS.nx * S.n;
-      S.wy = tnS.ay + tnS.ny * S.n;
-
-      var minX = S.letterR;
-      var maxX = W - S.letterR;
+      var minX = S.letterR, maxX = W - S.letterR;
       var corrX = 0;
       if (S.wx < minX) corrX = minX - S.wx;
       else if (S.wx > maxX) corrX = maxX - S.wx;
       if (!corrX) continue;
 
-      // Position correction (project world correction to local basis)
       S.u = wrapArc(S.u + corrX * S.tx, pathLen);
       S.n = clamp(S.n + corrX * S.nx, -S.maxN, S.maxN);
+      S.wx += corrX;
 
-      // Velocity reflection across x-wall normal (nx=+1 for left, -1 for right)
       var vx = S.tx * S.vU + S.nx * S.vN;
       var vy = S.ty * S.vU + S.ny * S.vN;
       var wallNx = corrX > 0 ? 1 : -1;
@@ -560,17 +551,13 @@
       S.vN = vx * S.nx + vy * S.ny;
     }
 
-    // 7) Render
+    // 6) Render (use stored world pose — no extra path lookups).
     for (var r = 0; r < count; r++) {
       var C = this.letters[r];
-      var tn = this._getTN(C.u, pathLen);
-      var wx = tn.ax + tn.nx * C.n;
-      var wy = tn.ay + tn.ny * C.n;
-      var ang = Math.atan2(tn.ty, tn.tx) * 180 / Math.PI;
-
-      C.el.setAttribute('x', wx);
-      C.el.setAttribute('y', wy);
-      C.el.setAttribute('transform', 'rotate(' + ang + ',' + wx + ',' + wy + ')');
+      var ang = Math.atan2(C.ty, C.tx) * 180 / Math.PI;
+      C.el.setAttribute('x', C.wx);
+      C.el.setAttribute('y', C.wy);
+      C.el.setAttribute('transform', 'rotate(' + ang + ',' + C.wx + ',' + C.wy + ')');
       C.el.style.opacity = 0.9;
     }
   };
@@ -607,10 +594,10 @@
       if (DATA[j].sw < minSw) minSw = DATA[j].sw;
       if (DATA[j].sw > maxSw) maxSw = DATA[j].sw;
     }
-    // PC only: keep current minimum, extend maximum by +50% for random range.
-    if (!isMobile) maxSw *= 1.5;
+    // Extend range for visible thickness variation.
+    maxSw *= isMobile ? 1.4 : 1.5;
     if (!fixedRandomWidths || fixedRandomWidths.length !== DATA.length) {
-      var minDiff = isMobile ? 1.2 : Math.max(4.5, (maxSw - minSw) / 5);
+      var minDiff = isMobile ? 8 : Math.max(4.5, (maxSw - minSw) / 5);
       fixedRandomWidths = createDistinctRandomWidths(DATA.length, minSw, maxSw, minDiff);
     }
 
