@@ -38,7 +38,7 @@ body {
 }
 
 .yarn-text {
-    font-size: 22px;
+    font-size: 33px;
     font-weight: 800;
     font-family: 'GothamBold', 'GothamBook', 'Helvetica Neue', sans-serif;
     fill: #000;
@@ -58,5 +58,5 @@ body {
 }
 
 @media (max-width: 768px) {
-    .yarn-text { font-size: 16px; }
+    .yarn-text { font-size: 24px; }
 }

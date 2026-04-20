@@ -26,6 +26,12 @@
   var lastTs = 0;
 
   function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function wrapArc(u, len) {
+    if (len <= 0) return 0;
+    u = u % len;
+    if (u < 0) u += len;
+    return u;
+  }
 
   function Yarn(cfg) {
     this.word = cfg.word.toUpperCase();
@@ -97,11 +103,14 @@
 
   Yarn.prototype._buildLetters = function () {
     var pathLen = this.pathEl.getTotalLength() || W;
-    var targetCount = Math.max(this.word.length * 2, Math.round(pathLen / 22));
+    var baseCount = Math.max(this.word.length * 2, Math.round(pathLen / 22));
+    var densityScale = 0.7;
+    var targetCount = Math.max(this.word.length, Math.round(baseCount * densityScale));
     var repeats = Math.max(1, Math.round(targetCount / this.word.length));
-    var total = repeats * this.word.length;
-    var spacing = pathLen / total;
-    var letterR = canHover ? 8.5 : 7;
+    var intraUnit = 1;
+    var interUnit = 2;
+    var unit = pathLen / (repeats * (this.word.length * intraUnit + interUnit));
+    var letterR = canHover ? 12.75 : 10.5;
     var maxN = this.sw * 0.5 - letterR;
 
     for (var k = 0; k < this.letters.length; k++) {
@@ -109,39 +118,47 @@
     }
     this.letters = [];
 
-    for (var i = 0; i < total; i++) {
-      var ch = this.word[i % this.word.length];
-      var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      el.textContent = ch;
-      el.setAttribute('class', 'yarn-text');
-      textGroup.appendChild(el);
+    for (var g = 0; g < repeats; g++) {
+      var groupStart = g * (this.word.length * intraUnit + interUnit) * unit;
+      for (var c = 0; c < this.word.length; c++) {
+        var ch = this.word[c];
+        var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        el.textContent = ch;
+        el.setAttribute('class', 'yarn-text');
+        textGroup.appendChild(el);
 
-      // u: arc position (fixed reference)
-      var u = i * spacing + spacing * 0.5;
-      // Snap anchor coords
-      var pt = this.pathEl.getPointAtLength(clamp(u, 0, pathLen));
+        // Default placement: ordered letters, 2n word gap / 1n letter gap
+        var u = groupStart + (c * intraUnit + 0.5) * unit;
+        u = wrapArc(u, pathLen);
+        var pt = this.pathEl.getPointAtLength(u);
 
-      this.letters.push({
-        el: el,
-        u: u,           // arc anchor — stays fixed (read-only reference for rotation)
-        n: (Math.random() - 0.5) * maxN * 0.8,  // normal offset, starts near center
-        vN: 0,          // normal velocity
-        // world coords cache (set in render)
-        wx: pt.x,
-        wy: pt.y,
-        // previous anchor world position (to compute yarn motion)
-        pax: pt.x,
-        pay: pt.y,
-        letterR: letterR,
-        maxN: maxN
-      });
+        this.letters.push({
+          el: el,
+          u: u,
+          vU: 0,
+          n: (Math.random() - 0.5) * maxN * 0.5,
+          vN: 0,
+          wx: pt.x,
+          wy: pt.y,
+          tx: 1,
+          ty: 0,
+          nx: 0,
+          ny: 1,
+          pax: pt.x,
+          pay: pt.y,
+          letterR: letterR,
+          maxN: maxN
+        });
+      }
     }
   };
 
   // Get tangent & normal at arc position u on pathEl
   Yarn.prototype._getTN = function (u, pathLen) {
-    var s  = clamp(u, 0, pathLen);
-    var s2 = clamp(u + 1.5, 0, pathLen);
+    var s = wrapArc(u, pathLen);
+    var s2 = s + 1.5;
+    if (s2 > pathLen) s2 = s - 1.5;
+    if (s2 < 0) s2 = s + 1.5;
     var p  = this.pathEl.getPointAtLength(s);
     var p2 = this.pathEl.getPointAtLength(s2);
     var tdx = p2.x - p.x, tdy = p2.y - p.y;
@@ -184,37 +201,41 @@
     if (!pathLen) return;
 
     var count = this.letters.length;
-    var damping = Math.exp(-dt / 0.5);
-    var maxSpeed = 400;
+    var damping = Math.exp(-dt / 0.58);
+    var maxUSpeed = 280;
+    var maxNSpeed = 420;
 
-    // ── 1. Yarn motion → normal impulse ──────────────────────
+    // ── 1. Yarn motion → local impulses (tangent + normal) ───
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
       var tn = this._getTN(L.u, pathLen);
 
-      // How much did the anchor point move along the normal axis?
       var dax = tn.ax - L.pax;
       var day = tn.ay - L.pay;
-      var dnorm = dax * tn.nx + day * tn.ny;  // displacement along normal
+      var dtan = dax * tn.tx + day * tn.ty;
+      var dnorm = dax * tn.nx + day * tn.ny;
 
-      // Transfer that as velocity impulse (restitution-like)
-      L.vN += dnorm / dt * 0.6;
+      L.vU += (dtan / dt) * 0.35;
+      L.vN += (dnorm / dt) * 0.62;
 
-      // Save anchor for next frame
       L.pax = tn.ax;
       L.pay = tn.ay;
     }
 
-    // ── 2. Integrate vN → n ──────────────────────────────────
+    // ── 2. Integrate (u, n) with hard yarn boundary on n ─────
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
-      // Clamp speed
-      if (L.vN > maxSpeed) L.vN = maxSpeed;
-      if (L.vN < -maxSpeed) L.vN = -maxSpeed;
+
+      if (L.vU > maxUSpeed) L.vU = maxUSpeed;
+      if (L.vU < -maxUSpeed) L.vU = -maxUSpeed;
+      if (L.vN > maxNSpeed) L.vN = maxNSpeed;
+      if (L.vN < -maxNSpeed) L.vN = -maxNSpeed;
+
+      L.u = wrapArc(L.u + L.vU * dt, pathLen);
       L.n += L.vN * dt;
+      L.vU *= damping;
       L.vN *= damping;
 
-      // Hard boundary: bounce off yarn edge
       if (L.n > L.maxN) {
         L.n = L.maxN;
         if (L.vN > 0) L.vN *= -0.35;
@@ -224,16 +245,20 @@
       }
     }
 
-    // ── 3. Compute world positions for collision ──────────────
+    // ── 3. Compute world pose from (u, n) ─────────────────────
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
       var tn = this._getTN(L.u, pathLen);
+      L.tx = tn.tx;
+      L.ty = tn.ty;
+      L.nx = tn.nx;
+      L.ny = tn.ny;
       L.wx = tn.ax + tn.nx * L.n;
       L.wy = tn.ay + tn.ny * L.n;
     }
 
-    // ── 4. Letter–letter collision (resolve in n) ─────────────
-    var minGap = (canHover ? 8.5 : 7) * 2;
+    // ── 4. Letter–letter collision (world impulse, local update)
+    var minGap = (canHover ? 12.75 : 10.5) * 2;
     for (var a = 0; a < count; a++) {
       for (var b = a + 1; b < count; b++) {
         var A = this.letters[a];
@@ -243,30 +268,43 @@
         var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
         if (cdist >= minGap) continue;
 
-        var pen = (minGap - cdist) * 0.5;
+        var pen = (minGap - cdist);
         var cnx = cdx / cdist, cny = cdy / cdist;
 
-        // Collision normal projected onto each letter's yarn normal
-        var tnA = this._getTN(A.u, pathLen);
-        var tnB = this._getTN(B.u, pathLen);
-        var projA = cnx * tnA.nx + cny * tnA.ny;
-        var projB = cnx * tnB.nx + cny * tnB.ny;
+        // Position correction in world, then project to local (u,n)
+        var corrAx = -cnx * pen * 0.5;
+        var corrAy = -cny * pen * 0.5;
+        var corrBx = cnx * pen * 0.5;
+        var corrBy = cny * pen * 0.5;
 
-        // Position correction in n
-        A.n -= pen * projA;
-        B.n += pen * projB;
+        A.u = wrapArc(A.u + (corrAx * A.tx + corrAy * A.ty), pathLen);
+        A.n = clamp(A.n + (corrAx * A.nx + corrAy * A.ny), -A.maxN, A.maxN);
+        B.u = wrapArc(B.u + (corrBx * B.tx + corrBy * B.ty), pathLen);
+        B.n = clamp(B.n + (corrBx * B.nx + corrBy * B.ny), -B.maxN, B.maxN);
 
-        // Velocity exchange
-        var relVn = (B.vN * projB) - (A.vN * projA);
+        // Velocity response in world, then project back to local
+        var aVx = A.tx * A.vU + A.nx * A.vN;
+        var aVy = A.ty * A.vU + A.ny * A.vN;
+        var bVx = B.tx * B.vU + B.nx * B.vN;
+        var bVy = B.ty * B.vU + B.ny * B.vN;
+
+        var relVx = bVx - aVx;
+        var relVy = bVy - aVy;
+        var relVn = relVx * cnx + relVy * cny;
         if (relVn < 0) {
-          var imp = relVn * 0.5;
-          A.vN += imp * projA;
-          B.vN -= imp * projB;
-        }
+          var restitution = 0.24;
+          var imp = -(1 + restitution) * relVn * 0.5;
 
-        // Re-clamp n
-        A.n = clamp(A.n, -A.maxN, A.maxN);
-        B.n = clamp(B.n, -B.maxN, B.maxN);
+          aVx -= imp * cnx;
+          aVy -= imp * cny;
+          bVx += imp * cnx;
+          bVy += imp * cny;
+
+          A.vU = aVx * A.tx + aVy * A.ty;
+          A.vN = aVx * A.nx + aVy * A.ny;
+          B.vU = bVx * B.tx + bVy * B.ty;
+          B.vN = bVx * B.nx + bVy * B.ny;
+        }
       }
     }
 
