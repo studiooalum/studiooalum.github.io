@@ -69,12 +69,7 @@ function renderEditionGrid(editions) {
     const thumb = document.createElement("div");
     thumb.className = "edition-card__thumb";
 
-    if (sold) {
-      const soldMark = document.createElement("span");
-      soldMark.className = "edition-card__sold";
-      soldMark.textContent = "SOLD";
-      thumb.appendChild(soldMark);
-    } else {
+    if (!sold) {
       const firstImage =
         Array.isArray(edition.images) && edition.images.length > 0
           ? imageUrl(edition.images[0], { width: 720, height: 720 })

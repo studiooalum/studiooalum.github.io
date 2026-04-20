@@ -17,21 +17,24 @@
 }
 
 .edition-media {
-  aspect-ratio: 1 / 1;
   background: #efeee7;
-  overflow: hidden;
   position: relative;
 }
 
 .edition-media img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
 }
 
+.edition-media img + img {
+  margin-top: 8px;
+}
+
 .edition-media.is-sold {
+  aspect-ratio: 1 / 1;
   background: var(--point);
+  overflow: hidden;
 }
 
 .edition-media__sold {
@@ -125,13 +128,19 @@
 
 @media (min-width: 960px) {
   .edition-main {
-    grid-template-columns: minmax(340px, 480px) minmax(340px, 560px);
+    grid-template-columns: 1fr 1fr;
     align-items: start;
-    gap: 28px;
-    padding: 18px 28px 44px;
+    align-content: center;
+    gap: 48px;
+    min-height: 100vh;
+    padding: var(--gnb-height, 40px) 60px 24px;
   }
 
   .edition-title {
-    font-size: 34px;
+    font-size: 36px;
+  }
+
+  .edition-price {
+    font-size: 22px;
   }
 }

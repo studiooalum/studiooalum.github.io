@@ -56,20 +56,28 @@ function renderMedia(product) {
     return;
   }
 
-  const firstImage = Array.isArray(product.images) && product.images.length > 0
-    ? imageUrl(product.images[0], { width: 1000, height: 1000 })
-    : null;
-
-  if (!firstImage) {
+  const images = Array.isArray(product.images) ? product.images : [];
+  if (images.length === 0) {
     mediaEl.innerHTML = "";
     return;
   }
 
-  const img = document.createElement("img");
-  img.src = firstImage;
-  img.alt = product.title;
-  img.draggable = false;
-  mediaEl.appendChild(img);
+  // Main image
+  const mainImg = document.createElement("img");
+  mainImg.src = imageUrl(images[0], { width: 1000, height: 1000 });
+  mainImg.alt = product.title;
+  mainImg.draggable = false;
+  mediaEl.appendChild(mainImg);
+
+  // Detail images (additional images from Sanity)
+  for (let i = 1; i < images.length; i++) {
+    const img = document.createElement("img");
+    img.src = imageUrl(images[i], { width: 1000 });
+    img.alt = `${product.title} detail ${i}`;
+    img.loading = "lazy";
+    img.draggable = false;
+    mediaEl.appendChild(img);
+  }
 }
 
 function toCheckoutWith(product) {
