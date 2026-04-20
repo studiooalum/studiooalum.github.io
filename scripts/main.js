@@ -33,6 +33,13 @@
     return u;
   }
 
+  function shortestArcDelta(fromU, toU, len) {
+    var d = toU - fromU;
+    if (d > len * 0.5) d -= len;
+    if (d < -len * 0.5) d += len;
+    return d;
+  }
+
   function randomInRange(min, max) {
     return min + Math.random() * (max - min);
   }
@@ -125,6 +132,16 @@
       });
       this.hitPathEl.addEventListener('mouseleave', function () {
         self.hovered = false;
+        // PC default state: random static layout.
+        for (var i = 0; i < self.letters.length; i++) {
+          var L = self.letters[i];
+          if (!isMobile) {
+            L.u = L.restU;
+            L.n = L.restN;
+            L.vU = 0;
+            L.vN = 0;
+          }
+        }
       });
     }
     function handleClick() {
@@ -152,6 +169,15 @@
     }
     this.letters = [];
 
+    var randomSeedU = [];
+    if (!isMobile) {
+      for (var rs = 0; rs < repeats * this.word.length; rs++) {
+        randomSeedU.push(Math.random() * pathLen);
+      }
+      randomSeedU.sort(function (a, b) { return a - b; });
+    }
+    var randomIdx = 0;
+
     for (var g = 0; g < repeats; g++) {
       var groupStart = g * (this.word.length * intraUnit + interUnit) * unit;
       for (var c = 0; c < this.word.length; c++) {
@@ -161,16 +187,22 @@
         el.setAttribute('class', 'yarn-text');
         this.groupEl.appendChild(el);
 
-        // Default placement: ordered letters, 2n word gap / 1n letter gap
-        var u = groupStart + (c * intraUnit + 0.5) * unit;
-        u = wrapArc(u, pathLen);
+        // Hover target: word gap 2n, letter gap 0.7n
+        var hoverU = groupStart + (c * 0.7 + 0.35) * unit;
+        hoverU = wrapArc(hoverU, pathLen);
+
+        // Default PC: random spacing. Mobile keeps ordered placement.
+        var restU = isMobile ? hoverU : randomSeedU[randomIdx++];
+        var restN = clamp((Math.random() - 0.5) * maxN * 1.6, -maxN, maxN);
+
+        var u = restU;
         var pt = this.pathEl.getPointAtLength(u);
 
         this.letters.push({
           el: el,
           u: u,
           vU: 0,
-          n: 0,
+          n: restN,
           vN: 0,
           wx: pt.x,
           wy: pt.y,
@@ -181,7 +213,10 @@
           pax: NaN,
           pay: NaN,
           letterR: letterR,
-          maxN: maxN
+          maxN: maxN,
+          restU: restU,
+          restN: restN,
+          hoverU: hoverU
         });
       }
     }
@@ -235,18 +270,22 @@
     if (!pathLen) return;
 
     var count = this.letters.length;
-    var maxUSpeed = 320;
-    var maxNSpeed = 350;
+    var maxUSpeed = 260;
+    var maxNSpeed = 300;
 
-    // ── 1. Refresh local basis only; yarn motion does not inject velocity ───
-    for (var i = 0; i < count; i++) {
-      var L = this.letters[i];
-      var tn = this._getTN(L.u, pathLen);
-      L.pax = tn.ax;
-      L.pay = tn.ay;
+    // 1) Hover on PC: gather into word layout (word gap 2n, letter gap 0.7n)
+    if (canHover && this.hovered && !isMobile) {
+      var gatherK = 26;
+      var gatherDamp = 0.84;
+      for (var g = 0; g < count; g++) {
+        var G = this.letters[g];
+        var du = shortestArcDelta(G.u, G.hoverU, pathLen);
+        G.vU += du * gatherK * dt;
+        G.vU *= gatherDamp;
+      }
     }
 
-    // ── 2. Integrate (u, n) with perfectly elastic wall bounce
+    // 2) Integrate and handle elastic yarn boundary response.
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
 
@@ -267,24 +306,40 @@
       }
     }
 
-    // ── 3. Compute world pose from (u, n) ─────────────────────
-    for (var i = 0; i < count; i++) {
-      var L = this.letters[i];
-      var tn = this._getTN(L.u, pathLen);
-      L.tx = tn.tx;
-      L.ty = tn.ty;
-      L.nx = tn.nx;
-      L.ny = tn.ny;
-      L.wx = tn.ax + tn.nx * L.n;
-      L.wy = tn.ay + tn.ny * L.n;
+    // 3) Compute world pose.
+    for (var p = 0; p < count; p++) {
+      var P = this.letters[p];
+      var tnP = this._getTN(P.u, pathLen);
+      P.tx = tnP.tx;
+      P.ty = tnP.ty;
+      P.nx = tnP.nx;
+      P.ny = tnP.ny;
+      P.wx = tnP.ax + tnP.nx * P.n;
+      P.wy = tnP.ay + tnP.ny * P.n;
     }
 
-    // ── 4. Letter–letter collision: perfectly elastic, equal mass
+    // 4) Collision (optimized neighborhood pairs) to reduce PC latency.
+    var order = [];
+    for (var oi = 0; oi < count; oi++) order.push(oi);
+    order.sort(function (ia, ib) { return this.letters[ia].u - this.letters[ib].u; }.bind(this));
+
+    var neighborWindow = isMobile ? 10 : 8;
+    var maxArcCheck = 120;
+
     for (var pass = 0; pass < 2; pass++) {
-      for (var a = 0; a < count; a++) {
-        for (var b = a + 1; b < count; b++) {
-          var A = this.letters[a];
+      for (var ord = 0; ord < count; ord++) {
+        var a = order[ord];
+        var A = this.letters[a];
+
+        for (var step = 1; step <= neighborWindow && step < count; step++) {
+          var ordB = (ord + step) % count;
+          var b = order[ordB];
           var B = this.letters[b];
+
+          var arcDelta = B.u - A.u;
+          if (arcDelta < 0) arcDelta += pathLen;
+          if (arcDelta > maxArcCheck) break;
+
           var cdx = B.wx - A.wx;
           var cdy = B.wy - A.wy;
           var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
@@ -295,7 +350,6 @@
           var cny = cdy / cdist;
           var pen = minGap - cdist;
 
-          // Position correction in world, then project back to each local basis.
           var corrAx = -cnx * pen * 0.5;
           var corrAy = -cny * pen * 0.5;
           var corrBx = cnx * pen * 0.5;
@@ -306,7 +360,6 @@
           B.u = wrapArc(B.u + corrBx * B.tx + corrBy * B.ty, pathLen);
           B.n = clamp(B.n + corrBx * B.nx + corrBy * B.ny, -B.maxN, B.maxN);
 
-          // World velocities from local components.
           var aVx = A.tx * A.vU + A.nx * A.vN;
           var aVy = A.ty * A.vU + A.ny * A.vN;
           var bVx = B.tx * B.vU + B.nx * B.vN;
@@ -328,7 +381,6 @@
             B.vN = bVx * B.nx + bVy * B.ny;
           }
 
-          // Refresh world pose after correction for the second pass.
           var tnA = this._getTN(A.u, pathLen);
           A.tx = tnA.tx;
           A.ty = tnA.ty;
@@ -348,7 +400,7 @@
       }
     }
 
-    // ── 5. Render ─────────────────────────────────────────────
+    // 5) Render
     for (var r = 0; r < count; r++) {
       var C = this.letters[r];
       var tn = this._getTN(C.u, pathLen);
