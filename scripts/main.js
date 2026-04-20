@@ -1,6 +1,6 @@
 /* ======================================================
    Studio OALUM – Yarn Menu
-   Physics-based letters inside moving yarns
+   Letters pushed by yarn boundary, 2D free physics
 ====================================================== */
 (function () {
   'use strict';
@@ -77,7 +77,6 @@
     this.hoverRatio = 0.5;
     this.hoverAmt = 0;
     this.letters = [];
-    this.lastPathLen = 0;
 
     this._bind();
     this.updatePath();
@@ -93,7 +92,6 @@
         self.hovered = true;
         self.hoverRatio = clamp(e.clientX / Math.max(1, W), 0, 1);
       });
-
       this.hitPathEl.addEventListener('mouseleave', function () {
         self.hovered = false;
       });
@@ -115,6 +113,12 @@
     var total = repeats * this.word.length;
     var spacing = pathLen / total;
 
+    // Remove old elements
+    for (var k = 0; k < this.letters.length; k++) {
+      if (this.letters[k].el.parentNode) {
+        this.letters[k].el.parentNode.removeChild(this.letters[k].el);
+      }
+    }
     this.letters = [];
 
     for (var i = 0; i < total; i++) {
@@ -124,23 +128,26 @@
       el.setAttribute('class', 'yarn-text');
       textGroup.appendChild(el);
 
+      // Arc anchor position
+      var u = i * spacing + spacing * 0.5;
+      var pt = this.pathEl.getPointAtLength(clamp(u, 0, pathLen));
+
+      // Scatter initial position randomly within yarn cross-section
+      var scatter = (Math.random() - 0.5) * this.sw * 0.5;
+      var scatterY = (Math.random() - 0.5) * this.sw * 0.5;
+
       this.letters.push({
         el: el,
-        u: i * spacing,
-        vU: 0,
-        n: (Math.random() - 0.5) * this.sw * 0.25,
-        vN: (Math.random() - 0.5) * 2,
-        x: 0,
-        y: 0,
-        tx: 1,
-        ty: 0,
-        nx: 0,
-        ny: 1,
+        u: u,           // arc anchor (fixed, used for rotation direction only)
+        x: pt.x + scatter,
+        y: pt.y + scatterY,
+        vx: 0,
+        vy: 0,
+        px: pt.x,      // previous anchor x (for anchor velocity)
+        py: pt.y,      // previous anchor y
         r: canHover ? 8.5 : 7
       });
     }
-
-    this.lastPathLen = pathLen;
   };
 
   Yarn.prototype.updatePath = function () {
@@ -182,117 +189,139 @@
     var pathLen = this.pathEl.getTotalLength();
     if (!pathLen) return;
 
-    if (this.lastPathLen > 0 && Math.abs(pathLen - this.lastPathLen) > 0.001) {
-      var ratio = pathLen / this.lastPathLen;
-      for (var z = 0; z < this.letters.length; z++) {
-        this.letters[z].u *= ratio;
-      }
-    }
-    this.lastPathLen = pathLen;
-
     var count = this.letters.length;
-    var spacing = pathLen / count;
-    var kSpring = this.hovered && canHover ? 38 : 26;
-    var noise = this.hovered && canHover ? 1.2 : 2.2;
-    var normalMax = this.sw * 0.42;
+    var yarnRadius = this.sw * 0.5;  // half stroke-width = physical edge
+    var letterR = canHover ? 8.5 : 7;
+    var edgeDist = yarnRadius + letterR; // distance at which yarn boundary hits letter center
+    var minLetterGap = letterR * 2;
+    var maxSpeed = 280;
+    // Damping: time-constant ~0.6s → exp(-dt/0.6)
+    var damping = Math.exp(-dt / 0.6);
 
+    // ── 1. Yarn boundary pushes letters ──────────────────────
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
-      var prev = this.letters[(i - 1 + count) % count];
-      var next = this.letters[(i + 1) % count];
+      var u = clamp(L.u, 0, pathLen - 0.01);
 
-      var nextU = next.u;
-      if (i === count - 1) nextU += pathLen;
-      var prevU = prev.u;
-      if (i === 0) prevU -= pathLen;
+      // Current anchor point on path
+      var pt  = this.pathEl.getPointAtLength(u);
+      var pt2 = this.pathEl.getPointAtLength(clamp(u + 2, 0, pathLen));
+      var tLen = Math.sqrt((pt2.x - pt.x) * (pt2.x - pt.x) + (pt2.y - pt.y) * (pt2.y - pt.y)) || 1;
+      var tx = (pt2.x - pt.x) / tLen;
+      var ty = (pt2.y - pt.y) / tLen;
+      // Normal (perpendicular)
+      var nx = -ty, ny = tx;
 
-      var stretchNext = nextU - L.u - spacing;
-      var stretchPrev = L.u - prevU - spacing;
-      var forceU = (stretchNext - stretchPrev) * kSpring;
+      // Anchor velocity this frame
+      var anchorVx = (pt.x - L.px) / dt;
+      var anchorVy = (pt.y - L.py) / dt;
 
-      forceU += (Math.random() - 0.5) * noise;
-      L.vU += forceU * dt;
-      L.vU *= 0.86;
-      L.u += L.vU * dt;
+      // Distance from letter to anchor
+      var dx = L.x - pt.x;
+      var dy = L.y - pt.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
 
-      while (L.u < 0) L.u += pathLen;
-      while (L.u >= pathLen) L.u -= pathLen;
+      // Push direction: away from anchor center
+      var pushX = dist > 0.01 ? dx / dist : nx;
+      var pushY = dist > 0.01 ? dy / dist : ny;
 
-      var forceN = -L.n * (this.hovered && canHover ? 24 : 13);
-      forceN += (Math.random() - 0.5) * noise * 0.55;
-      L.vN += forceN * dt;
-      L.vN *= 0.84;
-      L.n += L.vN * dt;
+      if (dist < edgeDist) {
+        // Relative velocity along push direction
+        var relVx = L.vx - anchorVx;
+        var relVy = L.vy - anchorVy;
+        var relVn = relVx * pushX + relVy * pushY;
 
-      if (L.n > normalMax) {
-        L.n = normalMax;
-        L.vN *= -0.45;
+        // Only push if closing in
+        if (relVn < 0) {
+          var restitution = 0.3;
+          var impulse = -(1.0 + restitution) * relVn;
+          L.vx += impulse * pushX;
+          L.vy += impulse * pushY;
+        }
+
+        // Position correction (prevent overlap)
+        var correction = edgeDist - dist;
+        L.x += pushX * correction;
+        L.y += pushY * correction;
       }
-      if (L.n < -normalMax) {
-        L.n = -normalMax;
-        L.vN *= -0.45;
+
+      // Weak restoring: pull back when drifted too far
+      var restoreThresh = edgeDist + 40;
+      if (dist > restoreThresh) {
+        var pull = (dist - restoreThresh) * 4;
+        L.vx -= (dx / dist) * pull * dt;
+        L.vy -= (dy / dist) * pull * dt;
       }
+
+      // Store anchor for next frame
+      L.px = pt.x;
+      L.py = pt.y;
     }
 
-    for (var p = 0; p < count; p++) {
-      var T = this.letters[p];
-      var s = clamp(T.u, 0, pathLen);
-      var pt = this.pathEl.getPointAtLength(s);
-      var pt2 = this.pathEl.getPointAtLength(clamp(s + 1.5, 0, pathLen));
-      var t = normalize(pt2.x - pt.x, pt2.y - pt.y);
-      var n = { x: -t.y, y: t.x };
-
-      T.tx = t.x;
-      T.ty = t.y;
-      T.nx = n.x;
-      T.ny = n.y;
-      T.x = pt.x + n.x * T.n;
-      T.y = pt.y + n.y * T.n;
-    }
-
-    var minGap = canHover ? 14 : 12;
+    // ── 2. Letter–letter collision ────────────────────────────
     for (var a = 0; a < count; a++) {
       for (var b = a + 1; b < count; b++) {
         var A = this.letters[a];
         var B = this.letters[b];
-        var dx = B.x - A.x;
-        var dy = B.y - A.y;
-        var dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
-        if (dist >= minGap) continue;
+        var cdx = B.x - A.x;
+        var cdy = B.y - A.y;
+        var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
+        if (cdist >= minLetterGap) continue;
 
-        var nx = dx / dist;
-        var ny = dy / dist;
-        var impulse = (minGap - dist) * 0.16;
+        var cnx = cdx / cdist;
+        var cny = cdy / cdist;
+        var pen = minLetterGap - cdist;
 
-        var aLong = nx * A.tx + ny * A.ty;
-        var aNorm = nx * A.nx + ny * A.ny;
-        var bLong = nx * B.tx + ny * B.ty;
-        var bNorm = nx * B.nx + ny * B.ny;
+        // Position correction
+        A.x -= cnx * pen * 0.5;
+        A.y -= cny * pen * 0.5;
+        B.x += cnx * pen * 0.5;
+        B.y += cny * pen * 0.5;
 
-        A.vU -= aLong * impulse;
-        A.vN -= aNorm * impulse;
-        B.vU += bLong * impulse;
-        B.vN += bNorm * impulse;
+        // Velocity response
+        var cRelVx = B.vx - A.vx;
+        var cRelVy = B.vy - A.vy;
+        var cRelVn = cRelVx * cnx + cRelVy * cny;
+        if (cRelVn < 0) {
+          var cImp = cRelVn * 0.6;
+          A.vx += cImp * cnx;
+          A.vy += cImp * cny;
+          B.vx -= cImp * cnx;
+          B.vy -= cImp * cny;
+        }
       }
     }
 
+    // ── 3. Integrate + clamp + damp ───────────────────────────
+    for (var i = 0; i < count; i++) {
+      var L = this.letters[i];
+      var spd = Math.sqrt(L.vx * L.vx + L.vy * L.vy);
+      if (spd > maxSpeed) {
+        L.vx = (L.vx / spd) * maxSpeed;
+        L.vy = (L.vy / spd) * maxSpeed;
+      }
+      L.vx *= damping;
+      L.vy *= damping;
+      L.x += L.vx * dt;
+      L.y += L.vy * dt;
+    }
+
+    // ── 4. Render ─────────────────────────────────────────────
     for (var r = 0; r < count; r++) {
       var C = this.letters[r];
-      C.n = clamp(C.n, -normalMax, normalMax);
+      var u = clamp(C.u, 0, pathLen - 0.01);
+      var rpt  = this.pathEl.getPointAtLength(u);
+      var rpt2 = this.pathEl.getPointAtLength(clamp(u + 2, 0, pathLen));
+      var rtx = rpt2.x - rpt.x;
+      var rty = rpt2.y - rpt.y;
+      var rtLen = Math.sqrt(rtx * rtx + rty * rty) || 1;
+      rtx /= rtLen; rty /= rtLen;
+      var ang = Math.atan2(rty, rtx) * 180 / Math.PI;
 
-      var len = clamp(C.u, 0, pathLen);
-      var base = this.pathEl.getPointAtLength(len);
-      var baseN = this.pathEl.getPointAtLength(clamp(len + 1.5, 0, pathLen));
-      var dir = normalize(baseN.x - base.x, baseN.y - base.y);
-      var normal = { x: -dir.y, y: dir.x };
-      var x = base.x + normal.x * C.n;
-      var y = base.y + normal.y * C.n;
-      var ang = Math.atan2(dir.y, dir.x) * 180 / Math.PI;
-
-      C.el.setAttribute('x', x);
-      C.el.setAttribute('y', y);
-      C.el.setAttribute('transform', 'rotate(' + ang + ',' + x + ',' + y + ')');
-      C.el.style.opacity = this.hovered && canHover ? 1 : 0.9;
+      C.el.setAttribute('x', C.x);
+      C.el.setAttribute('y', C.y);
+      C.el.setAttribute('transform', 'rotate(' + ang + ',' + C.x + ',' + C.y + ')');
+      C.el.style.opacity = 0.9;
     }
   };
 
