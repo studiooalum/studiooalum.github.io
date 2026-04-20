@@ -125,6 +125,16 @@
     this.hoverAmt = 0;
     this.letters = [];
 
+    // Mobile drag state
+    this.dragActive = false;
+    this.dragTargetIdx = 2;
+    this.dragTargetX = 0;
+    this.dragTargetY = 0;
+    this.dragVelX = 0;
+    this.dragVelY = 0;
+    this._prevDragX = 0;
+    this._prevDragY = 0;
+
     this._bind();
     this.updatePath();
     this._buildLetters();
@@ -146,6 +156,70 @@
       openPage(self);
     }
     this.hitPathEl.addEventListener('click', handleClick);
+
+    if (isMobile) {
+      this.hitPathEl.addEventListener('touchstart', function (e) {
+        if (isPageOpen) return;
+        e.preventDefault();
+        var touch = e.touches[0];
+        var svgRect = svg.getBoundingClientRect();
+        var scaleX = W / svgRect.width;
+        var scaleY = H / svgRect.height;
+        var tx = (touch.clientX - svgRect.left) * scaleX;
+        var ty = (touch.clientY - svgRect.top) * scaleY;
+        self.dragActive = true;
+        self.dragTargetX = tx;
+        self.dragTargetY = ty;
+        self._prevDragX = tx;
+        self._prevDragY = ty;
+        self.dragVelX = 0;
+        self.dragVelY = 0;
+        // Find closest interior control point
+        var minDist = Infinity;
+        for (var pi = 1; pi < self.points.length - 1; pi++) {
+          var dx = self.points[pi].currentX - tx;
+          var dy = self.points[pi].currentY - ty;
+          var dist = dx * dx + dy * dy;
+          if (dist < minDist) { minDist = dist; self.dragTargetIdx = pi; }
+        }
+      }, { passive: false });
+
+      var onTouchMove = function (e) {
+        if (!self.dragActive) return;
+        e.preventDefault();
+        var touch = e.touches[0];
+        var svgRect = svg.getBoundingClientRect();
+        var scaleX = W / svgRect.width;
+        var scaleY = H / svgRect.height;
+        var tx = (touch.clientX - svgRect.left) * scaleX;
+        var ty = (touch.clientY - svgRect.top) * scaleY;
+        self.dragVelX = tx - self._prevDragX;
+        self.dragVelY = ty - self._prevDragY;
+        self._prevDragX = tx;
+        self._prevDragY = ty;
+        self.dragTargetX = tx;
+        self.dragTargetY = ty;
+      };
+
+      var onTouchEnd = function () {
+        if (!self.dragActive) return;
+        self.dragActive = false;
+        // Burst: fling letters using last drag velocity
+        var pathLen = self.pathEl.getTotalLength() || W;
+        var speed = Math.sqrt(self.dragVelX * self.dragVelX + self.dragVelY * self.dragVelY);
+        var burstScale = Math.max(25, Math.min(60, speed * 4));
+        for (var li = 0; li < self.letters.length; li++) {
+          var L = self.letters[li];
+          var vTang = self.dragVelX * L.tx + self.dragVelY * L.ty;
+          var vNorm = self.dragVelX * L.nx + self.dragVelY * L.ny;
+          L.vU += vTang * burstScale * (0.6 + Math.random() * 0.8);
+          L.vN += vNorm * burstScale * (0.6 + Math.random() * 0.8) + (Math.random() - 0.5) * 320;
+        }
+      };
+
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd);
+    }
   };
 
   Yarn.prototype._buildLetters = function () {
@@ -205,16 +279,16 @@
         el.style.fontSize = letterSize + 'px';
         this.groupEl.appendChild(el);
 
-        // Initial placement: centered on screen, ordered along arc.
+        // Initial placement: mobile = centered, PC = evenly spread across full path.
         var u = isMobile
           ? mobileStartU + (c * 0.7 + 0.35) * unit
-          : wrapArc(hoverOffset + g * blockUnits * unit + (c * 0.7 + 0.35) * unit, pathLen);
+          : wrapArc((g / repeats) * pathLen + (c * 0.7 + 0.35) * unit, pathLen);
         var pt = this.pathEl.getPointAtLength(u);
 
         this.letters.push({
           el: el,
           u: u,
-          vU: 0,
+          vU: (Math.random() - 0.5) * 150,
           n: 0,
           vN: 0,
           wx: pt.x,
@@ -259,6 +333,13 @@
     this.points[0].currentX = 0;
     this.points[this.points.length - 1].currentX = W;
 
+    // Mobile drag: pull nearest interior control point toward finger.
+    if (isMobile && this.dragActive) {
+      var dp = this.points[this.dragTargetIdx];
+      dp.currentX += (this.dragTargetX - dp.currentX) * 0.35;
+      dp.currentY += (this.dragTargetY - dp.currentY) * 0.35;
+    }
+
     var pts = this.points;
     var d = 'M ' + pts[0].currentX + ' ' + pts[0].currentY;
     for (var j = 0; j < pts.length - 1; j++) {
@@ -291,6 +372,23 @@
     var wallKickSpeed = 34;
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
+
+    // 0) Mobile drag: spring letters to evenly-spaced positions along yarn.
+    if (isMobile && this.dragActive && count > 0) {
+      var sortedIdx = [];
+      for (var si = 0; si < count; si++) sortedIdx.push(si);
+      sortedIdx.sort(function (a, b) { return this.letters[a].u - this.letters[b].u; }.bind(this));
+      for (var ai = 0; ai < count; ai++) {
+        var li = sortedIdx[ai];
+        var AL = this.letters[li];
+        var targetU = wrapArc((ai + 0.5) / count * pathLen, pathLen);
+        var du = shortestArcDelta(AL.u, targetU, pathLen);
+        AL.vU += du * 30 * dt;
+        AL.vU *= 0.76;
+        AL.vN += (-AL.n) * 22 * dt;
+        AL.vN *= 0.82;
+      }
+    }
 
     // 1) Yarn boundary interaction only (no direct tangent velocity injection).
     for (var i = 0; i < count; i++) {
