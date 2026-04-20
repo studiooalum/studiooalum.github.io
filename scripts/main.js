@@ -11,6 +11,7 @@
 
   var W = window.innerWidth;
   var H = window.innerHeight;
+  var isMobile = window.matchMedia('(max-width: 768px)').matches;
   var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   var DATA = [
@@ -36,6 +37,7 @@
     this.word = cfg.word.toUpperCase();
     this.color = cfg.color;
     this.sw = cfg.sw;
+    this.renderSw = isMobile ? this.sw : this.sw * 1.15;
     this.baseY = H * cfg.yOff;
     this.url = cfg.url;
 
@@ -53,7 +55,7 @@
         angle: Math.random() * 6.283,
         speed: (0.004 + Math.random() * 0.008) * 3.0,  // 2x speed
         ampX: edge ? 2 : 8 + Math.random() * 12,
-        ampY: edge ? 3 : 16 + Math.random() * 24
+        ampY: edge ? 10 : 16 + Math.random() * 24
       });
     }
 
@@ -65,13 +67,13 @@
     this.pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     this.pathEl.setAttribute('class', 'yarn');
     this.pathEl.setAttribute('stroke', this.color);
-    this.pathEl.setAttribute('stroke-width', this.sw);
+    this.pathEl.setAttribute('stroke-width', this.renderSw);
     this.groupEl.appendChild(this.pathEl);
 
     this.hitPathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     this.hitPathEl.setAttribute('fill', 'none');
     this.hitPathEl.setAttribute('stroke', 'transparent');
-    this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.sw * 1.8));
+    this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.renderSw * 1.8));
     this.hitPathEl.style.cursor = 'pointer';
     this.hitPathEl.style.pointerEvents = 'stroke';
     this.groupEl.appendChild(this.hitPathEl);
@@ -115,7 +117,7 @@
     var interUnit = 2;
     var unit = pathLen / (repeats * (this.word.length * intraUnit + interUnit));
     var letterR = canHover ? 12.75 : 10.5;
-    var maxN = this.sw * 0.5 - letterR;
+    var maxN = this.renderSw * 0.5 - letterR;
 
     for (var k = 0; k < this.letters.length; k++) {
       if (this.letters[k].el.parentNode) this.letters[k].el.parentNode.removeChild(this.letters[k].el);
@@ -173,7 +175,7 @@
 
   Yarn.prototype.updatePath = function () {
     var wScale = this.transitioning ? 0 : (1 - this.hoverAmt * 0.6);
-    for (var i = 1; i < this.points.length - 1; i++) {
+    for (var i = 0; i < this.points.length; i++) {
       var p = this.points[i];
       p.angle += p.speed;
       p.currentX = p.x + Math.cos(p.angle) * p.ampX * wScale;
@@ -195,8 +197,8 @@
 
     var goal = (this.hovered || this.transitioning) ? 1 : 0;
     this.hoverAmt += (goal - this.hoverAmt) * 0.08;
-    this.pathEl.setAttribute('stroke-width', this.sw * (1 + this.hoverAmt * 0.15));
-    this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.sw * 1.8));
+    this.pathEl.setAttribute('stroke-width', this.renderSw * (1 + this.hoverAmt * 0.15));
+    this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.renderSw * 1.8));
   };
 
   Yarn.prototype.updateLetters = function (dt) {
@@ -345,7 +347,7 @@
 
     var tl = gsap.timeline();
     tl.to(yarn.points, { currentY: yarn.baseY, currentX: function (i, t) { return t.x; }, duration: 0.5, ease: 'back.out(1.5)' }, 0);
-    tl.to(yarn.pathEl, { attr: { 'stroke-width': yarn.sw * 0.35 }, duration: 0.5, ease: 'power2.out' }, 0);
+    tl.to(yarn.pathEl, { attr: { 'stroke-width': yarn.renderSw * 0.35 }, duration: 0.5, ease: 'power2.out' }, 0);
     tl.to(overlay, { x: '0%', duration: 1.0, ease: 'power4.inOut' }, 0.2);
     tl.call(function () { window.location.href = yarn.url; }, null, 1.3);
   }
@@ -355,6 +357,7 @@
     yarns = [];
     W = window.innerWidth;
     H = window.innerHeight;
+    isMobile = window.matchMedia('(max-width: 768px)').matches;
     canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
