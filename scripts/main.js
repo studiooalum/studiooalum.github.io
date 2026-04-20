@@ -24,6 +24,7 @@
   var yarns = [];
   var isPageOpen = false;
   var lastTs = 0;
+  var fixedRandomWidths = null;
 
   function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
   function wrapArc(u, len) {
@@ -154,6 +155,10 @@
     var letterSize = isMobile ? this.renderSw * 0.75 : 33 * 1.3;
     var letterR = letterSize * 0.42;
     var maxN = this.renderSw * 0.5 - letterR;
+    var blockUnits = this.word.length * 0.7 + 2;
+    var totalHoverUnits = repeats * blockUnits;
+    var totalHoverLen = totalHoverUnits * unit;
+    var hoverOffset = (pathLen - totalHoverLen) * 0.5;
 
     for (var k = 0; k < this.letters.length; k++) {
       if (this.letters[k].el.parentNode) this.letters[k].el.parentNode.removeChild(this.letters[k].el);
@@ -170,8 +175,8 @@
         el.style.fontSize = letterSize + 'px';
         this.groupEl.appendChild(el);
 
-        // Hover target: word gap 2n, letter gap 0.7n
-        var hoverU = groupStart + (c * 0.7 + 0.35) * unit;
+        // Hover target: centered word layout, word gap 2n / letter gap 0.7n
+        var hoverU = hoverOffset + g * blockUnits * unit + (c * 0.7 + 0.35) * unit;
         hoverU = wrapArc(hoverU, pathLen);
 
         // Default first layout: centered on yarn (n=0), ordered along arc.
@@ -238,7 +243,8 @@
 
     var goal = (this.hovered || this.transitioning) ? 1 : 0;
     this.hoverAmt += (goal - this.hoverAmt) * 0.08;
-    var currentSw = this.renderSw * (1 + this.hoverAmt * 0.15);
+    // Keep visible thickness fixed after initial render.
+    var currentSw = this.renderSw;
     this.pathEl.setAttribute('stroke-width', currentSw);
     // Keep pointer hit area exactly on the visible yarn stroke.
     this.hitPathEl.setAttribute('stroke-width', currentSw);
@@ -495,7 +501,10 @@
     }
     // PC only: keep current minimum, extend maximum by +50% for random range.
     if (!isMobile) maxSw *= 1.5;
-    var randomWidths = createDistinctRandomWidths(DATA.length, minSw, maxSw, 1.2);
+    if (!fixedRandomWidths || fixedRandomWidths.length !== DATA.length) {
+      var minDiff = isMobile ? 1.2 : Math.max(4.5, (maxSw - minSw) / 5);
+      fixedRandomWidths = createDistinctRandomWidths(DATA.length, minSw, maxSw, minDiff);
+    }
 
     // Build Newsletter→Archive so Archive group is last in DOM = on top.
     // Within each group: path(behind) then letters(front).
@@ -503,7 +512,7 @@
       yarns.push(new Yarn({
         word: DATA[i].word,
         color: DATA[i].color,
-        sw: randomWidths[i],
+        sw: fixedRandomWidths[i],
         yOff: DATA[i].yOff,
         url: DATA[i].url
       }));
