@@ -411,7 +411,42 @@
       }
     }
 
-    // 6) Render
+    // 6) Screen boundary collision (left/right viewport walls)
+    // Keep letters inside [letterR, W - letterR] and bounce with restitution.
+    for (var w = 0; w < count; w++) {
+      var S = this.letters[w];
+      var tnS = this._getTN(S.u, pathLen);
+      S.tx = tnS.tx;
+      S.ty = tnS.ty;
+      S.nx = tnS.nx;
+      S.ny = tnS.ny;
+      S.wx = tnS.ax + tnS.nx * S.n;
+      S.wy = tnS.ay + tnS.ny * S.n;
+
+      var minX = S.letterR;
+      var maxX = W - S.letterR;
+      var corrX = 0;
+      if (S.wx < minX) corrX = minX - S.wx;
+      else if (S.wx > maxX) corrX = maxX - S.wx;
+      if (!corrX) continue;
+
+      // Position correction (project world correction to local basis)
+      S.u = wrapArc(S.u + corrX * S.tx, pathLen);
+      S.n = clamp(S.n + corrX * S.nx, -S.maxN, S.maxN);
+
+      // Velocity reflection across x-wall normal (nx=+1 for left, -1 for right)
+      var vx = S.tx * S.vU + S.nx * S.vN;
+      var vy = S.ty * S.vU + S.ny * S.vN;
+      var wallNx = corrX > 0 ? 1 : -1;
+      var vAlongN = vx * wallNx;
+      if (vAlongN < 0) {
+        vx -= (1 + restitution) * vAlongN * wallNx;
+      }
+      S.vU = vx * S.tx + vy * S.ty;
+      S.vN = vx * S.nx + vy * S.ny;
+    }
+
+    // 7) Render
     for (var r = 0; r < count; r++) {
       var C = this.letters[r];
       var tn = this._getTN(C.u, pathLen);
@@ -458,6 +493,8 @@
       if (DATA[j].sw < minSw) minSw = DATA[j].sw;
       if (DATA[j].sw > maxSw) maxSw = DATA[j].sw;
     }
+    // PC only: keep current minimum, extend maximum by +50% for random range.
+    if (!isMobile) maxSw *= 1.5;
     var randomWidths = createDistinctRandomWidths(DATA.length, minSw, maxSw, 1.2);
 
     // Build Newsletter→Archive so Archive group is last in DOM = on top.
