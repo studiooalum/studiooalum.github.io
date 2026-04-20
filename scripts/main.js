@@ -33,6 +33,34 @@
     return u;
   }
 
+  function randomInRange(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function createDistinctRandomWidths(count, min, max, minDiff) {
+    var widths = [];
+    var attempts = 0;
+    while (widths.length < count && attempts < 400) {
+      var candidate = randomInRange(min, max);
+      var uniqueEnough = true;
+      for (var i = 0; i < widths.length; i++) {
+        if (Math.abs(widths[i] - candidate) < minDiff) {
+          uniqueEnough = false;
+          break;
+        }
+      }
+      if (uniqueEnough) widths.push(candidate);
+      attempts++;
+    }
+
+    // Fallback for very tight ranges.
+    while (widths.length < count) {
+      var t = count === 1 ? 0.5 : widths.length / (count - 1);
+      widths.push(min + (max - min) * t);
+    }
+    return widths;
+  }
+
   function Yarn(cfg) {
     this.word = cfg.word.toUpperCase();
     this.color = cfg.color;
@@ -110,7 +138,7 @@
   Yarn.prototype._buildLetters = function () {
     var pathLen = this.pathEl.getTotalLength() || W;
     var baseCount = Math.max(this.word.length * 2, Math.round(pathLen / 22));
-    var densityScale = 0.7;
+    var densityScale = isMobile ? 0.7 : 0.5;
     var targetCount = Math.max(this.word.length, Math.round(baseCount * densityScale));
     var repeats = Math.max(1, Math.round(targetCount / this.word.length));
     var intraUnit = 1;
@@ -361,9 +389,25 @@
     canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
+    var minSw = Infinity;
+    var maxSw = -Infinity;
+    for (var j = 0; j < DATA.length; j++) {
+      if (DATA[j].sw < minSw) minSw = DATA[j].sw;
+      if (DATA[j].sw > maxSw) maxSw = DATA[j].sw;
+    }
+    var randomWidths = createDistinctRandomWidths(DATA.length, minSw, maxSw, 1.2);
+
     // Build Newsletter→Archive so Archive group is last in DOM = on top.
     // Within each group: path(behind) then letters(front).
-    for (var i = DATA.length - 1; i >= 0; i--) yarns.push(new Yarn(DATA[i]));
+    for (var i = DATA.length - 1; i >= 0; i--) {
+      yarns.push(new Yarn({
+        word: DATA[i].word,
+        color: DATA[i].color,
+        sw: randomWidths[i],
+        yOff: DATA[i].yOff,
+        url: DATA[i].url
+      }));
+    }
     lastTs = 0;
   }
 
