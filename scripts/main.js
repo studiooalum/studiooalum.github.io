@@ -237,6 +237,9 @@
     }
     this.letters = [];
 
+    var totalLetters = repeats * this.word.length;
+    var uniformGap = pathLen / totalLetters;
+
     for (var g = 0; g < repeats; g++) {
       for (var c = 0; c < this.word.length; c++) {
         var ch = this.word[c];
@@ -246,9 +249,12 @@
         el.style.fontSize = letterSize + 'px';
         this.groupEl.appendChild(el);
 
-        // 2n/0.7n layout evenly distributed across full yarn
+        var idx = g * this.word.length + c;
+        // Hover target: 2n/0.7n word-grouped layout
         var hoverU = wrapArc(g * blockUnits * hUnit + (c * 0.7 + centerOff) * hUnit, pathLen);
-        var u = hoverU;  // Default position = hover target
+        // Default position: uniform spacing across full yarn
+        var defaultU = wrapArc((idx + 0.5) * uniformGap, pathLen);
+        var u = defaultU;
         var pt = this.pathEl.getPointAtLength(u);
 
         this.letters.push({
@@ -266,7 +272,8 @@
           halfW: Math.max(2, el.getBBox().width * 0.5),
           halfH: Math.max(2, el.getBBox().height * 0.5),
           maxN: maxN,
-          hoverU: hoverU
+          hoverU: hoverU,
+          defaultU: defaultU
         });
       }
     }
@@ -387,15 +394,26 @@
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
 
-    // 0) PC hover: spring letters back to default 2n/0.7n positions.
-    if (canHover && this.hovered && !isMobile) {
-      for (var gi = 0; gi < count; gi++) {
-        var GL = this.letters[gi];
-        var du = shortestArcDelta(GL.u, GL.hoverU, pathLen);
-        GL.vU += du * 28 * dt;
-        GL.vU *= 0.82;
-        GL.vN += (-GL.n) * 20 * dt;
-        GL.vN *= 0.86;
+    // 0) PC hover/unhover springs.
+    if (canHover && !isMobile) {
+      if (this.hovered) {
+        // Hover: spring to word-grouped positions (2n/0.7n)
+        for (var gi = 0; gi < count; gi++) {
+          var GL = this.letters[gi];
+          var du = shortestArcDelta(GL.u, GL.hoverU, pathLen);
+          GL.vU += du * 28 * dt;
+          GL.vU *= 0.82;
+          GL.vN += (-GL.n) * 20 * dt;
+          GL.vN *= 0.86;
+        }
+      } else {
+        // Unhover: gently spring back to uniform spacing
+        for (var gi2 = 0; gi2 < count; gi2++) {
+          var GL2 = this.letters[gi2];
+          var du2 = shortestArcDelta(GL2.u, GL2.defaultU, pathLen);
+          GL2.vU += du2 * 12 * dt;
+          GL2.vU *= 0.90;
+        }
       }
     }
 
