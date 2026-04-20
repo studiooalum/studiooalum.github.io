@@ -208,21 +208,10 @@
     var maxUSpeed = 320;
     var maxNSpeed = 350;
 
-    // ── 1. Yarn motion → local impulse (u, n) ────────────────
+    // ── 1. Refresh local basis only; yarn motion does not inject velocity ───
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
       var tn = this._getTN(L.u, pathLen);
-
-      // Skip first frame (pax/pay not yet initialised)
-      if (!isNaN(L.pax)) {
-        var dax = tn.ax - L.pax;
-        var day = tn.ay - L.pay;
-        var dtan = dax * tn.tx + day * tn.ty;
-        var dnorm = dax * tn.nx + day * tn.ny;
-        L.vU += (dtan / dt) * 0.35;
-        L.vN += (dnorm / dt) * 0.55;
-      }
-
       L.pax = tn.ax;
       L.pay = tn.ay;
     }
