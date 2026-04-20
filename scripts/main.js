@@ -249,6 +249,9 @@
     var maxUSpeed = 260;
     var maxNSpeed = 300;
     var restitution = 0.7;
+    var wallKickSpeed = 34;
+    var nearWallBand = 0.88;
+    var nearWallCenterPull = 48;
 
     // 1) Hover on PC: gather into centered word layout (2n / 0.7n)
     if (canHover && this.hovered && !isMobile) {
@@ -273,7 +276,7 @@
         var dax = tnB.ax - B.pax;
         var day = tnB.ay - B.pay;
         var wallVn = (dax * tnB.nx + day * tnB.ny) / Math.max(dt, 1e-6);
-        B.vN += wallVn * 0.22;
+        B.vN += wallVn * 0.16;
       }
 
       B.pax = tnB.ax;
@@ -292,12 +295,21 @@
       L.u = wrapArc(L.u + L.vU * dt, pathLen);
       L.n += L.vN * dt;
 
+      // Anti-stick: add a weak center pull only near the yarn walls.
+      var nearRatio = Math.abs(L.n) / Math.max(1e-6, L.maxN);
+      if (nearRatio > nearWallBand) {
+        var towardCenter = L.n > 0 ? -1 : 1;
+        L.vN += towardCenter * nearWallCenterPull * (nearRatio - nearWallBand) * dt;
+      }
+
       if (L.n > L.maxN) {
         L.n = L.maxN;
         if (L.vN > 0) L.vN *= -restitution;
+        if (Math.abs(L.vN) < wallKickSpeed) L.vN = -wallKickSpeed;
       } else if (L.n < -L.maxN) {
         L.n = -L.maxN;
         if (L.vN < 0) L.vN *= -restitution;
+        if (Math.abs(L.vN) < wallKickSpeed) L.vN = wallKickSpeed;
       }
     }
 
