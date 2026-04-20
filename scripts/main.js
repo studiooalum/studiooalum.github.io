@@ -58,11 +58,19 @@
       });
     }
 
+    // Per-yarn layered group: text below its own yarn path.
+    this.layerEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this.textLayerEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this.pathLayerEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this.layerEl.appendChild(this.textLayerEl);
+    this.layerEl.appendChild(this.pathLayerEl);
+    yarnGroup.appendChild(this.layerEl);
+
     this.pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     this.pathEl.setAttribute('class', 'yarn');
     this.pathEl.setAttribute('stroke', this.color);
     this.pathEl.setAttribute('stroke-width', this.sw);
-    yarnGroup.appendChild(this.pathEl);
+    this.pathLayerEl.appendChild(this.pathEl);
 
     this.hitPathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     this.hitPathEl.setAttribute('fill', 'none');
@@ -70,7 +78,7 @@
     this.hitPathEl.setAttribute('stroke-width', Math.max(28, this.sw * 1.8));
     this.hitPathEl.style.cursor = 'pointer';
     this.hitPathEl.style.pointerEvents = 'stroke';
-    yarnGroup.appendChild(this.hitPathEl);
+    this.pathLayerEl.appendChild(this.hitPathEl);
 
     this.hovered = false;
     this.transitioning = false;
@@ -125,7 +133,7 @@
         var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         el.textContent = ch;
         el.setAttribute('class', 'yarn-text');
-        textGroup.appendChild(el);
+        this.textLayerEl.appendChild(el);
 
         // Default placement: ordered letters, 2n word gap / 1n letter gap
         var u = groupStart + (c * intraUnit + 0.5) * unit;
@@ -136,7 +144,7 @@
           el: el,
           u: u,
           vU: 0,
-          n: (Math.random() - 0.5) * maxN * 0.5,
+          n: 0,
           vN: 0,
           wx: pt.x,
           wy: pt.y,
@@ -258,7 +266,6 @@
     }
 
     // ── 4. Letter–letter collision (world impulse, local update)
-    var minGap = (canHover ? 12.75 : 10.5) * 2;
     for (var a = 0; a < count; a++) {
       for (var b = a + 1; b < count; b++) {
         var A = this.letters[a];
@@ -266,6 +273,7 @@
         var cdx = B.wx - A.wx;
         var cdy = B.wy - A.wy;
         var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
+        var minGap = (A.letterR + B.letterR) * 1.06;
         if (cdist >= minGap) continue;
 
         var pen = (minGap - cdist);
@@ -292,7 +300,7 @@
         var relVy = bVy - aVy;
         var relVn = relVx * cnx + relVy * cny;
         if (relVn < 0) {
-          var restitution = 0.24;
+          var restitution = 0.3;
           var imp = -(1 + restitution) * relVn * 0.5;
 
           aVx -= imp * cnx;
@@ -348,7 +356,9 @@
     H = window.innerHeight;
     canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-    for (var i = 0; i < DATA.length; i++) yarns.push(new Yarn(DATA[i]));
+
+    // Build from bottom to top so upper yarn layers are visually on top.
+    for (var i = DATA.length - 1; i >= 0; i--) yarns.push(new Yarn(DATA[i]));
     lastTs = 0;
   }
 
