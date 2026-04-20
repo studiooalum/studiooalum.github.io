@@ -167,13 +167,18 @@
     var mobileStartU = 0;
 
     if (isMobile) {
+      // Find startU that centers the word AND has no arc-wrap (to keep letter order).
+      var wordSpan = (this.word.length * 0.7) * unit;
       var bestErr = Infinity;
-      var sampleCount = 64;
+      var sampleCount = 128;
       for (var s = 0; s < sampleCount; s++) {
         var startU = pathLen * (s / sampleCount);
+        // Skip positions where the word would wrap past pathLen (scrambles visual order).
+        var lastU = startU + (this.word.length - 1) * 0.7 * unit + 0.35 * unit;
+        if (lastU > pathLen) continue;
         var sumX = 0;
         for (var mc = 0; mc < this.word.length; mc++) {
-          var sampleU = wrapArc(startU + (mc * 0.7 + 0.35) * unit, pathLen);
+          var sampleU = startU + (mc * 0.7 + 0.35) * unit;
           sumX += this.pathEl.getPointAtLength(sampleU).x;
         }
         var avgX = sumX / this.word.length;
@@ -200,14 +205,10 @@
         el.style.fontSize = letterSize + 'px';
         this.groupEl.appendChild(el);
 
-        // Hover target: centered word layout, word gap 2n / letter gap 0.7n
-        var hoverU = isMobile
+        // Initial placement: centered on screen, ordered along arc.
+        var u = isMobile
           ? mobileStartU + (c * 0.7 + 0.35) * unit
-          : hoverOffset + g * blockUnits * unit + (c * 0.7 + 0.35) * unit;
-        hoverU = wrapArc(hoverU, pathLen);
-
-        // Default first layout: centered on yarn (n=0), ordered along arc.
-        var u = hoverU;
+          : wrapArc(hoverOffset + g * blockUnits * unit + (c * 0.7 + 0.35) * unit, pathLen);
         var pt = this.pathEl.getPointAtLength(u);
 
         this.letters.push({
@@ -227,8 +228,7 @@
           letterR: letterR,
           halfW: Math.max(2, el.getBBox().width * 0.5),
           halfH: Math.max(2, el.getBBox().height * 0.5),
-          maxN: maxN,
-          hoverU: hoverU
+          maxN: maxN
         });
       }
     }
@@ -292,21 +292,7 @@
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
 
-    // 1) Hover on PC: gather into centered word layout (2n / 0.7n)
-    if (canHover && this.hovered && !isMobile) {
-      var gatherK = 26;
-      var gatherDamp = 0.84;
-      for (var g = 0; g < count; g++) {
-        var G = this.letters[g];
-        var du = shortestArcDelta(G.u, G.hoverU, pathLen);
-        G.vU += du * gatherK * dt;
-        G.vU *= gatherDamp;
-        G.vN += (-G.n) * 22 * dt;
-        G.vN *= 0.86;
-      }
-    }
-
-    // 2) Yarn boundary interaction only (no direct tangent velocity injection).
+    // 1) Yarn boundary interaction only (no direct tangent velocity injection).
     for (var i = 0; i < count; i++) {
       var B = this.letters[i];
       var tnB = this._getTN(B.u, pathLen);
