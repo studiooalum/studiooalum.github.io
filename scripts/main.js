@@ -205,10 +205,10 @@
     if (!pathLen) return;
 
     var count = this.letters.length;
-    var damping = Math.exp(-dt / 0.35);
+    var maxUSpeed = 320;
     var maxNSpeed = 350;
 
-    // ── 1. Yarn motion → normal impulse only (u stays fixed) ─
+    // ── 1. Yarn motion → local impulse (u, n) ────────────────
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
       var tn = this._getTN(L.u, pathLen);
@@ -217,7 +217,9 @@
       if (!isNaN(L.pax)) {
         var dax = tn.ax - L.pax;
         var day = tn.ay - L.pay;
+        var dtan = dax * tn.tx + day * tn.ty;
         var dnorm = dax * tn.nx + day * tn.ny;
+        L.vU += (dtan / dt) * 0.35;
         L.vN += (dnorm / dt) * 0.55;
       }
 
@@ -225,22 +227,24 @@
       L.pay = tn.ay;
     }
 
-    // ── 2. Integrate n with hard yarn boundary ────────────────
+    // ── 2. Integrate (u, n) with perfectly elastic wall bounce
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
 
+      if (L.vU > maxUSpeed) L.vU = maxUSpeed;
+      if (L.vU < -maxUSpeed) L.vU = -maxUSpeed;
       if (L.vN > maxNSpeed) L.vN = maxNSpeed;
       if (L.vN < -maxNSpeed) L.vN = -maxNSpeed;
 
+      L.u = wrapArc(L.u + L.vU * dt, pathLen);
       L.n += L.vN * dt;
-      L.vN *= damping;
 
       if (L.n > L.maxN) {
         L.n = L.maxN;
-        if (L.vN > 0) L.vN *= -0.4;
+        if (L.vN > 0) L.vN *= -1;
       } else if (L.n < -L.maxN) {
         L.n = -L.maxN;
-        if (L.vN < 0) L.vN *= -0.4;
+        if (L.vN < 0) L.vN *= -1;
       }
     }
 
@@ -256,36 +260,71 @@
       L.wy = tn.ay + tn.ny * L.n;
     }
 
-    // ── 4. Letter–letter collision resolved directly in n ─────
-    for (var a = 0; a < count; a++) {
-      for (var b = a + 1; b < count; b++) {
-        var A = this.letters[a];
-        var B = this.letters[b];
-        var cdx = B.wx - A.wx;
-        var cdy = B.wy - A.wy;
-        var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
-        var minGap = (A.letterR + B.letterR);
-        if (cdist >= minGap) continue;
+    // ── 4. Letter–letter collision: perfectly elastic, equal mass
+    for (var pass = 0; pass < 2; pass++) {
+      for (var a = 0; a < count; a++) {
+        for (var b = a + 1; b < count; b++) {
+          var A = this.letters[a];
+          var B = this.letters[b];
+          var cdx = B.wx - A.wx;
+          var cdy = B.wy - A.wy;
+          var cdist = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
+          var minGap = (A.letterR + B.letterR);
+          if (cdist >= minGap) continue;
 
-        var pen = minGap - cdist;
-        var cnx = cdx / cdist, cny = cdy / cdist;
+          var cnx = cdx / cdist;
+          var cny = cdy / cdist;
+          var pen = minGap - cdist;
 
-        // Project collision normal onto each letter's yarn normal
-        var projA = cnx * A.nx + cny * A.ny;
-        var projB = cnx * B.nx + cny * B.ny;
+          // Position correction in world, then project back to each local basis.
+          var corrAx = -cnx * pen * 0.5;
+          var corrAy = -cny * pen * 0.5;
+          var corrBx = cnx * pen * 0.5;
+          var corrBy = cny * pen * 0.5;
 
-        // Position correction directly in n
-        A.n -= pen * 0.5 * (Math.abs(projA) > 0.05 ? projA : (A.n < 0 ? -0.5 : 0.5));
-        B.n += pen * 0.5 * (Math.abs(projB) > 0.05 ? projB : (B.n > 0 ? 0.5 : -0.5));
-        A.n = clamp(A.n, -A.maxN, A.maxN);
-        B.n = clamp(B.n, -B.maxN, B.maxN);
+          A.u = wrapArc(A.u + corrAx * A.tx + corrAy * A.ty, pathLen);
+          A.n = clamp(A.n + corrAx * A.nx + corrAy * A.ny, -A.maxN, A.maxN);
+          B.u = wrapArc(B.u + corrBx * B.tx + corrBy * B.ty, pathLen);
+          B.n = clamp(B.n + corrBx * B.nx + corrBy * B.ny, -B.maxN, B.maxN);
 
-        // Velocity response in n
-        var relVn = B.vN * projB - A.vN * projA;
-        if (relVn < 0) {
-          var imp = -relVn * 0.65;
-          A.vN -= imp * (projA || 0.5);
-          B.vN += imp * (projB || 0.5);
+          // World velocities from local components.
+          var aVx = A.tx * A.vU + A.nx * A.vN;
+          var aVy = A.ty * A.vU + A.ny * A.vN;
+          var bVx = B.tx * B.vU + B.nx * B.vN;
+          var bVy = B.ty * B.vU + B.ny * B.vN;
+
+          var relVx = bVx - aVx;
+          var relVy = bVy - aVy;
+          var relVn = relVx * cnx + relVy * cny;
+          if (relVn < 0) {
+            var impulse = -relVn;
+            aVx -= impulse * cnx;
+            aVy -= impulse * cny;
+            bVx += impulse * cnx;
+            bVy += impulse * cny;
+
+            A.vU = aVx * A.tx + aVy * A.ty;
+            A.vN = aVx * A.nx + aVy * A.ny;
+            B.vU = bVx * B.tx + bVy * B.ty;
+            B.vN = bVx * B.nx + bVy * B.ny;
+          }
+
+          // Refresh world pose after correction for the second pass.
+          var tnA = this._getTN(A.u, pathLen);
+          A.tx = tnA.tx;
+          A.ty = tnA.ty;
+          A.nx = tnA.nx;
+          A.ny = tnA.ny;
+          A.wx = tnA.ax + tnA.nx * A.n;
+          A.wy = tnA.ay + tnA.ny * A.n;
+
+          var tnB = this._getTN(B.u, pathLen);
+          B.tx = tnB.tx;
+          B.ty = tnB.ty;
+          B.nx = tnB.nx;
+          B.ny = tnB.ny;
+          B.wx = tnB.ax + tnB.nx * B.n;
+          B.wy = tnB.ay + tnB.ny * B.n;
         }
       }
     }
