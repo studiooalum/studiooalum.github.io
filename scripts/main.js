@@ -58,12 +58,13 @@
       });
     }
 
-    // Per-yarn layered group: text below its own yarn path.
+    // Per-yarn layered group: path first (behind), text on top.
+    // When two yarns overlap, the whole group of the lower yarn goes behind.
     this.layerEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.textLayerEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.pathLayerEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    this.layerEl.appendChild(this.textLayerEl);
+    this.textLayerEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     this.layerEl.appendChild(this.pathLayerEl);
+    this.layerEl.appendChild(this.textLayerEl);
     yarnGroup.appendChild(this.layerEl);
 
     this.pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
