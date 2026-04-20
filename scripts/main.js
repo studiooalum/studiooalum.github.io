@@ -132,16 +132,6 @@
       });
       this.hitPathEl.addEventListener('mouseleave', function () {
         self.hovered = false;
-        // PC default state: random static layout.
-        for (var i = 0; i < self.letters.length; i++) {
-          var L = self.letters[i];
-          if (!isMobile) {
-            L.u = L.restU;
-            L.n = L.restN;
-            L.vU = 0;
-            L.vN = 0;
-          }
-        }
       });
     }
     function handleClick() {
@@ -169,15 +159,6 @@
     }
     this.letters = [];
 
-    var randomSeedU = [];
-    if (!isMobile) {
-      for (var rs = 0; rs < repeats * this.word.length; rs++) {
-        randomSeedU.push(Math.random() * pathLen);
-      }
-      randomSeedU.sort(function (a, b) { return a - b; });
-    }
-    var randomIdx = 0;
-
     for (var g = 0; g < repeats; g++) {
       var groupStart = g * (this.word.length * intraUnit + interUnit) * unit;
       for (var c = 0; c < this.word.length; c++) {
@@ -191,18 +172,15 @@
         var hoverU = groupStart + (c * 0.7 + 0.35) * unit;
         hoverU = wrapArc(hoverU, pathLen);
 
-        // Default PC: random spacing. Mobile keeps ordered placement.
-        var restU = isMobile ? hoverU : randomSeedU[randomIdx++];
-        var restN = clamp((Math.random() - 0.5) * maxN * 1.6, -maxN, maxN);
-
-        var u = restU;
+        // Default first layout: centered on yarn (n=0), ordered along arc.
+        var u = hoverU;
         var pt = this.pathEl.getPointAtLength(u);
 
         this.letters.push({
           el: el,
           u: u,
           vU: 0,
-          n: restN,
+          n: 0,
           vN: 0,
           wx: pt.x,
           wy: pt.y,
@@ -214,8 +192,6 @@
           pay: NaN,
           letterR: letterR,
           maxN: maxN,
-          restU: restU,
-          restN: restN,
           hoverU: hoverU
         });
       }
@@ -272,8 +248,9 @@
     var count = this.letters.length;
     var maxUSpeed = 260;
     var maxNSpeed = 300;
+    var restitution = 0.7;
 
-    // 1) Hover on PC: gather into word layout (word gap 2n, letter gap 0.7n)
+    // 1) Hover on PC: gather into centered word layout (2n / 0.7n)
     if (canHover && this.hovered && !isMobile) {
       var gatherK = 26;
       var gatherDamp = 0.84;
@@ -282,10 +259,28 @@
         var du = shortestArcDelta(G.u, G.hoverU, pathLen);
         G.vU += du * gatherK * dt;
         G.vU *= gatherDamp;
+        G.vN += (-G.n) * 22 * dt;
+        G.vN *= 0.86;
       }
     }
 
-    // 2) Integrate and handle elastic yarn boundary response.
+    // 2) Yarn boundary interaction only (no direct tangent velocity injection).
+    for (var i = 0; i < count; i++) {
+      var B = this.letters[i];
+      var tnB = this._getTN(B.u, pathLen);
+
+      if (!isNaN(B.pax)) {
+        var dax = tnB.ax - B.pax;
+        var day = tnB.ay - B.pay;
+        var wallVn = (dax * tnB.nx + day * tnB.ny) / Math.max(dt, 1e-6);
+        B.vN += wallVn * 0.22;
+      }
+
+      B.pax = tnB.ax;
+      B.pay = tnB.ay;
+    }
+
+    // 3) Integrate and handle elastic yarn boundary response.
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
 
@@ -299,14 +294,14 @@
 
       if (L.n > L.maxN) {
         L.n = L.maxN;
-        if (L.vN > 0) L.vN *= -1;
+        if (L.vN > 0) L.vN *= -restitution;
       } else if (L.n < -L.maxN) {
         L.n = -L.maxN;
-        if (L.vN < 0) L.vN *= -1;
+        if (L.vN < 0) L.vN *= -restitution;
       }
     }
 
-    // 3) Compute world pose.
+    // 4) Compute world pose.
     for (var p = 0; p < count; p++) {
       var P = this.letters[p];
       var tnP = this._getTN(P.u, pathLen);
@@ -318,7 +313,7 @@
       P.wy = tnP.ay + tnP.ny * P.n;
     }
 
-    // 4) Collision (optimized neighborhood pairs) to reduce PC latency.
+    // 5) Collision (optimized neighborhood pairs) to reduce PC latency.
     var order = [];
     for (var oi = 0; oi < count; oi++) order.push(oi);
     order.sort(function (ia, ib) { return this.letters[ia].u - this.letters[ib].u; }.bind(this));
@@ -369,7 +364,7 @@
           var relVy = bVy - aVy;
           var relVn = relVx * cnx + relVy * cny;
           if (relVn < 0) {
-            var impulse = -relVn;
+            var impulse = -(1 + restitution) * relVn * 0.5;
             aVx -= impulse * cnx;
             aVy -= impulse * cny;
             bVx += impulse * cnx;
@@ -400,7 +395,7 @@
       }
     }
 
-    // 5) Render
+    // 6) Render
     for (var r = 0; r < count; r++) {
       var C = this.letters[r];
       var tn = this._getTN(C.u, pathLen);
