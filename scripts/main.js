@@ -95,7 +95,7 @@
         currentX: t * W,
         currentY: this.baseY + jy,
         angle: Math.random() * 6.283,
-        speed: (0.004 + Math.random() * 0.008) * 2.0,
+        speed: (0.004 + Math.random() * 0.008) * 2.0 * (isMobile ? 0.75 : 1.0),
         ampX: edge ? 2 : 8 + Math.random() * 12,
         ampY: edge ? 10 : 16 + Math.random() * 24
       });
@@ -224,7 +224,8 @@
     var repeats = isMobile ? 1 : Math.max(1, Math.round(targetCount / this.word.length));
     var letterSize = isMobile ? this.renderSw * 0.75 : this.renderSw * 0.7;
     var letterR = letterSize * 0.42;
-    var maxN = this.renderSw * 0.5 - letterR;
+    var maxN = this.renderSw * 0.5 - letterR; // fallback; overridden by measurement below
+    var visualCenterOffset = 0; // offset to align text visual center with (wx, wy)
 
     // 2n word gap + 0.7n letter gap, spanning full yarn length
     var blockUnits = this.word.length * 0.7 + 2;
@@ -236,6 +237,22 @@
       if (this.letters[k].el.parentNode) this.letters[k].el.parentNode.removeChild(this.letters[k].el);
     }
     this.letters = [];
+
+    // Measure actual letter visual bounds for precise yarn-edge alignment.
+    // dominant-baseline:central may not center visually symmetric — measure and correct.
+    var mEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    mEl.textContent = 'H';
+    mEl.setAttribute('class', 'yarn-text');
+    mEl.style.fontSize = letterSize + 'px';
+    mEl.setAttribute('x', '0');
+    mEl.setAttribute('y', '0');
+    this.groupEl.appendChild(mEl);
+    var mBbox = mEl.getBBox();
+    if (mBbox.height > 0) {
+      visualCenterOffset = mBbox.y + mBbox.height * 0.5;
+      maxN = Math.max(0, this.renderSw * 0.5 - mBbox.height * 0.5);
+    }
+    this.groupEl.removeChild(mEl);
 
     var totalLetters = repeats * this.word.length;
     var uniformGap = pathLen / totalLetters;
@@ -271,6 +288,7 @@
           letterR: letterR,
           halfW: Math.max(2, el.getBBox().width * 0.5),
           halfH: Math.max(2, el.getBBox().height * 0.5),
+          visualCenterOffset: visualCenterOffset,
           maxN: maxN,
           hoverU: hoverU,
           defaultU: defaultU
@@ -387,10 +405,11 @@
     }
 
     var count = this.letters.length;
-    var maxUSpeed = 140;
-    var maxNSpeed = 160;
+    var speedScale = isMobile ? 0.75 : 1.0;
+    var maxUSpeed = 140 * speedScale;
+    var maxNSpeed = 160 * speedScale;
     var restitution = 0.7;
-    var wallKickSpeed = 18;
+    var wallKickSpeed = 18 * speedScale;
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
 
@@ -478,6 +497,10 @@
         var day = tnB.ay - B.pay;
         var invDt = 1 / Math.max(dt, 1e-6);
         B.vN += (dax * tnB.nx + day * tnB.ny) * invDt * 0.18;
+        // PC: tangential coupling lets yarn horizontal wave motion drive letters sideways.
+        if (!isMobile) {
+          B.vU += (dax * tnB.tx + day * tnB.ty) * invDt * 0.08;
+        }
       }
 
       B.tx = tnB.tx; B.ty = tnB.ty;
@@ -622,7 +645,7 @@
       var C = this.letters[r];
       var ang = Math.atan2(C.ty, C.tx) * 180 / Math.PI;
       C.el.setAttribute('x', C.wx);
-      C.el.setAttribute('y', C.wy);
+      C.el.setAttribute('y', C.wy - C.visualCenterOffset);
       C.el.setAttribute('transform', 'rotate(' + ang + ',' + C.wx + ',' + C.wy + ')');
       C.el.style.opacity = 0.9;
     }

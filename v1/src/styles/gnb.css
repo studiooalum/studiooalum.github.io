@@ -26,7 +26,7 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
-.gnb--shop       { background: rgba(227, 66, 52, 0.92); color: #fff; }
+.gnb--shop       { background: rgba(227, 66, 52, 0.92); color: #111; }
 .gnb--archive    { background: rgba(255, 204, 195, 0.92); color: #111; }
 .gnb--class      { background: rgba(255, 235, 83, 0.92); color: #111; }
 .gnb--newsletter { background: rgba(202, 213, 216, 0.92); color: #111; }
