@@ -19,6 +19,12 @@
   gap: var(--grid-gap);
 }
 
+.edition-stage__details {
+  display: grid;
+  gap: var(--grid-gap);
+  min-width: 0;
+}
+
 .edition-media {
   background: #fbfaf5;
   position: relative;
@@ -224,8 +230,9 @@
     min-height: calc(100vh - var(--gnb-height, 40px) - var(--page-top-space));
   }
 
-  .edition-stage__summary,
-  .edition-stage__info {
+  .edition-stage__details {
+    grid-column: 2 / span 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     position: sticky;
     top: calc(var(--gnb-height, 40px) + var(--page-top-space));
     align-self: start;
