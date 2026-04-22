@@ -17,6 +17,8 @@ if (!slug) {
 }
 
 const mediaEl = document.getElementById("editionMedia");
+const detailsEl = document.getElementById("editionDetails");
+const detailsStickyEl = document.getElementById("editionDetailsSticky");
 const kickerEl = document.getElementById("editionKicker");
 const titleEl = document.getElementById("editionTitle");
 const numberEl = document.getElementById("editionNumber");
@@ -28,6 +30,47 @@ const addBtn = document.getElementById("addToCartBtn");
 const buyBtn = document.getElementById("buyNowBtn");
 const noteEl = document.getElementById("editionNote");
 const backEl = document.getElementById("editionBack");
+
+function syncStickyStop() {
+  if (!detailsEl || !detailsStickyEl) return;
+
+  if (window.innerWidth < 960) {
+    detailsEl.style.removeProperty("height");
+    return;
+  }
+
+  const mediaImages = mediaEl.querySelectorAll("img");
+  const stickyHeight = Math.ceil(detailsStickyEl.offsetHeight);
+
+  if (mediaImages.length <= 1) {
+    detailsEl.style.height = `${stickyHeight}px`;
+    return;
+  }
+
+  const lastImage = mediaImages[mediaImages.length - 1];
+  const stopOffset = Math.ceil(lastImage.offsetTop + stickyHeight);
+  detailsEl.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
+}
+
+function bindStickyStopUpdates() {
+  if (!detailsEl || !detailsStickyEl) return;
+
+  const mediaImages = mediaEl.querySelectorAll("img");
+  for (const image of mediaImages) {
+    if (image.complete) continue;
+    image.addEventListener("load", syncStickyStop, { once: true });
+  }
+
+  window.addEventListener("resize", syncStickyStop);
+
+  if (typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(syncStickyStop);
+    observer.observe(mediaEl);
+    observer.observe(detailsStickyEl);
+  }
+
+  requestAnimationFrame(syncStickyStop);
+}
 
 function markSold() {
   document.body.classList.add("is-sold");
@@ -54,12 +97,14 @@ function renderTags(product) {
 function renderMedia(product) {
   if (product.soldOut) {
     markSold();
+    syncStickyStop();
     return;
   }
 
   const images = Array.isArray(product.images) ? product.images : [];
   if (images.length === 0) {
     mediaEl.innerHTML = "";
+    syncStickyStop();
     return;
   }
 
@@ -79,6 +124,8 @@ function renderMedia(product) {
     img.draggable = false;
     mediaEl.appendChild(img);
   }
+
+  bindStickyStopUpdates();
 }
 
 function toCheckoutWith(product) {

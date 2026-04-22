@@ -20,6 +20,11 @@
 }
 
 .edition-stage__details {
+  position: relative;
+  min-width: 0;
+}
+
+.edition-stage__details-sticky {
   display: grid;
   gap: var(--grid-gap);
   min-width: 0;
@@ -232,6 +237,9 @@
 
   .edition-stage__details {
     grid-column: 2 / span 2;
+  }
+
+  .edition-stage__details-sticky {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     position: sticky;
     top: calc(var(--gnb-height, 40px) + var(--page-top-space));
