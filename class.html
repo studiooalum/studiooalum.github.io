@@ -2,23 +2,67 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Studio OALUM — Class</title>
-    <link rel="stylesheet" href="./styles/main.css">
-    <link rel="stylesheet" href="./styles/page.css">
+
+    <link rel="stylesheet" href="./v1/src/styles/reset.css">
+    <link rel="stylesheet" href="./v1/src/styles/variables.css">
+    <link rel="stylesheet" href="./v1/src/styles/layout.css">
+    <link rel="stylesheet" href="./v1/src/styles/class-page.css">
+    <link rel="stylesheet" href="./v1/src/styles/cart.css">
     <link rel="stylesheet" href="./v1/src/styles/gnb.css">
 </head>
-<body>
+<body class="class-page">
     <nav class="gnb gnb--class">
         <a href="index.html" class="gnb__back">← Home</a>
         <span class="gnb__title">Class</span>
-        <span class="gnb__spacer"></span>
     </nav>
-    <div class="page-hero" style="background-color: #ffeb53;">
-        <h1>Class</h1>
-    </div>
-    <section class="page-body">
-        <p>Coming soon.</p>
-    </section>
+
+    <main class="class-main">
+        <section class="class-layout">
+            <article class="class-card">
+                <div class="class-card__poster" aria-hidden="true"></div>
+                <h1 class="class-card__title">도란도란 수선 워크숍</h1>
+                <p class="class-card__copy">구멍이 난 제품을 관찰하고 수선하는 다닝 기법을 배웁니다.</p>
+                <p class="class-card__meta">소요 시간 : 3h
+작업 난이도 : 상</p>
+            </article>
+            <div class="class-placeholder" aria-hidden="true"></div>
+            <div class="class-placeholder" aria-hidden="true"></div>
+        </section>
+
+        <footer class="site-footer site-footer--grid">
+            <div class="site-footer__col">
+                <img class="site-footer__logo-mark" src="./로고.png" alt="Studio OALUM">
+                <p>2020년부터 운영해온 수선 스튜디오의 경험을 바탕으로, 만들고 싶은 것을 만듭니다.</p>
+                <p>Based on our experience running a repair studio since 2020,
+we create whatever we want to make.</p>
+            </div>
+            <div class="site-footer__col">
+                <p>스튜디오 오알룸
+만드는 사람: 한아름
+사업자등록번호 669-24-02313
+통신판매업 신고 제2025-서울동대문-2322호</p>
+                <p>이용약관
+개인정보처리방침
+배송 환불 적립금 안내</p>
+            </div>
+            <div class="site-footer__col">
+                <p>03971
+서울특별시 성산동 252-3 2층 202호
++82-10-4746-5999
+studio.oalum@gmail.com
+@</p>
+            </div>
+        </footer>
+    </main>
+
+    <script type="module">
+        import { initSiteChrome } from "./v1/src/scripts/components/siteChrome.js";
+        import { initCartUI } from "./v1/src/scripts/cart.js";
+
+        initSiteChrome({ title: "Class", backHref: "index.html", backLabel: "← Home" });
+        initCartUI();
+    </script>
 </body>
 </html>

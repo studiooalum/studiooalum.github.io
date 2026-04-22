@@ -1,6 +1,7 @@
 import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
+import { formatPrice, getFirstParagraph, parseProductTitle } from "./utils/catalog.js";
 
 const params = new URLSearchParams(window.location.search);
 const productName = params.get("product");
@@ -21,18 +22,7 @@ const titleEl = document.getElementById("productTitle");
 const introEl = document.getElementById("productIntro");
 const metaEl = document.getElementById("productMeta");
 const gridEl = document.getElementById("editionGrid");
-
-/** Split "Patchwork Cable Beanie (Cream #01)" → { baseName, editionLabel } */
-function parseProductTitle(title) {
-  const m = (title || "").match(/^(.+?)\s*\((.+)\)\s*$/);
-  if (m) return { baseName: m[1].trim(), editionLabel: m[2].trim() };
-  return { baseName: (title || "").trim(), editionLabel: null };
-}
-
-function formatPrice(n) {
-  if (n !== 0 && !n) return "";
-  return `₩${Number(n).toLocaleString("ko-KR")}`;
-}
+const backEl = document.getElementById("productBack");
 
 function renderEditionGrid(editions) {
   const representative = editions[0];
@@ -42,16 +32,24 @@ function renderEditionGrid(editions) {
 
   document.title = `${productName} Editions — Studio OALUM`;
   titleEl.textContent = productName;
-  introEl.textContent = representative.description || "상품 소개";
+  introEl.textContent = getFirstParagraph(representative.description || "상품 소개");
 
   if (discountRate > 0) {
     const discounted = Math.round(price * (1 - discountRate / 100));
-    metaEl.textContent = `총 ${editions.length}개 · 개당 ${formatPrice(discounted)} (${discountRate}% 할인)`;
+    metaEl.innerHTML = [
+      `<span class="product-meta__count">총 ${editions.length}개</span>`,
+      `<span class="product-meta__original">${formatPrice(price)}</span>`,
+      `<span class="product-meta__current">${formatPrice(discounted)}</span>`,
+      `<span class="product-meta__discount">-${discountRate}%</span>`,
+    ].join("");
   } else {
-    metaEl.textContent = `총 ${editions.length}개 · 개당 ${formatPrice(price)}`;
+    metaEl.innerHTML = [
+      `<span class="product-meta__count">총 ${editions.length}개</span>`,
+      `<span class="product-meta__current">${formatPrice(price)}</span>`,
+    ].join("");
   }
   if (availableCount === 0) {
-    metaEl.textContent += " · 전체 품절";
+    metaEl.insertAdjacentHTML("beforeend", `<span class="product-meta__count">전체 품절</span>`);
   }
 
   gridEl.innerHTML = "";
@@ -108,6 +106,10 @@ async function init() {
       const { baseName } = parseProductTitle(p.title);
       return baseName === productName;
     });
+
+    if (backEl) {
+      backEl.href = `./shop.html`;
+    }
 
     if (editions.length === 0) {
       gridEl.innerHTML = `<p class="product-state">상품을 찾을 수 없습니다.</p>`;

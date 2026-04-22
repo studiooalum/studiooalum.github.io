@@ -16,30 +16,73 @@
   <nav class="gnb gnb--shop">
     <a href="#" class="gnb__back" id="editionBack">← Editions</a>
     <span class="gnb__title">Edition</span>
-    <span class="gnb__spacer"></span>
   </nav>
 
-  <main class="edition-main" id="editionMain">
-    <section class="edition-media" id="editionMedia"></section>
-
-    <section class="edition-info">
-      <p class="edition-kicker">상품 정보</p>
-      <h1 class="edition-title" id="editionTitle">Loading...</h1>
-      <p class="edition-price" id="editionPrice">₩0</p>
-      <p class="edition-size" id="editionSize">Size: 정보 준비 중</p>
-      <p class="edition-desc" id="editionDesc">상세 설명을 불러오는 중입니다.</p>
-
-      <div class="edition-actions" id="editionActions">
-        <button class="edition-btn edition-btn--primary" id="addToCartBtn">장바구니 담기</button>
-        <button class="edition-btn edition-btn--secondary" id="buyNowBtn">바로 결제</button>
+  <main class="edition-page-main" id="editionMain">
+    <section class="edition-stage">
+      <div class="edition-stage__media">
+        <section class="edition-media" id="editionMedia"></section>
       </div>
-      <p class="edition-note" id="editionNote">다른 제품도 둘러보면서 장바구니에 담아 한 번에 결제할 수 있어요.</p>
+
+      <section class="edition-stage__summary">
+        <p class="edition-kicker" id="editionKicker">Loading...</p>
+        <h1 class="edition-title" id="editionTitle">Loading...</h1>
+        <p class="edition-number" id="editionNumber">Loading...</p>
+      </section>
+
+      <section class="edition-stage__info">
+        <p class="edition-desc" id="editionDesc">상세 설명을 불러오는 중입니다.</p>
+        <p class="edition-size" id="editionSize">사이즈 정보 준비 중</p>
+        <div class="edition-tags" id="editionTags"></div>
+        <p class="edition-price" id="editionPrice">₩0</p>
+
+        <div class="edition-actions" id="editionActions">
+          <button class="edition-btn edition-btn--secondary" id="buyNowBtn">바로 결제</button>
+          <button class="edition-btn edition-btn--primary" id="addToCartBtn">카트 담기</button>
+        </div>
+        <p class="edition-note" id="editionNote"></p>
+      </section>
     </section>
+
+    <section class="edition-recommendation">
+      <div class="edition-recommendation__inner">
+        <p class="edition-recommendation__title">you may also like</p>
+        <div class="edition-recommendation__grid" id="recommendGrid"></div>
+      </div>
+    </section>
+
+    <footer class="site-footer site-footer--grid">
+      <div class="site-footer__col">
+        <img class="site-footer__logo-mark" src="./로고.png" alt="Studio OALUM">
+        <p>2020년부터 운영해온 수선 스튜디오의 경험을 바탕으로, 만들고 싶은 것을 만듭니다.</p>
+        <p>Based on our experience running a repair studio since 2020,
+we create whatever we want to make.</p>
+      </div>
+      <div class="site-footer__col">
+        <p>스튜디오 오알룸
+만드는 사람: 한아름
+사업자등록번호 669-24-02313
+통신판매업 신고 제2025-서울동대문-2322호</p>
+        <p>이용약관
+개인정보처리방침
+배송 환불 적립금 안내</p>
+      </div>
+      <div class="site-footer__col">
+        <p>03971
+서울특별시 성산동 252-3 2층 202호
++82-10-4746-5999
+studio.oalum@gmail.com
+@</p>
+      </div>
+    </footer>
   </main>
 
   <script type="module" src="./v1/src/scripts/edition.js"></script>
   <script type="module">
+    import { initSiteChrome } from "./v1/src/scripts/components/siteChrome.js";
     import { initCartUI } from "./v1/src/scripts/cart.js";
+
+    initSiteChrome({ title: "Editions", backHref: "shop.html", backLabel: "← Editions" });
     initCartUI();
   </script>
 </body>

@@ -201,7 +201,7 @@
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
   transition: background 0.2s, color 0.2s;
 }
 
@@ -269,7 +269,7 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
   transition: background 0.2s;
 }
 

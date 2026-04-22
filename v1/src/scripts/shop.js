@@ -2,6 +2,14 @@ import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 
+const SHOP_TAGS = [
+  { value: "all", label: "all" },
+  { value: "accessories", label: "accessories" },
+  { value: "clothing", label: "clothing" },
+  { value: "hat", label: "hat" },
+  { value: "home", label: "home" },
+];
+
 function formatPrice(n) {
   if (n !== 0 && !n) return "";
   return `₩${Number(n).toLocaleString("ko-KR")}`;
@@ -25,9 +33,35 @@ function groupProducts(products) {
   return groups;
 }
 
+function normalizeTag(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (raw === "accessory") return "accessories";
+  return raw;
+}
+
+function getProductTags(product) {
+  const tags = new Set();
+
+  if (Array.isArray(product.shopTags)) {
+    product.shopTags.forEach((tag) => {
+      const normalized = normalizeTag(tag);
+      if (normalized) tags.add(normalized);
+    });
+  }
+
+  const categoryTag = normalizeTag(product.category);
+  if (categoryTag) tags.add(categoryTag);
+
+  return Array.from(tags);
+}
+
 const gridEl = document.getElementById("shopGrid");
-const introCountEl = document.getElementById("shopCount");
+const tagsEl = document.getElementById("shopTags");
+const sectionHeadEl = document.getElementById("shopSectionHead");
+const sectionTitleEl = document.getElementById("shopSectionTitle");
 const inV1Shell = window.location.pathname.includes("/v1/");
+const activeTag = normalizeTag(new URLSearchParams(window.location.search).get("tag")) || "all";
 
 function getProductPath(baseName) {
   const encoded = encodeURIComponent(baseName);
@@ -36,8 +70,13 @@ function getProductPath(baseName) {
     : `./product.html?product=${encoded}`;
 }
 
-if (!gridEl || !introCountEl) {
-  throw new Error("Shop DOM is missing required #shopGrid or #shopCount element.");
+function getShopPath(tag) {
+  const target = tag && tag !== "all" ? `./shop.html?tag=${encodeURIComponent(tag)}` : "./shop.html";
+  return inV1Shell ? target.replace("./", "../") : target;
+}
+
+if (!gridEl || !tagsEl || !sectionHeadEl || !sectionTitleEl) {
+  throw new Error("Shop DOM is missing required shop layout elements.");
 }
 
 function createProductCard(baseName, editions, index) {
@@ -115,12 +154,34 @@ function createProductCard(baseName, editions, index) {
   return card;
 }
 
+function renderTags() {
+  tagsEl.innerHTML = "";
+
+  for (const tag of SHOP_TAGS) {
+    const link = document.createElement("a");
+    link.className = tag.value === activeTag ? "shop-tag is-active" : "shop-tag";
+    link.href = getShopPath(tag.value);
+    link.textContent = tag.label;
+    tagsEl.appendChild(link);
+  }
+}
+
 function renderProducts(products) {
   const safeProducts = Array.isArray(products) ? products : [];
-  const groups = groupProducts(safeProducts);
+  const filteredProducts =
+    activeTag === "all"
+      ? safeProducts
+      : safeProducts.filter((product) => getProductTags(product).includes(activeTag));
+  const groups = groupProducts(filteredProducts);
 
-  introCountEl.textContent = `${groups.size} products`;
+  sectionHeadEl.hidden = activeTag === "all";
+  sectionTitleEl.textContent = activeTag;
   gridEl.innerHTML = "";
+
+  if (groups.size === 0) {
+    gridEl.innerHTML = `<p class="shop-state">등록된 상품이 없습니다.</p>`;
+    return;
+  }
 
   let index = 0;
   for (const [baseName, editions] of groups) {
@@ -131,6 +192,7 @@ function renderProducts(products) {
 
 async function init() {
   try {
+    renderTags();
     gridEl.innerHTML = `<p class="shop-state">Loading products...</p>`;
     const products = await client.fetch(ALL_PRODUCTS_QUERY);
     renderProducts(products);

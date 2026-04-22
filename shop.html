@@ -15,21 +15,33 @@
     <nav class="gnb gnb--shop">
       <a href="./index.html" class="gnb__back">← Home</a>
       <span class="gnb__title">Shop</span>
-      <span class="gnb__spacer"></span>
+      <div class="gnb__actions" id="gnbActions">
+        <a href="#" class="gnb__action">Search</a>
+        <a href="#" class="gnb__action">Login</a>
+        <button type="button" class="gnb__action gnb__action--button">Cart</button>
+      </div>
     </nav>
-    <header class="shop-header">
-      <h1 class="shop-title">Shop</h1>
-      <p class="shop-intro">작은 에디션 드롭. 제품을 눌러 넘버링 목록으로 이동하세요.</p>
-      <p class="shop-count" id="shopCount">0 products</p>
-    </header>
+
+    <div class="shop-tags" id="shopTags" aria-label="Shop categories"></div>
 
     <main class="shop-main">
-      <section class="shop-grid" id="shopGrid" aria-live="polite"></section>
+      <section class="shop-shell">
+        <div class="shop-content">
+          <header class="shop-section-head" id="shopSectionHead" hidden>
+            <p class="shop-section-title" id="shopSectionTitle"></p>
+          </header>
+          <section class="shop-grid" id="shopGrid" aria-live="polite"></section>
+        </div>
+        <aside class="shop-rail" aria-hidden="true"></aside>
+      </section>
     </main>
 
     <script type="module" src="./v1/src/scripts/shop.js"></script>
     <script type="module">
+      import { initSiteChrome } from "./v1/src/scripts/components/siteChrome.js";
       import { initCartUI } from "./v1/src/scripts/cart.js";
+
+      initSiteChrome({ title: "Shop", backHref: "index.html", backLabel: "← Home" });
       initCartUI();
     </script>
 </body>

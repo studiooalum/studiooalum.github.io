@@ -14,24 +14,31 @@
 </head>
 <body class="product-page">
   <nav class="gnb gnb--shop">
-    <a href="./shop.html" class="gnb__back">← Shop</a>
+    <a href="./shop.html" class="gnb__back" id="productBack">← Shop</a>
     <span class="gnb__title">Product</span>
-    <span class="gnb__spacer"></span>
   </nav>
 
-  <header class="product-header">
-    <h1 class="product-title" id="productTitle">상품 소개</h1>
-    <p class="product-intro" id="productIntro">넘버링 제품을 선택해 상세 페이지로 이동하세요.</p>
-    <p class="product-meta" id="productMeta">Loading...</p>
-  </header>
-
   <main class="product-main">
-    <section class="edition-grid" id="editionGrid" aria-live="polite"></section>
+    <section class="product-layout">
+      <header class="product-overview">
+        <div class="product-copy">
+          <h1 class="product-title" id="productTitle">상품 소개</h1>
+          <p class="product-intro" id="productIntro">넘버링 제품을 선택해 상세 페이지로 이동하세요.</p>
+        </div>
+        <div class="product-meta" id="productMeta">Loading...</div>
+      </header>
+
+      <section class="edition-grid" id="editionGrid" aria-live="polite"></section>
+      <aside class="product-rail" aria-hidden="true"></aside>
+    </section>
   </main>
 
   <script type="module" src="./v1/src/scripts/product.js"></script>
   <script type="module">
+    import { initSiteChrome } from "./v1/src/scripts/components/siteChrome.js";
     import { initCartUI } from "./v1/src/scripts/cart.js";
+
+    initSiteChrome({ title: "Product", backHref: "shop.html", backLabel: "← Shop" });
     initCartUI();
   </script>
 </body>

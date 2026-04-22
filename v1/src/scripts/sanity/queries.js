@@ -13,6 +13,8 @@ export const ALL_PRODUCTS_QUERY = `
     discountRate,
     soldOut,
     slug,
+    category,
+    shopTags,
     images[]{
       asset->{url}
     }
@@ -31,6 +33,7 @@ export const PRODUCT_BY_SLUG_QUERY = `
     soldOut,
     slug,
     category,
+    shopTags,
     images[]{
       asset->{url}
     }

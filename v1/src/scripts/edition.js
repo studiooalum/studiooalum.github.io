@@ -1,7 +1,8 @@
 import client from "./sanity/client.js";
-import { PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
+import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { addToCart, addToCartSilent } from "./cart.js";
+import { formatPrice, getProductTags, parseProductTitle } from "./utils/catalog.js";
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
@@ -15,27 +16,19 @@ if (!slug) {
   window.location.href = getShopPath();
 }
 
-/** Split "Patchwork Cable Beanie (Cream #01)" → { baseName, editionLabel } */
-function parseProductTitle(title) {
-  const m = (title || "").match(/^(.+?)\s*\((.+)\)\s*$/);
-  if (m) return { baseName: m[1].trim(), editionLabel: m[2].trim() };
-  return { baseName: (title || "").trim(), editionLabel: null };
-}
-
 const mediaEl = document.getElementById("editionMedia");
+const kickerEl = document.getElementById("editionKicker");
 const titleEl = document.getElementById("editionTitle");
+const numberEl = document.getElementById("editionNumber");
 const priceEl = document.getElementById("editionPrice");
 const sizeEl = document.getElementById("editionSize");
 const descEl = document.getElementById("editionDesc");
+const tagsEl = document.getElementById("editionTags");
+const recommendGridEl = document.getElementById("recommendGrid");
 const addBtn = document.getElementById("addToCartBtn");
 const buyBtn = document.getElementById("buyNowBtn");
 const noteEl = document.getElementById("editionNote");
 const backEl = document.getElementById("editionBack");
-
-function formatPrice(n) {
-  if (n !== 0 && !n) return "";
-  return `₩${Number(n).toLocaleString("ko-KR")}`;
-}
 
 function resolveSize(product) {
   if (product.size) return product.size;
@@ -46,8 +39,23 @@ function resolveSize(product) {
 function markSold() {
   document.body.classList.add("is-sold");
   mediaEl.classList.add("is-sold");
-  mediaEl.innerHTML = `<span class="edition-media__sold">SOLD</span>`;
+  mediaEl.innerHTML = `<span class="edition-media__sold"></span>`;
   noteEl.textContent = "판매 완료된 에디션입니다. 다른 에디션을 확인해보세요.";
+}
+
+function renderTags(product) {
+  const tags = getProductTags(product);
+  tagsEl.innerHTML = "";
+
+  if (tags.length === 0) return;
+
+  for (const tag of tags) {
+    const link = document.createElement("a");
+    link.className = "edition-tag";
+    link.href = `./shop.html?tag=${encodeURIComponent(tag)}`;
+    link.textContent = tag;
+    tagsEl.appendChild(link);
+  }
 }
 
 function renderMedia(product) {
@@ -85,9 +93,51 @@ function toCheckoutWith(product) {
   window.location.href = "./checkout.html";
 }
 
+function renderRecommendations(allProducts, currentBaseName) {
+  const grouped = new Map();
+
+  for (const item of allProducts || []) {
+    const { baseName } = parseProductTitle(item.title);
+    if (baseName === currentBaseName) continue;
+    if (!grouped.has(baseName)) grouped.set(baseName, item);
+  }
+
+  const recommendations = Array.from(grouped.values()).slice(0, 4);
+  recommendGridEl.innerHTML = "";
+
+  for (const item of recommendations) {
+    const { baseName } = parseProductTitle(item.title);
+    const link = document.createElement("a");
+    link.className = "edition-recommend-card";
+    link.href = `./product.html?product=${encodeURIComponent(baseName)}`;
+
+    const thumb = document.createElement("div");
+    thumb.className = "edition-recommend-card__thumb";
+
+    const firstImage = Array.isArray(item.images) && item.images.length > 0
+      ? imageUrl(item.images[0], { width: 640, height: 640 })
+      : null;
+
+    if (firstImage) {
+      const image = document.createElement("img");
+      image.src = firstImage;
+      image.alt = baseName;
+      image.loading = "lazy";
+      thumb.appendChild(image);
+    }
+
+    link.appendChild(thumb);
+    recommendGridEl.appendChild(link);
+  }
+}
+
 async function init() {
   try {
-    const product = await client.fetch(PRODUCT_BY_SLUG_QUERY, { slug });
+    const [product, allProducts] = await Promise.all([
+      client.fetch(PRODUCT_BY_SLUG_QUERY, { slug }),
+      client.fetch(ALL_PRODUCTS_QUERY),
+    ]);
+
     if (!product) {
       titleEl.textContent = "상품을 찾을 수 없습니다";
       addBtn.style.display = "none";
@@ -96,16 +146,19 @@ async function init() {
     }
 
     const { baseName, editionLabel } = parseProductTitle(product.title);
-    const displayTitle = editionLabel || product.title;
     const sold = !!product.soldOut;
+    const tags = getProductTags(product);
 
     // Back link → product page for the base product
     backEl.href = `./product.html?product=${encodeURIComponent(baseName)}`;
 
     document.title = `${product.title} — Studio OALUM`;
-    titleEl.textContent = displayTitle;
-    sizeEl.textContent = `Size: ${resolveSize(product)}`;
+    kickerEl.textContent = tags[0] || "edition";
+    titleEl.textContent = baseName;
+    numberEl.textContent = editionLabel || product.title;
+    sizeEl.textContent = `사이즈 ${resolveSize(product)}`;
     descEl.textContent = product.description || "제품 정보";
+    renderTags(product);
 
     // Price with discount
     const price = Number(product.price) || 0;
@@ -113,12 +166,13 @@ async function init() {
 
     if (discountRate > 0) {
       const discounted = Math.round(price * (1 - discountRate / 100));
-      priceEl.innerHTML = `<span class="price-original">${formatPrice(price)}</span> ${formatPrice(discounted)} <span class="discount-badge">-${discountRate}%</span>`;
+      priceEl.innerHTML = `<span class="price-original">${formatPrice(price)}</span><span class="price-current">${formatPrice(discounted)}</span><span class="discount-badge">-${discountRate}%</span>`;
     } else {
-      priceEl.textContent = formatPrice(price);
+      priceEl.innerHTML = `<span class="price-current">${formatPrice(price)}</span>`;
     }
 
     renderMedia(product);
+    renderRecommendations(allProducts, baseName);
 
     if (sold) return;
 
