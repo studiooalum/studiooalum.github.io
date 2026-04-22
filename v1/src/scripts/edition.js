@@ -2,7 +2,7 @@ import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { addToCart, addToCartSilent } from "./cart.js";
-import { formatPrice, getProductTags, parseProductTitle } from "./utils/catalog.js";
+import { getProductTags, parseProductTitle } from "./utils/catalog.js";
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
@@ -21,7 +21,6 @@ const kickerEl = document.getElementById("editionKicker");
 const titleEl = document.getElementById("editionTitle");
 const numberEl = document.getElementById("editionNumber");
 const priceEl = document.getElementById("editionPrice");
-const sizeEl = document.getElementById("editionSize");
 const descEl = document.getElementById("editionDesc");
 const tagsEl = document.getElementById("editionTags");
 const recommendGridEl = document.getElementById("recommendGrid");
@@ -29,12 +28,6 @@ const addBtn = document.getElementById("addToCartBtn");
 const buyBtn = document.getElementById("buyNowBtn");
 const noteEl = document.getElementById("editionNote");
 const backEl = document.getElementById("editionBack");
-
-function resolveSize(product) {
-  if (product.size) return product.size;
-  if (product.dimensions) return product.dimensions;
-  return "One Size / 상세 문의";
-}
 
 function markSold() {
   document.body.classList.add("is-sold");
@@ -156,19 +149,20 @@ async function init() {
     kickerEl.textContent = tags[0] || "edition";
     titleEl.textContent = baseName;
     numberEl.textContent = editionLabel || product.title;
-    sizeEl.textContent = `사이즈 ${resolveSize(product)}`;
     descEl.textContent = product.description || "제품 정보";
     renderTags(product);
 
     // Price with discount
     const price = Number(product.price) || 0;
     const discountRate = Number(product.discountRate) || 0;
+    const displayPrice = Number(price).toLocaleString("ko-KR");
 
     if (discountRate > 0) {
       const discounted = Math.round(price * (1 - discountRate / 100));
-      priceEl.innerHTML = `<span class="price-original">${formatPrice(price)}</span><span class="price-current">${formatPrice(discounted)}</span><span class="discount-badge">-${discountRate}%</span>`;
+      const discountedLabel = Number(discounted).toLocaleString("ko-KR");
+      priceEl.innerHTML = `<span class="price-original">${displayPrice}</span><span class="price-current">${discountedLabel}</span><span class="discount-badge">-${discountRate}%</span>`;
     } else {
-      priceEl.innerHTML = `<span class="price-current">${formatPrice(price)}</span>`;
+      priceEl.innerHTML = `<span class="price-current">${displayPrice}</span>`;
     }
 
     renderMedia(product);

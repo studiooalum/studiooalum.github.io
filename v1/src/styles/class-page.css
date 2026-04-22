@@ -5,12 +5,12 @@
 }
 
 .class-main {
-  padding: calc(var(--gnb-height, 40px) + 24px) 5px 32px;
+  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 40px;
 }
 
 .class-layout {
   display: grid;
-  gap: 5px;
+  gap: var(--grid-gap);
 }
 
 .class-card,
@@ -56,7 +56,7 @@
 
 @media (min-width: 960px) {
   .class-main {
-    padding-top: calc(var(--gnb-height, 40px) + 54px);
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
   }
 
   .class-layout {

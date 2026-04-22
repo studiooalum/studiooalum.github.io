@@ -1,7 +1,7 @@
 import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
-import { formatPrice, getFirstParagraph, parseProductTitle } from "./utils/catalog.js";
+import { getFirstParagraph, parseProductTitle } from "./utils/catalog.js";
 
 const params = new URLSearchParams(window.location.search);
 const productName = params.get("product");
@@ -29,6 +29,7 @@ function renderEditionGrid(editions) {
   const price = Number(representative.price) || 0;
   const discountRate = Number(representative.discountRate) || 0;
   const availableCount = editions.filter((e) => !e.soldOut).length;
+  const displayPrice = Number(price).toLocaleString("ko-KR");
 
   document.title = `${productName} Editions — Studio OALUM`;
   titleEl.textContent = productName;
@@ -36,20 +37,20 @@ function renderEditionGrid(editions) {
 
   if (discountRate > 0) {
     const discounted = Math.round(price * (1 - discountRate / 100));
+    const discountedLabel = Number(discounted).toLocaleString("ko-KR");
     metaEl.innerHTML = [
-      `<span class="product-meta__count">총 ${editions.length}개</span>`,
-      `<span class="product-meta__original">${formatPrice(price)}</span>`,
-      `<span class="product-meta__current">${formatPrice(discounted)}</span>`,
-      `<span class="product-meta__discount">-${discountRate}%</span>`,
+      `<span class="product-meta__item">총 ${editions.length}개</span>`,
+      `<span class="product-meta__item">개당 ${discountedLabel}</span>`,
+      `<span class="product-meta__item product-meta__item--accent">(${discountRate}% 할인)</span>`,
     ].join("");
   } else {
     metaEl.innerHTML = [
-      `<span class="product-meta__count">총 ${editions.length}개</span>`,
-      `<span class="product-meta__current">${formatPrice(price)}</span>`,
+      `<span class="product-meta__item">총 ${editions.length}개</span>`,
+      `<span class="product-meta__item">개당 ${displayPrice}</span>`,
     ].join("");
   }
   if (availableCount === 0) {
-    metaEl.insertAdjacentHTML("beforeend", `<span class="product-meta__count">전체 품절</span>`);
+    metaEl.insertAdjacentHTML("beforeend", `<span class="product-meta__item">전체 품절</span>`);
   }
 
   gridEl.innerHTML = "";

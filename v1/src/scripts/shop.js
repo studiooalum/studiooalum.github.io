@@ -58,8 +58,6 @@ function getProductTags(product) {
 
 const gridEl = document.getElementById("shopGrid");
 const tagsEl = document.getElementById("shopTags");
-const sectionHeadEl = document.getElementById("shopSectionHead");
-const sectionTitleEl = document.getElementById("shopSectionTitle");
 const inV1Shell = window.location.pathname.includes("/v1/");
 const activeTag = normalizeTag(new URLSearchParams(window.location.search).get("tag")) || "all";
 
@@ -75,7 +73,7 @@ function getShopPath(tag) {
   return inV1Shell ? target.replace("./", "../") : target;
 }
 
-if (!gridEl || !tagsEl || !sectionHeadEl || !sectionTitleEl) {
+if (!gridEl || !tagsEl) {
   throw new Error("Shop DOM is missing required shop layout elements.");
 }
 
@@ -174,8 +172,6 @@ function renderProducts(products) {
       : safeProducts.filter((product) => getProductTags(product).includes(activeTag));
   const groups = groupProducts(filteredProducts);
 
-  sectionHeadEl.hidden = activeTag === "all";
-  sectionTitleEl.textContent = activeTag;
   gridEl.innerHTML = "";
 
   if (groups.size === 0) {

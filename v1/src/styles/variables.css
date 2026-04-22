@@ -44,6 +44,14 @@
   --color-bg: #ffffff;
   --color-text: #111111;
   --color-accent: #000000;
+  --page-gutter: 16px;
+  --grid-gap: 16px;
+  --page-top-space: 72px;
+  --shop-top-space: 96px;
+  --product-top-space: 72px;
+  --footer-row-gap: 24px;
+  --page-column-width: calc((100vw - var(--page-gutter) - var(--page-gutter) - var(--grid-gap) - var(--grid-gap)) / 3);
+  --page-third-start: calc(100vw - var(--page-gutter) - var(--page-column-width));
 
   --font-book: "GothamBook", system-ui, -apple-system, sans-serif;
   --font-light: "GothamLight", "GothamBook", system-ui, -apple-system, sans-serif;
@@ -55,4 +63,15 @@
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 32px;
+}
+
+@media (min-width: 960px) {
+  :root {
+    --page-gutter: 40px;
+    --grid-gap: 40px;
+    --page-top-space: 160px;
+    --shop-top-space: 160px;
+    --product-top-space: 112px;
+    --footer-row-gap: 32px;
+  }
 }

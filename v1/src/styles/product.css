@@ -1,7 +1,6 @@
 .product-page {
   --bg: #ffffff;
   --point: #e34234;
-  --product-gap: 5px;
   background: var(--bg);
   color: #111;
   min-height: 100vh;
@@ -10,37 +9,38 @@
 }
 
 .product-main {
-  padding: calc(var(--gnb-height, 40px) + 5px) 5px 34px;
+  padding: calc(var(--gnb-height, 40px) + var(--product-top-space)) var(--page-gutter) 80px;
 }
 
 .product-layout {
   display: grid;
-  gap: var(--product-gap);
+  gap: var(--grid-gap);
 }
 
 .product-overview {
   display: grid;
-  gap: 12px;
+  gap: 24px;
 }
 
 .product-copy {
-  max-width: 56ch;
+  max-width: none;
 }
 
 .product-title {
   margin: 0;
   font-family: var(--font-book);
-  font-size: clamp(32px, 4vw, 50px);
-  line-height: 0.95;
-  letter-spacing: -0.03em;
+  font-size: clamp(28px, 2.6vw, 34px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
 }
 
 .product-intro {
-  margin: 16px 0 0;
-  max-width: 36ch;
+  margin: 0;
+  max-width: 72ch;
   font-family: var(--font-kor-body);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.7;
   white-space: pre-line;
   color: rgba(17, 17, 17, 0.82);
 }
@@ -48,37 +48,27 @@
 .product-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 8px 16px;
   align-items: baseline;
-  font-size: 14px;
+  font-family: var(--font-book);
+  font-size: 13px;
+  line-height: 1.4;
   color: rgba(17, 17, 17, 0.78);
 }
 
-.product-meta__count {
-  font-family: var(--font-kor-body);
-}
-
-.product-meta__original {
-  color: rgba(17, 17, 17, 0.35);
-  text-decoration: line-through;
-}
-
-.product-meta__current {
+.product-meta__item {
   font-family: var(--font-book);
-  font-size: 30px;
-  line-height: 1;
-  color: #111;
+  font-size: 13px;
 }
 
-.product-meta__discount {
-  font-family: var(--font-medium);
+.product-meta__item--accent {
   color: #b85b4b;
 }
 
 .edition-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--product-gap);
+  gap: var(--grid-gap);
 }
 
 .edition-card {
@@ -101,9 +91,10 @@
 }
 
 .edition-card__no {
-  margin-top: 6px;
+  margin-top: 12px;
   font-family: var(--font-light);
-  font-size: 22px;
+  font-size: 18px;
+  line-height: 1.2;
   letter-spacing: -0.02em;
   text-align: left !important;
 }
@@ -130,7 +121,7 @@
 
 @media (min-width: 900px) {
   .product-main {
-    padding-top: calc(var(--gnb-height, 40px) + 20px);
+    padding-top: calc(var(--gnb-height, 40px) + var(--product-top-space));
   }
 
   .product-layout {
@@ -140,7 +131,7 @@
 
   .product-overview {
     grid-column: 1 / span 2;
-    min-height: 164px;
+    min-height: 0;
   }
 
   .edition-grid {
