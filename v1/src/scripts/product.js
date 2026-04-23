@@ -28,7 +28,6 @@ function renderEditionGrid(editions) {
   const representative = editions[0];
   const price = Number(representative.price) || 0;
   const discountRate = Number(representative.discountRate) || 0;
-  const availableCount = editions.filter((e) => !e.soldOut).length;
   const displayPrice = Number(price).toLocaleString("ko-KR");
 
   document.title = `${productName} Editions — Studio OALUM`;
@@ -38,19 +37,9 @@ function renderEditionGrid(editions) {
   if (discountRate > 0) {
     const discounted = Math.round(price * (1 - discountRate / 100));
     const discountedLabel = Number(discounted).toLocaleString("ko-KR");
-    metaEl.innerHTML = [
-      `<span class="product-meta__item">총 ${editions.length}개</span>`,
-      `<span class="product-meta__item">개당 ${discountedLabel}</span>`,
-      `<span class="product-meta__item product-meta__item--accent">(${discountRate}% 할인)</span>`,
-    ].join("");
+    metaEl.innerHTML = `<span class="product-meta__item">총 ${editions.length}개 개당 ￦${discountedLabel} (${discountRate}%할인)</span>`;
   } else {
-    metaEl.innerHTML = [
-      `<span class="product-meta__item">총 ${editions.length}개</span>`,
-      `<span class="product-meta__item">개당 ${displayPrice}</span>`,
-    ].join("");
-  }
-  if (availableCount === 0) {
-    metaEl.insertAdjacentHTML("beforeend", `<span class="product-meta__item">전체 품절</span>`);
+    metaEl.innerHTML = `<span class="product-meta__item">총 ${editions.length}개 개당 ￦${displayPrice}</span>`;
   }
 
   gridEl.innerHTML = "";

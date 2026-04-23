@@ -9,16 +9,13 @@
   color: var(--color-text, #111);
 }
 
-/* ---- Two-column layout ---- */
+/* ---- Shared page layout ---- */
 .checkout-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  grid-template-columns: 1fr;
+  gap: 32px;
   min-height: 100vh;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 60px 32px 48px;
-  padding-top: calc(60px + var(--gnb-height, 40px));
+  padding: calc(var(--gnb-height, 40px) + 52px) var(--page-gutter) 48px;
 }
 
 /* =========================
@@ -40,8 +37,7 @@
 ========================= */
 
 .checkout-summary {
-  padding-right: 40px;
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  padding-right: 0;
 }
 
 .checkout-empty {
@@ -53,7 +49,7 @@
 
 .checkout-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   padding: 12px 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -76,9 +72,14 @@
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.checkout-item__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .checkout-item__meta {
@@ -87,10 +88,52 @@
   margin-top: 2px;
 }
 
+.checkout-item__controls {
+  margin-top: 8px;
+}
+
+.checkout-item__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkout-item__qty-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(17, 17, 17, 0.2);
+  background: transparent;
+  color: #111;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.checkout-item__qty-value {
+  min-width: 10px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.checkout-item__remove {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.55);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .checkout-item__subtotal {
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
+  margin-left: auto;
+  padding-top: 2px;
 }
 
 /* ---- Totals ---- */
@@ -122,7 +165,26 @@
 ========================= */
 
 .checkout-form-section {
-  padding-left: 40px;
+  padding-left: 0;
+}
+
+@media (min-width: 960px) {
+  .checkout-layout {
+    grid-template-columns: repeat(3, minmax(0, var(--page-column-width)));
+    gap: var(--grid-gap);
+    align-items: start;
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+  }
+
+  .checkout-summary {
+    grid-column: 1;
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .checkout-form-section {
+    grid-column: 2;
+  }
 }
 
 .checkout-form {
@@ -294,8 +356,6 @@
   }
 
   .checkout-summary {
-    padding-right: 0;
-    border-right: none;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     padding-bottom: 24px;
   }

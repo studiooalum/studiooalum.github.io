@@ -51,6 +51,7 @@
   --product-top-space: 72px;
   --footer-row-gap: 24px;
   --page-column-width: calc((100vw - var(--page-gutter) - var(--page-gutter) - var(--grid-gap) - var(--grid-gap)) / 3);
+  --page-second-start: calc(var(--page-gutter) + var(--page-column-width) + var(--grid-gap));
   --page-third-start: calc(100vw - var(--page-gutter) - var(--page-column-width));
 
   --font-book: "GothamBook", system-ui, -apple-system, sans-serif;

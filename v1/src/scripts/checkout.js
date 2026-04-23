@@ -3,6 +3,7 @@
 ========================= */
 
 import { imageUrl } from "./sanity/image.js";
+import { removeFromCart, renderCartPanel, updateQty } from "./cart.js";
 
 const CART_KEY = "studiooalum_cart";
 
@@ -28,12 +29,17 @@ function formatPrice(n) {
 function renderOrderSummary() {
   const items = getCart();
   const container = document.getElementById("checkoutItems");
+  const submitButton = document.getElementById("submitOrderBtn");
 
   if (items.length === 0) {
     container.innerHTML = `<p class="checkout-empty">장바구니가 비어있습니다</p>`;
-    document.getElementById("submitOrderBtn").disabled = true;
+    submitButton.disabled = true;
+    document.getElementById("checkoutSubtotal").textContent = formatPrice(0);
+    document.getElementById("checkoutTotal").textContent = formatPrice(0);
     return;
   }
+
+  submitButton.disabled = false;
 
   container.innerHTML = items.map((item) => {
     const imgSrc = item.image ? imageUrl(item.image, { width: 120 }) : "";
@@ -42,8 +48,18 @@ function renderOrderSummary() {
       <div class="checkout-item">
         ${imgSrc ? `<img class="checkout-item__img" src="${imgSrc}" alt="${item.title}" />` : ""}
         <div class="checkout-item__info">
-          <div class="checkout-item__title">${item.title}${editionLabel}</div>
-          <div class="checkout-item__meta">${formatPrice(item.price)} × ${item.qty}</div>
+          <div class="checkout-item__top">
+            <div class="checkout-item__title">${item.title}${editionLabel}</div>
+            <button type="button" class="checkout-item__remove" data-checkout-remove="${item.lineId || item._id}" aria-label="삭제">×</button>
+          </div>
+          <div class="checkout-item__meta">${formatPrice(item.price)}</div>
+          <div class="checkout-item__controls">
+            <div class="checkout-item__qty">
+              <button type="button" class="checkout-item__qty-btn" data-checkout-qty="dec" data-id="${item.lineId || item._id}">−</button>
+              <span class="checkout-item__qty-value">${item.qty}</span>
+              <button type="button" class="checkout-item__qty-btn" data-checkout-qty="inc" data-id="${item.lineId || item._id}">+</button>
+            </div>
+          </div>
         </div>
         <div class="checkout-item__subtotal">${formatPrice(item.price * item.qty)}</div>
       </div>
@@ -53,6 +69,29 @@ function renderOrderSummary() {
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   document.getElementById("checkoutSubtotal").textContent = formatPrice(subtotal);
   document.getElementById("checkoutTotal").textContent = formatPrice(subtotal);
+}
+
+function setupSummaryControls() {
+  const container = document.getElementById("checkoutItems");
+
+  container.addEventListener("click", (event) => {
+    const removeButton = event.target.closest("[data-checkout-remove]");
+    if (removeButton) {
+      removeFromCart(removeButton.getAttribute("data-checkout-remove"));
+      renderOrderSummary();
+      renderCartPanel();
+      return;
+    }
+
+    const qtyButton = event.target.closest("[data-checkout-qty]");
+    if (!qtyButton) return;
+
+    const itemId = qtyButton.getAttribute("data-id");
+    const delta = qtyButton.getAttribute("data-checkout-qty") === "inc" ? 1 : -1;
+    updateQty(itemId, delta);
+    renderOrderSummary();
+    renderCartPanel();
+  });
 }
 
 /* =========================
@@ -138,6 +177,7 @@ function setupForm() {
 ========================= */
 
 renderOrderSummary();
+setupSummaryControls();
 setupMemo();
 setupForm();
 

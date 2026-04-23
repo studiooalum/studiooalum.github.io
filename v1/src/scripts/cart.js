@@ -27,6 +27,7 @@ function computeFinalPrice(product) {
 }
 
 export function addToCart(product) {
+  initCartUI();
   const items = getCart();
   const lineId = product._id;
   const existing = items.find((i) => i.lineId === lineId);
@@ -152,7 +153,7 @@ export function initCartUI() {
   panelEl.className = "cart-panel";
   panelEl.innerHTML = `
     <div class="cart-panel__header">
-      <h2 class="cart-panel__title">장바구니</h2>
+      <h2 class="cart-panel__title">Cart</h2>
       <button class="cart-panel__close" aria-label="닫기">&times;</button>
     </div>
     <div class="cart-panel__items" id="cartItems"></div>

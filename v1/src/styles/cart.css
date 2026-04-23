@@ -86,27 +86,30 @@
 .cart-panel__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px 20px 16px;
-  background: #fff;
+  justify-content: flex-start;
+  min-height: var(--gnb-height, 40px);
+  padding: 0 16px;
+  background: rgba(227, 66, 52, 0.92);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  color: #111;
 }
 
 .cart-panel__title {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-book, sans-serif);
+  font-size: var(--gnb-font-size, 13px);
+  font-weight: 400;
+  letter-spacing: 0;
   margin: 0;
 }
 
 .cart-panel__close {
+  margin-left: auto;
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: calc(var(--gnb-font-size, 13px) + 4px);
   line-height: 1;
   cursor: pointer;
-  color: #888;
+  color: #111;
   transition: color 0.2s;
 }
 
