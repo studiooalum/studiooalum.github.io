@@ -1,0 +1,230 @@
+.placeholder-page {
+  min-height: 100vh;
+  background: #fff;
+  color: #111;
+}
+
+.archive-page {
+  --placeholder-accent: #ffccc3;
+  --placeholder-panel: #fff3ef;
+  --placeholder-panel-strong: #f7d9d1;
+}
+
+.newsletter-page {
+  --placeholder-accent: #cad5d8;
+  --placeholder-panel: #edf2f2;
+  --placeholder-panel-strong: #dbe4e6;
+}
+
+.placeholder-main {
+  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 40px;
+}
+
+.placeholder-layout {
+  display: grid;
+  gap: var(--grid-gap);
+}
+
+.placeholder-hero,
+.placeholder-note,
+.placeholder-card {
+  min-width: 0;
+}
+
+.placeholder-hero {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-height: 320px;
+  padding: 18px;
+  background: var(--placeholder-panel);
+}
+
+.placeholder-hero--archive {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)) 0 0 / 100% 100%,
+    var(--placeholder-accent);
+}
+
+.placeholder-hero--newsletter {
+  background:
+    radial-gradient(circle at 82% 26%, rgba(255, 255, 255, 0.8) 0 52px, transparent 53px),
+    var(--placeholder-accent);
+}
+
+.placeholder-eyebrow,
+.placeholder-note__label {
+  margin: 0;
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.placeholder-title {
+  margin: 0;
+  font-family: var(--font-book);
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+}
+
+.placeholder-copy,
+.placeholder-note__body,
+.placeholder-card__copy {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(17, 17, 17, 0.82);
+}
+
+.placeholder-note {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 160px;
+  padding: 18px;
+  background: var(--placeholder-panel-strong);
+}
+
+.placeholder-card {
+  background: #fff;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.placeholder-card--feature {
+  background: var(--placeholder-panel);
+  border: 0;
+}
+
+.placeholder-card__visual {
+  aspect-ratio: 1 / 1;
+}
+
+.placeholder-card__visual--archive {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0 18%, transparent 18% 100%),
+    linear-gradient(0deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.08)) 48% 0 / 1px 100% no-repeat,
+    linear-gradient(90deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.08)) 0 52% / 100% 1px no-repeat,
+    var(--placeholder-accent);
+}
+
+.placeholder-card__body {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.placeholder-card__title {
+  margin: 0;
+  font-family: var(--font-book);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.placeholder-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.placeholder-form__group {
+  display: grid;
+  gap: 6px;
+}
+
+.placeholder-form__group--wide {
+  width: 100%;
+}
+
+.placeholder-form__label {
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.placeholder-form__input {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 14px;
+  border: 1px solid #111;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+}
+
+.placeholder-form__input::placeholder {
+  color: rgba(17, 17, 17, 0.45);
+}
+
+.placeholder-form__agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.placeholder-form__agree input {
+  margin: 2px 0 0;
+  accent-color: #111;
+}
+
+.placeholder-form__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 0 14px;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.placeholder-form__status {
+  margin: 2px 0 0;
+  min-height: 16px;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.placeholder-form__status.is-error {
+  color: #b85b4b;
+}
+
+.placeholder-form__status.is-success {
+  color: #111;
+}
+
+@media (min-width: 960px) {
+  .placeholder-layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .placeholder-hero {
+    grid-column: 1 / span 2;
+    min-height: calc(var(--page-column-width) + 80px);
+    padding: 24px;
+  }
+
+  .placeholder-note {
+    grid-column: 3;
+    min-height: calc(var(--page-column-width) / 2);
+    padding: 24px;
+  }
+
+  .placeholder-card--feature {
+    grid-column: 1 / span 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

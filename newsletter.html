@@ -2,23 +2,115 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Studio OALUM — Newsletter</title>
-    <link rel="stylesheet" href="./styles/main.css">
-    <link rel="stylesheet" href="./styles/page.css">
+
+    <link rel="stylesheet" href="./v1/src/styles/reset.css">
+    <link rel="stylesheet" href="./v1/src/styles/variables.css">
+    <link rel="stylesheet" href="./v1/src/styles/layout.css">
+    <link rel="stylesheet" href="./v1/src/styles/placeholder-page.css">
+    <link rel="stylesheet" href="./v1/src/styles/cart.css">
     <link rel="stylesheet" href="./v1/src/styles/gnb.css">
 </head>
-<body>
+<body class="placeholder-page newsletter-page">
     <nav class="gnb gnb--newsletter">
         <a href="index.html" class="gnb__back">← Home</a>
         <span class="gnb__title">Newsletter</span>
-        <span class="gnb__spacer"></span>
     </nav>
-    <div class="page-hero" style="background-color: #cad5d8;">
-        <h1>Newsletter</h1>
-    </div>
-    <section class="page-body">
-        <p>Coming soon.</p>
-    </section>
+
+    <main class="placeholder-main">
+        <section class="placeholder-layout">
+            <header class="placeholder-hero placeholder-hero--newsletter">
+                <p class="placeholder-eyebrow">Preview</p>
+                <h1 class="placeholder-title">Newsletter</h1>
+                <p class="placeholder-copy">신제품 소식보다, 작업 중인 생각과 수선의 진행 과정을 먼저 보내는 페이지를 준비하고 있습니다. 임시 페이지에서는 앞으로 담길 톤과 구성을 먼저 정리해두었습니다.</p>
+            </header>
+
+            <aside class="placeholder-note">
+                <p class="placeholder-note__label">Upcoming Format</p>
+                <p class="placeholder-note__body">한 달에 한 번, 작업 메모와 제품 출시 예고, 아카이브 업데이트, 수선 워크숍 일정이 함께 정리된 소식지를 발행할 예정입니다.</p>
+            </aside>
+
+            <article class="placeholder-card placeholder-card--feature">
+                <div class="placeholder-card__body">
+                    <h2 class="placeholder-card__title">Issue 01 Preview</h2>
+                    <p class="placeholder-card__copy">준비 중인 첫 번째 뉴스레터에는 최근 작업 메모, 실험 중인 패치 조합, 그리고 다음 에디션 공개 일정이 포함될 예정입니다.</p>
+                    <form class="placeholder-form" id="newsletterForm" novalidate>
+                        <label class="placeholder-form__group">
+                            <span class="placeholder-form__label">Name</span>
+                            <input class="placeholder-form__input" type="text" name="name" placeholder="Your name" autocomplete="name">
+                        </label>
+                        <label class="placeholder-form__group placeholder-form__group--wide">
+                            <span class="placeholder-form__label">Email</span>
+                            <input class="placeholder-form__input" type="email" name="email" placeholder="name@example.com" autocomplete="email" required>
+                        </label>
+                        <label class="placeholder-form__agree">
+                            <input type="checkbox" name="agree" required>
+                            <span>뉴스레터 수신과 개인정보 수집에 동의합니다.</span>
+                        </label>
+                        <button class="placeholder-form__button" type="submit">Subscribe</button>
+                        <p class="placeholder-form__status" id="newsletterFormStatus" aria-live="polite"></p>
+                    </form>
+                </div>
+            </article>
+
+            <article class="placeholder-card">
+                <div class="placeholder-card__body">
+                    <h2 class="placeholder-card__title">What You Will Receive</h2>
+                    <p class="placeholder-card__copy">출시 일정, 소재 실험 메모, 클래스 공지, 아카이브 업데이트를 가볍게 묶어 전달합니다.</p>
+                </div>
+            </article>
+
+            <article class="placeholder-card">
+                <div class="placeholder-card__body">
+                    <h2 class="placeholder-card__title">Tone</h2>
+                    <p class="placeholder-card__copy">광고성 알림보다는 스튜디오의 진행 상황과 편집 방향을 짧고 천천히 공유하는 형식을 목표로 합니다.</p>
+                </div>
+            </article>
+        </section>
+
+        <footer class="site-footer site-footer--grid">
+            <div class="site-footer__brand">
+                <img class="site-footer__logo-mark" src="./로고.png" alt="Studio OALUM">
+            </div>
+            <div class="site-footer__text site-footer__text--lead">
+                <p>2020년부터 운영해온 수선 스튜디오의 경험을 바탕으로, 만들고 싶은 것을 만듭니다.</p>
+                <p>Based on our experience running a repair studio since 2020,
+we create whatever we want to make.</p>
+            </div>
+            <div class="site-footer__text site-footer__text--info">
+                <p>스튜디오 오알룸
+만드는 사람: 한아름
+사업자등록번호 669-24-02313
+통신판매업 신고 제2025-서울동대문-2322호</p>
+                <p>이용약관
+개인정보처리방침
+배송 환불 적립금 안내</p>
+            </div>
+            <div class="site-footer__text site-footer__text--contact">
+                <p>03971
+서울특별시 성산동 252-3 2층 202호
++82-10-4746-5999
+studio.oalum@gmail.com</p>
+                <a class="site-footer__instagram" href="#" aria-label="Instagram">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" stroke-width="1.6"></rect>
+                        <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.6"></circle>
+                        <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                </a>
+            </div>
+        </footer>
+    </main>
+
+    <script type="module">
+        import { initSiteChrome } from "./v1/src/scripts/components/siteChrome.js";
+        import { initCartUI } from "./v1/src/scripts/cart.js";
+        import { initNewsletterForm } from "./v1/src/scripts/newsletter.js";
+
+        initSiteChrome({ title: "Newsletter", backHref: "index.html", backLabel: "← Home" });
+        initCartUI();
+        initNewsletterForm();
+    </script>
 </body>
 </html>
