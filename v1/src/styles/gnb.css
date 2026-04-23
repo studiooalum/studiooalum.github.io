@@ -123,10 +123,4 @@
     transform: translateY(-50%);
     text-align: left;
   }
-
-  .shop-page .gnb__title,
-  .product-page .gnb__title,
-  .edition-page .gnb__title {
-    left: var(--page-second-start);
-  }
 }

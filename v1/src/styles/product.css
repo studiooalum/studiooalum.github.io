@@ -123,7 +123,7 @@
 
 @media (min-width: 900px) {
   .product-main {
-    padding-top: calc(var(--gnb-height, 40px) + var(--product-top-space));
+    padding-top: var(--gnb-height, 40px);
   }
 
   .product-layout {
@@ -133,8 +133,8 @@
 
   .product-overview {
     grid-column: 1 / span 2;
-    min-height: var(--page-column-width);
-    align-content: center;
+    min-height: 0;
+    padding: 80px 0;
   }
 
   .edition-grid {
