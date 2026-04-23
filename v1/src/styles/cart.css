@@ -20,7 +20,7 @@
   border-radius: 6px 0 0 6px;
   cursor: pointer;
   transition: background 0.2s ease;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
 }
 
 .cart-toggle:hover {
@@ -72,7 +72,7 @@
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-body, sans-serif);
   color: #111;
   transform: translateX(100%);
   transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -95,7 +95,7 @@
 }
 
 .cart-panel__title {
-  font-family: var(--font-book, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
   font-size: var(--gnb-font-size, 13px);
   font-weight: 400;
   letter-spacing: 0;
@@ -158,8 +158,9 @@
 }
 
 .cart-item__title {
+  font-family: var(--font-kor-button, sans-serif);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.03em;
   white-space: nowrap;
   overflow: hidden;
@@ -167,6 +168,7 @@
 }
 
 .cart-item__price {
+  font-family: var(--font-kor-body, sans-serif);
   font-size: 11px;
   color: #666;
   margin-top: 2px;
@@ -177,6 +179,7 @@
   align-items: center;
   gap: 8px;
   margin-top: 6px;
+  font-family: var(--font-kor-body, sans-serif);
   font-size: 12px;
 }
 
@@ -190,6 +193,7 @@
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
+  font-family: var(--font-kor-button, sans-serif);
   font-size: 13px;
   color: #444;
   transition: background 0.15s;
@@ -226,8 +230,9 @@
 .cart-panel__total {
   display: flex;
   justify-content: space-between;
+  font-family: var(--font-kor-button, sans-serif);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.04em;
   margin-bottom: 14px;
 }
@@ -240,7 +245,7 @@
   background: #111;
   color: #fff;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
@@ -248,7 +253,7 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
 }
 
 .cart-panel__checkout-btn:hover {

@@ -138,10 +138,10 @@
 
 @media (min-width: 800px) {
   .shop-tags {
-    left: var(--page-second-start);
+    left: var(--page-third-start);
     width: var(--page-column-width);
     right: auto;
-    top: calc(var(--gnb-height, 40px) + 22px);
+    top: calc(var(--gnb-height, 40px) + 8px);
   }
 
   .shop-main {
