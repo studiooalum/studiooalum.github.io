@@ -54,12 +54,12 @@
   --page-second-start: calc(var(--page-gutter) + var(--page-column-width) + var(--grid-gap));
   --page-third-start: calc(100vw - var(--page-gutter) - var(--page-column-width));
 
-  --font-book: "GothamBook", system-ui, -apple-system, sans-serif;
-  --font-light: "GothamLight", "GothamBook", system-ui, -apple-system, sans-serif;
-  --font-medium: "GothamMedium", "GothamBook", system-ui, -apple-system, sans-serif;
-  --font-kor-body: "SM3ShinJungGothic02", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-  --font-kor-ui: "SM3ShinJungGothic02", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-  --font-kor-button: "SM3ShinJungGothic03", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-book: "GothamBook", sans-serif;
+  --font-light: "GothamLight", "GothamBook", sans-serif;
+  --font-medium: "GothamMedium", "GothamBook", sans-serif;
+  --font-kor-body: "SM3ShinJungGothic02", sans-serif;
+  --font-kor-ui: "SM3ShinJungGothic02", sans-serif;
+  --font-kor-button: "SM3ShinJungGothic03", sans-serif;
   --font-base: var(--font-book);
   --space-sm: 8px;
   --space-md: 16px;

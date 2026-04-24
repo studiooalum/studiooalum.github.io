@@ -26,7 +26,7 @@ body {
     padding: 60px 32px 120px;
 }
 .page-body p {
-    font-family: 'GothamBook', 'Helvetica Neue', sans-serif;
+    font-family: 'GothamBook', sans-serif;
     font-size: 1.1rem;
     line-height: 1.8;
     color: #555;

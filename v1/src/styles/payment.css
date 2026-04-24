@@ -6,7 +6,7 @@
 .payment-page {
   background: #ffffff;
   min-height: 100vh;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-body, sans-serif);
   color: var(--color-text, #111);
 }
 
@@ -25,8 +25,9 @@
 }
 
 .payment-section-title {
+  font-family: var(--font-kor-button, sans-serif);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin: 0 0 12px;
@@ -42,14 +43,16 @@
 }
 
 .payment-order-name {
+  font-family: var(--font-kor-body, sans-serif);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   margin: 0 0 4px;
 }
 
 .payment-order-total {
+  font-family: var(--font-book, sans-serif);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 400;
   margin: 0;
 }
 
@@ -76,12 +79,12 @@
   background: #111;
   color: #fff;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.06em;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
   transition: background 0.2s;
 }
 
@@ -99,6 +102,7 @@
   text-align: center;
   padding: 80px 0;
   color: #888;
+  font-family: var(--font-kor-body, sans-serif);
   font-size: 14px;
 }
 
@@ -106,6 +110,7 @@
   display: inline-block;
   margin-top: 16px;
   color: #111;
+  font-family: var(--font-kor-button, sans-serif);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -137,13 +142,15 @@
 }
 
 .payment-result__title {
+  font-family: var(--font-kor-button, sans-serif);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 400;
   margin: 16px 0 0;
   color: #111;
 }
 
 .payment-result__desc {
+  font-family: var(--font-kor-body, sans-serif);
   font-size: 14px;
   color: #666;
   margin: 8px 0 24px;
@@ -168,13 +175,15 @@
 }
 
 .payment-result__label {
+  font-family: var(--font-kor-button, sans-serif);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   color: #333;
   white-space: nowrap;
 }
 
 .payment-result__value {
+  font-family: var(--font-book, sans-serif);
   font-size: 14px;
   font-weight: 400;
   color: #555;
@@ -197,7 +206,7 @@
   padding: 13px 0;
   text-align: center;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.04em;
   border: 1px solid #111;
   border-radius: 6px;
@@ -205,7 +214,7 @@
   color: #111;
   text-decoration: none;
   cursor: pointer;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
   transition: background 0.2s, color 0.2s;
   box-sizing: border-box;
 }
@@ -221,7 +230,7 @@
   padding: 13px 0;
   text-align: center;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.04em;
   border: none;
   border-radius: 6px;
@@ -229,7 +238,7 @@
   color: #555;
   text-decoration: none;
   cursor: pointer;
-  font-family: var(--font-base, sans-serif);
+  font-family: var(--font-kor-button, sans-serif);
   transition: background 0.2s;
   box-sizing: border-box;
 }

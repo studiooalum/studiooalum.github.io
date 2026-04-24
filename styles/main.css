@@ -18,7 +18,7 @@
 body {
     overflow: hidden;
     background: #ffffff;
-    font-family: 'GothamBook', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'GothamBook', sans-serif;
 }
 
 #svg-container {
@@ -40,7 +40,7 @@ body {
 .yarn-text {
     font-size: 33px;
     font-weight: 800;
-    font-family: 'GothamBold', 'GothamBook', 'Helvetica Neue', sans-serif;
+    font-family: 'GothamBold', 'GothamBook', sans-serif;
     fill: #000;
     pointer-events: none;
     text-anchor: middle;

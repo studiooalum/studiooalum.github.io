@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--page-gutter);
-  font-family: var(--font-book, 'GothamBook', system-ui, sans-serif);
+  font-family: var(--font-book, sans-serif);
   font-size: var(--gnb-font-size);
   letter-spacing: 0;
   backdrop-filter: blur(10px);
@@ -36,7 +36,7 @@
   text-decoration: none;
   color: inherit;
   font-size: var(--gnb-font-size);
-  font-family: var(--font-book, 'GothamBook', system-ui, sans-serif);
+  font-family: var(--font-book, sans-serif);
   opacity: 0.85;
   transition: opacity 0.2s;
 }
@@ -48,7 +48,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   font-size: var(--gnb-font-size);
-  font-family: var(--font-medium, 'GothamBook', system-ui, sans-serif);
+  font-family: var(--font-medium, sans-serif);
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -69,7 +69,7 @@
   padding: 0;
   background: transparent;
   color: inherit;
-  font-family: var(--font-book, 'GothamBook', system-ui, sans-serif);
+  font-family: var(--font-book, sans-serif);
   font-size: var(--gnb-font-size);
   line-height: 1;
   text-decoration: none;
