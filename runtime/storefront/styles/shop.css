@@ -122,7 +122,8 @@
 }
 
 .shop-card__price {
-  font-weight: 600;
+  font-family: var(--font-medium);
+  font-weight: 500;
 }
 
 .shop-card__discount {

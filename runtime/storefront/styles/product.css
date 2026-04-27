@@ -42,6 +42,7 @@
   max-width: 72ch;
   font-family: var(--font-kor-body);
   font-size: calc(var(--gnb-font-size) - 1px);
+  letter-spacing: 0;
   line-height: 1.7;
   white-space: pre-line;
   color: rgba(17, 17, 17, 0.82);
@@ -54,6 +55,7 @@
   align-items: baseline;
   font-family: var(--font-kor-button);
   font-size: calc(var(--gnb-font-size) - 2px);
+  letter-spacing: 0;
   line-height: 1.4;
   color: var(--point);
 }
@@ -118,6 +120,7 @@
 .product-state {
   margin: 12px 0;
   font-size: 13px;
+  letter-spacing: 0;
   color: rgba(17, 17, 17, 0.8);
 }
 

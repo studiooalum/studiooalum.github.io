@@ -123,7 +123,7 @@ export default function PaymentPage() {
             <h2>Preview server confirmation</h2>
           </div>
           <p className="detail-note">
-            Replace this preview confirm step with the real PG secret-key approval call when the provider backend is ready.
+            If `paymentKey` and `TOSS_SECRET_KEY` are both present, this same route is now ready to call Toss confirm. Until then it stays in preview mode.
           </p>
           <div className="purchase-panel__actions">
             <Link href="/checkout" className="action-button action-button--ghost">

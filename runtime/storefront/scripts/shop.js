@@ -44,8 +44,7 @@ if (!gridEl || !tagsEl) {
   throw new Error("Shop DOM is missing required shop layout elements.");
 }
 
-function createProductCard(baseName, editions, index) {
-  const representative = editions[0]; // first edition (#01) is the representative
+function createProductCard(baseName, representative, editionCount) {
   const card = document.createElement("a");
   card.className = "shop-card";
   card.href = getProductPath(baseName);
@@ -104,12 +103,13 @@ function createProductCard(baseName, editions, index) {
     meta.appendChild(badge);
   } else {
     const priceSpan = document.createElement("span");
+    priceSpan.className = "shop-card__price";
     priceSpan.textContent = formatPrice(price);
     meta.appendChild(priceSpan);
   }
 
   const editionSpan = document.createElement("span");
-  editionSpan.textContent = `${editions.length} editions`;
+  editionSpan.textContent = `${editionCount} editions`;
   meta.appendChild(editionSpan);
 
   body.appendChild(title);
@@ -133,6 +133,7 @@ function renderTags() {
 
 function renderProducts(products) {
   const safeProducts = Array.isArray(products) ? products : [];
+  const allGroups = groupProducts(safeProducts);
   const filteredProducts =
     activeTag === "all"
       ? safeProducts
@@ -146,10 +147,10 @@ function renderProducts(products) {
     return;
   }
 
-  let index = 0;
   for (const [baseName, editions] of groups) {
-    gridEl.appendChild(createProductCard(baseName, editions, index));
-    index += 1;
+    const fullEditions = allGroups.get(baseName) || editions;
+    const representative = fullEditions[0] || editions[0];
+    gridEl.appendChild(createProductCard(baseName, representative, fullEditions.length));
   }
 }
 
