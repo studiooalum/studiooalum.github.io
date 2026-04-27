@@ -54,10 +54,18 @@ npm run studio:dev
 - `runtime/storefront/`는 현재 GitHub Pages가 직접 읽는 라이브 런타임입니다.
 - `archive/legacy/`는 더 이상 루트 사이트가 직접 사용하지 않는 이전 HTML 셸을 보관합니다.
 
+## Planning Docs
+
+- `docs/architecture.md`: 현재 저장소 경계와 운영 방향
+- `docs/cloudflare-low-cost-stack.md`: 디자인을 유지하는 최저비용 운영 구조
+- `docs/gabia-cloudflare-domain-setup.md`: 가비아 도메인과 Cloudflare 연결 절차
+- `docs/apps-web-deploy.md`: `apps/web` 기반 확장 경로
+- `docs/commerce-schema.sql`: 주문/결제 스키마 초안
+
 ## Next Step
 
-- 정식 오픈 시에는 `apps/web`에 storefront를 구축하고,
-- 주문/결제/웹훅은 서버 API로 옮기고,
-- GitHub Pages 루트는 점진적으로 축소하거나 리디렉션 진입점으로 전환합니다.
+- 저트래픽 운영을 먼저 열려면 `docs/cloudflare-low-cost-stack.md` 경로를 따르고,
+- 더 큰 앱 구조로 확장하려면 `apps/web` 중심 경로로 이동하고,
+- 주문/결제/웹훅은 어느 경로든 서버 API로 옮겨야 합니다.
 
 자세한 경계와 마이그레이션 기준은 `docs/architecture.md`를 참고하세요.

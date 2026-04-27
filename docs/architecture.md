@@ -53,19 +53,49 @@
 
 ## Recommended Production Direction
 
-정식 오픈 구조는 아래를 목표로 합니다.
+현재 저장소에는 두 가지 운영 방향이 공존합니다.
+
+### 1. Full app direction
+
+정식 앱 전환을 길게 보면 아래 구조가 목적지입니다.
 
 - `apps/web`: Next.js storefront
 - `apps/studio`: Sanity Studio
 - Postgres: 주문/결제 상태 저장
 - PG direct: 토스 우선, 서버 승인/웹훅 필수
 
-현재 초안 문서는 아래에 정리되어 있습니다.
+관련 초안 문서:
 
 - `docs/commerce-schema.sql`: 주문, 결제, 배송, 웹훅 적재용 Postgres 초안
 - `docs/apps-web-deploy.md`: `apps/web`의 Vercel 전환 체크리스트
 
+### 2. Lowest-cost production direction
+
+현재처럼 트래픽이 적고 디자인 유지가 중요한 상황에서는 아래 경로를 우선 추천합니다.
+
+- 루트 정적 사이트 디자인 유지
+- Cloudflare Pages: 정적 배포
+- Cloudflare Workers: 주문/결제 API
+- Cloudflare D1: 주문 저장
+- Cloudflare DNS / SSL: custom domain과 HTTPS
+
+관련 문서:
+
+- `docs/cloudflare-low-cost-stack.md`: 최저비용 운영 구조 정리
+- `docs/gabia-cloudflare-domain-setup.md`: 가비아 도메인 + Cloudflare 운영 절차
+
 ## Migration Order
+
+### Low-cost order first
+
+1. custom domain 확보
+2. Cloudflare DNS / SSL 연결
+3. 정적 프론트는 루트 디자인 그대로 유지
+4. Workers에 주문 생성 / 결제 승인 / 웹훅 API 구축
+5. D1에 최소 주문 테이블 구축
+6. Toss live 검증 후 실결제 오픈
+
+### Full app order later
 
 1. `apps/web` 스캐폴드를 실제 storefront로 확장
 2. Sanity 읽기 코드를 서버 중심으로 이동

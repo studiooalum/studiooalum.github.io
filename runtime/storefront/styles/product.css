@@ -43,7 +43,7 @@
   font-family: var(--font-kor-body);
   font-size: calc(var(--gnb-font-size) - 1px);
   letter-spacing: 0;
-  line-height: 1.7;
+  line-height: 1;
   white-space: pre-line;
   color: rgba(17, 17, 17, 0.82);
 }
@@ -56,7 +56,7 @@
   font-family: var(--font-kor-button);
   font-size: calc(var(--gnb-font-size) - 2px);
   letter-spacing: 0;
-  line-height: 1.4;
+  line-height: 1;
   color: var(--point);
 }
 
@@ -120,6 +120,7 @@
 .product-state {
   margin: 12px 0;
   font-size: 13px;
+  line-height: 1;
   letter-spacing: 0;
   color: rgba(17, 17, 17, 0.8);
 }
