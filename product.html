@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Studio OALUM — Product</title>
 
-  <link rel="stylesheet" href="./v1/src/styles/reset.css">
-  <link rel="stylesheet" href="./v1/src/styles/variables.css">
-  <link rel="stylesheet" href="./v1/src/styles/layout.css">
-  <link rel="stylesheet" href="./v1/src/styles/product.css">
-  <link rel="stylesheet" href="./v1/src/styles/cart.css">
-  <link rel="stylesheet" href="./v1/src/styles/gnb.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/product.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="product-page">
   <nav class="gnb gnb--shop">
@@ -33,10 +33,10 @@
     </section>
   </main>
 
-  <script type="module" src="./v1/src/scripts/product.js"></script>
+  <script type="module" src="./runtime/storefront/scripts/product.js"></script>
   <script type="module">
-    import { initSiteChrome } from "./v1/src/scripts/components/siteChrome.js";
-    import { initCartUI } from "./v1/src/scripts/cart.js";
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+    import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
     initSiteChrome({ title: "Product", backHref: "shop.html", backLabel: "← Shop" });
     initCartUI();

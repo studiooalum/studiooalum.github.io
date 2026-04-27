@@ -1,155 +1,63 @@
-```bash
-git clone https://github.com/studiooalum/studiooalum.github.io.git
-cd studiooalum.github.io
-# make changes...
-git add .
-git commit -m "Update site"
-git push origin main
-```
+# Studio OALUM Repository
 
-# studiooalum.github.io
+현재 공개 중인 GitHub Pages 사이트를 유지한 채, 정식 오픈용 구조로 넘어가기 쉽게 저장소를 재정리한 상태입니다.
 
-This is the GitHub Pages repository for the user site `studiooalum.github.io`.
+## What Stays Live
 
-To run locally:
-- Edit files in this repo (index.html, assets).
-- Commit and push to `main` (or to the branch configured under Settings → Pages).
+- 루트의 `index.html`, `shop.html`, `product.html` 등은 계속 GitHub Pages 진입점으로 사용합니다.
+- 루트 페이지 대부분은 `runtime/storefront/styles`와 `runtime/storefront/scripts`를 공유 런타임으로 사용합니다.
+- `styles/`와 `scripts/`는 루트의 초기 마케팅 페이지(`index.html`)에 남아 있습니다.
 
-Site URL: https://studiooalum.github.io
+즉, 현재 GitHub Pages 배포를 깨지 않기 위해 루트 HTML과 `runtime/storefront/` 라이브 자산을 유지합니다.
 
-## Overview
-
-이 프로젝트는 **정적 웹 기반의 개인/소규모 프로젝트**를 위한 기본 뼈대입니다.
-HTML, CSS, Vanilla JavaScript를 사용하며, 디자인 중심의 작업과 가벼운 인터랙션을 염두에 두고 설계되었습니다.
-
-초기에는 단순한 구조로 빠르게 작업할 수 있고, 이후 필요에 따라 React, Vite 등의 빌드 도구로 확장하거나 이전하기 쉬운 형태를 목표로 합니다.
-
----
-
-## Goals
-
-* 작업과 구조를 명확히 분리한다
-* 혼자 작업해도 헷갈리지 않는 파일 배치
-* 디자인과 콘텐츠에 집중할 수 있는 환경
-* 추후 확장 시 전체 구조를 갈아엎지 않도록 설계
-
----
-
-## Tech Stack
-
-* HTML5
-* CSS3 (모듈화된 CSS 파일 구조)
-* Vanilla JavaScript (ES Modules)
-
-※ 빌드 도구 없이도 동작하며, 필요 시 Vite / React로 이전 가능
-
----
-
-## Project Structure
+## Repository Layout
 
 ```txt
-project-root/
-├─ public/                 # 정적 리소스
-│  ├─ images/
-│  ├─ fonts/
-│  └─ favicon.ico
-│
-├─ src/
-│  ├─ index.html           # 메인 HTML
-│  │
-│  ├─ styles/
-│  │  ├─ reset.css         # 브라우저 초기화
-│  │  ├─ variables.css     # 색상, 폰트, spacing 변수
-│  │  ├─ layout.css        # 전체 레이아웃
-│  │  ├─ components.css    # 공통 컴포넌트 스타일
-│  │  └─ main.css          # CSS entry point
-│  │
-│  ├─ scripts/
-│  │  ├─ main.js           # JS entry point
-│  │  ├─ utils/            # 헬퍼 함수
-│  │  │  └─ helpers.js
-│  │  └─ components/       # UI 컴포넌트 단위 JS
-│  │     └─ menu.js
-│  │
-│  └─ data/                # JSON, 임시 데이터
-│     └─ mock.json
-│
-├─ .gitignore
-├─ README.md
-└─ package.json            # (선택) 빌드 도구 사용 시
+.
+├─ index.html, shop.html, ...  # 현재 GitHub Pages에서 노출되는 정적 진입점
+├─ styles/                     # 루트 초기 페이지용 스타일
+├─ scripts/                    # 루트 초기 페이지용 스크립트
+├─ public/                     # 폰트/이미지 등 정적 자산
+├─ runtime/
+│  └─ storefront/              # 현재 라이브 페이지가 공유하는 스타일/스크립트 런타임
+├─ apps/
+│  ├─ web/                     # 정식 오픈용 Next.js storefront 스캐폴드
+│  └─ studio/                  # 로컬 전용 Sanity Studio repo (gitignored)
+├─ archive/
+│  ├─ legacy/
+│  │  ├─ about.html            # 더 이상 쓰지 않는 루트 소개 페이지
+│  │  └─ v1/                   # 이전 HTML 셸과 실험용 구조 보관
+│  ├─ local/
+│  │  └─ site-prototype/       # 로컬 전용 실험용 repo 아카이브 (gitignored)
+│  └─ README.md
+└─ docs/
+   └─ architecture.md
 ```
 
----
+## Commands
 
-## File Responsibilities
+```bash
+npm run site:serve
+npm run web:dev
+npm run studio:dev
+```
 
-### HTML
+- `site:serve`: 현재 GitHub Pages 루트를 로컬에서 정적으로 확인합니다.
+- `web:dev`: `apps/web` 아래 Next.js storefront 스캐폴드를 실행합니다.
+- `studio:dev`: `apps/studio` 아래 로컬 Sanity Studio를 실행합니다.
 
-* `index.html`
+## Working Rules
 
-  * 전체 레이아웃의 뼈대
-  * CSS / JS entry 연결
-  * 최소한의 마크업만 유지
+- 현재 공개 사이트를 수정할 때는 루트 HTML과 `runtime/storefront` 자산을 먼저 봅니다.
+- `apps/web`는 정식 오픈용 Next.js storefront 스캐폴드입니다. 아직 루트 GitHub Pages를 대체하지 않습니다.
+- `apps/studio`와 `archive/local/site-prototype`는 로컬 전용 repo라서 메인 repo에서 추적하지 않습니다.
+- `runtime/storefront/`는 현재 GitHub Pages가 직접 읽는 라이브 런타임입니다.
+- `archive/legacy/`는 더 이상 루트 사이트가 직접 사용하지 않는 이전 HTML 셸을 보관합니다.
 
-### CSS
+## Next Step
 
-* `variables.css`
+- 정식 오픈 시에는 `apps/web`에 storefront를 구축하고,
+- 주문/결제/웹훅은 서버 API로 옮기고,
+- GitHub Pages 루트는 점진적으로 축소하거나 리디렉션 진입점으로 전환합니다.
 
-  * 컬러, 폰트, 여백 등 디자인 토큰 정의
-* `layout.css`
-
-  * header / footer / main 구조
-* `components.css`
-
-  * 버튼, 메뉴, 카드 등 재사용 컴포넌트
-* `main.css`
-
-  * 모든 CSS를 불러오는 진입 파일
-
-### JavaScript
-
-* `main.js`
-
-  * 초기 실행 로직
-  * 컴포넌트 렌더링 호출
-* `components/`
-
-  * UI 단위별 기능 분리
-* `utils/`
-
-  * 공통 로직, 헬퍼 함수
-
----
-
-## Naming Conventions
-
-* 파일명: 소문자 + 하이픈 또는 camelCase
-* 클래스명: 기능 중심 네이밍
-* JS 함수: 동사 + 명사 (`renderMenu`, `initApp` 등)
-
----
-
-## Development Notes
-
-* CSS는 가능한 한 **구조 → 컴포넌트 → 디테일** 순서로 작성
-* JS는 DOM 직접 조작을 최소화하고 컴포넌트 단위로 분리
-* 데이터가 늘어나면 `data/` 디렉토리 기준으로 관리
-
----
-
-## Possible Extensions
-
-* Vite 도입
-* React / Vue 전환
-* CSS Preprocessor 또는 Tailwind 적용
-* 작업 아카이브 / CMS 연동
-
----
-
-## Author
-
-Oalum
-
-## License
-
-Private / Personal Project
+자세한 경계와 마이그레이션 기준은 `docs/architecture.md`를 참고하세요.

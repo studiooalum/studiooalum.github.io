@@ -1,6 +1,7 @@
 node_modules/
+.next/
 .DS_Store
 
 # Local-only repos (avoid gitlinks/submodules in Pages repo)
-studiooalum/
-studio-oalum-sanity/
+apps/studio/
+archive/local/site-prototype/

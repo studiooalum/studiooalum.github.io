@@ -1,4 +1,13 @@
 {
+  "private": true,
+  "scripts": {
+    "site:serve": "python3 -m http.server 4173",
+    "web:dev": "next dev ./apps/web",
+    "web:build": "next build ./apps/web",
+    "web:start": "next start ./apps/web",
+    "studio:dev": "cd apps/studio && npm run dev",
+    "studio:build": "cd apps/studio && npm run build"
+  },
   "dependencies": {
     "@sanity/client": "^7.14.1",
     "@sanity/image-url": "^2.0.2",

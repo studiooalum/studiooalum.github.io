@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Studio OALUM — Class</title>
 
-    <link rel="stylesheet" href="./v1/src/styles/reset.css">
-    <link rel="stylesheet" href="./v1/src/styles/variables.css">
-    <link rel="stylesheet" href="./v1/src/styles/layout.css">
-    <link rel="stylesheet" href="./v1/src/styles/class-page.css">
-    <link rel="stylesheet" href="./v1/src/styles/cart.css">
-    <link rel="stylesheet" href="./v1/src/styles/gnb.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/class-page.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="class-page">
     <nav class="gnb gnb--class">
@@ -66,8 +66,8 @@ studio.oalum@gmail.com</p>
     </main>
 
     <script type="module">
-        import { initSiteChrome } from "./v1/src/scripts/components/siteChrome.js";
-        import { initCartUI } from "./v1/src/scripts/cart.js";
+        import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+        import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
         initSiteChrome({ title: "Class", backHref: "index.html", backLabel: "← Home" });
         initCartUI();
