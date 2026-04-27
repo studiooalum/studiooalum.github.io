@@ -97,27 +97,31 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px 12px;
-  margin: 40px 0 0;
-  color: #111;
+  margin: calc(40px + 1lh) 0 0;
+  font-family: var(--font-book);
+  font-size: 13px;
+  color: rgba(17, 17, 17, 0.82);
 }
 
-.edition-price .price-original {
+.edition-price .shop-card__price--original {
   text-decoration: line-through;
   color: rgba(17, 17, 17, 0.4);
-  font-family: var(--font-book);
   font-size: 13px;
 }
 
-.edition-price .price-current {
-  font-family: var(--font-book);
-  font-size: 18px;
-  line-height: 1.1;
+.edition-price .shop-card__price {
+  font-family: var(--font-medium);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #111;
 }
 
-.edition-price .discount-badge {
-  color: #b85b4b;
-  font-family: var(--font-book);
-  font-size: 18px;
+.edition-price .shop-card__discount {
+  color: var(--point);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .edition-desc {
@@ -134,7 +138,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px 20px;
-  margin-top: 40px;
+  margin-top: calc(40px + 1lh);
 }
 
 .edition-tag {

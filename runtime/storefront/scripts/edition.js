@@ -2,7 +2,7 @@ import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { addToCart, addToCartSilent } from "./cart.js";
-import { getProductTags, parseProductTitle } from "./utils/catalog.js";
+import { formatPrice, getProductTags, parseProductTitle } from "./utils/catalog.js";
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
@@ -29,6 +29,36 @@ const addBtn = document.getElementById("addToCartBtn");
 const buyBtn = document.getElementById("buyNowBtn");
 const noteEl = document.getElementById("editionNote");
 const backEl = document.getElementById("editionBack");
+
+function renderEditionPrice(price, discountRate) {
+  if (!priceEl) return;
+
+  priceEl.replaceChildren();
+
+  if (discountRate > 0) {
+    const discounted = Math.round(price * (1 - discountRate / 100));
+
+    const originalSpan = document.createElement("span");
+    originalSpan.className = "shop-card__price--original";
+    originalSpan.textContent = formatPrice(price);
+
+    const discountedSpan = document.createElement("span");
+    discountedSpan.className = "shop-card__price";
+    discountedSpan.textContent = formatPrice(discounted);
+
+    const badge = document.createElement("span");
+    badge.className = "shop-card__discount";
+    badge.textContent = `-${discountRate}%`;
+
+    priceEl.append(originalSpan, discountedSpan, badge);
+    return;
+  }
+
+  const priceSpan = document.createElement("span");
+  priceSpan.className = "shop-card__price";
+  priceSpan.textContent = formatPrice(price);
+  priceEl.appendChild(priceSpan);
+}
 
 function syncStickyStop() {
   if (!detailsEl || !detailsStickyEl) return;
@@ -198,18 +228,9 @@ async function init() {
     descEl.textContent = product.description || "제품 정보";
     renderTags(product);
 
-    // Price with discount
     const price = Number(product.price) || 0;
     const discountRate = Number(product.discountRate) || 0;
-    const displayPrice = Number(price).toLocaleString("ko-KR");
-
-    if (discountRate > 0) {
-      const discounted = Math.round(price * (1 - discountRate / 100));
-      const discountedLabel = Number(discounted).toLocaleString("ko-KR");
-      priceEl.innerHTML = `<span class="price-original">${displayPrice}</span><span class="price-current">${discountedLabel}</span><span class="discount-badge">-${discountRate}%</span>`;
-    } else {
-      priceEl.innerHTML = `<span class="price-current">${displayPrice}</span>`;
-    }
+    renderEditionPrice(price, discountRate);
 
     renderMedia(product);
     renderRecommendations(allProducts, baseName);
