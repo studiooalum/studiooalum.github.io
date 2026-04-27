@@ -70,7 +70,7 @@
 .edition-kicker {
   margin: 0;
   font-family: var(--font-kor-button);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0;
   line-height: 1.2;
 }
@@ -99,19 +99,19 @@
   gap: 8px 12px;
   margin: calc(40px + 1lh) 0 0;
   font-family: var(--font-book);
-  font-size: 15px;
+  font-size: 16px;
   color: rgba(17, 17, 17, 0.82);
 }
 
 .edition-price .shop-card__price--original {
   text-decoration: line-through;
   color: rgba(17, 17, 17, 0.4);
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .edition-price .shop-card__price {
   font-family: var(--font-medium);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.2;
   color: #111;
@@ -119,7 +119,7 @@
 
 .edition-price .shop-card__discount {
   color: var(--point);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.2;
 }
@@ -127,7 +127,7 @@
 .edition-desc {
   margin: 0;
   font-family: var(--font-kor-body);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0;
   line-height: 1.6;
   white-space: pre-line;
@@ -144,7 +144,7 @@
 .edition-tag {
   color: #111;
   font-family: var(--font-kor-button);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0;
   line-height: 1.2;
   text-decoration: underline;
@@ -164,7 +164,7 @@
   padding: 0 14px;
   border: 1px solid #111;
   font-family: var(--font-kor-button);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0;
   cursor: pointer;
 }
@@ -183,7 +183,7 @@
 .edition-note {
   min-height: 18px;
   margin: 14px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0;
   color: rgba(17, 17, 17, 0.65);
 }

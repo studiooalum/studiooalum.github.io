@@ -38,11 +38,15 @@
 
 ```bash
 npm run site:serve
+npm run cf:build
+npm run cf:pages:dev
 npm run web:dev
 npm run studio:dev
 ```
 
 - `site:serve`: 현재 GitHub Pages 루트를 로컬에서 정적으로 확인합니다.
+- `cf:build`: Cloudflare Pages 배포용 `dist/` 정적 출력물을 생성합니다.
+- `cf:pages:dev`: Cloudflare Pages + Functions 기준으로 로컬 개발 서버를 실행합니다.
 - `web:dev`: `apps/web` 아래 Next.js storefront 스캐폴드를 실행합니다.
 - `studio:dev`: `apps/studio` 아래 로컬 Sanity Studio를 실행합니다.
 
@@ -59,6 +63,7 @@ npm run studio:dev
 - `docs/architecture.md`: 현재 저장소 경계와 운영 방향
 - `docs/cloudflare-low-cost-stack.md`: 디자인을 유지하는 최저비용 운영 구조
 - `docs/gabia-cloudflare-domain-setup.md`: 가비아 도메인과 Cloudflare 연결 절차
+- `docs/cloudflare-pages-transition.md`: Cloudflare Pages 전환용 실제 스캐폴드와 명령어
 - `docs/apps-web-deploy.md`: `apps/web` 기반 확장 경로
 - `docs/commerce-schema.sql`: 주문/결제 스키마 초안
 

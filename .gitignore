@@ -1,6 +1,12 @@
 node_modules/
 .next/
 .DS_Store
+dist/
+.wrangler/
+/.dev.vars
+/.dev.vars.*
+/.env
+/.env.*
 
 # Local-only repos (avoid gitlinks/submodules in Pages repo)
 apps/studio/

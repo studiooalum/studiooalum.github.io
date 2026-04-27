@@ -141,6 +141,12 @@
 6. Toss live key를 넣고 실결제를 검증한다.
 7. 마지막으로 공개 결제를 연다.
 
+실제 스캐폴드와 명령어는 아래 문서를 참고한다.
+
+- `docs/cloudflare-pages-transition.md`
+- `cloudflare/d1/schema.sql`
+- `functions/api/*`
+
 ## Not Recommended For This Site
 
 트래픽이 매우 적고 디자인 유지가 중요한 현재 상황에서는 아래 조합은 비효율적이다.

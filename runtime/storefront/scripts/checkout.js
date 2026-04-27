@@ -7,12 +7,64 @@ import { removeFromCart, renderCartPanel, updateQty } from "./cart.js";
 import { formatPrice } from "./utils/catalog.js";
 import { CART_KEY, ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
+const ORDER_CREATE_ENDPOINT = "/api/orders";
+
 /* =========================
    CART DATA (read-only on this page)
 ========================= */
 
 function getCart() {
   return readStoredJson(CART_KEY, []);
+}
+
+function generateLocalOrderId() {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 10);
+  return `OALUM-LOCAL-${timestamp}-${random}`.toUpperCase();
+}
+
+function buildOrderName(items) {
+  if (!items || items.length === 0) return "주문 상품 없음";
+  const first = items[0]?.title || "상품";
+  if (items.length === 1) return first;
+  return `${first} 외 ${items.length - 1}건`;
+}
+
+async function createPendingOrder(orderData) {
+  try {
+    const response = await fetch(ORDER_CREATE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Order API failed: ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (!payload?.ok || !payload?.order) {
+      throw new Error("Order API returned an invalid payload.");
+    }
+
+    return {
+      ...orderData,
+      ...payload.order,
+    };
+  } catch (error) {
+    console.warn("Falling back to local pending order preview.", error);
+
+    return {
+      ...orderData,
+      orderId: generateLocalOrderId(),
+      orderName: buildOrderName(orderData.items),
+      providerMode: "local-preview",
+      status: "pending",
+      paymentStatus: "ready",
+    };
+  }
 }
 
 /* =========================
@@ -127,7 +179,7 @@ function setupMemo() {
 function setupForm() {
   const form = document.getElementById("checkoutForm");
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     // Basic client-side validation
@@ -157,8 +209,10 @@ function setupForm() {
       createdAt: new Date().toISOString(),
     };
 
+    const pendingOrder = await createPendingOrder(orderData);
+
     // Save order for the payment page to read
-    writeStoredJson(ORDER_KEY, orderData);
+    writeStoredJson(ORDER_KEY, pendingOrder);
 
     // Redirect to Toss payment page
     window.location.href = "./payment.html";

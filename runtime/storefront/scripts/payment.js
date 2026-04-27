@@ -4,11 +4,10 @@
 ========================= */
 
 import { formatPrice } from "./utils/catalog.js";
-import { ORDER_KEY, readStoredJson } from "./utils/storage.js";
+import { ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
 // ---- Constants ----
-// TODO: Replace with your live client key for production
-const CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+const DEFAULT_CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
 
 /* =========================
    READ ORDER DATA
@@ -23,6 +22,11 @@ function generateOrderId() {
   const ts = Date.now().toString(36);
   const rand = Math.random().toString(36).slice(2, 10);
   return `OALUM-${ts}-${rand}`;
+}
+
+function getClientKey() {
+  const metaValue = document.querySelector('meta[name="oalum-toss-client-key"]')?.content?.trim();
+  return metaValue || DEFAULT_CLIENT_KEY;
 }
 
 /* =========================
@@ -56,7 +60,7 @@ async function initPayment() {
   }
 
   // Display brief order info
-  const orderName = buildOrderName(order.items);
+  const orderName = order.orderName || buildOrderName(order.items);
   document.getElementById("paymentOrderName").textContent = orderName;
   document.getElementById("paymentOrderTotal").textContent = formatPrice(order.total);
 
@@ -67,7 +71,15 @@ async function initPayment() {
     return;
   }
 
-  const tossPayments = TossPayments(CLIENT_KEY);
+  const clientKey = getClientKey();
+  const tossPayments = TossPayments(clientKey);
+  const paymentOrderId = order.orderId || generateOrderId();
+
+  writeStoredJson(ORDER_KEY, {
+    ...order,
+    orderId: paymentOrderId,
+    orderName,
+  });
 
   // Use anonymous customer (no login required)
   const widgets = tossPayments.widgets({
@@ -103,7 +115,7 @@ async function initPayment() {
 
     try {
       await widgets.requestPayment({
-        orderId: generateOrderId(),
+        orderId: paymentOrderId,
         orderName,
         successUrl: buildPageUrl("success.html"),
         failUrl: buildPageUrl("fail.html"),

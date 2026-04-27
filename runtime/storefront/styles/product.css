@@ -43,7 +43,7 @@
   font-family: var(--font-kor-body);
   font-size: calc(var(--gnb-font-size) - 1px);
   letter-spacing: 0;
-  line-height: 1;
+  line-height: 1.6;
   white-space: pre-line;
   color: rgba(17, 17, 17, 0.82);
 }
