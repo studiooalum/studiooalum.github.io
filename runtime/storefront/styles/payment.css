@@ -28,7 +28,7 @@
   font-family: var(--font-kor-button, sans-serif);
   font-size: 14px;
   font-weight: 400;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   text-transform: uppercase;
   margin: 0 0 12px;
   padding-bottom: 10px;
@@ -80,7 +80,7 @@
   color: #fff;
   font-size: 15px;
   font-weight: 400;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -207,7 +207,7 @@
   text-align: center;
   font-size: 14px;
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   border: 1px solid #111;
   border-radius: 6px;
   background: transparent;
@@ -231,7 +231,7 @@
   text-align: center;
   font-size: 14px;
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   border: none;
   border-radius: 6px;
   background: #e8e4dd;

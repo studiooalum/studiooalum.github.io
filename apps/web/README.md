@@ -32,3 +32,5 @@ npm run web:dev
 - This app is not the live public site yet.
 - The payment approval route is still a preview flow. It crosses the server boundary but does not yet call a real PG secret-key API.
 - When production work begins, replace the preview approval logic with the provider's real server-side confirmation request.
+- The initial Postgres draft for orders, payments, shipping, and webhook events lives in `docs/commerce-schema.sql`.
+- The first Vercel migration checklist for this app lives in `docs/apps-web-deploy.md`.

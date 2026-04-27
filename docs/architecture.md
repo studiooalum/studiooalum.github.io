@@ -60,6 +60,11 @@
 - Postgres: 주문/결제 상태 저장
 - PG direct: 토스 우선, 서버 승인/웹훅 필수
 
+현재 초안 문서는 아래에 정리되어 있습니다.
+
+- `docs/commerce-schema.sql`: 주문, 결제, 배송, 웹훅 적재용 Postgres 초안
+- `docs/apps-web-deploy.md`: `apps/web`의 Vercel 전환 체크리스트
+
 ## Migration Order
 
 1. `apps/web` 스캐폴드를 실제 storefront로 확장
