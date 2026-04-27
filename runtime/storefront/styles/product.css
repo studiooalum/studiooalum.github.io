@@ -54,7 +54,7 @@
   gap: 0;
   align-items: baseline;
   font-family: var(--font-kor-button);
-  font-size: calc(var(--gnb-font-size) - 2px);
+  font-size: 14px;
   letter-spacing: 0;
   line-height: 1;
   color: var(--point);
@@ -97,7 +97,7 @@
 .edition-card__no {
   margin-top: 12px;
   font-family: var(--font-book);
-  font-size: calc(var(--gnb-font-size) - 1px);
+  font-size: var(--gnb-font-size);
   line-height: 1.2;
   letter-spacing: -0.02em;
   text-align: left !important;
