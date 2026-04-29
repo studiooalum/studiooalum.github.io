@@ -29,6 +29,10 @@ const addBtn = document.getElementById("addToCartBtn");
 const buyBtn = document.getElementById("buyNowBtn");
 const noteEl = document.getElementById("editionNote");
 const backEl = document.getElementById("editionBack");
+const lightboxEl = document.getElementById("editionLightbox");
+const lightboxImageEl = document.getElementById("editionLightboxImage");
+
+let lightboxPreviouslyFocused = null;
 
 function renderEditionPrice(price, discountRate) {
   if (!priceEl) return;
@@ -121,6 +125,54 @@ function renderTags(product) {
     link.textContent = tag;
     tagsEl.appendChild(link);
   }
+}
+
+function closeLightbox() {
+  if (!lightboxEl || !lightboxImageEl) return;
+
+  lightboxEl.classList.remove("is-open");
+  lightboxEl.setAttribute("aria-hidden", "true");
+  lightboxImageEl.removeAttribute("src");
+  lightboxImageEl.alt = "확대 이미지";
+  document.body.style.removeProperty("overflow");
+
+  if (lightboxPreviouslyFocused && typeof lightboxPreviouslyFocused.focus === "function") {
+    lightboxPreviouslyFocused.focus();
+  }
+
+  lightboxPreviouslyFocused = null;
+}
+
+function openLightbox(imageEl) {
+  if (!lightboxEl || !lightboxImageEl || !imageEl?.src) return;
+
+  lightboxPreviouslyFocused = document.activeElement;
+  lightboxImageEl.src = imageEl.src;
+  lightboxImageEl.alt = imageEl.alt || "확대 이미지";
+  lightboxEl.classList.add("is-open");
+  lightboxEl.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function bindLightbox() {
+  if (!lightboxEl || !lightboxImageEl) return;
+
+  mediaEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    openLightbox(target);
+  });
+
+  lightboxEl.addEventListener("click", (event) => {
+    if (event.target !== lightboxEl) return;
+    closeLightbox();
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (!lightboxEl.classList.contains("is-open")) return;
+    closeLightbox();
+  });
 }
 
 function renderMedia(product) {
@@ -248,4 +300,5 @@ async function init() {
   }
 }
 
+bindLightbox();
 init();
