@@ -16,7 +16,7 @@
 
 .shop-tags {
   position: fixed;
-  top: calc(var(--gnb-height, 40px) + 10px);
+  top: calc(var(--gnb-height, 40px) + 12px);
   left: var(--page-gutter);
   right: var(--page-gutter);
   z-index: 949;
@@ -142,7 +142,7 @@
     left: var(--page-third-start);
     width: var(--page-column-width);
     right: auto;
-    top: calc(var(--gnb-height, 40px) + 10px);
+    top: calc(var(--gnb-height, 40px) + 12px);
   }
 
   .shop-main {
