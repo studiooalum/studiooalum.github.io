@@ -2,7 +2,7 @@ import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { addToCart, addToCartSilent } from "./cart.js";
-import { formatPrice, getProductTags, parseProductTitle } from "./utils/catalog.js";
+import { formatPrice, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
@@ -29,10 +29,91 @@ const addBtn = document.getElementById("addToCartBtn");
 const buyBtn = document.getElementById("buyNowBtn");
 const noteEl = document.getElementById("editionNote");
 const backEl = document.getElementById("editionBack");
-const lightboxEl = document.getElementById("editionLightbox");
-const lightboxImageEl = document.getElementById("editionLightboxImage");
 
 let lightboxPreviouslyFocused = null;
+
+let lightboxEl = null;
+let lightboxScrollerEl = null;
+let lightboxCloseEl = null;
+
+function ensureLightbox() {
+  if (lightboxEl) return;
+
+  lightboxEl = document.createElement("div");
+  lightboxEl.className = "edition-lightbox";
+  lightboxEl.innerHTML = `
+    <div class="edition-lightbox__backdrop" data-lightbox-close="true"></div>
+    <button type="button" class="edition-lightbox__close" aria-label="확대 이미지 닫기">닫기</button>
+    <div class="edition-lightbox__scroller" role="dialog" aria-modal="true" aria-label="상품 이미지 확대 보기">
+      <div class="edition-lightbox__stack"></div>
+    </div>
+  `;
+
+  document.body.appendChild(lightboxEl);
+  lightboxScrollerEl = lightboxEl.querySelector(".edition-lightbox__stack");
+  lightboxCloseEl = lightboxEl.querySelector(".edition-lightbox__close");
+
+  lightboxEl.addEventListener("click", (event) => {
+    if (event.target === lightboxEl || event.target.closest("[data-lightbox-close]")) {
+      closeLightbox();
+    }
+  });
+
+  lightboxCloseEl?.addEventListener("click", closeLightbox);
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeLightbox();
+    }
+  });
+}
+
+function closeLightbox() {
+  if (!lightboxEl) return;
+
+  lightboxEl.classList.remove("is-open");
+  document.body.classList.remove("edition-lightbox-open");
+
+  if (lightboxPreviouslyFocused && typeof lightboxPreviouslyFocused.focus === "function") {
+    lightboxPreviouslyFocused.focus();
+  }
+
+  lightboxPreviouslyFocused = null;
+}
+
+function openLightbox(images, activeIndex = 0) {
+  if (!Array.isArray(images) || images.length === 0) return;
+
+  ensureLightbox();
+  lightboxPreviouslyFocused = document.activeElement;
+  lightboxScrollerEl.innerHTML = "";
+
+  const figures = [];
+
+  for (const [index, image] of images.entries()) {
+    const figure = document.createElement("figure");
+    figure.className = "edition-lightbox__figure";
+
+    const element = document.createElement("img");
+    element.className = "edition-lightbox__image";
+    element.src = image.url;
+    element.alt = image.alt;
+    element.loading = index === activeIndex ? "eager" : "lazy";
+
+    figure.appendChild(element);
+    lightboxScrollerEl.appendChild(figure);
+    figures.push(figure);
+  }
+
+  lightboxEl.classList.add("is-open");
+  document.body.classList.add("edition-lightbox-open");
+  lightboxCloseEl?.focus();
+
+  requestAnimationFrame(() => {
+    const target = figures[activeIndex] || figures[0];
+    target?.scrollIntoView({ block: "start" });
+  });
+}
 
 function renderEditionPrice(price, discountRate) {
   if (!priceEl) return;
@@ -127,54 +208,6 @@ function renderTags(product) {
   }
 }
 
-function closeLightbox() {
-  if (!lightboxEl || !lightboxImageEl) return;
-
-  lightboxEl.classList.remove("is-open");
-  lightboxEl.setAttribute("aria-hidden", "true");
-  lightboxImageEl.removeAttribute("src");
-  lightboxImageEl.alt = "확대 이미지";
-  document.body.style.removeProperty("overflow");
-
-  if (lightboxPreviouslyFocused && typeof lightboxPreviouslyFocused.focus === "function") {
-    lightboxPreviouslyFocused.focus();
-  }
-
-  lightboxPreviouslyFocused = null;
-}
-
-function openLightbox(imageEl) {
-  if (!lightboxEl || !lightboxImageEl || !imageEl?.src) return;
-
-  lightboxPreviouslyFocused = document.activeElement;
-  lightboxImageEl.src = imageEl.src;
-  lightboxImageEl.alt = imageEl.alt || "확대 이미지";
-  lightboxEl.classList.add("is-open");
-  lightboxEl.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-
-function bindLightbox() {
-  if (!lightboxEl || !lightboxImageEl) return;
-
-  mediaEl.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLImageElement)) return;
-    openLightbox(target);
-  });
-
-  lightboxEl.addEventListener("click", (event) => {
-    if (event.target !== lightboxEl) return;
-    closeLightbox();
-  });
-
-  window.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    if (!lightboxEl.classList.contains("is-open")) return;
-    closeLightbox();
-  });
-}
-
 function renderMedia(product) {
   if (product.soldOut) {
     markSold();
@@ -189,20 +222,40 @@ function renderMedia(product) {
     return;
   }
 
+  const galleryItems = images.map((image, index) => ({
+    pageUrl: index === 0
+      ? imageUrl(image, { width: 1000, height: 1000 })
+      : imageUrl(image, { width: 1000 }),
+    lightboxUrl: imageUrl(image, { width: 1800 }),
+    alt: index === 0 ? product.title : `${product.title} detail ${index}`,
+  }));
+
   // Main image
   const mainImg = document.createElement("img");
-  mainImg.src = imageUrl(images[0], { width: 1000, height: 1000 });
-  mainImg.alt = product.title;
+  mainImg.src = galleryItems[0].pageUrl;
+  mainImg.alt = galleryItems[0].alt;
   mainImg.draggable = false;
+  mainImg.addEventListener("click", () => {
+    openLightbox(
+      galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt })),
+      0,
+    );
+  });
   mediaEl.appendChild(mainImg);
 
   // Detail images (additional images from Sanity)
   for (let i = 1; i < images.length; i++) {
     const img = document.createElement("img");
-    img.src = imageUrl(images[i], { width: 1000 });
-    img.alt = `${product.title} detail ${i}`;
+    img.src = galleryItems[i].pageUrl;
+    img.alt = galleryItems[i].alt;
     img.loading = "lazy";
     img.draggable = false;
+    img.addEventListener("click", () => {
+      openLightbox(
+        galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt })),
+        i,
+      );
+    });
     mediaEl.appendChild(img);
   }
 
@@ -220,10 +273,14 @@ function renderRecommendations(allProducts, currentBaseName) {
   for (const item of allProducts || []) {
     const { baseName } = parseProductTitle(item.title);
     if (baseName === currentBaseName) continue;
-    if (!grouped.has(baseName)) grouped.set(baseName, item);
+    if (!grouped.has(baseName)) grouped.set(baseName, []);
+    grouped.get(baseName).push(item);
   }
 
-  const recommendations = Array.from(grouped.values()).slice(0, 4);
+  const recommendations = Array.from(grouped.values())
+    .map((editions) => pickRepresentativeEdition(editions))
+    .filter(Boolean)
+    .slice(0, 4);
   recommendGridEl.innerHTML = "";
 
   for (const item of recommendations) {
@@ -299,6 +356,4 @@ async function init() {
     buyBtn.style.display = "none";
   }
 }
-
-bindLightbox();
 init();

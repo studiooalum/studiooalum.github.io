@@ -48,3 +48,9 @@ export function getFirstParagraph(text) {
   const parts = normalized.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
   return parts[0] || normalized;
 }
+
+export function pickRepresentativeEdition(editions) {
+  const safeEditions = Array.isArray(editions) ? editions : [];
+
+  return safeEditions.find((edition) => edition?.isRepresentative) || safeEditions[0] || null;
+}
