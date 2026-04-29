@@ -16,8 +16,8 @@ if (!slug) {
 }
 
 const mediaEl = document.getElementById("editionMedia");
+const sidebarTrackEl = document.getElementById("editionSidebarTrack");
 const sidebarEl = document.getElementById("editionSidebar");
-const sidebarStickyEl = document.getElementById("editionSidebarSticky");
 const kickerEl = document.getElementById("editionKicker");
 const titleEl = document.getElementById("editionTitle");
 const numberEl = document.getElementById("editionNumber");
@@ -65,28 +65,28 @@ function renderEditionPrice(price, discountRate) {
 }
 
 function syncStickyStop() {
-  if (!sidebarEl || !sidebarStickyEl) return;
+  if (!sidebarTrackEl || !sidebarEl) return;
 
   if (window.innerWidth < 960) {
-    sidebarEl.style.removeProperty("height");
+    sidebarTrackEl.style.removeProperty("height");
     return;
   }
 
   const mediaImages = mediaEl.querySelectorAll("img");
-  const stickyHeight = Math.ceil(sidebarStickyEl.offsetHeight);
+  const stickyHeight = Math.ceil(sidebarEl.offsetHeight);
 
   if (mediaImages.length === 0) {
-    sidebarEl.style.height = `${stickyHeight}px`;
+    sidebarTrackEl.style.height = `${stickyHeight}px`;
     return;
   }
 
   const lastImage = mediaImages[mediaImages.length - 1];
   const stopOffset = Math.ceil(lastImage.offsetTop + stickyHeight);
-  sidebarEl.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
+  sidebarTrackEl.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
 }
 
 function bindStickyStopUpdates() {
-  if (!sidebarEl || !sidebarStickyEl) return;
+  if (!sidebarTrackEl || !sidebarEl) return;
 
   const mediaImages = mediaEl.querySelectorAll("img");
   for (const image of mediaImages) {
@@ -99,7 +99,7 @@ function bindStickyStopUpdates() {
   if (typeof ResizeObserver !== "undefined") {
     const observer = new ResizeObserver(syncStickyStop);
     observer.observe(mediaEl);
-    observer.observe(sidebarStickyEl);
+    observer.observe(sidebarEl);
   }
 
   requestAnimationFrame(syncStickyStop);
