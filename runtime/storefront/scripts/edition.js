@@ -16,8 +16,8 @@ if (!slug) {
 }
 
 const mediaEl = document.getElementById("editionMedia");
-const detailsEl = document.getElementById("editionDetails");
-const detailsStickyEl = document.getElementById("editionDetailsSticky");
+const sidebarEl = document.getElementById("editionSidebar");
+const sidebarStickyEl = document.getElementById("editionSidebarSticky");
 const kickerEl = document.getElementById("editionKicker");
 const titleEl = document.getElementById("editionTitle");
 const numberEl = document.getElementById("editionNumber");
@@ -65,28 +65,28 @@ function renderEditionPrice(price, discountRate) {
 }
 
 function syncStickyStop() {
-  if (!detailsEl || !detailsStickyEl) return;
+  if (!sidebarEl || !sidebarStickyEl) return;
 
   if (window.innerWidth < 960) {
-    detailsEl.style.removeProperty("height");
+    sidebarEl.style.removeProperty("height");
     return;
   }
 
   const mediaImages = mediaEl.querySelectorAll("img");
-  const stickyHeight = Math.ceil(detailsStickyEl.offsetHeight);
+  const stickyHeight = Math.ceil(sidebarStickyEl.offsetHeight);
 
-  if (mediaImages.length <= 1) {
-    detailsEl.style.height = `${stickyHeight}px`;
+  if (mediaImages.length === 0) {
+    sidebarEl.style.height = `${stickyHeight}px`;
     return;
   }
 
   const lastImage = mediaImages[mediaImages.length - 1];
   const stopOffset = Math.ceil(lastImage.offsetTop + stickyHeight);
-  detailsEl.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
+  sidebarEl.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
 }
 
 function bindStickyStopUpdates() {
-  if (!detailsEl || !detailsStickyEl) return;
+  if (!sidebarEl || !sidebarStickyEl) return;
 
   const mediaImages = mediaEl.querySelectorAll("img");
   for (const image of mediaImages) {
@@ -99,7 +99,7 @@ function bindStickyStopUpdates() {
   if (typeof ResizeObserver !== "undefined") {
     const observer = new ResizeObserver(syncStickyStop);
     observer.observe(mediaEl);
-    observer.observe(detailsStickyEl);
+    observer.observe(sidebarStickyEl);
   }
 
   requestAnimationFrame(syncStickyStop);
