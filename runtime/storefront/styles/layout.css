@@ -6,6 +6,29 @@ html, body {
   letter-spacing: var(--tracking-latin);
 }
 
+.shop-page,
+.product-page,
+.edition-page,
+.account-page,
+.checkout-page,
+.payment-page,
+.success-page,
+.fail-page {
+  --site-footer-accent: #e34234;
+}
+
+.class-page {
+  --site-footer-accent: #ffeb53;
+}
+
+.archive-page {
+  --site-footer-accent: #ffccc3;
+}
+
+.newsletter-page {
+  --site-footer-accent: #cad5d8;
+}
+
 /* canvas pages (홈화면) only — other pages use their own scroll */
 .canvas-page {
   overflow: hidden;
@@ -43,6 +66,30 @@ canvas {
   white-space: pre-line;
 }
 
+.site-footer__links {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+
+.site-footer__link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.site-footer__link:hover {
+  color: #111;
+}
+
 .site-footer__logo {
   margin: 0 0 24px;
   font-family: var(--font-book);
@@ -71,6 +118,180 @@ canvas {
 .site-footer__instagram svg {
   width: 100%;
   height: 100%;
+}
+
+.site-policy-open {
+  overflow: hidden;
+}
+
+.site-policy {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px var(--page-gutter);
+}
+
+.site-policy.is-open {
+  display: flex;
+}
+
+.site-policy__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.site-policy__panel {
+  position: relative;
+  z-index: 1;
+  width: calc(100vw - (var(--page-gutter) * 2));
+  max-width: 100%;
+  max-height: calc(100dvh - 96px);
+  border: 1px solid var(--site-footer-accent, #111);
+  border-radius: 20px;
+  background: #fffdf8;
+  box-shadow: 0 28px 60px rgba(17, 17, 17, 0.22);
+  overflow: hidden;
+}
+
+.site-policy__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+}
+
+.site-policy__close::before,
+.site-policy__close::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 6px;
+  width: 16px;
+  height: 1px;
+  background: currentColor;
+}
+
+.site-policy__close::before {
+  transform: rotate(45deg);
+}
+
+.site-policy__close::after {
+  transform: rotate(-45deg);
+}
+
+.site-policy__scroll {
+  height: 100%;
+  max-height: inherit;
+  overflow-y: auto;
+  padding: 20px 18px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--site-footer-accent, #111) rgba(17, 17, 17, 0.08);
+}
+
+.site-policy__scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.site-policy__scroll::-webkit-scrollbar-track {
+  background: rgba(17, 17, 17, 0.08);
+  border-radius: 999px;
+}
+
+.site-policy__scroll::-webkit-scrollbar-thumb {
+  background: var(--site-footer-accent, #111);
+  border-radius: 999px;
+}
+
+.site-policy__title {
+  margin: 0;
+  padding-right: 28px;
+  font-family: var(--font-kor-sticker);
+  font-size: 11px;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+  color: #111;
+}
+
+.site-policy__content {
+  margin-top: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.site-policy__section {
+  display: grid;
+  gap: 10px;
+}
+
+.site-policy__section-block {
+  display: grid;
+  gap: 4px;
+}
+
+.site-policy__section-title {
+  margin: 0;
+  font-family: var(--font-kor-sticker);
+  font-size: 11px;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+  color: #111;
+}
+
+.site-policy__subheading {
+  margin: 0;
+  font-family: var(--font-kor-sticker);
+  font-size: 10px;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
+  color: #111;
+}
+
+.site-policy__body,
+.site-policy__list,
+.site-policy__meta {
+  margin: 0;
+  font-family: var(--font-kor-ui);
+  font-size: 10px;
+  letter-spacing: -0.03em;
+  line-height: 1.6;
+  color: rgba(17, 17, 17, 0.84);
+  white-space: pre-line;
+}
+
+.site-policy__list {
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 960px) {
+  .site-policy {
+    padding-top: 160px;
+    padding-bottom: 160px;
+  }
+
+  .site-policy__panel {
+    width: min(var(--page-column-width), calc(100vw - (var(--page-gutter) * 2)));
+    max-height: calc(100dvh - 320px);
+  }
+
+  .site-policy__scroll {
+    padding: 22px 20px 28px;
+  }
 }
 
 @media (min-width: 960px) {

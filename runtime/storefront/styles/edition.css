@@ -94,35 +94,26 @@
   padding: 0;
   background: transparent;
   color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
 .edition-lightbox__nav span {
-  position: absolute;
-  top: 50%;
-  left: 50%;
   display: block;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-top: 1px solid currentColor;
-  border-right: 1px solid currentColor;
+  font-family: var(--font-light);
+  font-size: clamp(22px, 2.7vw, 30px);
+  font-weight: 300;
+  line-height: 1;
 }
 
 .edition-lightbox__nav--prev {
   left: 0;
 }
 
-.edition-lightbox__nav--prev span {
-  transform: rotate(-135deg);
-}
-
 .edition-lightbox__nav--next {
   right: 0;
-}
-
-.edition-lightbox__nav--next span {
-  transform: rotate(45deg);
 }
 
 .edition-lightbox__nav[hidden] {
@@ -452,8 +443,6 @@
   }
 
   .edition-lightbox__nav span {
-    width: 12px;
-    height: 12px;
-    margin: -6px 0 0 -6px;
+    font-size: 24px;
   }
 }

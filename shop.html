@@ -36,10 +36,12 @@
     <script type="module" src="./runtime/storefront/scripts/shop.js"></script>
     <script type="module">
       import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+      import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js";
       import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
       initSiteChrome({ title: "Shop", backHref: "index.html", backLabel: "← Home" });
       initCartUI();
+      initSiteFooter();
     </script>
 </body>
 </html>

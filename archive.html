@@ -139,10 +139,12 @@ studio.oalum@gmail.com</p>
 
     <script type="module">
         import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+        import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js";
         import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
         initSiteChrome({ title: "Archive", backHref: "index.html", backLabel: "← Home" });
         initCartUI();
+        initSiteFooter();
     </script>
 </body>
 </html>

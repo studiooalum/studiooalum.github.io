@@ -34,6 +34,13 @@
 }
 
 @font-face {
+  font-family: "SM3KyungChulGothic";
+  src: url("../../../public/fonts/SM3견출고딕-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
   font-family: "GothamBook";
   src: url("../../../public/fonts/GothamBookItalic.woff2") format("woff2");
   font-weight: 400;
@@ -60,6 +67,7 @@
   --font-kor-body: "SM3JungGothic02", sans-serif;
   --font-kor-ui: "SM3JungGothic02", sans-serif;
   --font-kor-button: "SM3JungGothic03", sans-serif;
+  --font-kor-sticker: "SM3KyungChulGothic", "SM3JungGothic03", sans-serif;
   --font-base: var(--font-book);
   --tracking-latin: -0.02em;
   --tracking-korean: -0.03em;
