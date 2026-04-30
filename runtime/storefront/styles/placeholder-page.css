@@ -135,6 +135,7 @@
   background: rgba(255, 255, 255, 0.72);
   font-family: var(--font-kor-button);
   font-size: 11px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.2;
 }
 
@@ -144,7 +145,7 @@
   font-family: var(--font-book);
   font-size: clamp(28px, 4vw, 42px);
   line-height: 0.9;
-  letter-spacing: -0.06em;
+  letter-spacing: var(--tracking-latin);
 }
 
 .archive-entry__caption {
@@ -162,6 +163,7 @@
   margin: 0;
   font-family: var(--font-book);
   font-size: 22px;
+  letter-spacing: var(--tracking-latin);
   line-height: 1;
 }
 
@@ -169,6 +171,7 @@
   margin: 0;
   font-family: var(--font-kor-body);
   font-size: 13px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.6;
   color: rgba(17, 17, 17, 0.78);
 }
@@ -210,6 +213,7 @@
   margin: 0;
   font-family: var(--font-kor-button);
   font-size: 11px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.2;
 }
 
@@ -218,7 +222,7 @@
   font-family: var(--font-book);
   font-size: clamp(30px, 4vw, 48px);
   line-height: 0.94;
-  letter-spacing: -0.05em;
+  letter-spacing: var(--tracking-latin);
 }
 
 .placeholder-copy,
@@ -227,6 +231,7 @@
   margin: 0;
   font-family: var(--font-kor-body);
   font-size: 14px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.65;
   color: rgba(17, 17, 17, 0.82);
 }
@@ -272,6 +277,7 @@
   margin: 0;
   font-family: var(--font-book);
   font-size: 24px;
+  letter-spacing: var(--tracking-latin);
   line-height: 1;
 }
 
@@ -293,6 +299,7 @@
 .placeholder-form__label {
   font-family: var(--font-kor-button);
   font-size: 11px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.2;
 }
 
@@ -305,6 +312,7 @@
   color: #111;
   font-family: var(--font-kor-body);
   font-size: 11px;
+  letter-spacing: var(--tracking-korean);
 }
 
 .placeholder-form__input::placeholder {
@@ -317,6 +325,7 @@
   gap: 8px;
   font-family: var(--font-kor-body);
   font-size: 11px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.45;
 }
 
@@ -337,6 +346,7 @@
   color: #fff;
   font-family: var(--font-kor-button);
   font-size: 11px;
+  letter-spacing: var(--tracking-korean);
   cursor: pointer;
 }
 
@@ -345,6 +355,7 @@
   min-height: 16px;
   font-family: var(--font-kor-body);
   font-size: 11px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.4;
   color: rgba(17, 17, 17, 0.72);
 }

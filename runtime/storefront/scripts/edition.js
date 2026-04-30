@@ -33,8 +33,52 @@ const backEl = document.getElementById("editionBack");
 let lightboxPreviouslyFocused = null;
 
 let lightboxEl = null;
-let lightboxScrollerEl = null;
 let lightboxCloseEl = null;
+let lightboxImageEl = null;
+let lightboxPrevEl = null;
+let lightboxNextEl = null;
+let lightboxImages = [];
+let lightboxActiveIndex = 0;
+
+function isLightboxOpen() {
+  return !!lightboxEl?.classList.contains("is-open");
+}
+
+function normalizeLightboxIndex(index) {
+  if (lightboxImages.length === 0) return 0;
+  return (index + lightboxImages.length) % lightboxImages.length;
+}
+
+function preloadLightboxImage(index) {
+  const item = lightboxImages[index];
+  if (!item?.url) return;
+
+  const image = new Image();
+  image.src = item.url;
+}
+
+function updateLightbox() {
+  if (!lightboxImageEl || lightboxImages.length === 0) return;
+
+  const currentImage = lightboxImages[lightboxActiveIndex];
+  lightboxImageEl.src = currentImage.url;
+  lightboxImageEl.alt = currentImage.alt || "상품 이미지";
+
+  const hasMultipleImages = lightboxImages.length > 1;
+  lightboxPrevEl?.toggleAttribute("hidden", !hasMultipleImages);
+  lightboxNextEl?.toggleAttribute("hidden", !hasMultipleImages);
+
+  if (!hasMultipleImages) return;
+
+  preloadLightboxImage(normalizeLightboxIndex(lightboxActiveIndex - 1));
+  preloadLightboxImage(normalizeLightboxIndex(lightboxActiveIndex + 1));
+}
+
+function stepLightbox(offset) {
+  if (lightboxImages.length < 2) return;
+  lightboxActiveIndex = normalizeLightboxIndex(lightboxActiveIndex + offset);
+  updateLightbox();
+}
 
 function ensureLightbox() {
   if (lightboxEl) return;
@@ -43,15 +87,27 @@ function ensureLightbox() {
   lightboxEl.className = "edition-lightbox";
   lightboxEl.innerHTML = `
     <div class="edition-lightbox__backdrop" data-lightbox-close="true"></div>
-    <button type="button" class="edition-lightbox__close" aria-label="확대 이미지 닫기">닫기</button>
-    <div class="edition-lightbox__scroller" role="dialog" aria-modal="true" aria-label="상품 이미지 확대 보기">
-      <div class="edition-lightbox__stack"></div>
+    <div class="edition-lightbox__dialog" role="dialog" aria-modal="true" aria-label="상품 이미지 확대 보기">
+      <button type="button" class="edition-lightbox__nav edition-lightbox__nav--prev" aria-label="이전 이미지">
+        <span aria-hidden="true">&lt;</span>
+      </button>
+      <div class="edition-lightbox__viewport">
+        <figure class="edition-lightbox__figure">
+          <img class="edition-lightbox__image" alt="">
+        </figure>
+      </div>
+      <button type="button" class="edition-lightbox__nav edition-lightbox__nav--next" aria-label="다음 이미지">
+        <span aria-hidden="true">&gt;</span>
+      </button>
+      <button type="button" class="edition-lightbox__close" aria-label="확대 이미지 닫기"></button>
     </div>
   `;
 
   document.body.appendChild(lightboxEl);
-  lightboxScrollerEl = lightboxEl.querySelector(".edition-lightbox__stack");
   lightboxCloseEl = lightboxEl.querySelector(".edition-lightbox__close");
+  lightboxImageEl = lightboxEl.querySelector(".edition-lightbox__image");
+  lightboxPrevEl = lightboxEl.querySelector(".edition-lightbox__nav--prev");
+  lightboxNextEl = lightboxEl.querySelector(".edition-lightbox__nav--next");
 
   lightboxEl.addEventListener("click", (event) => {
     if (event.target === lightboxEl || event.target.closest("[data-lightbox-close]")) {
@@ -60,10 +116,24 @@ function ensureLightbox() {
   });
 
   lightboxCloseEl?.addEventListener("click", closeLightbox);
+  lightboxPrevEl?.addEventListener("click", () => stepLightbox(-1));
+  lightboxNextEl?.addEventListener("click", () => stepLightbox(1));
 
   window.addEventListener("keydown", (event) => {
+    if (!isLightboxOpen()) return;
+
     if (event.key === "Escape") {
       closeLightbox();
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      stepLightbox(-1);
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      stepLightbox(1);
     }
   });
 }
@@ -73,6 +143,7 @@ function closeLightbox() {
 
   lightboxEl.classList.remove("is-open");
   document.body.classList.remove("edition-lightbox-open");
+  lightboxEl.setAttribute("aria-hidden", "true");
 
   if (lightboxPreviouslyFocused && typeof lightboxPreviouslyFocused.focus === "function") {
     lightboxPreviouslyFocused.focus();
@@ -86,32 +157,16 @@ function openLightbox(images, activeIndex = 0) {
 
   ensureLightbox();
   lightboxPreviouslyFocused = document.activeElement;
-  lightboxScrollerEl.innerHTML = "";
-
-  const figures = [];
-
-  for (const [index, image] of images.entries()) {
-    const figure = document.createElement("figure");
-    figure.className = "edition-lightbox__figure";
-
-    const element = document.createElement("img");
-    element.className = "edition-lightbox__image";
-    element.src = image.url;
-    element.alt = image.alt;
-    element.loading = index === activeIndex ? "eager" : "lazy";
-
-    figure.appendChild(element);
-    lightboxScrollerEl.appendChild(figure);
-    figures.push(figure);
-  }
+  lightboxImages = images;
+  lightboxActiveIndex = normalizeLightboxIndex(activeIndex);
+  updateLightbox();
 
   lightboxEl.classList.add("is-open");
+  lightboxEl.setAttribute("aria-hidden", "false");
   document.body.classList.add("edition-lightbox-open");
-  lightboxCloseEl?.focus();
 
   requestAnimationFrame(() => {
-    const target = figures[activeIndex] || figures[0];
-    target?.scrollIntoView({ block: "start" });
+    lightboxCloseEl?.focus();
   });
 }
 

@@ -21,6 +21,7 @@
   cursor: pointer;
   transition: background 0.2s ease;
   font-family: var(--font-kor-button, sans-serif);
+  letter-spacing: var(--tracking-korean);
 }
 
 .cart-toggle:hover {
@@ -73,6 +74,7 @@
   display: flex;
   flex-direction: column;
   font-family: var(--font-kor-body, sans-serif);
+  letter-spacing: var(--tracking-korean);
   color: #111;
   transform: translateX(100%);
   transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -98,7 +100,6 @@
   font-family: var(--font-kor-button, sans-serif);
   font-size: var(--gnb-font-size, 13px);
   font-weight: 400;
-  letter-spacing: 0;
   margin: 0;
 }
 
@@ -168,7 +169,6 @@
   font-family: var(--font-kor-button, sans-serif);
   font-size: 12px;
   font-weight: 400;
-  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -240,7 +240,6 @@
   font-family: var(--font-kor-button, sans-serif);
   font-size: 14px;
   font-weight: 400;
-  letter-spacing: 0;
   margin-bottom: 14px;
 }
 
@@ -253,7 +252,6 @@
   color: #fff;
   font-size: 13px;
   font-weight: 400;
-  letter-spacing: 0;
   text-transform: uppercase;
   text-decoration: none;
   border: none;

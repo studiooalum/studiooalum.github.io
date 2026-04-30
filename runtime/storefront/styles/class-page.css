@@ -33,6 +33,7 @@
   margin: 18px 0 8px;
   font-family: var(--font-book);
   font-size: 28px;
+  letter-spacing: var(--tracking-latin);
   line-height: 1;
 }
 
@@ -41,6 +42,7 @@
   margin: 0;
   font-family: var(--font-kor-body);
   font-size: 14px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.55;
 }
 

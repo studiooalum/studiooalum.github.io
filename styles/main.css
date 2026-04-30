@@ -1,5 +1,9 @@
 /* Studio OALUM - Yarn Menu */
 
+:root {
+    --tracking-latin: -0.02em;
+}
+
 @font-face {
     font-family: 'GothamBook';
     src: url('/public/fonts/GothamBook.woff2') format('woff2');
@@ -19,6 +23,7 @@ body {
     overflow: hidden;
     background: #ffffff;
     font-family: 'GothamBook', sans-serif;
+    letter-spacing: var(--tracking-latin);
 }
 
 #svg-container {
@@ -41,6 +46,7 @@ body {
     font-size: 33px;
     font-weight: 800;
     font-family: 'GothamBold', 'GothamBook', sans-serif;
+    letter-spacing: var(--tracking-latin);
     fill: #000;
     pointer-events: none;
     text-anchor: middle;

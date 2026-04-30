@@ -16,7 +16,7 @@
 
 .shop-tags {
   position: fixed;
-  top: calc(var(--gnb-height, 40px) + 12px);
+  top: calc(var(--gnb-height, 40px) + 14px);
   left: var(--page-gutter);
   right: var(--page-gutter);
   z-index: 949;
@@ -90,7 +90,7 @@
   display: grid;
   place-items: center;
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-latin);
   color: rgba(17, 17, 17, 0.5);
 }
 
@@ -133,7 +133,9 @@
 
 .shop-state {
   margin: 12px 0;
+  font-family: var(--font-kor-body);
   font-size: 13px;
+  letter-spacing: var(--tracking-korean);
   color: rgba(17, 17, 17, 0.8);
 }
 
@@ -142,7 +144,7 @@
     left: var(--page-third-start);
     width: var(--page-column-width);
     right: auto;
-    top: calc(var(--gnb-height, 40px) + 12px);
+    top: calc(var(--gnb-height, 40px) + 14px);
   }
 
   .shop-main {

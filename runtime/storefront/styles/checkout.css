@@ -6,6 +6,7 @@
   background: #ffffff;
   min-height: 100vh;
   font-family: var(--font-kor-body, sans-serif);
+  letter-spacing: var(--tracking-korean);
   color: var(--color-text, #111);
 }
 
@@ -26,7 +27,6 @@
   font-family: var(--font-kor-button, sans-serif);
   font-size: 14px;
   font-weight: 400;
-  letter-spacing: 0;
   text-transform: uppercase;
   margin: 0 0 20px;
   padding-bottom: 12px;
@@ -73,7 +73,6 @@
   font-family: var(--font-kor-button, sans-serif);
   font-size: 13px;
   font-weight: 400;
-  letter-spacing: 0;
   min-width: 0;
 }
 
@@ -206,7 +205,6 @@
   font-family: var(--font-kor-button, sans-serif);
   font-size: 12px;
   font-weight: 400;
-  letter-spacing: 0;
   margin-bottom: 6px;
   color: #444;
 }
@@ -265,7 +263,6 @@
   padding: 10px 16px;
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0;
   border: 1px solid #111;
   background: transparent;
   color: #111;
@@ -341,7 +338,6 @@
   color: #fff;
   font-size: 11px;
   font-weight: 400;
-  letter-spacing: 0;
   text-transform: none;
   border: none;
   border-radius: 4px;

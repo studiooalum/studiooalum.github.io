@@ -3,6 +3,7 @@
 body {
     overflow-y: auto;
     background: #fff;
+    letter-spacing: var(--tracking-latin);
 }
 
 .page-hero {
@@ -16,7 +17,7 @@ body {
 .page-hero h1 {
     font-family: 'GothamBold', 'GothamBook', sans-serif;
     font-size: clamp(3rem, 8vw, 7rem);
-    letter-spacing: 6px;
+    letter-spacing: var(--tracking-latin);
     text-transform: uppercase;
 }
 

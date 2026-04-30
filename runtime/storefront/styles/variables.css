@@ -61,6 +61,8 @@
   --font-kor-ui: "SM3JungGothic02", sans-serif;
   --font-kor-button: "SM3JungGothic03", sans-serif;
   --font-base: var(--font-book);
+  --tracking-latin: -0.02em;
+  --tracking-korean: -0.03em;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 32px;

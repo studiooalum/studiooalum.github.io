@@ -22,7 +22,7 @@
   padding: 0 var(--page-gutter);
   font-family: var(--font-book, sans-serif);
   font-size: var(--gnb-font-size);
-  letter-spacing: 0;
+  letter-spacing: var(--tracking-latin);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -50,7 +50,6 @@
   font-size: var(--gnb-font-size);
   font-family: var(--font-medium, sans-serif);
   font-weight: 500;
-  letter-spacing: 0;
   text-transform: none;
 }
 
