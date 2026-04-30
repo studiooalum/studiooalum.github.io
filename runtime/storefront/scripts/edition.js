@@ -110,7 +110,15 @@ function ensureLightbox() {
   lightboxNextEl = lightboxEl.querySelector(".edition-lightbox__nav--next");
 
   lightboxEl.addEventListener("click", (event) => {
-    if (event.target === lightboxEl || event.target.closest("[data-lightbox-close]")) {
+    if (event.target.closest(".edition-lightbox__image, .edition-lightbox__nav, .edition-lightbox__close")) {
+      return;
+    }
+
+    if (
+      event.target === lightboxEl
+      || event.target.closest("[data-lightbox-close]")
+      || event.target.closest(".edition-lightbox__dialog, .edition-lightbox__viewport, .edition-lightbox__figure")
+    ) {
       closeLightbox();
     }
   });
