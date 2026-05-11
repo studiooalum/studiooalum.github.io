@@ -5,7 +5,7 @@
 
 /** Fetch ALL published products (each edition = one document) */
 export const ALL_PRODUCTS_QUERY = `
-  *[_type == "product"] | order(title asc) {
+  *[_type == "product"] | order(_createdAt desc, title asc) {
     _id,
     title,
     description,

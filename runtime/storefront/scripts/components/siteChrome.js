@@ -37,28 +37,18 @@ export function initSiteChrome({ title, backHref, backLabel } = {}) {
   }
 
   const loggedIn = isLoggedIn();
-  const searchHref = resolvePath("shop.html");
   const accountHref = resolvePath("account.html");
 
   actionsEl.innerHTML = loggedIn
     ? [
-        createActionButton({ label: "Search", attrs: 'data-search-toggle="true"' }),
         createActionButton({ label: "Logout", attrs: 'data-auth-toggle="logout"' }),
         createActionLink({ href: accountHref, label: "Account" }),
         createActionButton({ label: 'Cart <span class="gnb__count js-cart-count" hidden>0</span>', className: "gnb__action--cart", attrs: 'data-cart-toggle="true"' }),
       ].join("")
     : [
-        createActionButton({ label: "Search", attrs: 'data-search-toggle="true"' }),
         createActionButton({ label: "Login", attrs: 'data-auth-toggle="login"' }),
         createActionButton({ label: 'Cart <span class="gnb__count js-cart-count" hidden>0</span>', className: "gnb__action--cart", attrs: 'data-cart-toggle="true"' }),
       ].join("");
-
-  actionsEl.querySelectorAll("[data-search-toggle]").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      window.location.href = searchHref;
-    });
-  });
 
   actionsEl.querySelectorAll("[data-auth-toggle]").forEach((button) => {
     button.addEventListener("click", (event) => {

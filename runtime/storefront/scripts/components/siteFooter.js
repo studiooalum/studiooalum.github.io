@@ -350,7 +350,20 @@ const PANEL_CONTENT = {
 };
 
 function getFooterMarkup() {
-  const links = FOOTER_LINKS.map(
+  const [firstLink, ...restLinks] = FOOTER_LINKS;
+  const firstRow = `
+    <div class="site-footer__links-line">
+      <button type="button" class="site-footer__link" data-site-policy="${firstLink.key}">${firstLink.label}</button>
+      <a class="site-footer__instagram" href="https://www.instagram.com/studio_oalum/" target="_blank" rel="noreferrer" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" stroke-width="1.6"></rect>
+          <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.6"></circle>
+          <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor"></circle>
+        </svg>
+      </a>
+    </div>
+  `;
+  const remainingLinks = restLinks.map(
     ({ key, label }) => `<button type="button" class="site-footer__link" data-site-policy="${key}">${label}</button>`,
   ).join("");
 
@@ -368,20 +381,13 @@ we create whatever we want to make.</p>
 만드는 사람: 한아름
 사업자등록번호 669-24-02313
 통신판매업 신고 제2025-서울동대문-2322호</p>
-      <div class="site-footer__links" aria-label="사이트 정책 링크">${links}</div>
+      <div class="site-footer__links" aria-label="사이트 정책 링크">${firstRow}${remainingLinks}</div>
     </div>
     <div class="site-footer__text site-footer__text--contact">
       <p>03971
 서울특별시 성산동 252-3 2층 202호
 +82-10-4746-5999
 studio.oalum@gmail.com</p>
-      <a class="site-footer__instagram" href="#" aria-label="Instagram">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" stroke-width="1.6"></rect>
-          <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.6"></circle>
-          <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor"></circle>
-        </svg>
-      </a>
     </div>
   `;
 }

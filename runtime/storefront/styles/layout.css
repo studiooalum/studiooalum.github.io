@@ -67,9 +67,16 @@ canvas {
 }
 
 .site-footer__links {
-  display: grid;
-  justify-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
+}
+
+.site-footer__links-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .site-footer__link {
@@ -111,7 +118,7 @@ canvas {
   display: inline-flex;
   width: 16px;
   height: 16px;
-  margin-top: 10px;
+  margin-top: 0;
   color: #111;
 }
 
@@ -153,7 +160,7 @@ canvas {
   max-width: 100%;
   max-height: calc(100dvh - 96px);
   border: 1px solid var(--site-footer-accent, #111);
-  border-radius: 20px;
+  border-radius: 0;
   background: #fffdf8;
   box-shadow: 0 28px 60px rgba(17, 17, 17, 0.22);
   overflow: hidden;
@@ -198,7 +205,7 @@ canvas {
   overflow-y: auto;
   padding: 20px 18px 24px;
   scrollbar-width: thin;
-  scrollbar-color: var(--site-footer-accent, #111) rgba(17, 17, 17, 0.08);
+  scrollbar-color: #ffffff var(--site-footer-accent, #111);
 }
 
 .site-policy__scroll::-webkit-scrollbar {
@@ -206,13 +213,14 @@ canvas {
 }
 
 .site-policy__scroll::-webkit-scrollbar-track {
-  background: rgba(17, 17, 17, 0.08);
-  border-radius: 999px;
+  background: var(--site-footer-accent, #111);
+  border-radius: 0;
 }
 
 .site-policy__scroll::-webkit-scrollbar-thumb {
-  background: var(--site-footer-accent, #111);
-  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid var(--site-footer-accent, #111);
+  border-radius: 0;
 }
 
 .site-policy__title {
@@ -228,17 +236,17 @@ canvas {
 .site-policy__content {
   margin-top: 18px;
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .site-policy__section {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .site-policy__section-block {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .site-policy__section-title {
@@ -255,7 +263,7 @@ canvas {
   font-family: var(--font-kor-sticker);
   font-size: 10px;
   letter-spacing: -0.02em;
-  line-height: 1.5;
+  line-height: 1.35;
   color: #111;
 }
 
@@ -266,7 +274,7 @@ canvas {
   font-family: var(--font-kor-ui);
   font-size: 10px;
   letter-spacing: -0.03em;
-  line-height: 1.6;
+  line-height: 1.5;
   color: rgba(17, 17, 17, 0.84);
   white-space: pre-line;
 }
