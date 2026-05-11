@@ -1,3 +1,5 @@
+import { lockBodyScroll, unlockBodyScroll } from "../utils/scroll-lock.js";
+
 const PRIMARY_NAV_ITEMS = [
   { key: "archive", label: "ARCHIVE", href: "archive.html" },
   { key: "shop", label: "SHOP", href: "shop.html" },
@@ -168,6 +170,7 @@ function renderSiteChrome(nav, { showActions = true } = {}) {
   const sectionKey = getSectionKey(nav);
   const loggedIn = authState.authenticated;
 
+  unlockBodyScroll("gnb-menu");
   nav.classList.remove("is-menu-open");
   document.body.classList.remove("gnb-menu-open");
 
@@ -196,8 +199,6 @@ async function logout() {
     authenticated: false,
   };
 }
-
-import { lockBodyScroll, unlockBodyScroll } from "../utils/scroll-lock.js";
 
 function bindAuthActions(nav, options) {
   nav.querySelectorAll("[data-auth-toggle='logout']").forEach((button) => {
@@ -235,24 +236,25 @@ function setMobileMenuOpen(nav, isOpen) {
 }
 
 function bindMobileMenu(nav) {
-  const toggle = nav.querySelector("[data-nav-toggle='true']");
-
-  toggle?.addEventListener("click", () => {
-    const nextOpen = !nav.classList.contains("is-menu-open");
-    setMobileMenuOpen(nav, nextOpen);
-  });
-
-  nav.querySelectorAll("[data-nav-close='true'], .gnb__mobile-menu a, .gnb__mobile-actions a, .gnb__mobile-actions [data-cart-toggle], .gnb__mobile-actions [data-auth-toggle='logout']").forEach((target) => {
-    target.addEventListener("click", () => {
-      setMobileMenuOpen(nav, false);
-    });
-  });
-
   if (nav.dataset.mobileMenuBound === "true") {
     return;
   }
 
   nav.dataset.mobileMenuBound = "true";
+
+  nav.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-nav-toggle='true']");
+    if (toggle && nav.contains(toggle)) {
+      const nextOpen = !nav.classList.contains("is-menu-open");
+      setMobileMenuOpen(nav, nextOpen);
+      return;
+    }
+
+    const closeTarget = event.target.closest("[data-nav-close='true'], .gnb__mobile-menu a, .gnb__mobile-actions a, .gnb__mobile-actions [data-cart-toggle], .gnb__mobile-actions [data-auth-toggle='logout']");
+    if (closeTarget && nav.contains(closeTarget)) {
+      setMobileMenuOpen(nav, false);
+    }
+  });
 
   window.addEventListener("resize", () => {
     if (window.innerWidth > 768) {
@@ -264,6 +266,10 @@ function bindMobileMenu(nav) {
     if (event.key === "Escape") {
       setMobileMenuOpen(nav, false);
     }
+  });
+
+  window.addEventListener("pagehide", () => {
+    setMobileMenuOpen(nav, false);
   });
 }
 

@@ -51,6 +51,10 @@
   display: none;
 }
 
+.gnb > .gnb__back {
+  display: none;
+}
+
 .gnb__menu-toggle,
 .gnb__mobile-backdrop,
 .gnb__mobile-panel,
