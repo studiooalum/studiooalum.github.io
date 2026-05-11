@@ -1,7 +1,7 @@
 /* =========================
-   GNB — Slim fixed navigation bar
+  GNB — fixed navigation bar
    Color matches each menu's thread color from the main page.
-   Archive: #ffccc3 | Shop: #e34234 | Class: #ffeb53 | Newsletter: #cad5d8
+  Archive: #ffccc3 | Shop: #e34234 | Workshops: #ffeb53 | Newsletter: #cad5d8
 ========================= */
 
 :root {
@@ -19,48 +19,93 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding: 0 var(--page-gutter);
   font-family: var(--font-book, sans-serif);
   font-size: var(--gnb-font-size);
-  letter-spacing: var(--tracking-latin);
+  letter-spacing: 0.04em;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
 .gnb--shop       { background: rgba(227, 66, 52, 0.92); color: #111; }
 .gnb--archive    { background: rgba(255, 204, 195, 0.92); color: #111; }
-.gnb--class      { background: rgba(255, 235, 83, 0.92); color: #111; }
+.gnb--workshops  { background: rgba(255, 235, 83, 0.92); color: #111; }
 .gnb--newsletter { background: rgba(202, 213, 216, 0.92); color: #111; }
 
-.gnb__back {
+.gnb__primary {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.8vw, 18px);
+}
+
+.gnb__home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
   text-decoration: none;
+}
+
+.gnb__home-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gnb__menu {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 18px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.gnb__menu::-webkit-scrollbar {
+  display: none;
+}
+
+.gnb__menu-item {
+  position: relative;
+  padding-bottom: 2px;
   color: inherit;
   font-size: var(--gnb-font-size);
-  font-family: var(--font-book, sans-serif);
-  opacity: 0.85;
-  transition: opacity 0.2s;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
-.gnb__back:hover { opacity: 1; }
 
-.gnb__title {
+.gnb__menu-item::after {
+  content: "";
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: var(--gnb-font-size);
-  font-family: var(--font-medium, sans-serif);
-  font-weight: 500;
-  text-transform: none;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.18s ease;
+}
+
+.gnb__menu-item.is-active::after,
+.gnb__menu-item:hover::after {
+  transform: scaleX(1);
 }
 
 .gnb__actions {
-  position: relative;
-  z-index: 1;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 20px;
-  min-width: 40px;
-  margin-left: auto;
+  gap: clamp(12px, 1.4vw, 20px);
+  margin-left: 8px;
 }
 
 .gnb__action {
@@ -72,6 +117,7 @@
   font-size: var(--gnb-font-size);
   line-height: 1;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -92,34 +138,34 @@
   font-size: calc(var(--gnb-font-size) - 3px);
 }
 
-.gnb__spacer {
-  width: 40px;
-}
-
 @media (max-width: 768px) {
   :root {
-    --gnb-height: 36px;
-    --gnb-font-size: 12px;
+    --gnb-height: 38px;
+    --gnb-font-size: 10px;
   }
+
   .gnb {
     padding: 0 var(--page-gutter);
+    gap: 10px;
+  }
+
+  .gnb__primary {
+    gap: 10px;
   }
 
   .gnb__actions {
-    gap: 14px;
+    gap: 10px;
+    margin-left: 0;
   }
 
+  .gnb__home {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 @media (min-width: 960px) {
   :root {
     --gnb-font-size: 14px;
-  }
-
-  .gnb__title {
-    left: var(--page-third-start);
-    width: var(--page-column-width);
-    transform: translateY(-50%);
-    text-align: left;
   }
 }

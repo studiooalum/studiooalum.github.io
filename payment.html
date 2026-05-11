@@ -42,5 +42,10 @@
 
   <script src="https://js.tosspayments.com/v2/standard"></script>
   <script type="module" src="./runtime/storefront/scripts/payment.js"></script>
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+
+    initSiteChrome({ showActions: false });
+  </script>
 </body>
 </html>

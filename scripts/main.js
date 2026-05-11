@@ -17,7 +17,7 @@
   var DATA = [
     { word: 'Archive',    color: '#ffccc3', sw: 55, yOff: 0.2,  url: 'archive.html' },
     { word: 'Shop',       color: '#e34234', sw: 42, yOff: 0.42, url: 'shop.html' },
-    { word: 'Class',      color: '#ffeb53', sw: 48, yOff: 0.66, url: 'class.html' },
+    { word: 'Workshops',  color: '#ffeb53', sw: 48, yOff: 0.66, url: 'workshops.html' },
     { word: 'Newsletter', color: '#cad5d8', sw: 40, yOff: 0.86, url: 'newsletter.html' }
   ];
 
@@ -218,20 +218,10 @@
 
   Yarn.prototype._buildLetters = function () {
     var pathLen = this.pathEl.getTotalLength() || W;
-    var baseCount = Math.max(this.word.length * 2, Math.round(pathLen / 22));
-    var densityScale = isMobile ? 0.7 : 0.21;
-    var targetCount = Math.max(this.word.length, Math.round(baseCount * densityScale));
-    var repeats = isMobile ? 1 : Math.max(1, Math.round(targetCount / this.word.length));
     var letterSize = isMobile ? this.renderSw * 0.75 : this.renderSw * 0.7;
     var letterR = letterSize * 0.42;
     var maxN = this.renderSw * 0.5 - letterR; // fallback; overridden by measurement below
     var visualCenterOffset = 0; // offset to align text visual center with (wx, wy)
-
-    // 2n word gap + 0.7n letter gap, spanning full yarn length
-    var blockUnits = this.word.length * 0.7 + 2;
-    var hUnit = pathLen / (repeats * blockUnits);
-    // Center each word within its block: offset = (blockUnits - (wordLen-1)*0.7) / 2 = 1.35
-    var centerOff = 1.35;
 
     for (var k = 0; k < this.letters.length; k++) {
       if (this.letters[k].el.parentNode) this.letters[k].el.parentNode.removeChild(this.letters[k].el);
@@ -254,46 +244,59 @@
     }
     this.groupEl.removeChild(mEl);
 
-    var totalLetters = repeats * this.word.length;
-    var uniformGap = pathLen / totalLetters;
+    var tempLetters = [];
+    var wordGap = letterSize * 0.12;
+    var wordWidth = 0;
 
-    for (var g = 0; g < repeats; g++) {
-      for (var c = 0; c < this.word.length; c++) {
-        var ch = this.word[c];
-        var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        el.textContent = ch;
-        el.setAttribute('class', 'yarn-text');
-        el.style.fontSize = letterSize + 'px';
-        this.groupEl.appendChild(el);
+    for (var c = 0; c < this.word.length; c++) {
+      var ch = this.word[c];
+      var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      el.textContent = ch;
+      el.setAttribute('class', 'yarn-text');
+      el.style.fontSize = letterSize + 'px';
+      this.groupEl.appendChild(el);
 
-        var idx = g * this.word.length + c;
-        // Hover target: 2n/0.7n word-grouped layout
-        var hoverU = wrapArc(g * blockUnits * hUnit + (c * 0.7 + centerOff) * hUnit, pathLen);
-        // Default position: uniform spacing across full yarn
-        var defaultU = wrapArc((idx + 0.5) * uniformGap, pathLen);
-        var u = defaultU;
-        var pt = this.pathEl.getPointAtLength(u);
+      var bbox = el.getBBox();
+      var letterWidth = Math.max(letterSize * 0.42, bbox.width);
+      tempLetters.push({
+        el: el,
+        width: letterWidth,
+        halfW: Math.max(2, letterWidth * 0.5),
+        halfH: Math.max(2, bbox.height * 0.5)
+      });
+      wordWidth += letterWidth;
+      if (c < this.word.length - 1) wordWidth += wordGap;
+    }
 
-        this.letters.push({
-          el: el,
-          u: u,
-          vU: 0,     // Start stationary; yarn motion drives letters
-          n: 0,
-          vN: 0,
-          wx: pt.x,
-          wy: pt.y,
-          tx: 1, ty: 0,
-          nx: 0, ny: 1,
-          pax: NaN, pay: NaN,
-          letterR: letterR,
-          halfW: Math.max(2, el.getBBox().width * 0.5),
-          halfH: Math.max(2, el.getBBox().height * 0.5),
-          visualCenterOffset: visualCenterOffset,
-          maxN: maxN,
-          hoverU: hoverU,
-          defaultU: defaultU
-        });
-      }
+    var startU = wrapArc(pathLen * 0.5 - wordWidth * 0.5, pathLen);
+    var cursorU = startU;
+
+    for (var i = 0; i < tempLetters.length; i++) {
+      var letter = tempLetters[i];
+      var centerU = wrapArc(cursorU + letter.width * 0.5, pathLen);
+      var pt = this.pathEl.getPointAtLength(centerU);
+
+      this.letters.push({
+        el: letter.el,
+        u: centerU,
+        vU: 0,
+        n: 0,
+        vN: 0,
+        wx: pt.x,
+        wy: pt.y,
+        tx: 1, ty: 0,
+        nx: 0, ny: 1,
+        pax: NaN, pay: NaN,
+        letterR: letterR,
+        halfW: letter.halfW,
+        halfH: letter.halfH,
+        visualCenterOffset: visualCenterOffset,
+        maxN: maxN,
+        hoverU: centerU,
+        defaultU: centerU
+      });
+
+      cursorU += letter.width + wordGap;
     }
   };
 

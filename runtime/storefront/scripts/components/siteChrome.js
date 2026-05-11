@@ -1,5 +1,12 @@
 const AUTH_KEY = "studiooalum_logged_in";
 
+const PRIMARY_NAV_ITEMS = [
+  { key: "archive", label: "ARCHIVE", href: "archive.html" },
+  { key: "shop", label: "SHOP", href: "shop.html" },
+  { key: "workshops", label: "WORKSHOPS", href: "workshops.html" },
+  { key: "newsletter", label: "NEWSLETTER", href: "newsletter.html" },
+];
+
 function resolvePath(path) {
   if (!path) return "#";
   if (/^(https?:|#|mailto:|tel:)/.test(path)) return path;
@@ -18,28 +25,33 @@ function createActionButton({ label, className = "", attrs = "" }) {
   return `<button type="button" class="gnb__action gnb__action--button ${className}" ${attrs}>${label}</button>`;
 }
 
-export function initSiteChrome({ title, backHref, backLabel } = {}) {
-  const nav = document.querySelector(".gnb");
-  if (!nav) return;
-
-  const backEl = nav.querySelector(".gnb__back");
-  const titleEl = nav.querySelector(".gnb__title");
-  let actionsEl = nav.querySelector(".gnb__actions");
-
-  if (backEl && backHref) backEl.href = resolvePath(backHref);
-  if (backEl && backLabel) backEl.textContent = backLabel;
-  if (titleEl && title) titleEl.textContent = title;
-
-  if (!actionsEl) {
-    actionsEl = document.createElement("div");
-    actionsEl.className = "gnb__actions";
-    nav.appendChild(actionsEl);
+function getSectionKey(nav) {
+  for (const key of PRIMARY_NAV_ITEMS.map((item) => item.key)) {
+    if (nav.classList.contains(`gnb--${key}`)) return key;
   }
+  return "shop";
+}
 
-  const loggedIn = isLoggedIn();
+function createPrimaryNavMarkup(activeKey) {
+  const items = PRIMARY_NAV_ITEMS.map(({ key, label, href }) => {
+    const active = key === activeKey;
+    return `<a href="${resolvePath(href)}" class="gnb__menu-item${active ? " is-active" : ""}"${active ? ' aria-current="page"' : ""}>${label}</a>`;
+  }).join("");
+
+  return `
+    <div class="gnb__primary">
+      <a href="${resolvePath("index.html")}" class="gnb__home" aria-label="Home">
+        <img src="${resolvePath("favicon.svg")}" class="gnb__home-logo" alt="">
+      </a>
+      <div class="gnb__menu" aria-label="Primary">${items}</div>
+    </div>
+  `;
+}
+
+function createActionsMarkup(loggedIn) {
   const accountHref = resolvePath("account.html");
 
-  actionsEl.innerHTML = loggedIn
+  return loggedIn
     ? [
         createActionButton({ label: "Logout", attrs: 'data-auth-toggle="logout"' }),
         createActionLink({ href: accountHref, label: "Account" }),
@@ -49,13 +61,26 @@ export function initSiteChrome({ title, backHref, backLabel } = {}) {
         createActionButton({ label: "Login", attrs: 'data-auth-toggle="login"' }),
         createActionButton({ label: 'Cart <span class="gnb__count js-cart-count" hidden>0</span>', className: "gnb__action--cart", attrs: 'data-cart-toggle="true"' }),
       ].join("");
+}
 
-  actionsEl.querySelectorAll("[data-auth-toggle]").forEach((button) => {
+export function initSiteChrome({ showActions = true } = {}) {
+  const nav = document.querySelector(".gnb");
+  if (!nav) return;
+
+  const sectionKey = getSectionKey(nav);
+  const loggedIn = isLoggedIn();
+
+  nav.innerHTML = `
+    ${createPrimaryNavMarkup(sectionKey)}
+    ${showActions ? `<div class="gnb__actions">${createActionsMarkup(loggedIn)}</div>` : ""}
+  `;
+
+  nav.querySelectorAll("[data-auth-toggle]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
       const mode = button.getAttribute("data-auth-toggle");
       window.localStorage.setItem(AUTH_KEY, mode === "login" ? "true" : "false");
-      initSiteChrome({ title, backHref, backLabel });
+      initSiteChrome({ showActions });
       window.dispatchEvent(new Event("studiooalum:nav-updated"));
     });
   });

@@ -1,35 +1,35 @@
-.class-page {
+.workshops-page {
   min-height: 100vh;
   background: #fff;
   color: #111;
 }
 
-.class-main {
+.workshops-main {
   padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 40px;
 }
 
-.class-layout {
+.workshops-layout {
   display: grid;
   gap: var(--grid-gap);
 }
 
-.class-card,
-.class-placeholder {
+.workshops-card,
+.workshops-placeholder {
   min-height: 320px;
 }
 
-.class-card {
+.workshops-card {
   background: #f4f3ee;
   padding: 18px;
 }
 
-.class-card__poster {
+.workshops-card__poster {
   aspect-ratio: 1 / 1;
   background: radial-gradient(circle at 28% 28%, #ef3f31 0 72px, transparent 73px), #ffffff;
   border: 18px solid rgba(0, 0, 0, 0.05);
 }
 
-.class-card__title {
+.workshops-card__title {
   margin: 18px 0 8px;
   font-family: var(--font-book);
   font-size: 28px;
@@ -37,8 +37,8 @@
   line-height: 1;
 }
 
-.class-card__copy,
-.class-card__meta {
+.workshops-card__copy,
+.workshops-card__meta {
   margin: 0;
   font-family: var(--font-kor-body);
   font-size: 14px;
@@ -46,22 +46,22 @@
   line-height: 1.55;
 }
 
-.class-card__meta {
+.workshops-card__meta {
   margin-top: 26px;
   color: #b85b4b;
   white-space: pre-line;
 }
 
-.class-placeholder {
+.workshops-placeholder {
   background: #fff45a;
 }
 
 @media (min-width: 960px) {
-  .class-main {
+  .workshops-main {
     padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
   }
 
-  .class-layout {
+  .workshops-layout {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

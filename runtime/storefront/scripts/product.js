@@ -22,6 +22,15 @@ const introEl = document.getElementById("productIntro");
 const metaEl = document.getElementById("productMeta");
 const gridEl = document.getElementById("editionGrid");
 const backEl = document.getElementById("productBack");
+const editionCollator = new Intl.Collator("ko-KR", { numeric: true, sensitivity: "base" });
+
+function sortEditionsForProduct(editions) {
+  return [...editions].sort((left, right) => {
+    const leftLabel = parseProductTitle(left.title).editionLabel || left.title || "";
+    const rightLabel = parseProductTitle(right.title).editionLabel || right.title || "";
+    return editionCollator.compare(leftLabel, rightLabel);
+  });
+}
 
 function renderEditionGrid(editions) {
   const representative = editions[0];
@@ -95,16 +104,17 @@ async function init() {
       const { baseName } = parseProductTitle(p.title);
       return baseName === productName;
     });
+    const sortedEditions = sortEditionsForProduct(editions);
 
     if (backEl) {
       backEl.href = `./shop.html`;
     }
 
-    if (editions.length === 0) {
+    if (sortedEditions.length === 0) {
       gridEl.innerHTML = `<p class="product-state">상품을 찾을 수 없습니다.</p>`;
       return;
     }
-    renderEditionGrid(editions);
+    renderEditionGrid(sortedEditions);
   } catch (err) {
     console.error("Failed to load product editions", err);
     gridEl.innerHTML = `<p class="product-state">상품을 불러오지 못했습니다.</p>`;

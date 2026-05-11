@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Studio OALUM — Class</title>
+    <title>Studio OALUM — Workshops</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 
     <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
-    <link rel="stylesheet" href="./runtime/storefront/styles/class-page.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/workshops-page.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
-<body class="class-page">
-    <nav class="gnb gnb--class">
+<body class="workshops-page">
+    <nav class="gnb gnb--workshops">
         <a href="index.html" class="gnb__back">← Home</a>
-        <span class="gnb__title">Class</span>
+        <span class="gnb__title">Workshops</span>
     </nav>
 
-    <main class="class-main">
-        <section class="class-layout">
-            <article class="class-card">
-                <div class="class-card__poster" aria-hidden="true"></div>
-                <h1 class="class-card__title">도란도란 수선 워크숍</h1>
-                <p class="class-card__copy">구멍이 난 제품을 관찰하고 수선하는 다닝 기법을 배웁니다.</p>
-                <p class="class-card__meta">소요 시간 : 3h
+    <main class="workshops-main">
+        <section class="workshops-layout">
+            <article class="workshops-card">
+                <div class="workshops-card__poster" aria-hidden="true"></div>
+                <h1 class="workshops-card__title">도란도란 수선 워크숍</h1>
+                <p class="workshops-card__copy">구멍이 난 제품을 관찰하고 수선하는 다닝 기법을 배웁니다.</p>
+                <p class="workshops-card__meta">소요 시간 : 3h
 작업 난이도 : 상</p>
             </article>
-            <div class="class-placeholder" aria-hidden="true"></div>
-            <div class="class-placeholder" aria-hidden="true"></div>
+            <div class="workshops-placeholder" aria-hidden="true"></div>
+            <div class="workshops-placeholder" aria-hidden="true"></div>
         </section>
 
         <footer class="site-footer site-footer--grid">
@@ -71,7 +71,7 @@ studio.oalum@gmail.com</p>
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js";
         import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
-        initSiteChrome({ title: "Class", backHref: "index.html", backLabel: "← Home" });
+        initSiteChrome();
         initCartUI();
         initSiteFooter();
     </script>
