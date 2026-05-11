@@ -109,6 +109,7 @@ function createProductCard(baseName, representative, editionCount) {
   }
 
   const editionSpan = document.createElement("span");
+  editionSpan.className = "shop-card__edition-count";
   editionSpan.textContent = `${editionCount} editions`;
   meta.appendChild(editionSpan);
 

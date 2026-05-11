@@ -131,12 +131,27 @@
   font-weight: 600;
 }
 
+.shop-card__edition-count {
+  font-size: inherit;
+  line-height: 1.2;
+}
+
 .shop-state {
   margin: 12px 0;
   font-family: var(--font-kor-body);
   font-size: 13px;
   letter-spacing: var(--tracking-korean);
   color: rgba(17, 17, 17, 0.8);
+}
+
+@media (max-width: 799px) {
+  .shop-tag {
+    font-size: calc(var(--gnb-font-size) + 1px);
+  }
+
+  .shop-card__edition-count {
+    font-size: calc(var(--gnb-font-size) + 1px);
+  }
 }
 
 @media (min-width: 800px) {
