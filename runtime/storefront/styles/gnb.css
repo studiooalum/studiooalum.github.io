@@ -33,6 +33,20 @@
 .gnb--workshops  { background: rgba(255, 235, 83, 0.92); color: #111; }
 .gnb--newsletter { background: rgba(202, 213, 216, 0.92); color: #111; }
 
+.gnb__title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--gnb-font-size);
+  font-family: var(--font-medium, sans-serif);
+  font-weight: 500;
+  letter-spacing: var(--tracking-latin);
+  text-transform: none;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .gnb__primary {
   min-width: 0;
   flex: 1 1 auto;
@@ -167,5 +181,12 @@
 @media (min-width: 960px) {
   :root {
     --gnb-font-size: 14px;
+  }
+
+  .gnb__title {
+    left: var(--page-third-start);
+    width: var(--page-column-width);
+    transform: translateY(-50%);
+    text-align: left;
   }
 }

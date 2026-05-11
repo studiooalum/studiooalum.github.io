@@ -268,17 +268,19 @@
       if (c < this.word.length - 1) wordWidth += wordGap;
     }
 
-    var startU = wrapArc(pathLen * 0.5 - wordWidth * 0.5, pathLen);
-    var cursorU = startU;
+    var uniformGap = pathLen / tempLetters.length;
+    var clusterStartU = wrapArc(pathLen * 0.5 - wordWidth * 0.5, pathLen);
+    var clusterCursorU = clusterStartU;
 
     for (var i = 0; i < tempLetters.length; i++) {
       var letter = tempLetters[i];
-      var centerU = wrapArc(cursorU + letter.width * 0.5, pathLen);
-      var pt = this.pathEl.getPointAtLength(centerU);
+      var hoverU = wrapArc(clusterCursorU + letter.width * 0.5, pathLen);
+      var defaultU = wrapArc((i + 0.5) * uniformGap, pathLen);
+      var pt = this.pathEl.getPointAtLength(defaultU);
 
       this.letters.push({
         el: letter.el,
-        u: centerU,
+        u: defaultU,
         vU: 0,
         n: 0,
         vN: 0,
@@ -292,11 +294,11 @@
         halfH: letter.halfH,
         visualCenterOffset: visualCenterOffset,
         maxN: maxN,
-        hoverU: centerU,
-        defaultU: centerU
+        hoverU: hoverU,
+        defaultU: defaultU
       });
 
-      cursorU += letter.width + wordGap;
+      clusterCursorU += letter.width + wordGap;
     }
   };
 

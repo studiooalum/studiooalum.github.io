@@ -41,11 +41,15 @@ function createPrimaryNavMarkup(activeKey) {
   return `
     <div class="gnb__primary">
       <a href="${resolvePath("index.html")}" class="gnb__home" aria-label="Home">
-        <img src="${resolvePath("favicon.svg")}" class="gnb__home-logo" alt="">
+        <img src="${resolvePath("oalum_favicon.png")}" class="gnb__home-logo" alt="">
       </a>
       <div class="gnb__menu" aria-label="Primary">${items}</div>
     </div>
   `;
+}
+
+function createTitleMarkup(title) {
+  return `<span class="gnb__title">${title || ""}</span>`;
 }
 
 function createActionsMarkup(loggedIn) {
@@ -63,15 +67,18 @@ function createActionsMarkup(loggedIn) {
       ].join("");
 }
 
-export function initSiteChrome({ showActions = true } = {}) {
+export function initSiteChrome({ showActions = true, title = "" } = {}) {
   const nav = document.querySelector(".gnb");
   if (!nav) return;
 
   const sectionKey = getSectionKey(nav);
   const loggedIn = isLoggedIn();
+  const existingTitle = nav.querySelector(".gnb__title")?.textContent?.trim() || "";
+  const titleText = title || existingTitle;
 
   nav.innerHTML = `
     ${createPrimaryNavMarkup(sectionKey)}
+    ${createTitleMarkup(titleText)}
     ${showActions ? `<div class="gnb__actions">${createActionsMarkup(loggedIn)}</div>` : ""}
   `;
 
@@ -80,7 +87,7 @@ export function initSiteChrome({ showActions = true } = {}) {
       event.preventDefault();
       const mode = button.getAttribute("data-auth-toggle");
       window.localStorage.setItem(AUTH_KEY, mode === "login" ? "true" : "false");
-      initSiteChrome({ showActions });
+      initSiteChrome({ showActions, title: titleText });
       window.dispatchEvent(new Event("studiooalum:nav-updated"));
     });
   });
