@@ -48,10 +48,6 @@ function createPrimaryNavMarkup(activeKey) {
   `;
 }
 
-function createTitleMarkup(title) {
-  return `<span class="gnb__title">${title || ""}</span>`;
-}
-
 function createActionsMarkup(loggedIn) {
   const accountHref = resolvePath("account.html");
 
@@ -73,12 +69,9 @@ export function initSiteChrome({ showActions = true, title = "" } = {}) {
 
   const sectionKey = getSectionKey(nav);
   const loggedIn = isLoggedIn();
-  const existingTitle = nav.querySelector(".gnb__title")?.textContent?.trim() || "";
-  const titleText = title || existingTitle;
 
   nav.innerHTML = `
     ${createPrimaryNavMarkup(sectionKey)}
-    ${createTitleMarkup(titleText)}
     ${showActions ? `<div class="gnb__actions">${createActionsMarkup(loggedIn)}</div>` : ""}
   `;
 
@@ -87,7 +80,7 @@ export function initSiteChrome({ showActions = true, title = "" } = {}) {
       event.preventDefault();
       const mode = button.getAttribute("data-auth-toggle");
       window.localStorage.setItem(AUTH_KEY, mode === "login" ? "true" : "false");
-      initSiteChrome({ showActions, title: titleText });
+      initSiteChrome({ showActions, title });
       window.dispatchEvent(new Event("studiooalum:nav-updated"));
     });
   });

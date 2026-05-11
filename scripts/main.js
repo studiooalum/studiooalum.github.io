@@ -367,7 +367,7 @@
     this.hitPathEl.setAttribute('d', d);
 
     var goal = (this.hovered || this.transitioning) ? 1 : 0;
-    this.hoverAmt += (goal - this.hoverAmt) * 0.08;
+    this.hoverAmt += (goal - this.hoverAmt) * 0.09;
     // Keep visible thickness fixed after initial render.
     var currentSw = this.renderSw;
     this.pathEl.setAttribute('stroke-width', currentSw);
@@ -425,10 +425,10 @@
         for (var gi = 0; gi < count; gi++) {
           var GL = this.letters[gi];
           var du = shortestArcDelta(GL.u, GL.hoverU, pathLen);
-          GL.vU += du * 28 * dt;
-          GL.vU *= 0.82;
-          GL.vN += (-GL.n) * 20 * dt;
-          GL.vN *= 0.86;
+          GL.vU += du * 34 * dt;
+          GL.vU *= 0.84;
+          GL.vN += (-GL.n) * 24 * dt;
+          GL.vN *= 0.88;
         }
       } else {
         // Unhover: gently spring back to uniform spacing

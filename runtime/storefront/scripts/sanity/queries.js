@@ -39,3 +39,34 @@ export const PRODUCT_BY_SLUG_QUERY = `
     }
   }
 `;
+
+/** Fetch published workshops for the live workshops page */
+export const ALL_WORKSHOPS_QUERY = `
+  *[_type == "workshop"] | order(_createdAt desc, title asc) {
+    _id,
+    title,
+    description,
+    summary,
+    excerpt,
+    duration,
+    durationLabel,
+    category,
+    workshopCategory,
+    slug,
+    bookingUrl,
+    externalUrl,
+    link,
+    poster {
+      asset->{url}
+    },
+    posterImage {
+      asset->{url}
+    },
+    mainImage {
+      asset->{url}
+    },
+    images[]{
+      asset->{url}
+    }
+  }
+`;

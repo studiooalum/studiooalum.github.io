@@ -19,17 +19,14 @@
         <span class="gnb__title">Workshops</span>
     </nav>
 
+    <div class="workshops-tags" id="workshopsTags" aria-label="Workshop categories"></div>
+
     <main class="workshops-main">
-        <section class="workshops-layout">
-            <article class="workshops-card">
-                <div class="workshops-card__poster" aria-hidden="true"></div>
-                <h1 class="workshops-card__title">도란도란 수선 워크숍</h1>
-                <p class="workshops-card__copy">구멍이 난 제품을 관찰하고 수선하는 다닝 기법을 배웁니다.</p>
-                <p class="workshops-card__meta">소요 시간 : 3h
-작업 난이도 : 상</p>
-            </article>
-            <div class="workshops-placeholder" aria-hidden="true"></div>
-            <div class="workshops-placeholder" aria-hidden="true"></div>
+        <section class="workshops-shell">
+            <div class="workshops-content">
+                <section class="workshops-grid" id="workshopsGrid" aria-live="polite"></section>
+            </div>
+            <aside class="workshops-rail" aria-hidden="true"></aside>
         </section>
 
         <footer class="site-footer site-footer--grid">
@@ -66,6 +63,7 @@ studio.oalum@gmail.com</p>
         </footer>
     </main>
 
+    <script type="module" src="./runtime/storefront/scripts/workshops.js"></script>
     <script type="module">
         import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js";
