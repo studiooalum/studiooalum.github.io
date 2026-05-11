@@ -11,7 +11,7 @@
 .edition-page-main {
   display: grid;
   gap: 0;
-  padding: calc(var(--gnb-height, 40px) + var(--page-gutter)) var(--page-gutter) 40px;
+  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 40px;
 }
 
 .edition-stage {
@@ -236,19 +236,19 @@
 
 .edition-title {
   margin: 18px 0 0;
-  font-family: var(--font-medium);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.6;
+  font-family: var(--font-book);
+  font-size: clamp(28px, 2.6vw, 34px);
+  font-weight: 400;
+  line-height: 1.08;
   letter-spacing: var(--tracking-latin);
 }
 
 .edition-number {
   margin: 12px 0 0 auto;
-  font-family: var(--font-book);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.6;
+  font-family: var(--font-light);
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.1;
   text-align: right;
 }
 
@@ -450,8 +450,49 @@
 }
 
 @media (max-width: 959px) {
+  .edition-page-main {
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-gutter));
+  }
+
+  .edition-stage__summary {
+    display: grid;
+    gap: 0;
+    width: auto;
+  }
+
+  .edition-kicker,
+  .edition-title,
+  .edition-number {
+    line-height: 1.6;
+  }
+
+  .edition-kicker {
+    font-size: 14px;
+  }
+
+  .edition-title {
+    margin-top: 0;
+    font-family: var(--font-medium);
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  .edition-number {
+    margin-top: 0;
+    margin-left: 0;
+    font-family: var(--font-book);
+    font-size: 17px;
+    font-weight: 400;
+    text-align: left;
+  }
+
   .edition-media {
+    background: transparent;
     overflow: hidden;
+  }
+
+  .edition-media__slider {
+    background: transparent;
   }
 
   .edition-media__track {
@@ -481,17 +522,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding-top: 10px;
+    gap: 8px;
+    padding-top: 12px;
   }
 
   .edition-media__dot {
-    width: 5px;
-    height: 5px;
-    border: 0;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--point);
     padding: 0;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--point) 30%, white);
+    background: transparent;
     cursor: pointer;
   }
 

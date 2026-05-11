@@ -69,6 +69,25 @@ function createActionButton({ label, className = "", attrs = "" }) {
   return `<button type="button" class="gnb__action gnb__action--button ${className}" ${attrs}>${label}</button>`;
 }
 
+function getUserIconMarkup() {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="8.2" r="3.3" stroke="currentColor" stroke-width="1.4"/>
+      <path d="M5.5 18.5C7 15.7 9.25 14.3 12 14.3C14.75 14.3 17 15.7 18.5 18.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+  `;
+}
+
+function getCartIconMarkup() {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M4 5.5H6.2L8 14.5H17.2L19 8H8.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="10.2" cy="18.3" r="1.15" fill="currentColor"/>
+      <circle cx="16.9" cy="18.3" r="1.15" fill="currentColor"/>
+    </svg>
+  `;
+}
+
 function getSectionKey(nav) {
   for (const key of PRIMARY_NAV_ITEMS.map((item) => item.key)) {
     if (nav.classList.contains(`gnb--${key}`)) return key;
@@ -85,6 +104,7 @@ function createPrimaryNavItemsMarkup(activeKey, className = "gnb__menu-item") {
 
 function createPrimaryNavMarkup(activeKey) {
   const items = createPrimaryNavItemsMarkup(activeKey);
+  const mobileUtilities = createMobileUtilitiesMarkup(authState.authenticated);
 
   return `
     <div class="gnb__primary">
@@ -96,6 +116,7 @@ function createPrimaryNavMarkup(activeKey) {
       <a href="${resolvePath("index.html")}" class="gnb__home" aria-label="Home">
         <img src="${resolvePath("oalum_favicon.png")}" class="gnb__home-logo" alt="">
       </a>
+      ${mobileUtilities}
       <div class="gnb__menu" aria-label="Primary">${items}</div>
     </div>
   `;
@@ -106,7 +127,24 @@ function createMobileNavMarkup(activeKey, { showActions = true } = {}) {
     <div class="gnb__mobile-backdrop" data-nav-close="true"></div>
     <div class="gnb__mobile-panel" id="gnbMobilePanel" aria-label="Mobile navigation">
       <div class="gnb__mobile-menu">${createPrimaryNavItemsMarkup(activeKey, "gnb__mobile-item")}</div>
-      ${showActions ? `<div class="gnb__mobile-actions">${createActionsMarkup(authState.authenticated)}</div>` : ""}
+      ${showActions && authState.authenticated ? `<div class="gnb__mobile-actions">${createActionButton({ label: "Logout", attrs: 'data-auth-toggle="logout"' })}</div>` : ""}
+    </div>
+  `;
+}
+
+function createMobileUtilitiesMarkup(loggedIn) {
+  const accountHref = resolvePath("account.html");
+  const accountLabel = loggedIn ? "Account" : "Login";
+
+  return `
+    <div class="gnb__mobile-utilities" aria-label="Quick actions">
+      <a href="${accountHref}" class="gnb__mobile-utility gnb__mobile-utility--account" aria-label="${accountLabel}">
+        ${getUserIconMarkup()}
+      </a>
+      <button type="button" class="gnb__mobile-utility gnb__mobile-utility--cart" aria-label="Cart" data-cart-toggle="true">
+        ${getCartIconMarkup()}
+        <span class="gnb__count gnb__count--mobile js-cart-count" hidden>0</span>
+      </button>
     </div>
   `;
 }
