@@ -221,3 +221,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+@media (max-width: 799px) {
+  .workshops-tag {
+    font-size: calc(var(--gnb-font-size) + 1px);
+  }
+
+  .workshops-main {
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+  }
+}

@@ -26,6 +26,10 @@
   display: none !important;
 }
 
+.account-page:not(.is-authenticated) [data-account-protected] {
+  display: none !important;
+}
+
 .account-heading {
   margin: 0;
   display: inline-block;

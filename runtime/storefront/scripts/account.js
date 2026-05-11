@@ -196,6 +196,7 @@ export function initAccountPage() {
   function showLoggedOut() {
     const isVerifying = Boolean(state.pendingEmail);
 
+    document.body.classList.remove("is-authenticated");
     requestForm.hidden = isVerifying;
     verifyForm.hidden = !isVerifying;
     authenticatedEl.hidden = true;
@@ -246,6 +247,7 @@ export function initAccountPage() {
   function renderAuthenticated(account) {
     const user = account?.user || {};
 
+    document.body.classList.add("is-authenticated");
     requestForm.hidden = true;
     verifyForm.hidden = true;
     authenticatedEl.hidden = false;

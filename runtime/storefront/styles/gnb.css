@@ -277,7 +277,7 @@ body.gnb-menu-open {
   }
 
   .gnb__mobile-actions {
-    border-top: 1px solid rgba(17, 17, 17, 0.18);
+    border-top: 0;
   }
 
   .gnb__mobile-item,
@@ -286,7 +286,7 @@ body.gnb-menu-open {
     align-items: center;
     min-height: 38px;
     padding: 0 var(--page-gutter);
-    border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+    border-bottom: 0;
     color: inherit;
     font-size: 12px;
     line-height: 1;

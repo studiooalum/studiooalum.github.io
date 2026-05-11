@@ -149,6 +149,10 @@
     font-size: calc(var(--gnb-font-size) + 1px);
   }
 
+  .shop-main {
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+  }
+
   .shop-card__edition-count {
     font-size: calc(var(--gnb-font-size) + 1px);
   }
