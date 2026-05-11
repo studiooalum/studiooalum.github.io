@@ -4,8 +4,17 @@ import { requestLoginCode } from "../../../cloudflare/lib/auth.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
 const requestSchema = z.object({
+  mode: z.enum(["login", "signup"]).default("login"),
   email: z.string().trim().email(),
-  fullName: z.string().trim().max(120).optional(),
+  fullName: z.string().trim().max(120).optional().default(""),
+}).superRefine((value, context) => {
+  if (value.mode === "signup" && !value.fullName) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["fullName"],
+      message: "회원가입에는 이름이 필요합니다.",
+    });
+  }
 });
 
 export function onRequestOptions(context) {
@@ -21,7 +30,7 @@ export async function onRequestPost(context) {
       return validationError(context.env, parsed.error);
     }
 
-    const result = await requestLoginCode(context.env, parsed.data.email);
+    const result = await requestLoginCode(context.env, parsed.data);
 
     return json(context.env, {
       ok: true,

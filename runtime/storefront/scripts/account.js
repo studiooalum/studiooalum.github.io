@@ -70,35 +70,86 @@ async function requestJson(url, { method = "GET", body } = {}) {
 }
 
 export function initAccountPage() {
-  const requestForm = document.querySelector(".js-account-request-form");
-  const verifyForm = document.querySelector(".js-account-verify-form");
+  const authShell = document.querySelector(".js-account-auth-shell");
+  const memberLayout = document.querySelector(".js-account-member-layout");
+  const loginRequestForm = document.querySelector(".js-account-login-request-form");
+  const loginVerifyForm = document.querySelector(".js-account-login-verify-form");
+  const signupRequestForm = document.querySelector(".js-account-signup-request-form");
+  const signupVerifyForm = document.querySelector(".js-account-signup-verify-form");
+  const guestForm = document.querySelector(".js-account-guest-form");
   const profileForm = document.querySelector(".js-account-profile-form");
-  const socialSectionEl = document.querySelector(".js-account-auth-social");
-  const providerGridEl = document.querySelector(".js-account-provider-grid");
-  const authDividerEl = document.querySelector(".js-account-auth-divider");
-  const statusEl = document.querySelector(".js-account-status");
-  const emailDisplayEl = document.querySelector(".js-account-email-display");
-  const debugEl = document.querySelector(".js-account-debug");
-  const authenticatedEl = document.querySelector(".js-account-authenticated");
-  const authenticatedEmailEl = document.querySelector(".js-account-user-email");
+  const loginStatusEl = document.querySelector(".js-account-login-status");
+  const signupStatusEl = document.querySelector(".js-account-signup-status");
+  const guestStatusEl = document.querySelector(".js-account-guest-status");
+  const memberStatusEl = document.querySelector(".js-account-member-status");
+  const loginEmailDisplayEl = document.querySelector(".js-account-login-email-display");
+  const signupEmailDisplayEl = document.querySelector(".js-account-signup-email-display");
+  const loginDebugEl = document.querySelector(".js-account-login-debug");
+  const signupDebugEl = document.querySelector(".js-account-signup-debug");
+  const guestResultEl = document.querySelector(".js-account-guest-result");
   const identitiesEl = document.querySelector(".js-account-identities");
   const logoutButton = document.querySelector(".js-account-logout");
-  const resetButton = document.querySelector(".js-account-reset");
+  const loginResetButton = document.querySelector(".js-account-login-reset");
+  const signupResetButton = document.querySelector(".js-account-signup-reset");
   const ordersEl = document.querySelector(".js-account-orders");
   const pointsEl = document.querySelector(".js-account-points");
-  const protectedPanels = Array.from(document.querySelectorAll("[data-account-protected]"));
 
-  if (!requestForm || !verifyForm || !profileForm || !statusEl) {
+  if (
+    !authShell
+    || !memberLayout
+    || !loginRequestForm
+    || !loginVerifyForm
+    || !signupRequestForm
+    || !signupVerifyForm
+    || !guestForm
+    || !profileForm
+    || !ordersEl
+    || !pointsEl
+  ) {
     return;
   }
 
   const state = {
-    pendingEmail: "",
-    pendingFullName: "",
-    debugCode: "",
+    login: {
+      pendingEmail: "",
+      pendingFullName: "",
+      debugCode: "",
+    },
+    signup: {
+      pendingEmail: "",
+      pendingFullName: "",
+      debugCode: "",
+    },
   };
 
   const urlMessage = readStatusFromUrl();
+  const emptyOrdersMarkup = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
+  const flows = {
+    login: {
+      mode: "login",
+      requestForm: loginRequestForm,
+      verifyForm: loginVerifyForm,
+      statusEl: loginStatusEl,
+      emailDisplayEl: loginEmailDisplayEl,
+      debugEl: loginDebugEl,
+      resetButton: loginResetButton,
+      requestButtonLabel: "발송 중…",
+      verifyButtonLabel: "확인 중…",
+      successMessage: "로그인되었습니다.",
+    },
+    signup: {
+      mode: "signup",
+      requestForm: signupRequestForm,
+      verifyForm: signupVerifyForm,
+      statusEl: signupStatusEl,
+      emailDisplayEl: signupEmailDisplayEl,
+      debugEl: signupDebugEl,
+      resetButton: signupResetButton,
+      requestButtonLabel: "발송 중…",
+      verifyButtonLabel: "가입 중…",
+      successMessage: "회원가입이 완료되었습니다.",
+    },
+  };
 
   function readStatusFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -137,31 +188,6 @@ export function initAccountPage() {
     };
   }
 
-  function renderSocialProviders(providers) {
-    if (!socialSectionEl || !providerGridEl || !authDividerEl) {
-      return;
-    }
-
-    const items = Array.isArray(providers) ? providers : [];
-    providerGridEl.innerHTML = "";
-
-    if (items.length === 0) {
-      socialSectionEl.hidden = true;
-      return;
-    }
-
-    socialSectionEl.hidden = false;
-    authDividerEl.hidden = false;
-
-    for (const provider of items) {
-      const link = document.createElement("a");
-      link.className = `account-provider-btn account-provider-btn--${provider.key}`;
-      link.href = `./api/auth/oauth/start?provider=${encodeURIComponent(provider.key)}&redirect=${encodeURIComponent("/account.html")}`;
-      link.textContent = provider.label || `${PROVIDER_LABELS[provider.key] || provider.key}로 계속하기`;
-      providerGridEl.appendChild(link);
-    }
-  }
-
   function renderIdentities(providers) {
     if (!identitiesEl) return;
 
@@ -172,52 +198,59 @@ export function initAccountPage() {
     }).join("");
   }
 
-  async function loadProviders() {
-    try {
-      const payload = await requestJson("./api/auth/providers");
-      renderSocialProviders(payload.providers || []);
-    } catch (error) {
-      console.error("Failed to load auth providers.", error);
-      renderSocialProviders([]);
+  function setStatus(target, message = "", type = "info") {
+    if (!target) return;
+
+    target.textContent = message;
+    target.classList.remove("is-success", "is-error");
+
+    if (type === "success") {
+      target.classList.add("is-success");
+    } else if (type === "error") {
+      target.classList.add("is-error");
     }
   }
 
-  function setStatus(message = "", type = "info") {
-    statusEl.textContent = message;
-    statusEl.classList.remove("is-success", "is-error");
+  function renderFlow(mode) {
+    const flow = flows[mode];
+    const flowState = state[mode];
+    const isVerifying = Boolean(flowState.pendingEmail);
 
-    if (type === "success") {
-      statusEl.classList.add("is-success");
-    } else if (type === "error") {
-      statusEl.classList.add("is-error");
+    flow.requestForm.hidden = isVerifying;
+    flow.verifyForm.hidden = !isVerifying;
+
+    if (flow.requestForm.elements.email) {
+      flow.requestForm.elements.email.value = flowState.pendingEmail || flow.requestForm.elements.email.value || "";
     }
+
+    if (flow.requestForm.elements.fullName) {
+      flow.requestForm.elements.fullName.value = flowState.pendingFullName || flow.requestForm.elements.fullName.value || "";
+    }
+
+    flow.emailDisplayEl.textContent = flowState.pendingEmail;
+    flow.debugEl.hidden = !flowState.debugCode;
+    flow.debugEl.textContent = flowState.debugCode ? `개발용 인증코드: ${flowState.debugCode}` : "";
   }
 
   function showLoggedOut() {
-    const isVerifying = Boolean(state.pendingEmail);
-
     document.body.classList.remove("is-authenticated");
-    requestForm.hidden = isVerifying;
-    verifyForm.hidden = !isVerifying;
-    authenticatedEl.hidden = true;
-    protectedPanels.forEach((panel) => {
-      panel.hidden = true;
-    });
+    authShell.hidden = false;
+    memberLayout.hidden = true;
 
-    requestForm.elements.fullName.value = state.pendingFullName || requestForm.elements.fullName.value || "";
-    requestForm.elements.email.value = state.pendingEmail || requestForm.elements.email.value || "";
-    emailDisplayEl.textContent = state.pendingEmail;
-    debugEl.hidden = !state.debugCode;
-    debugEl.textContent = state.debugCode ? `개발용 인증코드: ${state.debugCode}` : "";
-    authenticatedEmailEl.textContent = "";
+    renderFlow("login");
+    renderFlow("signup");
+
+    guestResultEl.hidden = true;
+    guestResultEl.innerHTML = "";
+    setStatus(memberStatusEl, "");
     renderIdentities([]);
     pointsEl.textContent = "0 포인트";
-    ordersEl.innerHTML = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
+    ordersEl.innerHTML = emptyOrdersMarkup;
   }
 
   function renderOrders(orders) {
     if (!Array.isArray(orders) || orders.length === 0) {
-      ordersEl.innerHTML = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
+      ordersEl.innerHTML = emptyOrdersMarkup;
       return;
     }
 
@@ -244,18 +277,53 @@ export function initAccountPage() {
     }).join("");
   }
 
+  function renderGuestOrder(order) {
+    if (!order) {
+      guestResultEl.hidden = true;
+      guestResultEl.innerHTML = "";
+      return;
+    }
+
+    const itemsMarkup = Array.isArray(order.items) && order.items.length > 0
+      ? `
+        <div class="account-guest-items">
+          ${order.items.map((item) => {
+            const titleParts = [item.title, item.editionLabel].filter(Boolean).join(" / ");
+            return `
+              <div class="account-guest-item">
+                <span class="account-guest-item-title">${escapeHtml(titleParts || "상품")}${item.quantity > 1 ? ` × ${escapeHtml(item.quantity)}` : ""}</span>
+                <span class="account-guest-item-price">${escapeHtml(formatPrice(item.unitPrice * item.quantity))}</span>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `
+      : "";
+
+    guestResultEl.innerHTML = `
+      <div class="account-guest-head">
+        <p class="account-order-name">${escapeHtml(order.orderName || "주문 상품")}</p>
+        <strong class="account-order-total">${escapeHtml(formatPrice(order.totalAmount))}</strong>
+      </div>
+      <div class="account-guest-meta">
+        <span>${escapeHtml(order.orderId || "-")}</span>
+        <span>${escapeHtml(formatDate(order.createdAt))}</span>
+        <span>${escapeHtml(order.paymentStatus || order.status || "-")}</span>
+      </div>
+      ${itemsMarkup}
+      <p class="account-copy">${escapeHtml(order.customerName || "주문자")}${order.customerPhone ? ` / ${escapeHtml(order.customerPhone)}` : ""}</p>
+      <p class="account-copy">${escapeHtml([order.zipcode, order.address1, order.address2].filter(Boolean).join(" "))}</p>
+    `;
+    guestResultEl.hidden = false;
+  }
+
   function renderAuthenticated(account) {
     const user = account?.user || {};
 
     document.body.classList.add("is-authenticated");
-    requestForm.hidden = true;
-    verifyForm.hidden = true;
-    authenticatedEl.hidden = false;
-    protectedPanels.forEach((panel) => {
-      panel.hidden = false;
-    });
+    authShell.hidden = true;
+    memberLayout.hidden = false;
 
-    authenticatedEmailEl.textContent = user.email || "";
     profileForm.elements.email.value = user.email || "";
     profileForm.elements.fullName.value = user.fullName || "";
     profileForm.elements.phone.value = user.phone || "";
@@ -270,81 +338,109 @@ export function initAccountPage() {
   async function loadAccount({ silent = false } = {}) {
     try {
       const payload = await requestJson("./api/auth/account");
-      state.pendingEmail = "";
-      state.pendingFullName = "";
-      state.debugCode = "";
+      state.login = { pendingEmail: "", pendingFullName: "", debugCode: "" };
+      state.signup = { pendingEmail: "", pendingFullName: "", debugCode: "" };
       renderAuthenticated(payload.account);
       if (!silent) {
-        setStatus("로그인 상태를 확인했습니다.");
+        setStatus(memberStatusEl, "로그인 상태를 확인했습니다.", "success");
       }
     } catch (error) {
       if (error.status === 401) {
         showLoggedOut();
         if (!silent) {
-          setStatus("로그인 후 계정 정보를 확인할 수 있습니다.");
+          setStatus(loginStatusEl, "로그인 후 계정 정보를 확인할 수 있습니다.");
         }
         return;
       }
 
       showLoggedOut();
-      setStatus(error.message || "계정 정보를 불러오지 못했습니다.", "error");
+      setStatus(loginStatusEl, error.message || "계정 정보를 불러오지 못했습니다.", "error");
     }
   }
 
-  requestForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const submitButton = requestForm.querySelector("button[type='submit']");
-    const fullName = String(requestForm.elements.fullName.value || "").trim();
-    const email = String(requestForm.elements.email.value || "").trim();
+  function resetFlow(mode, message = "") {
+    state[mode] = {
+      pendingEmail: "",
+      pendingFullName: "",
+      debugCode: "",
+    };
 
-    setButtonLoading(submitButton, true, "발송 중…");
+    flows[mode].verifyForm.reset();
+    renderFlow(mode);
 
-    try {
-      const payload = await requestJson("./api/auth/request", {
-        method: "POST",
-        body: { email, fullName },
-      });
-
-      state.pendingFullName = fullName;
-      state.pendingEmail = email;
-      state.debugCode = payload?.debugCode || "";
-      showLoggedOut();
-      verifyForm.elements.code.value = "";
-      verifyForm.elements.code.focus();
-      setStatus("인증코드를 전송했습니다. 메일함을 확인해주세요.", "success");
-    } catch (error) {
-      setStatus(error.message || "인증코드를 전송하지 못했습니다.", "error");
-    } finally {
-      setButtonLoading(submitButton, false, "발송 중…");
+    if (message) {
+      setStatus(flows[mode].statusEl, message);
     }
-  });
+  }
 
-  verifyForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const submitButton = verifyForm.querySelector("button[type='submit']");
-    const code = String(verifyForm.elements.code.value || "").trim();
+  function attachFlowHandlers(mode) {
+    const flow = flows[mode];
 
-    setButtonLoading(submitButton, true, "확인 중…");
+    flow.requestForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submitButton = flow.requestForm.querySelector("button[type='submit']");
+      const email = String(flow.requestForm.elements.email.value || "").trim();
+      const fullName = String(flow.requestForm.elements.fullName?.value || "").trim();
 
-    try {
-      await requestJson("./api/auth/verify", {
-        method: "POST",
-        body: {
-          email: state.pendingEmail,
-          code,
-          fullName: state.pendingFullName,
-        },
-      });
+      setButtonLoading(submitButton, true, flow.requestButtonLabel);
 
-      await loadAccount({ silent: true });
-      setStatus("로그인되었습니다.", "success");
-      window.dispatchEvent(new Event("studiooalum:auth-changed"));
-    } catch (error) {
-      setStatus(error.message || "인증코드를 확인하지 못했습니다.", "error");
-    } finally {
-      setButtonLoading(submitButton, false, "확인 중…");
-    }
-  });
+      try {
+        const payload = await requestJson("./api/auth/request", {
+          method: "POST",
+          body: {
+            mode,
+            email,
+            fullName,
+          },
+        });
+
+        state[mode] = {
+          pendingEmail: email,
+          pendingFullName: fullName,
+          debugCode: payload?.debugCode || "",
+        };
+        renderFlow(mode);
+        flow.verifyForm.elements.code.value = "";
+        flow.verifyForm.elements.code.focus();
+        setStatus(flow.statusEl, "인증코드를 전송했습니다. 메일함을 확인해주세요.", "success");
+      } catch (error) {
+        setStatus(flow.statusEl, error.message || "인증코드를 전송하지 못했습니다.", "error");
+      } finally {
+        setButtonLoading(submitButton, false, flow.requestButtonLabel);
+      }
+    });
+
+    flow.verifyForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submitButton = flow.verifyForm.querySelector("button[type='submit']");
+      const code = String(flow.verifyForm.elements.code.value || "").trim();
+
+      setButtonLoading(submitButton, true, flow.verifyButtonLabel);
+
+      try {
+        await requestJson("./api/auth/verify", {
+          method: "POST",
+          body: {
+            mode,
+            email: state[mode].pendingEmail,
+            code,
+            fullName: state[mode].pendingFullName,
+          },
+        });
+
+        await loadAccount({ silent: true });
+        setStatus(memberStatusEl, flow.successMessage, "success");
+        window.dispatchEvent(new Event("studiooalum:auth-changed"));
+      } catch (error) {
+        setStatus(flow.statusEl, error.message || "인증코드를 확인하지 못했습니다.", "error");
+      } finally {
+        setButtonLoading(submitButton, false, flow.verifyButtonLabel);
+      }
+    });
+  }
+
+  attachFlowHandlers("login");
+  attachFlowHandlers("signup");
 
   profileForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -365,28 +461,57 @@ export function initAccountPage() {
       });
 
       renderAuthenticated(payload.account);
-      setStatus("계정 정보를 업데이트했습니다.", "success");
+      setStatus(memberStatusEl, "계정 정보를 업데이트했습니다.", "success");
     } catch (error) {
       if (error.status === 401) {
-        state.pendingEmail = "";
-        state.debugCode = "";
+        state.login = { pendingEmail: "", pendingFullName: "", debugCode: "" };
+        state.signup = { pendingEmail: "", pendingFullName: "", debugCode: "" };
         showLoggedOut();
+        setStatus(loginStatusEl, "세션이 만료되었습니다. 다시 로그인해주세요.", "error");
+        return;
       }
 
-      setStatus(error.message || "계정 정보를 저장하지 못했습니다.", "error");
+      setStatus(memberStatusEl, error.message || "계정 정보를 저장하지 못했습니다.", "error");
     } finally {
       setButtonLoading(submitButton, false, "저장 중…");
     }
   });
 
-  resetButton?.addEventListener("click", () => {
-    state.pendingEmail = "";
-    state.pendingFullName = "";
-    state.debugCode = "";
-    verifyForm.reset();
-    showLoggedOut();
-    requestForm.elements.email.focus();
-    setStatus("다른 이메일 주소를 입력해주세요.");
+  loginResetButton?.addEventListener("click", () => {
+    resetFlow("login", "다른 이메일 주소를 입력해주세요.");
+    loginRequestForm.elements.email.focus();
+  });
+
+  signupResetButton?.addEventListener("click", () => {
+    resetFlow("signup", "입력 내용을 수정해주세요.");
+    signupRequestForm.elements.fullName.focus();
+  });
+
+  guestForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitButton = guestForm.querySelector("button[type='submit']");
+    const orderId = String(guestForm.elements.orderId.value || "").trim();
+    const email = String(guestForm.elements.email.value || "").trim();
+
+    setButtonLoading(submitButton, true, "조회 중…");
+
+    try {
+      const payload = await requestJson("./api/auth/guest-order", {
+        method: "POST",
+        body: {
+          orderId,
+          email,
+        },
+      });
+
+      renderGuestOrder(payload.order || null);
+      setStatus(guestStatusEl, "비회원 주문 정보를 확인했습니다.", "success");
+    } catch (error) {
+      renderGuestOrder(null);
+      setStatus(guestStatusEl, error.message || "주문 정보를 불러오지 못했습니다.", "error");
+    } finally {
+      setButtonLoading(submitButton, false, "조회 중…");
+    }
   });
 
   logoutButton?.addEventListener("click", async () => {
@@ -397,14 +522,13 @@ export function initAccountPage() {
         method: "POST",
       });
 
-      state.pendingEmail = "";
-      state.pendingFullName = "";
-      state.debugCode = "";
+      state.login = { pendingEmail: "", pendingFullName: "", debugCode: "" };
+      state.signup = { pendingEmail: "", pendingFullName: "", debugCode: "" };
       showLoggedOut();
-      setStatus("로그아웃되었습니다.");
+      setStatus(loginStatusEl, "로그아웃되었습니다.");
       window.dispatchEvent(new Event("studiooalum:auth-changed"));
     } catch (error) {
-      setStatus(error.message || "로그아웃하지 못했습니다.", "error");
+      setStatus(memberStatusEl, error.message || "로그아웃하지 못했습니다.", "error");
     } finally {
       setButtonLoading(logoutButton, false, "로그아웃 중…");
     }
@@ -415,10 +539,15 @@ export function initAccountPage() {
   });
 
   showLoggedOut();
-  loadProviders();
+  renderFlow("login");
+  renderFlow("signup");
   loadAccount({ silent: true }).finally(() => {
     if (urlMessage) {
-      setStatus(urlMessage.message, urlMessage.type);
+      if (document.body.classList.contains("is-authenticated")) {
+        setStatus(memberStatusEl, urlMessage.message, urlMessage.type);
+      } else {
+        setStatus(loginStatusEl, urlMessage.message, urlMessage.type);
+      }
     }
   });
 }

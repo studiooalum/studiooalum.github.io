@@ -20,54 +20,90 @@
   </nav>
 
   <main class="account-main">
-    <section class="account-layout">
-      <section class="account-panel account-panel--auth">
-        <h1 class="account-heading">회원가입 / 로그인</h1>
-        <div class="account-auth">
-          <p class="account-copy">회원은 구매 내역, 포인트, 기본 주소를 관리할 수 있고 비회원 주문도 같은 이메일이면 나중에 계정에 연결됩니다.</p>
-          <p class="account-status js-account-status" role="status" aria-live="polite"></p>
+    <section class="account-auth-shell js-account-auth-shell">
+      <section class="account-panel">
+        <h1 class="account-heading">로그인</h1>
+        <p class="account-copy">이미 가입한 이메일로 로그인하고 주문 내역과 기본 주소를 관리할 수 있습니다.</p>
+        <p class="account-status js-account-login-status" role="status" aria-live="polite"></p>
 
-          <section class="account-auth-social js-account-auth-social" hidden>
-            <h2 class="account-subheading">간편 회원가입 / 로그인</h2>
-            <div class="account-provider-grid js-account-provider-grid"></div>
-            <div class="account-auth-divider js-account-auth-divider"><span>또는</span></div>
-          </section>
+        <form class="account-form js-account-login-request-form" novalidate>
+          <label class="account-field">
+            <span>이메일 주소</span>
+            <input type="email" name="email" autocomplete="email" inputmode="email" required />
+          </label>
+          <button type="submit" class="account-btn">인증코드 받기</button>
+        </form>
 
-          <form class="account-form js-account-request-form" novalidate>
-            <h2 class="account-subheading">직접 가입 / 로그인</h2>
-            <label class="account-field">
-              <span>이름</span>
-              <input type="text" name="fullName" autocomplete="name" inputmode="text" />
-            </label>
-            <label class="account-field">
-              <span>이메일 주소</span>
-              <input type="email" name="email" autocomplete="email" inputmode="email" required />
-            </label>
-            <button type="submit" class="account-btn">이메일 인증코드 받기</button>
-          </form>
-
-          <form class="account-form js-account-verify-form" hidden novalidate>
-            <p class="account-copy account-auth-email">인증코드를 <strong class="js-account-email-display"></strong> 로 보냈습니다.</p>
-            <label class="account-field">
-              <span>6자리 인증코드</span>
-              <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
-            </label>
-            <p class="account-auth-debug js-account-debug" hidden></p>
-            <div class="account-auth-actions">
-              <button type="submit" class="account-btn">로그인</button>
-              <button type="button" class="account-btn account-btn--secondary js-account-reset">이메일 수정</button>
-            </div>
-          </form>
-
-          <div class="account-authenticated js-account-authenticated" hidden>
-            <p class="account-copy">로그인된 계정: <strong class="js-account-user-email"></strong></p>
-            <button type="button" class="account-btn account-btn--secondary js-account-logout">로그아웃</button>
+        <form class="account-form js-account-login-verify-form" hidden novalidate>
+          <p class="account-copy account-auth-email">인증코드를 <strong class="js-account-login-email-display"></strong> 로 보냈습니다.</p>
+          <label class="account-field">
+            <span>6자리 인증코드</span>
+            <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
+          </label>
+          <p class="account-auth-debug js-account-login-debug" hidden></p>
+          <div class="account-panel-actions">
+            <button type="submit" class="account-btn">로그인</button>
+            <button type="button" class="account-btn account-btn--secondary js-account-login-reset">이메일 수정</button>
           </div>
-        </div>
+        </form>
       </section>
 
-      <section class="account-panel" data-account-protected hidden>
-        <h2 class="account-heading">내 정보</h2>
+      <section class="account-panel">
+        <h2 class="account-heading">회원가입</h2>
+        <p class="account-copy">새 계정을 만들고 비회원 주문도 같은 이메일이면 이후 계정 주문으로 연결할 수 있습니다.</p>
+        <p class="account-status js-account-signup-status" role="status" aria-live="polite"></p>
+
+        <form class="account-form js-account-signup-request-form" novalidate>
+          <label class="account-field">
+            <span>이름</span>
+            <input type="text" name="fullName" autocomplete="name" inputmode="text" required />
+          </label>
+          <label class="account-field">
+            <span>이메일 주소</span>
+            <input type="email" name="email" autocomplete="email" inputmode="email" required />
+          </label>
+          <button type="submit" class="account-btn">가입용 인증코드 받기</button>
+        </form>
+
+        <form class="account-form js-account-signup-verify-form" hidden novalidate>
+          <p class="account-copy account-auth-email">인증코드를 <strong class="js-account-signup-email-display"></strong> 로 보냈습니다.</p>
+          <label class="account-field">
+            <span>6자리 인증코드</span>
+            <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
+          </label>
+          <p class="account-auth-debug js-account-signup-debug" hidden></p>
+          <div class="account-panel-actions">
+            <button type="submit" class="account-btn">회원가입 완료</button>
+            <button type="button" class="account-btn account-btn--secondary js-account-signup-reset">입력 수정</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="account-panel">
+        <h2 class="account-heading">비회원 주문확인</h2>
+        <p class="account-copy">주문번호와 결제에 사용한 이메일 주소로 현재 주문 상태를 확인할 수 있습니다.</p>
+        <p class="account-status js-account-guest-status" role="status" aria-live="polite"></p>
+
+        <form class="account-form js-account-guest-form" novalidate>
+          <label class="account-field">
+            <span>주문번호</span>
+            <input type="text" name="orderId" autocomplete="off" required />
+          </label>
+          <label class="account-field">
+            <span>이메일 주소</span>
+            <input type="email" name="email" autocomplete="email" inputmode="email" required />
+          </label>
+          <button type="submit" class="account-btn">주문 확인</button>
+        </form>
+
+        <div class="account-guest-result js-account-guest-result" hidden></div>
+      </section>
+    </section>
+
+    <section class="account-layout js-account-member-layout" data-account-protected hidden>
+      <section class="account-panel">
+        <h2 class="account-heading">내 계정 정보</h2>
+        <p class="account-status js-account-member-status" role="status" aria-live="polite"></p>
         <form class="account-form js-account-profile-form">
           <label class="account-field">
             <span>이메일 주소</span>
@@ -97,18 +133,21 @@
             <span>연결 계정</span>
             <div class="account-provider-chips js-account-identities"></div>
           </div>
-          <button type="submit" class="account-btn">계정 업데이트</button>
+          <div class="account-panel-actions">
+            <button type="submit" class="account-btn">계정 업데이트</button>
+            <button type="button" class="account-btn account-btn--secondary js-account-logout">로그아웃</button>
+          </div>
         </form>
       </section>
 
-      <section class="account-panel" data-account-protected hidden>
+      <section class="account-panel">
         <h2 class="account-heading">결제 내역</h2>
         <div class="account-orders js-account-orders">
           <div class="account-empty">등록된 주문 내역이 없습니다.</div>
         </div>
       </section>
 
-      <section class="account-panel" data-account-protected hidden>
+      <section class="account-panel">
         <h2 class="account-heading">적립금</h2>
         <p class="account-points js-account-points">0 포인트</p>
         <p class="account-copy">상품 구매시 결제 금액의 3% 적립해드리며 1,000 포인트부터 사용 가능합니다.</p>

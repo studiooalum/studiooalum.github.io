@@ -76,6 +76,16 @@ async function hashLoginCode(env, email, code) {
   return sha256Hex(withPepper(env, `${normalizeEmail(email)}:${String(code || "").trim()}`));
 }
 
+function normalizeDirectAuthMode(value) {
+  const mode = String(value || "login").trim().toLowerCase();
+  return mode === "signup" ? "signup" : "login";
+}
+
+async function hashDirectLoginCode(env, email, code, mode = "login") {
+  const normalizedMode = normalizeDirectAuthMode(mode);
+  return sha256Hex(withPepper(env, `${normalizeEmail(email)}:${normalizedMode}:${String(code || "").trim()}`));
+}
+
 async function hashSessionToken(env, token) {
   return sha256Hex(withPepper(env, String(token || "")));
 }
@@ -435,7 +445,25 @@ async function readLatestOrderProfile(database, { userId, emailNormalized }) {
 
 export async function requestLoginCode(env, email) {
   const database = requireDb(env);
-  const emailNormalized = normalizeEmail(email);
+  const options = typeof email === "string"
+    ? { email, mode: "login", fullName: "" }
+    : { ...(email || {}) };
+  const emailNormalized = normalizeEmail(options.email);
+  const authMode = normalizeDirectAuthMode(options.mode);
+  const existingUser = await findUserByEmail(database, emailNormalized);
+
+  if (authMode === "login" && !existingUser) {
+    throw Object.assign(new Error("가입된 계정이 없습니다. 회원가입을 먼저 진행해주세요."), {
+      status: 404,
+    });
+  }
+
+  if (authMode === "signup" && existingUser) {
+    throw Object.assign(new Error("이미 가입된 계정입니다. 로그인해 주세요."), {
+      status: 409,
+    });
+  }
+
   const recent = await database
     .prepare(`
       SELECT id, created_at, consumed_at
@@ -459,7 +487,7 @@ export async function requestLoginCode(env, email) {
   const createdAt = nowIso();
   const expiresAt = addMs(createdAt, LOGIN_CODE_TTL_MS);
   const code = generateLoginCode();
-  const codeHash = await hashLoginCode(env, emailNormalized, code);
+  const codeHash = await hashDirectLoginCode(env, emailNormalized, code, authMode);
 
   const insertResult = await database
     .prepare(`
@@ -549,57 +577,88 @@ async function createSession(database, env, userId, request) {
   };
 }
 
-export async function verifyLoginCode(env, { email, code, fullName }, request) {
+export async function verifyLoginCode(env, { email, code, fullName, mode }, request) {
   const database = requireDb(env);
   const emailNormalized = normalizeEmail(email);
-  const record = await database
+  const authMode = normalizeDirectAuthMode(mode);
+  const recordsResult = await database
     .prepare(`
       SELECT *
       FROM auth_login_codes
       WHERE email_normalized = ?
         AND consumed_at IS NULL
       ORDER BY id DESC
-      LIMIT 1
+      LIMIT 6
     `)
     .bind(emailNormalized)
-    .first();
+    .all();
 
-  if (!record) {
+  const records = recordsResult?.results || [];
+  const record = records[0] || null;
+
+  if (records.length === 0) {
     throw Object.assign(new Error("No active login code was found for this email address."), {
       status: 400,
     });
   }
 
-  if (!record.expires_at || Date.parse(record.expires_at) <= Date.now()) {
-    await markCodeAttempt(database, record.id, Number(record.attempts) || 0, nowIso());
-    throw Object.assign(new Error("This login code has expired. Please request a new one."), {
-      status: 400,
-    });
-  }
+  const candidateHash = await hashDirectLoginCode(env, emailNormalized, code, authMode);
+  const matchingRecord = records.find((item) => item.code_hash === candidateHash) || null;
 
-  const nextAttempts = (Number(record.attempts) || 0) + 1;
-  if (nextAttempts > MAX_LOGIN_ATTEMPTS) {
-    await markCodeAttempt(database, record.id, nextAttempts, nowIso());
-    throw Object.assign(new Error("Too many failed attempts. Please request a new login code."), {
-      status: 429,
-    });
-  }
+  if (!matchingRecord) {
+    const nextAttempts = (Number(record?.attempts) || 0) + 1;
+    if (record) {
+      await markCodeAttempt(
+        database,
+        record.id,
+        nextAttempts,
+        nextAttempts >= MAX_LOGIN_ATTEMPTS ? nowIso() : null,
+      );
+    }
 
-  const candidateHash = await hashLoginCode(env, emailNormalized, code);
-  if (candidateHash !== record.code_hash) {
-    await markCodeAttempt(
-      database,
-      record.id,
-      nextAttempts,
-      nextAttempts >= MAX_LOGIN_ATTEMPTS ? nowIso() : null,
-    );
     throw Object.assign(new Error("The login code is incorrect."), {
       status: 400,
     });
   }
 
-  await markCodeAttempt(database, record.id, nextAttempts, nowIso());
-  const user = await ensureUser(database, emailNormalized, { fullName });
+  if (!matchingRecord.expires_at || Date.parse(matchingRecord.expires_at) <= Date.now()) {
+    await markCodeAttempt(database, matchingRecord.id, Number(matchingRecord.attempts) || 0, nowIso());
+    throw Object.assign(new Error("This login code has expired. Please request a new one."), {
+      status: 400,
+    });
+  }
+
+  const nextAttempts = (Number(matchingRecord.attempts) || 0) + 1;
+  if (nextAttempts > MAX_LOGIN_ATTEMPTS) {
+    await markCodeAttempt(database, matchingRecord.id, nextAttempts, nowIso());
+    throw Object.assign(new Error("Too many failed attempts. Please request a new login code."), {
+      status: 429,
+    });
+  }
+
+  await markCodeAttempt(database, matchingRecord.id, nextAttempts, nowIso());
+
+  let user = null;
+  const existingUser = await findUserByEmail(database, emailNormalized);
+
+  if (authMode === "signup") {
+    if (existingUser) {
+      throw Object.assign(new Error("이미 가입된 계정입니다. 로그인해 주세요."), {
+        status: 409,
+      });
+    }
+
+    user = await ensureUser(database, emailNormalized, { fullName });
+  } else {
+    if (!existingUser) {
+      throw Object.assign(new Error("가입된 계정이 없습니다. 회원가입을 먼저 진행해주세요."), {
+        status: 404,
+      });
+    }
+
+    user = await touchUserLogin(database, existingUser.id, { fullName: existingUser.full_name || fullName });
+  }
+
   await linkGuestOrdersToUser(database, user.id, user.emailNormalized);
   await upsertIdentity(database, {
     userId: user.id,
@@ -859,4 +918,78 @@ export async function updateAccount(env, userId, input) {
     .run();
 
   return readAccount(env, userId);
+}
+
+function formatGuestOrderItem(row) {
+  return {
+    title: row.title,
+    editionLabel: row.edition_label || "",
+    quantity: Number(row.quantity) || 0,
+    unitPrice: Number(row.unit_price) || 0,
+  };
+}
+
+export async function lookupGuestOrder(env, { orderId, email }) {
+  const database = requireDb(env);
+  const normalizedOrderId = cleanText(orderId, 80);
+  const emailNormalized = normalizeEmail(email);
+
+  const order = await database
+    .prepare(`
+      SELECT
+        id,
+        order_name,
+        status,
+        payment_status,
+        total_amount,
+        currency,
+        customer_name,
+        customer_phone,
+        customer_email,
+        zipcode,
+        address1,
+        address2,
+        created_at
+      FROM orders
+      WHERE id = ?
+        AND lower(customer_email) = ?
+      LIMIT 1
+    `)
+    .bind(normalizedOrderId, emailNormalized)
+    .first();
+
+  if (!order) {
+    throw Object.assign(new Error("주문번호와 이메일이 일치하는 비회원 주문을 찾을 수 없습니다."), {
+      status: 404,
+    });
+  }
+
+  const itemsResult = await database
+    .prepare(`
+      SELECT title, edition_label, quantity, unit_price
+      FROM order_items
+      WHERE order_id = ?
+      ORDER BY id ASC
+    `)
+    .bind(order.id)
+    .all();
+
+  return {
+    order: {
+      orderId: order.id,
+      orderName: order.order_name,
+      status: order.status,
+      paymentStatus: order.payment_status,
+      totalAmount: Number(order.total_amount) || 0,
+      currency: order.currency || "KRW",
+      createdAt: order.created_at,
+      customerName: order.customer_name,
+      customerPhone: order.customer_phone,
+      customerEmail: order.customer_email,
+      zipcode: order.zipcode,
+      address1: order.address1,
+      address2: order.address2 || "",
+      items: (itemsResult?.results || []).map(formatGuestOrderItem),
+    },
+  };
 }
