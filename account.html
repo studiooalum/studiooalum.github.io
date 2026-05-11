@@ -24,6 +24,11 @@
       <section class="account-panel">
         <h1 class="account-heading">로그인</h1>
         <p class="account-copy">이미 가입한 이메일로 로그인하고 주문 내역과 기본 주소를 관리할 수 있습니다.</p>
+        <section class="account-social-auth" aria-label="간편 로그인">
+          <h2 class="account-subheading">간편 로그인</h2>
+          <div class="account-provider-grid js-account-provider-grid"></div>
+          <p class="account-provider-help js-account-provider-help"></p>
+        </section>
         <p class="account-status js-account-login-status" role="status" aria-live="polite"></p>
 
         <form class="account-form js-account-login-request-form" novalidate>
@@ -144,6 +149,13 @@
         <h2 class="account-heading">결제 내역</h2>
         <div class="account-orders js-account-orders">
           <div class="account-empty">등록된 주문 내역이 없습니다.</div>
+        </div>
+      </section>
+
+      <section class="account-panel">
+        <h2 class="account-heading">워크숍 예약</h2>
+        <div class="account-orders js-account-workshops">
+          <div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>
         </div>
       </section>
 

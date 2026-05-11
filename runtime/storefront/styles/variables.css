@@ -20,6 +20,13 @@
 }
 
 @font-face {
+  font-family: "GothamBold";
+  src: url("../../../public/fonts/Gotham-Font/GothamBold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
   font-family: "SM3JungGothic02";
   src: url("../../../public/fonts/SM3중고딕-02.otf") format("opentype");
   font-weight: 400;
@@ -64,6 +71,7 @@
   --font-book: "GothamBook", sans-serif;
   --font-light: "GothamLight", "GothamBook", sans-serif;
   --font-medium: "GothamMedium", "GothamBook", sans-serif;
+  --font-bold: "GothamBold", "GothamMedium", "GothamBook", sans-serif;
   --font-kor-body: "SM3JungGothic02", sans-serif;
   --font-kor-ui: "SM3JungGothic02", sans-serif;
   --font-kor-button: "SM3JungGothic03", sans-serif;

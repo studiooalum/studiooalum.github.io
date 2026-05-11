@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Studio OALUM — Workshop</title>
+    <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+    <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/workshop.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
+</head>
+<body class="workshop-page">
+    <nav class="gnb gnb--workshops">
+        <a href="./workshops.html" class="gnb__back" id="workshopBack">← Workshops</a>
+        <span class="gnb__title">Workshop</span>
+    </nav>
+
+    <main class="workshop-main" id="workshopMain">
+        <section class="workshop-stage" id="workshopStage">
+            <section class="workshop-stage__poster" id="workshopPosterPanel" aria-live="polite">
+                <div class="workshop-poster" id="workshopPoster"></div>
+            </section>
+
+            <section class="workshop-stage__content">
+                <header class="workshop-hero">
+                    <p class="workshop-kicker" id="workshopKicker">Loading...</p>
+                    <h1 class="workshop-title" id="workshopTitle">Loading...</h1>
+                    <div class="workshop-meta-row">
+                        <span class="workshop-meta-chip" id="workshopDuration">TBD</span>
+                        <span class="workshop-meta-chip" id="workshopLevel">all levels</span>
+                        <span class="workshop-meta-chip" id="workshopPrice">상담 후 확정</span>
+                    </div>
+                </header>
+
+                <div class="workshop-body-copy" id="workshopDescription">
+                    <p>워크숍 정보를 불러오는 중입니다.</p>
+                </div>
+
+                <section class="workshop-facts">
+                    <article class="workshop-fact">
+                        <h2 class="workshop-fact__title">materials</h2>
+                        <ul class="workshop-fact__list" id="workshopMaterials"></ul>
+                    </article>
+                    <article class="workshop-fact">
+                        <h2 class="workshop-fact__title">capacity</h2>
+                        <p class="workshop-fact__text" id="workshopCapacity">-</p>
+                    </article>
+                    <article class="workshop-fact">
+                        <h2 class="workshop-fact__title">location</h2>
+                        <p class="workshop-fact__text" id="workshopLocation">-</p>
+                    </article>
+                    <article class="workshop-fact">
+                        <h2 class="workshop-fact__title">bring</h2>
+                        <ul class="workshop-fact__list" id="workshopBring"></ul>
+                    </article>
+                </section>
+
+                <div class="workshop-cta-row">
+                    <button class="workshop-apply-btn" id="workshopApplyBtn" type="button">신청하기</button>
+                    <p class="workshop-note" id="workshopNotice"></p>
+                </div>
+            </section>
+
+            <aside class="workshop-stage__rail" id="workshopRail">
+                <div class="workshop-rail__empty" id="workshopRailEmpty">
+                    <p class="workshop-rail__eyebrow">booking rail</p>
+                    <p class="workshop-rail__message">신청하기를 누르면 우측에서 일정과 예약 폼이 열립니다.</p>
+                </div>
+
+                <div class="workshop-rail__panel" id="workshopRailPanel" hidden>
+                    <div class="workshop-rail__header">
+                        <p class="workshop-rail__eyebrow">booking rail</p>
+                        <button class="workshop-rail__close" id="workshopRailClose" type="button" aria-label="예약 패널 닫기"></button>
+                    </div>
+
+                    <section class="workshop-calendar-shell">
+                        <div class="workshop-calendar__toolbar">
+                            <button class="workshop-calendar__nav" id="calendarPrevBtn" type="button" aria-label="이전 달">←</button>
+                            <div class="workshop-calendar__headline">
+                                <span class="workshop-calendar__month" id="calendarMonth">MONTH</span>
+                                <span class="workshop-calendar__year" id="calendarYear">2025</span>
+                            </div>
+                            <button class="workshop-calendar__nav" id="calendarNextBtn" type="button" aria-label="다음 달">→</button>
+                        </div>
+                        <div class="workshop-calendar" id="workshopCalendar"></div>
+                    </section>
+
+                    <section class="workshop-slots">
+                        <div class="workshop-slots__header">
+                            <h2 class="workshop-slots__title">selected slots</h2>
+                            <p class="workshop-slots__date" id="workshopSelectedDate">날짜를 선택해 주세요.</p>
+                        </div>
+                        <div class="workshop-slots__list" id="workshopSlotList"></div>
+                    </section>
+
+                    <form class="workshop-booking-form" id="workshopBookingForm">
+                        <label class="workshop-booking-form__field">
+                            <span>name</span>
+                            <input type="text" id="bookingName" name="fullName" autocomplete="name" required>
+                        </label>
+                        <label class="workshop-booking-form__field">
+                            <span>email</span>
+                            <input type="email" id="bookingEmail" name="email" autocomplete="email" required>
+                        </label>
+                        <label class="workshop-booking-form__field">
+                            <span>phone</span>
+                            <input type="tel" id="bookingPhone" name="phone" autocomplete="tel" required>
+                        </label>
+                        <label class="workshop-booking-form__field">
+                            <span>note</span>
+                            <textarea id="bookingNote" name="note" rows="3" placeholder="필요한 메모가 있으면 남겨주세요."></textarea>
+                        </label>
+                        <button class="workshop-booking-form__submit" id="workshopBookingSubmit" type="submit">예약하기</button>
+                        <p class="workshop-booking-form__feedback" id="workshopBookingFeedback" aria-live="polite"></p>
+                    </form>
+                </div>
+            </aside>
+        </section>
+
+        <footer class="site-footer site-footer--grid">
+            <div class="site-footer__brand">
+                <img class="site-footer__logo-mark" src="./로고.png" alt="Studio OALUM">
+            </div>
+            <div class="site-footer__text site-footer__text--lead">
+                <p>2020년부터 운영해온 수선 스튜디오의 경험을 바탕으로, 만들고 싶은 것을 만듭니다.</p>
+                <p>Based on our experience running a repair studio since 2020, we create whatever we want to make.</p>
+            </div>
+            <div class="site-footer__text site-footer__text--info">
+                <p>스튜디오 오알룸
+만드는 사람: 한아름
+사업자등록번호 669-24-02313
+통신판매업 신고 제2025-서울동대문-2322호</p>
+                <p>이용약관
+개인정보처리방침
+배송 환불 적립금 안내</p>
+            </div>
+            <div class="site-footer__text site-footer__text--contact">
+                <p>03971
+서울특별시 성산동 252-3 2층 202호
++82-10-4746-5999
+studio.oalum@gmail.com</p>
+                <a class="site-footer__instagram" href="#" aria-label="Instagram">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" stroke-width="1.6"></rect>
+                        <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.6"></circle>
+                        <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor"></circle>
+                    </svg>
+                </a>
+            </div>
+        </footer>
+    </main>
+
+    <script type="module" src="./runtime/storefront/scripts/workshop.js"></script>
+    <script type="module">
+        import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+        import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js";
+        import { initCartUI } from "./runtime/storefront/scripts/cart.js";
+
+        initSiteChrome();
+        initCartUI();
+        initSiteFooter();
+    </script>
+</body>
+</html>

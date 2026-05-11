@@ -45,6 +45,7 @@ export const ALL_WORKSHOPS_QUERY = `
   *[_type == "workshop"] | order(_createdAt desc, title asc) {
     _id,
     title,
+    "slug": slug.current,
     description,
     summary,
     excerpt,
@@ -52,7 +53,18 @@ export const ALL_WORKSHOPS_QUERY = `
     durationLabel,
     category,
     workshopCategory,
-    slug,
+    levelLabel,
+    audienceLabel,
+    maxCapacity,
+    capacityLabel,
+    materials,
+    thingsToBring,
+    locationName,
+    locationAddress,
+    locationDetail,
+    hostName,
+    price,
+    bookingNotice,
     bookingUrl,
     externalUrl,
     link,
@@ -67,6 +79,59 @@ export const ALL_WORKSHOPS_QUERY = `
     },
     images[]{
       asset->{url}
+    }
+  }
+`;
+
+export const WORKSHOP_BY_SLUG_QUERY = `
+  *[_type == "workshop" && slug.current == $slug][0] {
+    _id,
+    title,
+    "slug": slug.current,
+    description,
+    summary,
+    excerpt,
+    duration,
+    durationLabel,
+    category,
+    workshopCategory,
+    levelLabel,
+    audienceLabel,
+    maxCapacity,
+    capacityLabel,
+    materials,
+    thingsToBring,
+    locationName,
+    locationAddress,
+    locationDetail,
+    hostName,
+    price,
+    bookingNotice,
+    bookingUrl,
+    externalUrl,
+    link,
+    poster {
+      asset->{url}
+    },
+    posterImage {
+      asset->{url}
+    },
+    mainImage {
+      asset->{url}
+    },
+    images[]{
+      asset->{url}
+    },
+    scheduleSlots[]{
+      _key,
+      label,
+      date,
+      startTime,
+      endTime,
+      capacity,
+      isBlocked,
+      status,
+      reason
     }
   }
 `;

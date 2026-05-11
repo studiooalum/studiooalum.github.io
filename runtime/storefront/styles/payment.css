@@ -194,11 +194,11 @@
 
 @media (max-width: 959px) {
   .payment-layout {
-    padding-top: var(--gnb-height, 40px);
+    padding-top: calc(var(--gnb-height, 40px) + 24px);
   }
 
   .payment-result-layout {
-    padding-top: var(--gnb-height, 40px);
+    padding-top: calc(var(--gnb-height, 40px) + 24px);
   }
 }
 

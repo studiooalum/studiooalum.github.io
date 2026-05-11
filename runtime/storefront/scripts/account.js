@@ -7,6 +7,12 @@ const PROVIDER_LABELS = {
   google: "Google",
 };
 
+const DEFAULT_SOCIAL_PROVIDERS = [
+  { key: "kakao", label: "카카오로 계속하기", enabled: false },
+  { key: "naver", label: "네이버로 계속하기", enabled: false },
+  { key: "google", label: "Google로 계속하기", enabled: false },
+];
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -74,6 +80,8 @@ export function initAccountPage() {
   const memberLayout = document.querySelector(".js-account-member-layout");
   const loginRequestForm = document.querySelector(".js-account-login-request-form");
   const loginVerifyForm = document.querySelector(".js-account-login-verify-form");
+  const providerGridEl = document.querySelector(".js-account-provider-grid");
+  const providerHelpEl = document.querySelector(".js-account-provider-help");
   const signupRequestForm = document.querySelector(".js-account-signup-request-form");
   const signupVerifyForm = document.querySelector(".js-account-signup-verify-form");
   const guestForm = document.querySelector(".js-account-guest-form");
@@ -92,6 +100,7 @@ export function initAccountPage() {
   const loginResetButton = document.querySelector(".js-account-login-reset");
   const signupResetButton = document.querySelector(".js-account-signup-reset");
   const ordersEl = document.querySelector(".js-account-orders");
+  const workshopsEl = document.querySelector(".js-account-workshops");
   const pointsEl = document.querySelector(".js-account-points");
 
   if (
@@ -104,6 +113,7 @@ export function initAccountPage() {
     || !guestForm
     || !profileForm
     || !ordersEl
+    || !workshopsEl
     || !pointsEl
   ) {
     return;
@@ -124,6 +134,7 @@ export function initAccountPage() {
 
   const urlMessage = readStatusFromUrl();
   const emptyOrdersMarkup = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
+  const emptyWorkshopsMarkup = '<div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>';
   const flows = {
     login: {
       mode: "login",
@@ -198,6 +209,67 @@ export function initAccountPage() {
     }).join("");
   }
 
+  function createProviderElement(provider) {
+    const key = String(provider?.key || "").trim().toLowerCase();
+    const label = String(provider?.label || `${PROVIDER_LABELS[key] || key}로 계속하기`).trim();
+    const enabled = provider?.enabled === true;
+
+    if (enabled) {
+      const link = document.createElement("a");
+      link.className = `account-provider-btn account-provider-btn--${key}`;
+      link.href = `./api/auth/oauth/start?provider=${encodeURIComponent(key)}&redirect=${encodeURIComponent("/account.html")}`;
+      link.textContent = label;
+      return link;
+    }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `account-provider-btn account-provider-btn--${key} is-disabled`;
+    button.disabled = true;
+    button.textContent = label;
+    return button;
+  }
+
+  function renderSocialProviders(providers, helpText = "") {
+    if (!providerGridEl) return;
+
+    const items = Array.isArray(providers) && providers.length > 0 ? providers : DEFAULT_SOCIAL_PROVIDERS;
+    providerGridEl.innerHTML = "";
+
+    for (const provider of items) {
+      providerGridEl.appendChild(createProviderElement(provider));
+    }
+
+    if (!providerHelpEl) return;
+
+    if (helpText) {
+      providerHelpEl.textContent = helpText;
+      return;
+    }
+
+    const enabledLabels = items
+      .filter((provider) => provider.enabled)
+      .map((provider) => PROVIDER_LABELS[String(provider.key || "").trim().toLowerCase()] || provider.label)
+      .filter(Boolean);
+
+    providerHelpEl.textContent = enabledLabels.length > 0
+      ? `현재 활성화: ${enabledLabels.join(", ")}`
+      : "현재 간편 로그인 설정이 아직 완료되지 않았습니다. 앱 등록과 환경 변수 설정 후 활성화됩니다.";
+  }
+
+  async function loadProviders() {
+    try {
+      const payload = await requestJson("./api/auth/providers");
+      renderSocialProviders(payload?.providers || []);
+    } catch (error) {
+      console.error("Failed to load auth providers.", error);
+      renderSocialProviders(
+        DEFAULT_SOCIAL_PROVIDERS,
+        "현재 페이지에서 간편 로그인 API를 불러오지 못했습니다. 정적 서버나 GitHub Pages에서는 간편 로그인이 동작하지 않고, Cloudflare Pages Functions 환경이 필요합니다.",
+      );
+    }
+  }
+
   function setStatus(target, message = "", type = "info") {
     if (!target) return;
 
@@ -246,6 +318,7 @@ export function initAccountPage() {
     renderIdentities([]);
     pointsEl.textContent = "0 포인트";
     ordersEl.innerHTML = emptyOrdersMarkup;
+    workshopsEl.innerHTML = emptyWorkshopsMarkup;
   }
 
   function renderOrders(orders) {
@@ -270,6 +343,36 @@ export function initAccountPage() {
           <div class="account-order-meta">
             <span class="account-order-id">${orderId}</span>
             <span class="account-order-date">${createdAt}</span>
+            <span class="account-order-state">${status}</span>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderWorkshopReservations(reservations) {
+    if (!Array.isArray(reservations) || reservations.length === 0) {
+      workshopsEl.innerHTML = emptyWorkshopsMarkup;
+      return;
+    }
+
+    workshopsEl.innerHTML = reservations.map((reservation) => {
+      const title = escapeHtml(reservation.workshopTitle || "워크숍");
+      const href = `./workshop.html?slug=${encodeURIComponent(reservation.workshopSlug || "")}`;
+      const location = escapeHtml(reservation.workshopLocation || "Studio OALUM");
+      const slotDate = escapeHtml(formatDate(reservation.slotDate));
+      const slotTime = escapeHtml([reservation.slotStartTime, reservation.slotEndTime].filter(Boolean).join(" - "));
+      const status = escapeHtml(reservation.status || "confirmed");
+
+      return `
+        <article class="account-order account-order--workshop">
+          <div class="account-order-head">
+            <p class="account-order-name"><a class="account-order-link" href="${href}">${title}</a></p>
+            <strong class="account-order-total">${slotTime || "time tbd"}</strong>
+          </div>
+          <div class="account-order-meta">
+            <span class="account-order-id">${slotDate}</span>
+            <span class="account-order-date">${location}</span>
             <span class="account-order-state">${status}</span>
           </div>
         </article>
@@ -333,6 +436,7 @@ export function initAccountPage() {
     renderIdentities(user.linkedProviders || []);
     pointsEl.textContent = `${Number(user.pointsBalance || 0).toLocaleString("ko-KR")} 포인트`;
     renderOrders(account?.orders || []);
+    renderWorkshopReservations(account?.workshopReservations || []);
   }
 
   async function loadAccount({ silent = false } = {}) {
@@ -541,6 +645,7 @@ export function initAccountPage() {
   showLoggedOut();
   renderFlow("login");
   renderFlow("signup");
+  loadProviders();
   loadAccount({ silent: true }).finally(() => {
     if (urlMessage) {
       if (document.body.classList.contains("is-authenticated")) {

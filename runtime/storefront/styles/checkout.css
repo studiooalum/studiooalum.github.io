@@ -177,7 +177,7 @@
 
 @media (max-width: 959px) {
   .checkout-layout {
-    padding-top: var(--gnb-height, 40px);
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-gutter));
   }
 }
 

@@ -2,10 +2,14 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
+  user_id TEXT,
   order_name TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending',
-  payment_status TEXT NOT NULL DEFAULT 'ready',
+  status TEXT NOT NULL DEFAULT 'created',
+  payment_status TEXT NOT NULL DEFAULT 'pending',
   currency TEXT NOT NULL DEFAULT 'KRW',
+  subtotal_amount INTEGER NOT NULL DEFAULT 0,
+  shipping_amount INTEGER NOT NULL DEFAULT 0,
+  discount_amount INTEGER NOT NULL DEFAULT 0,
   total_amount INTEGER NOT NULL,
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
@@ -13,16 +17,19 @@ CREATE TABLE IF NOT EXISTS orders (
   zipcode TEXT NOT NULL,
   address1 TEXT NOT NULL,
   address2 TEXT NOT NULL DEFAULT '',
-  memo TEXT NOT NULL DEFAULT '',
-  payment_key TEXT,
-  payment_method TEXT,
-  approved_at TEXT,
+  note TEXT NOT NULL DEFAULT '',
+  active_payment_key TEXT,
+  paid_at TEXT,
+  cancelled_at TEXT,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_orders_payment_key ON orders(payment_key);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status, payment_status);
+CREATE INDEX IF NOT EXISTS idx_orders_active_payment_key ON orders(active_payment_key);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS order_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,37 +41,147 @@ CREATE TABLE IF NOT EXISTS order_items (
   edition_label TEXT,
   unit_price INTEGER NOT NULL,
   quantity INTEGER NOT NULL,
+  snapshot TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL,
   FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_order_items_order_line_id ON order_items(order_id, line_id);
 
 CREATE TABLE IF NOT EXISTS payments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  order_id TEXT NOT NULL UNIQUE,
-  payment_key TEXT,
-  provider TEXT NOT NULL,
+  order_id TEXT NOT NULL,
+  payment_key TEXT NOT NULL UNIQUE,
+  provider TEXT NOT NULL DEFAULT 'toss',
   provider_mode TEXT NOT NULL,
+  toss_order_id TEXT,
   method TEXT,
-  status TEXT NOT NULL,
-  amount INTEGER NOT NULL,
-  raw_response TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  requested_amount INTEGER NOT NULL,
+  approved_amount INTEGER,
+  raw_request TEXT NOT NULL DEFAULT '{}',
+  raw_response TEXT NOT NULL DEFAULT '{}',
+  requested_at TEXT NOT NULL,
+  approved_at TEXT,
+  failed_at TEXT,
+  cancelled_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
+CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_payment_key ON payments(payment_key);
+CREATE INDEX IF NOT EXISTS idx_payments_toss_order_id ON payments(toss_order_id);
 
 CREATE TABLE IF NOT EXISTS payment_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   order_id TEXT,
+  payment_id INTEGER,
+  provider TEXT NOT NULL DEFAULT 'toss',
   event_type TEXT NOT NULL,
+  delivery_id TEXT,
   payload TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE SET NULL
+  received_at TEXT NOT NULL,
+  processed_at TEXT,
+  FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE SET NULL,
+  FOREIGN KEY(payment_id) REFERENCES payments(id) ON DELETE SET NULL,
+  UNIQUE(provider, delivery_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_payment_events_order_id ON payment_events(order_id);
+CREATE INDEX IF NOT EXISTS idx_payment_events_order_id ON payment_events(order_id, received_at DESC);
 CREATE INDEX IF NOT EXISTS idx_payment_events_type ON payment_events(event_type);
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  email_normalized TEXT NOT NULL UNIQUE,
+  full_name TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  zipcode TEXT NOT NULL DEFAULT '',
+  address1 TEXT NOT NULL DEFAULT '',
+  address2 TEXT NOT NULL DEFAULT '',
+  points_balance INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  last_login_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email_normalized ON users(email_normalized);
+
+CREATE TABLE IF NOT EXISTS auth_identities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  provider_user_id TEXT NOT NULL,
+  provider_email TEXT NOT NULL DEFAULT '',
+  provider_email_normalized TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  last_used_at TEXT,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(provider, provider_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_identities_user_id ON auth_identities(user_id, provider);
+CREATE INDEX IF NOT EXISTS idx_auth_identities_provider_email ON auth_identities(provider, provider_email_normalized);
+
+CREATE TABLE IF NOT EXISTS auth_login_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email_normalized TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at TEXT NOT NULL,
+  consumed_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_login_codes_email ON auth_login_codes(email_normalized, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_auth_login_codes_expires_at ON auth_login_codes(expires_at);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  session_token_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  user_agent TEXT NOT NULL DEFAULT '',
+  ip_address TEXT NOT NULL DEFAULT '',
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id, expires_at DESC);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS workshop_reservations (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  email TEXT NOT NULL,
+  email_normalized TEXT NOT NULL,
+  full_name TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  workshop_slug TEXT NOT NULL,
+  workshop_title TEXT NOT NULL,
+  workshop_category TEXT NOT NULL DEFAULT '',
+  workshop_location TEXT NOT NULL DEFAULT '',
+  slot_key TEXT NOT NULL,
+  slot_label TEXT NOT NULL DEFAULT '',
+  slot_date TEXT NOT NULL,
+  slot_start_time TEXT NOT NULL,
+  slot_end_time TEXT NOT NULL DEFAULT '',
+  attendee_count INTEGER NOT NULL DEFAULT 1,
+  status TEXT NOT NULL DEFAULT 'confirmed',
+  note TEXT NOT NULL DEFAULT '',
+  workshop_snapshot TEXT NOT NULL DEFAULT '{}',
+  slot_snapshot TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE(slot_key, email_normalized)
+);
+
+CREATE INDEX IF NOT EXISTS idx_workshop_reservations_user_id ON workshop_reservations(user_id, slot_date DESC, slot_start_time DESC);
+CREATE INDEX IF NOT EXISTS idx_workshop_reservations_email ON workshop_reservations(email_normalized, slot_date DESC, slot_start_time DESC);
+CREATE INDEX IF NOT EXISTS idx_workshop_reservations_slot ON workshop_reservations(slot_key, status);

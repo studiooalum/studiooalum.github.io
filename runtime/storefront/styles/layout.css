@@ -34,6 +34,12 @@ html {
   --site-scrollbar-track: #ffffff;
 }
 
+.workshop-page {
+  --site-footer-accent: #ffeb53;
+  --site-scrollbar-accent: #ffeb53;
+  --site-scrollbar-track: #ffffff;
+}
+
 .archive-page {
   --site-footer-accent: #ffccc3;
   --site-scrollbar-accent: #ffccc3;

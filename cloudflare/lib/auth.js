@@ -4,6 +4,8 @@ const LOGIN_RESEND_WINDOW_MS = 60 * 1000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 
+import { linkGuestWorkshopReservationsToUser, readWorkshopReservationsForIdentity } from "./workshops.js";
+
 function getDb(env) {
   return env?.OALUM_DB || null;
 }
@@ -660,6 +662,7 @@ export async function verifyLoginCode(env, { email, code, fullName, mode }, requ
   }
 
   await linkGuestOrdersToUser(database, user.id, user.emailNormalized);
+  await linkGuestWorkshopReservationsToUser(database, user.id, user.emailNormalized);
   await upsertIdentity(database, {
     userId: user.id,
     provider: "direct",
@@ -845,6 +848,7 @@ export async function authenticateFederatedIdentity(env, identity, request) {
   });
 
   await linkGuestOrdersToUser(database, user.id, user.emailNormalized);
+  await linkGuestWorkshopReservationsToUser(database, user.id, user.emailNormalized);
   const session = await createSession(database, env, user.id, request);
 
   return {
@@ -867,12 +871,17 @@ export async function readAccount(env, userId) {
 
   const user = mapUser(userRow);
   await linkGuestOrdersToUser(database, user.id, user.emailNormalized);
+  await linkGuestWorkshopReservationsToUser(database, user.id, user.emailNormalized);
   const linkedProviders = await readIdentityProviders(database, user.id);
   const latestOrderProfile = await readLatestOrderProfile(database, {
     userId: user.id,
     emailNormalized: user.emailNormalized,
   });
   const orders = await readOrdersForUser(database, {
+    userId: user.id,
+    emailNormalized: user.emailNormalized,
+  });
+  const workshopReservations = await readWorkshopReservationsForIdentity(database, {
     userId: user.id,
     emailNormalized: user.emailNormalized,
   });
@@ -888,6 +897,7 @@ export async function readAccount(env, userId) {
       address2: user.address2 || latestOrderProfile?.address2 || "",
     },
     orders,
+    workshopReservations,
   };
 }
 
