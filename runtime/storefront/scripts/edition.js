@@ -39,6 +39,7 @@ let lightboxPrevEl = null;
 let lightboxNextEl = null;
 let lightboxImages = [];
 let lightboxActiveIndex = 0;
+let galleryResizeHandlerBound = false;
 
 function isLightboxOpen() {
   return !!lightboxEl?.classList.contains("is-open");
@@ -271,6 +272,48 @@ function renderTags(product) {
   }
 }
 
+function updateGalleryDots(dots, activeIndex) {
+  dots.forEach((dot, index) => {
+    const isActive = index === activeIndex;
+    dot.classList.toggle("is-active", isActive);
+    dot.setAttribute("aria-current", isActive ? "true" : "false");
+  });
+}
+
+function bindGalleryDots(track, dots) {
+  if (!track || dots.length === 0) return;
+
+  let frameId = null;
+
+  const sync = () => {
+    frameId = null;
+    const slideWidth = track.clientWidth || 1;
+    const nextIndex = Math.max(0, Math.min(dots.length - 1, Math.round(track.scrollLeft / slideWidth)));
+    updateGalleryDots(dots, nextIndex);
+  };
+
+  track.addEventListener("scroll", () => {
+    if (frameId != null) return;
+    frameId = requestAnimationFrame(sync);
+  }, { passive: true });
+
+  dots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      track.scrollTo({
+        left: track.clientWidth * index,
+        behavior: "smooth",
+      });
+    });
+  });
+
+  if (!galleryResizeHandlerBound) {
+    galleryResizeHandlerBound = true;
+    window.addEventListener("resize", sync);
+  }
+
+  requestAnimationFrame(sync);
+}
+
 function renderMedia(product) {
   if (product.soldOut) {
     markSold();
@@ -279,8 +322,10 @@ function renderMedia(product) {
   }
 
   const images = Array.isArray(product.images) ? product.images : [];
+  mediaEl.classList.remove("is-sold");
+  mediaEl.innerHTML = "";
+
   if (images.length === 0) {
-    mediaEl.innerHTML = "";
     syncStickyStop();
     return;
   }
@@ -293,34 +338,62 @@ function renderMedia(product) {
     alt: index === 0 ? product.title : `${product.title} detail ${index}`,
   }));
 
-  // Main image
-  const mainImg = document.createElement("img");
-  mainImg.src = galleryItems[0].pageUrl;
-  mainImg.alt = galleryItems[0].alt;
-  mainImg.draggable = false;
-  mainImg.addEventListener("click", () => {
-    openLightbox(
-      galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt })),
-      0,
-    );
-  });
-  mediaEl.appendChild(mainImg);
-
-  // Detail images (additional images from Sanity)
-  for (let i = 1; i < images.length; i++) {
-    const img = document.createElement("img");
-    img.src = galleryItems[i].pageUrl;
-    img.alt = galleryItems[i].alt;
-    img.loading = "lazy";
-    img.draggable = false;
-    img.addEventListener("click", () => {
+  if (galleryItems.length === 1) {
+    const mainImg = document.createElement("img");
+    mainImg.src = galleryItems[0].pageUrl;
+    mainImg.alt = galleryItems[0].alt;
+    mainImg.draggable = false;
+    mainImg.addEventListener("click", () => {
       openLightbox(
         galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt })),
-        i,
+        0,
       );
     });
-    mediaEl.appendChild(img);
+    mediaEl.appendChild(mainImg);
+    bindStickyStopUpdates();
+    return;
   }
+
+  const sliderEl = document.createElement("div");
+  sliderEl.className = "edition-media__slider";
+
+  const trackEl = document.createElement("div");
+  trackEl.className = "edition-media__track";
+
+  const dotsEl = document.createElement("div");
+  dotsEl.className = "edition-media__dots";
+  dotsEl.setAttribute("aria-label", "상품 이미지 선택");
+
+  const lightboxItems = galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt }));
+  const dots = [];
+
+  galleryItems.forEach((item, index) => {
+    const slideEl = document.createElement("div");
+    slideEl.className = "edition-media__slide";
+
+    const img = document.createElement("img");
+    img.src = item.pageUrl;
+    img.alt = item.alt;
+    img.loading = index === 0 ? "eager" : "lazy";
+    img.draggable = false;
+    img.addEventListener("click", () => {
+      openLightbox(lightboxItems, index);
+    });
+
+    slideEl.appendChild(img);
+    trackEl.appendChild(slideEl);
+
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = `edition-media__dot${index === 0 ? " is-active" : ""}`;
+    dot.setAttribute("aria-label", `이미지 ${index + 1}`);
+    dotsEl.appendChild(dot);
+    dots.push(dot);
+  });
+
+  sliderEl.appendChild(trackEl);
+  mediaEl.append(sliderEl, dotsEl);
+  bindGalleryDots(trackEl, dots);
 
   bindStickyStopUpdates();
 }
