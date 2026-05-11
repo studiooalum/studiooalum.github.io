@@ -33,6 +33,7 @@
 .gnb--archive    { background: rgba(255, 204, 195, 0.92); color: #111; }
 .gnb--workshops  { background: rgba(255, 235, 83, 0.92); color: #111; }
 .gnb--newsletter { background: rgba(202, 213, 216, 0.92); color: #111; }
+.gnb--account    { background: #e5e5e1; color: #111; }
 
 .gnb__title {
   display: none;
@@ -43,7 +44,6 @@
   flex: 1 1 auto;
   display: flex;
   align-items: center;
-  height: 100%;
   gap: clamp(10px, 1.8vw, 18px);
 }
 
@@ -68,9 +68,6 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex: 1 1 auto;
-  height: 100%;
   gap: clamp(8px, 1.2vw, 18px);
   overflow-x: auto;
   scrollbar-width: none;
@@ -81,10 +78,8 @@
 }
 
 .gnb__menu-item {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-height: 100%;
+  position: static;
+  display: inline-block;
   padding: 0;
   color: inherit;
   font-size: var(--gnb-font-size);
@@ -94,37 +89,15 @@
   white-space: nowrap;
 }
 
-.gnb__menu-item::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.18s ease;
-}
-
-.gnb__menu-item.is-active::after,
-.gnb__menu-item:hover::after {
-  transform: scaleX(1);
-}
-
 .gnb__actions {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  height: 100%;
   gap: clamp(12px, 1.4vw, 20px);
   margin-left: 8px;
 }
 
 .gnb__action {
-  display: inline-flex;
-  align-items: center;
-  min-height: 100%;
   border: 0;
   padding: 0;
   background: transparent;
@@ -178,36 +151,10 @@
     width: 24px;
     height: 24px;
   }
-
-  .gnb__menu-item::after {
-    bottom: 7px;
-  }
 }
 
 @media (min-width: 960px) {
   :root {
     --gnb-font-size: 14px;
-  }
-
-  .gnb {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: var(--grid-gap);
-    justify-content: stretch;
-  }
-
-  .gnb__primary {
-    grid-column: 1;
-    min-width: 0;
-  }
-
-  .gnb__menu {
-    min-width: 0;
-  }
-
-  .gnb__actions {
-    grid-column: 3;
-    justify-self: end;
-    margin-left: 0;
   }
 }
