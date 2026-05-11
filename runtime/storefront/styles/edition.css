@@ -452,12 +452,12 @@
 
 @media (max-width: 959px) {
   .edition-page-main {
-    padding-top: var(--gnb-height, 40px);
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-gutter));
   }
 
   .edition-stage__summary {
     display: grid;
-    gap: 10px;
+    gap: 11px;
     width: auto;
   }
 
@@ -525,11 +525,11 @@
 
   .edition-tags {
     order: 5;
-    margin-top: 28px;
+    margin-top: 56px;
   }
 
   .edition-recommendation {
-    margin-top: 28px;
+    margin-top: 56px;
   }
 
   .edition-media__slider {
