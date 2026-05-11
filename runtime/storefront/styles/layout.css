@@ -6,27 +6,84 @@ html, body {
   letter-spacing: var(--tracking-latin);
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 .shop-page,
 .product-page,
 .edition-page,
-.account-page,
 .checkout-page,
 .payment-page,
 .success-page,
 .fail-page {
   --site-footer-accent: #e34234;
+  --site-scrollbar-accent: #e34234;
+  --site-scrollbar-track: #ffffff;
+}
+
+.account-page {
+  --site-footer-accent: #e34234;
+  --site-scrollbar-accent: #e5e5e1;
+  --site-scrollbar-track: #ffffff;
 }
 
 .workshops-page {
   --site-footer-accent: #ffeb53;
+  --site-scrollbar-accent: #ffeb53;
+  --site-scrollbar-track: #ffffff;
 }
 
 .archive-page {
   --site-footer-accent: #ffccc3;
+  --site-scrollbar-accent: #ffccc3;
+  --site-scrollbar-track: #ffffff;
 }
 
 .newsletter-page {
   --site-footer-accent: #cad5d8;
+  --site-scrollbar-accent: #cad5d8;
+  --site-scrollbar-track: #ffffff;
+}
+
+body {
+  scrollbar-width: auto;
+  scrollbar-color: var(--site-scrollbar-accent, var(--site-footer-accent, #111)) var(--site-scrollbar-track, #ffffff);
+}
+
+body::-webkit-scrollbar,
+.site-policy__scroll::-webkit-scrollbar,
+.cart-panel__items::-webkit-scrollbar,
+.gnb__mobile-panel::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+body::-webkit-scrollbar-track,
+.site-policy__scroll::-webkit-scrollbar-track,
+.cart-panel__items::-webkit-scrollbar-track,
+.gnb__mobile-panel::-webkit-scrollbar-track {
+  background: var(--site-scrollbar-track, #ffffff);
+  border-radius: 0;
+}
+
+body::-webkit-scrollbar-thumb,
+.site-policy__scroll::-webkit-scrollbar-thumb,
+.cart-panel__items::-webkit-scrollbar-thumb,
+.gnb__mobile-panel::-webkit-scrollbar-thumb {
+  background: var(--site-scrollbar-accent, var(--site-footer-accent, #111));
+  border: 0;
+  border-radius: 0;
+}
+
+body.is-scroll-locked {
+  position: fixed;
+  inset: 0;
+  top: var(--scroll-lock-top, 0);
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding-right: var(--scroll-lock-scrollbar-gap, 0);
 }
 
 /* canvas pages (홈화면) only — other pages use their own scroll */
@@ -201,22 +258,9 @@ canvas {
   overflow-y: auto;
   padding: 20px 18px 24px;
   scrollbar-width: auto;
-  scrollbar-color: var(--site-footer-accent, #111) #ffffff;
-}
-
-.site-policy__scroll::-webkit-scrollbar {
-  width: 10px;
-}
-
-.site-policy__scroll::-webkit-scrollbar-track {
-  background: #ffffff;
-  border-radius: 0;
-}
-
-.site-policy__scroll::-webkit-scrollbar-thumb {
-  background: var(--site-footer-accent, #111);
-  border: 0;
-  border-radius: 0;
+  scrollbar-color: var(--site-scrollbar-accent, var(--site-footer-accent, #111)) var(--site-scrollbar-track, #ffffff);
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .site-policy__title {

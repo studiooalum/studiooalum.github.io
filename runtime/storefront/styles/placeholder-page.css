@@ -20,6 +20,12 @@
   padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 40px;
 }
 
+@media (max-width: 959px) {
+  .placeholder-main {
+    padding-top: var(--gnb-height, 40px);
+  }
+}
+
 .archive-main {
   display: grid;
   gap: 56px;

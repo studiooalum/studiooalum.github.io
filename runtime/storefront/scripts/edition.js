@@ -2,6 +2,7 @@ import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { addToCart, addToCartSilent } from "./cart.js";
+import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { formatPrice, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -152,6 +153,7 @@ function closeLightbox() {
 
   lightboxEl.classList.remove("is-open");
   document.body.classList.remove("edition-lightbox-open");
+  unlockBodyScroll("edition-lightbox");
   lightboxEl.setAttribute("aria-hidden", "true");
 
   if (lightboxPreviouslyFocused && typeof lightboxPreviouslyFocused.focus === "function") {
@@ -173,6 +175,7 @@ function openLightbox(images, activeIndex = 0) {
   lightboxEl.classList.add("is-open");
   lightboxEl.setAttribute("aria-hidden", "false");
   document.body.classList.add("edition-lightbox-open");
+  lockBodyScroll("edition-lightbox");
 
   requestAnimationFrame(() => {
     lightboxCloseEl?.focus();

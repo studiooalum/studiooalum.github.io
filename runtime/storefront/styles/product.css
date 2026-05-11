@@ -127,6 +127,10 @@
 }
 
 @media (max-width: 899px) {
+  .product-main {
+    padding-top: var(--gnb-height, 40px);
+  }
+
   .product-layout {
     gap: 18px;
   }

@@ -4,6 +4,8 @@ const FOOTER_LINKS = [
   { key: "shipping", label: "배송 환불 적립금 안내" },
 ];
 
+import { lockBodyScroll, unlockBodyScroll } from "../utils/scroll-lock.js";
+
 const PANEL_CONTENT = {
   shipping: {
     title: "배송 환불 적립금 안내",
@@ -456,6 +458,7 @@ function openPanel(key, trigger) {
   panelEl.classList.add("is-open");
   panelEl.setAttribute("aria-hidden", "false");
   document.body.classList.add("site-policy-open");
+  lockBodyScroll("site-policy");
   panelEl.querySelector(".site-policy__close")?.focus();
 }
 
@@ -464,6 +467,7 @@ function closePanel() {
   panelEl.classList.remove("is-open");
   panelEl.setAttribute("aria-hidden", "true");
   document.body.classList.remove("site-policy-open");
+  unlockBodyScroll("site-policy");
   activeTrigger?.focus?.();
 }
 

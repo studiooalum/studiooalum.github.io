@@ -197,6 +197,8 @@ async function logout() {
   };
 }
 
+import { lockBodyScroll, unlockBodyScroll } from "../utils/scroll-lock.js";
+
 function bindAuthActions(nav, options) {
   nav.querySelectorAll("[data-auth-toggle='logout']").forEach((button) => {
     if (button.dataset.authBound === "true") return;
@@ -222,6 +224,13 @@ function bindAuthActions(nav, options) {
 function setMobileMenuOpen(nav, isOpen) {
   nav.classList.toggle("is-menu-open", isOpen);
   document.body.classList.toggle("gnb-menu-open", isOpen);
+
+  if (isOpen) {
+    lockBodyScroll("gnb-menu");
+  } else {
+    unlockBodyScroll("gnb-menu");
+  }
+
   nav.querySelector("[data-nav-toggle='true']")?.setAttribute("aria-expanded", String(isOpen));
 }
 

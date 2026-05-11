@@ -4,6 +4,7 @@
 
 import { imageUrl } from "./sanity/image.js";
 import { formatPrice } from "./utils/catalog.js";
+import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { CART_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
 /* =========================
@@ -226,12 +227,19 @@ export function renderCartPanel() {
 
 export function openCart() {
   document.body.classList.add("cart-open");
+  lockBodyScroll("cart-panel");
 }
 
 export function closeCart() {
   document.body.classList.remove("cart-open");
+  unlockBodyScroll("cart-panel");
 }
 
 export function toggleCart() {
-  document.body.classList.toggle("cart-open");
+  if (document.body.classList.contains("cart-open")) {
+    closeCart();
+    return;
+  }
+
+  openCart();
 }

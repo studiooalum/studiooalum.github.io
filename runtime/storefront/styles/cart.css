@@ -124,15 +124,12 @@
   min-height: 0; /* flex 자식이 컨테이너를 넘지 않도록 */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* iOS Safari */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: auto;
+  scrollbar-color: var(--site-scrollbar-accent, #e34234) var(--site-scrollbar-track, #ffffff);
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 12px 20px;
   background: #fff;
-}
-
-.cart-panel__items::-webkit-scrollbar {
-  width: 0;
-  height: 0;
 }
 
 .cart-panel__empty {
