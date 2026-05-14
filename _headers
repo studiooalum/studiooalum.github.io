@@ -26,7 +26,23 @@
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
+/account
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
 /account.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/signup
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/signup.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/checkout
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
@@ -34,11 +50,23 @@
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
+/payment
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
 /payment.html
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
+/success
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
 /success.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/fail
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 

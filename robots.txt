@@ -1,10 +1,17 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /account
 Disallow: /account.html
+Disallow: /signup
+Disallow: /signup.html
+Disallow: /checkout
 Disallow: /checkout.html
+Disallow: /payment
 Disallow: /payment.html
+Disallow: /success
 Disallow: /success.html
+Disallow: /fail
 Disallow: /fail.html
 Disallow: /archive/legacy/
 Sitemap: https://studiooalum.com/sitemap.xml

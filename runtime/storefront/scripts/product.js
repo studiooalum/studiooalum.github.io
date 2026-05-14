@@ -55,6 +55,7 @@ function renderEditionGrid(editions) {
     description,
     canonicalUrl,
     imageUrl: primaryImageUrl,
+    robots: "index,follow",
   });
 
   setJsonLd("product-page", {

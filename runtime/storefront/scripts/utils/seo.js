@@ -42,7 +42,7 @@ export function truncateDescription(value, maxLength = 155) {
   return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
-export function updatePageSeo({ title, description, canonicalUrl, imageUrl } = {}) {
+export function updatePageSeo({ title, description, canonicalUrl, imageUrl, robots } = {}) {
   if (title) {
     document.title = title;
     setMetaByProperty("og:title", title);
@@ -69,6 +69,10 @@ export function updatePageSeo({ title, description, canonicalUrl, imageUrl } = {
     setMetaByProperty("og:image", imageUrl);
     setMetaByName("twitter:image", imageUrl);
     setMetaByName("twitter:card", "summary_large_image");
+  }
+
+  if (robots) {
+    setMetaByName("robots", robots);
   }
 }
 

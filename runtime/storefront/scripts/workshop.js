@@ -210,6 +210,7 @@ function renderWorkshopDetails(workshop) {
     description,
     canonicalUrl,
     imageUrl: posterUrl,
+    robots: "index,follow",
   });
 
   const courseSchema = {

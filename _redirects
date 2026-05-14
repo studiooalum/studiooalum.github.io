@@ -1,0 +1,16 @@
+https://www.studiooalum.com/* https://studiooalum.com/:splat 301!
+
+/index.html / 301
+/archive.html /archive 301
+/shop.html /shop 301
+/workshops.html /workshops 301
+/newsletter.html /newsletter 301
+/checkout.html /checkout 301
+/payment.html /payment 301
+/product.html /product 301
+/edition.html /edition 301
+/workshop.html /workshop 301
+/account.html /account 301
+/signup.html /signup 301
+/success.html /success 301
+/fail.html /fail 301

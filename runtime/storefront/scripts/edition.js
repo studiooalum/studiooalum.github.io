@@ -504,6 +504,7 @@ async function init() {
       description,
       canonicalUrl,
       imageUrl: primaryImageUrl,
+      robots: "index,follow",
     });
 
     const productSchema = {
