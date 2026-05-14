@@ -1,6 +1,13 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "studiooalum-pages",
-  "pages_build_output_dir": "./dist",
-  "compatibility_date": "2026-04-27"
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "studiooalum-pages",
+	"pages_build_output_dir": "./dist",
+	"compatibility_date": "2026-04-27",
+	"d1_databases": [
+		{
+			"binding": "OALUM_DB",
+			"database_name": "oalum-orders",
+			"database_id": "3dcf3c2e-9176-471c-8da2-ffca1dc2e9cb"
+		}
+	]
 }

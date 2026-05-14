@@ -1,34 +1,32 @@
 # Studio OALUM Repository
 
-현재 공개 중인 GitHub Pages 사이트를 유지한 채, 정식 오픈용 구조로 넘어가기 쉽게 저장소를 재정리한 상태입니다.
+현재 공개 중인 루트 정적 storefront와 GitHub Pages 정적 배포를 유지하면서, 인증·주문·결제 같은 서버 기능은 Cloudflare 런타임으로 보강한 상태에서 정식 오픈용 구조로 넘어가기 쉽게 저장소를 재정리한 상태입니다.
 
 ## What Stays Live
 
-- 루트의 `index.html`, `shop.html`, `product.html` 등은 계속 GitHub Pages 진입점으로 사용합니다.
+- 루트의 `index.html`, `shop.html`, `product.html` 등은 계속 공개 진입점으로 사용합니다.
 - 루트 페이지 대부분은 `runtime/storefront/styles`와 `runtime/storefront/scripts`를 공유 런타임으로 사용합니다.
 - `styles/`와 `scripts/`는 루트의 초기 마케팅 페이지(`index.html`)에 남아 있습니다.
 
-즉, 현재 GitHub Pages 배포를 깨지 않기 위해 루트 HTML과 `runtime/storefront/` 라이브 자산을 유지합니다.
+즉, 현재 GitHub Pages 정적 배포를 깨지 않기 위해 루트 HTML과 `runtime/storefront/` 라이브 자산을 유지합니다.
 
 ## Repository Layout
 
 ```txt
 .
-├─ index.html, shop.html, ...  # 현재 GitHub Pages에서 노출되는 정적 진입점
+├─ index.html, shop.html, ...  # 현재 공개 중인 정적 진입점
 ├─ styles/                     # 루트 초기 페이지용 스타일
 ├─ scripts/                    # 루트 초기 페이지용 스크립트
 ├─ public/                     # 폰트/이미지 등 정적 자산
 ├─ runtime/
-│  └─ storefront/              # 현재 라이브 페이지가 공유하는 스타일/스크립트 런타임
+│  └─ storefront/              # 현재 공개 페이지가 공유하는 스타일/스크립트 런타임
+├─ functions/                  # Cloudflare runtime API surface
+├─ cloudflare/
+│  └─ d1/                      # Cloudflare libs, bindings, D1 schema/migrations
 ├─ apps/
-│  ├─ web/                     # 정식 오픈용 Next.js storefront 스캐폴드
-│  └─ studio/                  # 로컬 전용 Sanity Studio repo (gitignored)
+│  └─ web/                     # 정식 오픈용 Next.js storefront 스캐폴드
 ├─ archive/
-│  ├─ legacy/
-│  │  ├─ about.html            # 더 이상 쓰지 않는 루트 소개 페이지
-│  │  └─ v1/                   # 이전 HTML 셸과 실험용 구조 보관
-│  ├─ local/
-│  │  └─ site-prototype/       # 로컬 전용 실험용 repo 아카이브 (gitignored)
+│  ├─ legacy/                  # self-contained 레거시 HTML 셸 스냅샷 보관
 │  └─ README.md
 └─ docs/
    └─ architecture.md
@@ -41,29 +39,73 @@ npm run site:serve
 npm run cf:build
 npm run cf:pages:dev
 npm run web:dev
-npm run studio:dev
 ```
 
-- `site:serve`: 현재 GitHub Pages 루트를 로컬에서 정적으로 확인합니다.
+- `site:serve`: 현재 루트 정적 storefront를 로컬에서 정적으로 확인합니다.
 - `cf:build`: Cloudflare Pages 배포용 `dist/` 정적 출력물을 생성합니다.
 - `cf:pages:dev`: Cloudflare Pages + Functions 기준으로 로컬 개발 서버를 실행합니다.
 - `web:dev`: `apps/web` 아래 Next.js storefront 스캐폴드를 실행합니다.
-- `studio:dev`: `apps/studio` 아래 로컬 Sanity Studio를 실행합니다.
+
+## Deployment Reality
+
+- 현재 GitHub 저장소에는 `main` 푸시 시 자동으로 도는 `pages-build-deployment`가 연결되어 있습니다. 정적 루트 페이지 변경만 배포할 때는 GitHub에 push하면 반영됩니다.
+- 도메인이 Cloudflare를 거치더라도, 이 경로는 우선 GitHub Pages 정적 배포를 기준으로 이해하는 편이 맞습니다.
+- `wrangler pages deploy`는 이 정적 자동배포 경로를 대체하는 기본 명령이 아닙니다.
+- 반대로 `functions/api/*`, D1, 세션 쿠키, OAuth callback 같은 서버 기능은 GitHub Pages만으로는 동작하지 않습니다. 이 기능들은 Cloudflare Pages 또는 Workers 런타임이 실제로 연결되어 있어야 합니다.
+- 원격 dev container나 Codespaces에서는 브라우저 기반 `wrangler login`을 쓰지 않습니다. Cloudflare 인증 callback이 localhost로 떨어져 실패할 수 있으므로, 필요하면 Cloudflare Dashboard의 GitHub 연동이나 API token 경로만 사용합니다.
+
+## Auth Notes
+
+- 현재 로그인은 루트 공개 스토어 기준으로 `account.html` + `functions/api/auth/*` + `cloudflare/d1/schema.sql` 조합으로 동작합니다.
+- 인증 방식은 비밀번호 없는 이메일 인증코드 직접가입/로그인과 OAuth 소셜 로그인 조합입니다.
+- 현재 지원 코드는 `direct`(이메일), `kakao`, `naver`, `google`이며 구글은 환경변수가 있을 때만 버튼이 노출됩니다.
+- 로컬에서 인증 흐름까지 확인하려면 정적 서버가 아니라 `npm run cf:pages:dev`로 실행해야 합니다.
+- 배포 전에는 D1에 최신 `cloudflare/d1/schema.sql`을 반영해야 합니다.
+- 기존 D1을 쓰고 있다면 `cloudflare/d1/migrations/0002_auth_oauth.sql`을 먼저 적용해야 합니다.
+
+필수 또는 권장 환경 변수:
+
+- `OALUM_DB`: Cloudflare Pages D1 binding
+- `AUTH_SECRET`: 세션/인증코드 해시용 시크릿 문자열 권장
+- `RESEND_API_KEY`: 배포용 인증 메일 발송 API 키
+- `RESEND_FROM_EMAIL`: 배포용 발신 이메일 주소
+- `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`: 카카오 로그인
+- `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`: 네이버 로그인
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: 구글 로그인 선택
+- `AUTH_BASE_URL`: OAuth callback 절대 URL을 고정해야 할 때만 사용
+- `AUTH_DEBUG=true`: 메일 없이 개발용 인증코드를 API 응답에 포함할 때만 사용
+- `AUTH_COOKIE_INSECURE=true`: 로컬 HTTP 개발 환경에서만 필요할 수 있음
+
+기존 D1에 마이그레이션을 적용할 때는 아래처럼 실행합니다.
+
+```bash
+npx wrangler d1 execute oalum-orders --file=./cloudflare/d1/migrations/0002_auth_oauth.sql
+```
+
+OAuth 제공자에 등록할 callback URL 패턴:
+
+- 카카오: `/api/auth/oauth/callback?provider=kakao`
+- 네이버: `/api/auth/oauth/callback?provider=naver`
+- 구글: `/api/auth/oauth/callback?provider=google`
+
+예를 들어 운영 도메인이 `https://studiooalum.com` 이면 카카오 callback URL은 `https://studiooalum.com/api/auth/oauth/callback?provider=kakao` 입니다.
 
 ## Working Rules
 
 - 현재 공개 사이트를 수정할 때는 루트 HTML과 `runtime/storefront` 자산을 먼저 봅니다.
-- `apps/web`는 정식 오픈용 Next.js storefront 스캐폴드입니다. 아직 루트 GitHub Pages를 대체하지 않습니다.
-- `apps/studio`와 `archive/local/site-prototype`는 로컬 전용 repo라서 메인 repo에서 추적하지 않습니다.
-- `runtime/storefront/`는 현재 GitHub Pages가 직접 읽는 라이브 런타임입니다.
-- `archive/legacy/`는 더 이상 루트 사이트가 직접 사용하지 않는 이전 HTML 셸을 보관합니다.
+- `apps/web`는 정식 오픈용 Next.js storefront 스캐폴드입니다. 아직 루트 정적 storefront를 대체하지 않습니다.
+- Sanity Studio가 필요하면 별도 저장소 또는 비추적 로컬 경로로 두는 전제를 유지합니다.
+- `runtime/storefront/`는 현재 공개 정적 셸이 직접 읽는 라이브 런타임입니다.
+- `archive/legacy/`는 self-contained한 이전 HTML 셸 스냅샷만 보관합니다.
 
 ## Planning Docs
 
 - `docs/architecture.md`: 현재 저장소 경계와 운영 방향
 - `docs/cloudflare-low-cost-stack.md`: 디자인을 유지하는 최저비용 운영 구조
+- `docs/cloudflare-traffic-hygiene.md`: Cloudflare 봇 필터링, WAF, Web Analytics 운영 기준
 - `docs/gabia-cloudflare-domain-setup.md`: 가비아 도메인과 Cloudflare 연결 절차
 - `docs/cloudflare-pages-transition.md`: Cloudflare Pages 전환용 실제 스캐폴드와 명령어
+- `docs/seo-optimization-plan.md`: 정적 사이트 기준 SEO 우선순위와 실행 계획
 - `docs/apps-web-deploy.md`: `apps/web` 기반 확장 경로
 - `docs/commerce-schema.sql`: 주문/결제 스키마 초안
 

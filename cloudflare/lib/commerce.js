@@ -23,6 +23,7 @@ const shippingSchema = z.object({
 export const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1),
   shipping: shippingSchema,
+  saveAsDefaultAddress: z.boolean().optional().default(false),
   total: z.coerce.number().finite().nonnegative().optional(),
   createdAt: z.string().trim().optional(),
 });

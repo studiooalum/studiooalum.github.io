@@ -16,6 +16,15 @@ export function getTossConfig(env) {
   };
 }
 
+function isTruthyFlag(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+export function shouldRequirePersistence(env) {
+  return Boolean(getTossConfig(env).isServerReady || isTruthyFlag(env?.OALUM_STRICT_PERSISTENCE));
+}
+
 export function canConfirmWithToss(env, paymentKey) {
   return Boolean(getTossConfig(env).isServerReady && String(paymentKey || "").trim());
 }

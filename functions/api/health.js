@@ -1,6 +1,7 @@
 import { hasD1 } from "../../cloudflare/lib/d1.js";
 import { json, noContent } from "../../cloudflare/lib/http.js";
-import { getTossConfig } from "../../cloudflare/lib/toss.js";
+import { getOrderSyncConfig } from "../../cloudflare/lib/order-sync.js";
+import { getTossConfig, shouldRequirePersistence } from "../../cloudflare/lib/toss.js";
 
 export function onRequestOptions(context) {
   return noContent(context.env);
@@ -8,6 +9,7 @@ export function onRequestOptions(context) {
 
 export function onRequestGet(context) {
   const toss = getTossConfig(context.env);
+  const orderSync = getOrderSyncConfig(context.env);
 
   return json(context.env, {
     ok: true,
@@ -17,6 +19,9 @@ export function onRequestGet(context) {
       d1: hasD1(context.env),
       tossClientKey: toss.isClientReady,
       tossSecretKey: toss.isServerReady,
+      strictPersistence: shouldRequirePersistence(context.env),
+      orderSync: orderSync.isEnabled,
+      orderSyncEmails: orderSync.notificationEmails.length > 0,
     },
   });
 }

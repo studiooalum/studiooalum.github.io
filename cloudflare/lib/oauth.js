@@ -245,8 +245,7 @@ export function listOAuthProviders(env) {
       key: definition.key,
       label: definition.label,
       enabled: isProviderConfigured(env, definition.key),
-    }))
-    .filter((provider) => provider.enabled);
+    }));
 }
 
 function buildAuthorizeUrl(config, state) {
