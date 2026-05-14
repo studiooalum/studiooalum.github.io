@@ -65,8 +65,16 @@ body::-webkit-scrollbar,
   height: 16px;
 }
 
-body::-webkit-scrollbar-track,
-.site-policy__scroll::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: var(--site-page-bg, var(--site-scrollbar-track, #ffffff));
+  border-radius: 0;
+}
+
+.site-policy__scroll::-webkit-scrollbar-track {
+  background: var(--site-policy-bg, #fffdf8);
+  border-radius: 0;
+}
+
 .cart-panel__items::-webkit-scrollbar-track,
 .gnb__mobile-panel::-webkit-scrollbar-track {
   background: transparent;
@@ -111,7 +119,7 @@ canvas {
 .site-footer--grid {
   display: grid;
   gap: var(--grid-gap);
-  padding: 120px var(--page-gutter) 40px;
+  padding: 120px 0 40px;
 }
 
 .site-footer__brand,
@@ -362,6 +370,17 @@ canvas {
 
   .site-footer__brand {
     grid-area: brand;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .site-footer__logo-mark {
+    width: 100%;
+    max-width: none;
+    height: clamp(72px, 7vw, 104px);
+    object-fit: cover;
+    object-position: center;
+    clip-path: inset(0 11% 0 11%);
   }
 
   .site-footer__text--lead {

@@ -506,9 +506,9 @@
         var day = tnB.ay - B.pay;
         var invDt = 1 / Math.max(dt, 1e-6);
         B.vN += (dax * tnB.nx + day * tnB.ny) * invDt * 0.18;
-        // PC: tangential coupling lets yarn horizontal wave motion drive letters sideways.
+        // PC only: keep some lateral transfer from the yarn, but lower it to avoid runaway jitter.
         if (!isMobile) {
-          B.vU += (dax * tnB.tx + day * tnB.ty) * invDt * 0.08;
+          B.vU += (dax * tnB.tx + day * tnB.ty) * invDt * 0.04;
         }
       }
 
@@ -521,10 +521,17 @@
     // 2) Integrate and handle elastic yarn boundary response.
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
-      L.vU *= Math.exp((isMobile ? -4.4 : -3.2) * dt);
-      L.vN *= Math.exp((isMobile ? -6.4 : -4.8) * dt);
+      if (!isMobile) {
+        L.vU *= Math.exp(-5.1 * dt);
+        L.vN *= Math.exp(-7.2 * dt);
+      }
       L.vU = clamp(L.vU, -maxUSpeed, maxUSpeed);
       L.vN = clamp(L.vN, -maxNSpeed, maxNSpeed);
+
+      if (!isMobile) {
+        if (Math.abs(L.vU) < 1.2) L.vU = 0;
+        if (Math.abs(L.vN) < 1.2) L.vN = 0;
+      }
 
       L.u = clamp(L.u + L.vU * dt, 0, pathLen);
       L.n += L.vN * dt;
