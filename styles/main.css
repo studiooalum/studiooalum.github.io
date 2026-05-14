@@ -38,6 +38,7 @@ body {
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
+    shape-rendering: geometricPrecision;
     cursor: pointer;
     transition: stroke-width 0.35s ease;
 }
@@ -51,7 +52,8 @@ body {
     pointer-events: none;
     text-anchor: middle;
     dominant-baseline: central;
-    text-rendering: optimizeLegibility;
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
 }
 
 #page-overlay {

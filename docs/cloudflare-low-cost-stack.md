@@ -4,6 +4,9 @@
 
 현재 HTML, CSS, JavaScript 디자인을 유지한 채로 실제 결제를 열 수 있는 가장 저렴한 운영 구조를 잡는다.
 
+현재 공개 정적 셸은 GitHub Pages의 `main` / 루트 legacy build 기준이다.
+인증·주문·결제 같은 서버 기능과 이후 통합 경로는 Cloudflare 런타임 기준으로 준비돼 있다.
+
 핵심 원칙은 아래와 같다.
 
 - 프론트 디자인은 버리지 않는다.
@@ -12,8 +15,9 @@
 
 ## Recommended Stack
 
-- Frontend: 현재 루트 HTML + `runtime/storefront/*`
-- Static hosting: Cloudflare Pages Free
+- Frontend code: 현재 루트 HTML + `runtime/storefront/*`
+- Static hosting now: GitHub Pages legacy build
+- Static hosting after consolidation: Cloudflare Pages Free
 - API: Cloudflare Workers Paid
 - Order DB: Cloudflare D1
 - Domain: 가비아 또는 Cloudflare Registrar
@@ -68,9 +72,9 @@
 - HTTPS, CDN, 도메인 연결이 단순함
 - 운영비가 가장 낮음
 
-### Option B. Lowest migration effort now
+### Option B. Current lowest-migration path
 
-지금 GitHub Pages를 당장 안 옮기고 최소 변경만 하는 형태다.
+현재 공개 정적 셸과 가장 가까운 형태다.
 
 - 정적 프론트: GitHub Pages 유지
 - API: `api.your-domain.com` 을 Cloudflare Worker로 분리
@@ -135,7 +139,7 @@
 
 1. Custom domain을 확보한다.
 2. Cloudflare에 도메인을 붙이고 SSL을 활성화한다.
-3. 정적 프론트를 Cloudflare Pages 또는 기존 GitHub Pages로 유지할지 결정한다.
+3. 현재처럼 GitHub Pages를 유지할지, Cloudflare Pages로 통합할지 먼저 결정한다.
 4. Workers에 주문 생성 / 결제 승인 / 웹훅 API를 만든다.
 5. D1에 최소 주문 스키마를 만든다.
 6. Toss live key를 넣고 실결제를 검증한다.

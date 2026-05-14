@@ -1,7 +1,7 @@
 export const introStats = [
   {
     label: "Current live surface",
-    value: "GitHub Pages + runtime/storefront",
+    value: "Root static storefront + runtime/storefront",
   },
   {
     label: "Target runtime",
@@ -57,7 +57,7 @@ export const collectionPreview = [
 ];
 
 export const operationalNotes = [
-  "Keep the root Pages shell live until the Next routes reach feature parity.",
+  "Keep the root storefront shell live until the Next routes reach feature parity.",
   "Do not expose PG secret keys in client-side code.",
   "Treat the current API handlers as placeholders only, not production payment logic.",
 ];

@@ -362,8 +362,8 @@ function getFooterMarkup() {
       <img class="site-footer__logo-mark" src="./로고.png" alt="Studio OALUM">
     </div>
     <div class="site-footer__text site-footer__text--lead">
-      <p>2020년부터 운영해온 수선 스튜디오의 경험을 바탕으로, 만들고 싶은 것을 만듭니다.</p>
-      <p>Based on our experience running a repair studio since 2020, we create whatever we want to make.</p>
+      <p>스튜디오 오알룸은 2020년부터 운영해온 수선 스튜디오의 경험을 바탕으로, 만들고 싶은 것을 만듭니다.</p>
+      <p>Based on our experience running a repair studio since 2020, Studio OALUM creates whatever it wants to make.</p>
     </div>
     <div class="site-footer__text site-footer__text--info">
       <p>스튜디오 오알룸

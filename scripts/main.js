@@ -50,6 +50,10 @@
     return min + Math.random() * (max - min);
   }
 
+  function alignRenderValue(value) {
+    return Math.round(value * 2) / 2;
+  }
+
   function createDistinctRandomWidths(count, min, max, minDiff) {
     var widths = [];
     var attempts = 0;
@@ -356,12 +360,12 @@
     }
 
     var pts = this.points;
-    var d = 'M ' + pts[0].currentX + ' ' + pts[0].currentY;
+    var d = 'M ' + alignRenderValue(pts[0].currentX) + ' ' + alignRenderValue(pts[0].currentY);
     for (var j = 0; j < pts.length - 1; j++) {
       var x1 = pts[j].currentX, y1 = pts[j].currentY;
       var x2 = pts[j+1].currentX, y2 = pts[j+1].currentY;
       var cpx = x1 + (x2 - x1) / 2;
-      d += ' C ' + cpx + ' ' + y1 + ', ' + cpx + ' ' + y2 + ', ' + x2 + ' ' + y2;
+      d += ' C ' + alignRenderValue(cpx) + ' ' + alignRenderValue(y1) + ', ' + alignRenderValue(cpx) + ' ' + alignRenderValue(y2) + ', ' + alignRenderValue(x2) + ' ' + alignRenderValue(y2);
     }
     this.pathEl.setAttribute('d', d);
     this.hitPathEl.setAttribute('d', d);
@@ -517,6 +521,8 @@
     // 2) Integrate and handle elastic yarn boundary response.
     for (var i = 0; i < count; i++) {
       var L = this.letters[i];
+      L.vU *= Math.exp((isMobile ? -4.4 : -3.2) * dt);
+      L.vN *= Math.exp((isMobile ? -6.4 : -4.8) * dt);
       L.vU = clamp(L.vU, -maxUSpeed, maxUSpeed);
       L.vN = clamp(L.vN, -maxNSpeed, maxNSpeed);
 
@@ -649,9 +655,11 @@
     for (var r = 0; r < count; r++) {
       var C = this.letters[r];
       var ang = Math.atan2(C.ty, C.tx) * 180 / Math.PI;
-      C.el.setAttribute('x', C.wx);
-      C.el.setAttribute('y', C.wy - C.visualCenterOffset);
-      C.el.setAttribute('transform', 'rotate(' + ang + ',' + C.wx + ',' + C.wy + ')');
+      var renderX = alignRenderValue(C.wx);
+      var renderY = alignRenderValue(C.wy);
+      C.el.setAttribute('x', renderX);
+      C.el.setAttribute('y', alignRenderValue(C.wy - C.visualCenterOffset));
+      C.el.setAttribute('transform', 'rotate(' + ang.toFixed(3) + ',' + renderX + ',' + renderY + ')');
       C.el.style.opacity = 0.9;
     }
   };

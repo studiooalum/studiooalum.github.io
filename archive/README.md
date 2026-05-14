@@ -2,7 +2,8 @@
 
 이 디렉터리는 더 이상 현재 공개 사이트를 직접 구성하지 않는 자료를 보관하는 용도입니다.
 
-- `archive/legacy/about.html`: 이전 루트 소개 페이지
-- `archive/legacy/v1/`: 이전 HTML 셸과 실험용 구조
-- `archive/legacy/runtime-storefront/data/rugPatches.js`: 더 이상 사용하지 않는 이전 patch grid 개념
-- `archive/local/site-prototype/`: 로컬 전용 실험 repo 아카이브
+- `archive/legacy/v1/`: 현재 루트 storefront 이전의 self-contained HTML 셸 스냅샷
+
+깨진 단독 페이지나 현재 런타임과 연결되지 않는 조각 파일은 정리하고, 재현 가능한 묶음만 남기는 기준을 사용합니다.
+
+로컬 전용 실험 repo 경로가 필요하면 별도 비추적 경로로 두는 전제를 유지합니다.

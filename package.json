@@ -7,9 +7,7 @@
     "cf:pages:deploy": "npm run cf:build && npx wrangler pages deploy dist",
     "web:dev": "next dev ./apps/web",
     "web:build": "next build ./apps/web",
-    "web:start": "next start ./apps/web",
-    "studio:dev": "cd apps/studio && npm run dev",
-    "studio:build": "cd apps/studio && npm run build"
+    "web:start": "next start ./apps/web"
   },
   "dependencies": {
     "@sanity/client": "^7.14.1",

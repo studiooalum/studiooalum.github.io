@@ -10,7 +10,7 @@ export default function HomePage() {
           <h1>Build the production storefront here without breaking the live Pages shell.</h1>
           <p className="hero-panel__body">
             This Next.js app is the migration target for the public shop, product pages, checkout,
-            and payment flow. The current GitHub Pages entrypoints remain live until this surface
+            and payment flow. The current root storefront entrypoints remain live until this surface
             reaches parity.
           </p>
           <div className="action-row">

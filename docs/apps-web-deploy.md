@@ -2,11 +2,11 @@
 
 ## Goal
 
-`apps/web`를 GitHub Pages와 별개로 Vercel 같은 서버 런타임에 올려서 주문 생성, 결제 승인, 웹훅 처리가 가능한 구조로 전환한다.
+`apps/web`를 현재 루트 정적 storefront와 별개로 Vercel 같은 서버 런타임에 올려서 주문 생성, 결제 승인, 웹훅 처리가 가능한 구조로 전환한다.
 
 ## Current Constraint
 
-- 현재 공개 사이트는 GitHub Pages + `runtime/storefront` 기준이다.
+- 현재 공개 사이트는 GitHub Pages의 루트 HTML + `runtime/storefront` + Cloudflare runtime(`/api/*`) 기준이다.
 - `apps/web`는 Next.js storefront 목적지이지만, 아직 실제 DB 저장과 토스 운영 승인 로직은 붙지 않았다.
 - 따라서 현재 단계에서 Vercel 전환은 "준비"까지 가능하고, 실제 오픈 전환은 DB와 운영 키가 준비된 뒤 진행해야 한다.
 
@@ -41,10 +41,10 @@ Vercel 환경변수에는 최소 아래 값이 필요하다.
 4. `apps/web/app/api/payments/confirm/route.js`를 토스 secret-key 승인 요청으로 교체
 5. 토스 웹훅 엔드포인트 추가 및 `payment_events` 적재
 6. Vercel preview 배포에서 실주문 없이 승인 흐름 검증
-7. 도메인 연결 후 루트 Pages 셸을 단계적으로 축소
+7. 도메인 연결 후 루트 정적 셸을 단계적으로 축소
 
 ## Rollout Advice
 
 - 정식 전환 전에는 `shop`, `product`, `edition` 라우트부터 먼저 parity 확인
 - `checkout`, `payment`, `success`, `fail`은 DB 저장과 운영 승인 후에만 외부 트래픽 오픈
-- GitHub Pages는 완전 대체 전까지 계속 fallback 공개면으로 유지
+- 현재 루트 정적 storefront는 완전 대체 전까지 계속 fallback 공개면으로 유지

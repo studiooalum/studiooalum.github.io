@@ -7,6 +7,7 @@ import { formatPrice, getProductTags, parseProductTitle, pickRepresentativeEditi
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
+const lightboxMediaQuery = window.matchMedia("(min-width: 960px)");
 
 function getShopPath() {
   return "./shop.html";
@@ -41,6 +42,10 @@ let lightboxNextEl = null;
 let lightboxImages = [];
 let lightboxActiveIndex = 0;
 let galleryResizeHandlerBound = false;
+
+function isLightboxEnabled() {
+  return lightboxMediaQuery.matches;
+}
 
 function isLightboxOpen() {
   return !!lightboxEl?.classList.contains("is-open");
@@ -164,7 +169,7 @@ function closeLightbox() {
 }
 
 function openLightbox(images, activeIndex = 0) {
-  if (!Array.isArray(images) || images.length === 0) return;
+  if (!isLightboxEnabled() || !Array.isArray(images) || images.length === 0) return;
 
   ensureLightbox();
   lightboxPreviouslyFocused = document.activeElement;
@@ -180,6 +185,18 @@ function openLightbox(images, activeIndex = 0) {
   requestAnimationFrame(() => {
     lightboxCloseEl?.focus();
   });
+}
+
+function handleLightboxViewportChange(event) {
+  if (!event.matches) {
+    closeLightbox();
+  }
+}
+
+if (typeof lightboxMediaQuery.addEventListener === "function") {
+  lightboxMediaQuery.addEventListener("change", handleLightboxViewportChange);
+} else if (typeof lightboxMediaQuery.addListener === "function") {
+  lightboxMediaQuery.addListener(handleLightboxViewportChange);
 }
 
 function renderEditionPrice(price, discountRate) {

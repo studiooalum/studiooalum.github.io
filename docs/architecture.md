@@ -2,14 +2,14 @@
 
 ## Goal
 
-현재 GitHub Pages 사이트를 유지하면서도, 정식 오픈용 구조로 무리 없이 이동할 수 있는 저장소 경계를 만든다.
+현재 루트 정적 storefront와 GitHub Pages 정적 배포를 유지하고, 서버 기능은 Cloudflare 런타임으로 보강하면서도 정식 오픈용 구조로 무리 없이 이동할 수 있는 저장소 경계를 만든다.
 
 ## Current Runtime Boundaries
 
-### 1. Public GitHub Pages shell
+### 1. Public root storefront shell
 
 - 루트의 `index.html`, `shop.html`, `product.html`, `checkout.html` 등
-- GitHub Pages에서 직접 노출되는 공개 진입점
+- GitHub Pages의 `main` / 루트 legacy build에서 직접 노출되는 공개 진입점
 
 ### 2. Shared live runtime
 
@@ -25,20 +25,28 @@
 
 초기 루트 페이지가 사용 중인 자산입니다.
 
-### 4. Local-only workspaces
+### 4. Cloudflare server runtime
 
-- `apps/studio/`
-- `archive/local/site-prototype/`
+- `functions/api/*`
+- `cloudflare/lib/*`
+- `cloudflare/d1/*`
 
-이 둘은 메인 GitHub Pages 배포 대상이 아니며, 로컬 실험/편집용 repo입니다.
+인증, 주문 생성, 결제 승인, 웹훅 처리, D1 저장은 이 경로를 통해 동작합니다.
 
-### 5. Next storefront scaffold
+### 5. Optional local-only workspaces
+
+- `apps/studio/` 같은 co-located Sanity Studio 경로
+- `archive/local/site-prototype/` 같은 비추적 실험 경로
+
+이 경로들은 현재 저장소에 포함되지 않으며, 필요할 때만 로컬 비추적 경로로 둡니다.
+
+### 6. Next storefront scaffold
 
 - `apps/web/*`
 - Next.js App Router 기반의 다음 storefront 골격
 - 현재는 홈, Sanity 연동 샵/제품/에디션 라우트, 체크아웃/결제 프리뷰 흐름, API 라우트(`/api/orders`, `/api/payments/confirm`)까지 제공
 
-즉, `apps/web`는 운영 전환을 위한 목적지이고, 당장 공개 중인 루트 Pages 셸을 대체하지는 않습니다.
+즉, `apps/web`는 운영 전환을 위한 목적지이고, 당장 공개 중인 루트 storefront 셸을 대체하지는 않습니다.
 
 ## Why runtime/storefront Exists
 
@@ -60,7 +68,7 @@
 정식 앱 전환을 길게 보면 아래 구조가 목적지입니다.
 
 - `apps/web`: Next.js storefront
-- `apps/studio`: Sanity Studio
+- 별도 저장소 또는 필요 시 co-located `apps/studio`: Sanity Studio
 - Postgres: 주문/결제 상태 저장
 - PG direct: 토스 우선, 서버 승인/웹훅 필수
 
@@ -74,7 +82,8 @@
 현재처럼 트래픽이 적고 디자인 유지가 중요한 상황에서는 아래 경로를 우선 추천합니다.
 
 - 루트 정적 사이트 디자인 유지
-- Cloudflare Pages: 정적 배포
+- GitHub Pages: 현재 공개 정적 셸 배포
+- Cloudflare Pages: 정적과 API를 한 플랫폼으로 통합할 때의 다음 후보
 - Cloudflare Workers: 주문/결제 API
 - Cloudflare D1: 주문 저장
 - Cloudflare DNS / SSL: custom domain과 HTTPS
@@ -100,5 +109,5 @@
 1. `apps/web` 스캐폴드를 실제 storefront로 확장
 2. Sanity 읽기 코드를 서버 중심으로 이동
 3. 주문 생성과 결제 승인 API 구축
-4. 루트 Pages 페이지를 점진적으로 `apps/web` 결과물로 대체
-5. 더 이상 쓰지 않는 레거시 HTML 셸은 `archive/legacy/`에 보관
+4. 루트 storefront 페이지를 점진적으로 `apps/web` 결과물로 대체
+5. 더 이상 쓰지 않는 self-contained 레거시 HTML 셸은 `archive/legacy/`에 보관

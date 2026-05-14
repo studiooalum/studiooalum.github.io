@@ -19,6 +19,9 @@
 - API: Cloudflare Workers
 - DB: Cloudflare D1
 
+이 저장소에는 위 조합으로 옮기기 위한 스캐폴드가 들어 있다.
+다만 현재 공개 정적 셸 자체는 GitHub Pages의 `main` / 루트 legacy build 기준이다.
+
 ## Why This Is Better Than Gabia Server + SSL
 
 가비아 서버와 유료 SSL을 직접 쓰는 구조는 가능하지만, 현재처럼 저트래픽 정적 사이트에는 비용과 운영 복잡도가 더 높다.
@@ -88,9 +91,9 @@ Cloudflare 대시보드에서 아래 순서로 진행한다.
 - GitHub Pages보다 운영 구조가 더 단순함
 - Workers와 연결이 자연스러움
 
-### Path B. Keep GitHub Pages For Now
+### Path B. Current lowest-migration path if frontend stays on GitHub Pages
 
-당장 프론트 이전을 안 하려면 가능하다.
+당장 프론트 이전을 안 하려면 가능한 현재형 경로다.
 
 1. GitHub Pages의 custom domain 설정
 2. Cloudflare DNS에서 GitHub Pages용 레코드 설정
