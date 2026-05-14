@@ -371,16 +371,6 @@ canvas {
   .site-footer__brand {
     grid-area: brand;
     min-width: 0;
-    overflow: hidden;
-  }
-
-  .site-footer__logo-mark {
-    width: 100%;
-    max-width: none;
-    height: clamp(72px, 7vw, 104px);
-    object-fit: cover;
-    object-position: center;
-    clip-path: inset(0 11% 0 11%);
   }
 
   .site-footer__text--lead {

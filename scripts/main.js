@@ -51,6 +51,7 @@
   }
 
   function alignRenderValue(value) {
+    if (isMobile) return value;
     return Math.round(value * 2) / 2;
   }
 
