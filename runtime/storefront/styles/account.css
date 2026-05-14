@@ -26,6 +26,11 @@
   border-top: 1px solid #111;
 }
 
+.account-auth-shell > .account-panel {
+  padding-top: 0;
+  border-top: 0;
+}
+
 .account-panel[hidden] {
   display: none !important;
 }
@@ -323,6 +328,10 @@
   .account-main {
     padding-top: calc(var(--gnb-height, 40px) + var(--page-gutter));
   }
+
+  .account-auth-shell {
+    gap: 32px;
+  }
 }
 
 @media (min-width: 960px) {
@@ -345,6 +354,31 @@
 
   .account-panel--guest {
     grid-column: 2;
+  }
+
+  .account-panel--login,
+  .account-panel--guest {
+    grid-template-rows: auto minmax(calc(1.6em * 2), auto) minmax(18px, auto) auto;
+  }
+
+  .account-panel--login .account-copy,
+  .account-panel--guest .account-copy {
+    min-height: calc(1.6em * 2);
+  }
+
+  .account-panel--login .account-form,
+  .account-panel--guest .account-form {
+    grid-template-rows: repeat(2, auto) auto;
+    align-content: start;
+  }
+
+  .account-panel--login .account-panel-actions--auth {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-panel--guest .account-form > .account-btn {
+    width: 100%;
   }
 
   .account-layout {
