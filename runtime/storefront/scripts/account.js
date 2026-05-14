@@ -82,23 +82,17 @@ export function initAccountPage() {
   const loginVerifyForm = document.querySelector(".js-account-login-verify-form");
   const providerGridEl = document.querySelector(".js-account-provider-grid");
   const providerHelpEl = document.querySelector(".js-account-provider-help");
-  const signupRequestForm = document.querySelector(".js-account-signup-request-form");
-  const signupVerifyForm = document.querySelector(".js-account-signup-verify-form");
   const guestForm = document.querySelector(".js-account-guest-form");
   const profileForm = document.querySelector(".js-account-profile-form");
   const loginStatusEl = document.querySelector(".js-account-login-status");
-  const signupStatusEl = document.querySelector(".js-account-signup-status");
   const guestStatusEl = document.querySelector(".js-account-guest-status");
   const memberStatusEl = document.querySelector(".js-account-member-status");
   const loginEmailDisplayEl = document.querySelector(".js-account-login-email-display");
-  const signupEmailDisplayEl = document.querySelector(".js-account-signup-email-display");
   const loginDebugEl = document.querySelector(".js-account-login-debug");
-  const signupDebugEl = document.querySelector(".js-account-signup-debug");
   const guestResultEl = document.querySelector(".js-account-guest-result");
   const identitiesEl = document.querySelector(".js-account-identities");
   const logoutButton = document.querySelector(".js-account-logout");
   const loginResetButton = document.querySelector(".js-account-login-reset");
-  const signupResetButton = document.querySelector(".js-account-signup-reset");
   const ordersEl = document.querySelector(".js-account-orders");
   const workshopsEl = document.querySelector(".js-account-workshops");
   const pointsEl = document.querySelector(".js-account-points");
@@ -108,8 +102,6 @@ export function initAccountPage() {
     || !memberLayout
     || !loginRequestForm
     || !loginVerifyForm
-    || !signupRequestForm
-    || !signupVerifyForm
     || !guestForm
     || !profileForm
     || !ordersEl
@@ -125,41 +117,21 @@ export function initAccountPage() {
       pendingFullName: "",
       debugCode: "",
     },
-    signup: {
-      pendingEmail: "",
-      pendingFullName: "",
-      debugCode: "",
-    },
   };
 
   const urlMessage = readStatusFromUrl();
   const emptyOrdersMarkup = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
   const emptyWorkshopsMarkup = '<div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>';
-  const flows = {
-    login: {
-      mode: "login",
-      requestForm: loginRequestForm,
-      verifyForm: loginVerifyForm,
-      statusEl: loginStatusEl,
-      emailDisplayEl: loginEmailDisplayEl,
-      debugEl: loginDebugEl,
-      resetButton: loginResetButton,
-      requestButtonLabel: "발송 중…",
-      verifyButtonLabel: "확인 중…",
-      successMessage: "로그인되었습니다.",
-    },
-    signup: {
-      mode: "signup",
-      requestForm: signupRequestForm,
-      verifyForm: signupVerifyForm,
-      statusEl: signupStatusEl,
-      emailDisplayEl: signupEmailDisplayEl,
-      debugEl: signupDebugEl,
-      resetButton: signupResetButton,
-      requestButtonLabel: "발송 중…",
-      verifyButtonLabel: "가입 중…",
-      successMessage: "회원가입이 완료되었습니다.",
-    },
+  const loginFlow = {
+    mode: "login",
+    requestForm: loginRequestForm,
+    verifyForm: loginVerifyForm,
+    statusEl: loginStatusEl,
+    emailDisplayEl: loginEmailDisplayEl,
+    debugEl: loginDebugEl,
+    requestButtonLabel: "발송 중…",
+    verifyButtonLabel: "확인 중…",
+    successMessage: "로그인되었습니다.",
   };
 
   function readStatusFromUrl() {
@@ -265,7 +237,7 @@ export function initAccountPage() {
       console.error("Failed to load auth providers.", error);
       renderSocialProviders(
         DEFAULT_SOCIAL_PROVIDERS,
-        "현재 페이지에서 간편 로그인 API를 불러오지 못했습니다. 정적 서버나 GitHub Pages에서는 간편 로그인이 동작하지 않고, Cloudflare Pages Functions 환경이 필요합니다.",
+        "현재 페이지에서 간편 로그인 API를 불러오지 못했습니다. 정적 파일로만 열면 간편 로그인이 동작하지 않으며, Cloudflare Pages Functions 환경이 필요합니다.",
       );
     }
   }
@@ -283,9 +255,9 @@ export function initAccountPage() {
     }
   }
 
-  function renderFlow(mode) {
-    const flow = flows[mode];
-    const flowState = state[mode];
+  function renderLoginFlow() {
+    const flow = loginFlow;
+    const flowState = state.login;
     const isVerifying = Boolean(flowState.pendingEmail);
 
     flow.requestForm.hidden = isVerifying;
@@ -309,8 +281,7 @@ export function initAccountPage() {
     authShell.hidden = false;
     memberLayout.hidden = true;
 
-    renderFlow("login");
-    renderFlow("signup");
+    renderLoginFlow();
 
     guestResultEl.hidden = true;
     guestResultEl.innerHTML = "";
@@ -443,7 +414,6 @@ export function initAccountPage() {
     try {
       const payload = await requestJson("./api/auth/account");
       state.login = { pendingEmail: "", pendingFullName: "", debugCode: "" };
-      state.signup = { pendingEmail: "", pendingFullName: "", debugCode: "" };
       renderAuthenticated(payload.account);
       if (!silent) {
         setStatus(memberStatusEl, "로그인 상태를 확인했습니다.", "success");
@@ -462,23 +432,23 @@ export function initAccountPage() {
     }
   }
 
-  function resetFlow(mode, message = "") {
-    state[mode] = {
+  function resetLoginFlow(message = "") {
+    state.login = {
       pendingEmail: "",
       pendingFullName: "",
       debugCode: "",
     };
 
-    flows[mode].verifyForm.reset();
-    renderFlow(mode);
+    loginFlow.verifyForm.reset();
+    renderLoginFlow();
 
     if (message) {
-      setStatus(flows[mode].statusEl, message);
+      setStatus(loginFlow.statusEl, message);
     }
   }
 
-  function attachFlowHandlers(mode) {
-    const flow = flows[mode];
+  function attachLoginHandlers() {
+    const flow = loginFlow;
 
     flow.requestForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -492,18 +462,18 @@ export function initAccountPage() {
         const payload = await requestJson("./api/auth/request", {
           method: "POST",
           body: {
-            mode,
+            mode: "login",
             email,
             fullName,
           },
         });
 
-        state[mode] = {
+        state.login = {
           pendingEmail: email,
           pendingFullName: fullName,
           debugCode: payload?.debugCode || "",
         };
-        renderFlow(mode);
+        renderLoginFlow();
         flow.verifyForm.elements.code.value = "";
         flow.verifyForm.elements.code.focus();
         setStatus(flow.statusEl, "인증코드를 전송했습니다. 메일함을 확인해주세요.", "success");
@@ -525,10 +495,10 @@ export function initAccountPage() {
         await requestJson("./api/auth/verify", {
           method: "POST",
           body: {
-            mode,
-            email: state[mode].pendingEmail,
+            mode: "login",
+            email: state.login.pendingEmail,
             code,
-            fullName: state[mode].pendingFullName,
+            fullName: state.login.pendingFullName,
           },
         });
 
@@ -543,8 +513,7 @@ export function initAccountPage() {
     });
   }
 
-  attachFlowHandlers("login");
-  attachFlowHandlers("signup");
+  attachLoginHandlers();
 
   profileForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -569,7 +538,6 @@ export function initAccountPage() {
     } catch (error) {
       if (error.status === 401) {
         state.login = { pendingEmail: "", pendingFullName: "", debugCode: "" };
-        state.signup = { pendingEmail: "", pendingFullName: "", debugCode: "" };
         showLoggedOut();
         setStatus(loginStatusEl, "세션이 만료되었습니다. 다시 로그인해주세요.", "error");
         return;
@@ -582,13 +550,8 @@ export function initAccountPage() {
   });
 
   loginResetButton?.addEventListener("click", () => {
-    resetFlow("login", "다른 이메일 주소를 입력해주세요.");
+    resetLoginFlow("다른 이메일 주소를 입력해주세요.");
     loginRequestForm.elements.email.focus();
-  });
-
-  signupResetButton?.addEventListener("click", () => {
-    resetFlow("signup", "입력 내용을 수정해주세요.");
-    signupRequestForm.elements.fullName.focus();
   });
 
   guestForm.addEventListener("submit", async (event) => {
@@ -627,7 +590,6 @@ export function initAccountPage() {
       });
 
       state.login = { pendingEmail: "", pendingFullName: "", debugCode: "" };
-      state.signup = { pendingEmail: "", pendingFullName: "", debugCode: "" };
       showLoggedOut();
       setStatus(loginStatusEl, "로그아웃되었습니다.");
       window.dispatchEvent(new Event("studiooalum:auth-changed"));
@@ -643,8 +605,7 @@ export function initAccountPage() {
   });
 
   showLoggedOut();
-  renderFlow("login");
-  renderFlow("signup");
+  renderLoginFlow();
   loadProviders();
   loadAccount({ silent: true }).finally(() => {
     if (urlMessage) {

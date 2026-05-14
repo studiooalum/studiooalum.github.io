@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — Sign Up</title>
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
+</head>
+<body class="account-page signup-page">
+  <nav class="gnb gnb--account">
+    <a href="./account.html" class="gnb__back">← Login</a>
+    <span class="gnb__title">Sign Up</span>
+  </nav>
+
+  <main class="account-main">
+    <section class="account-auth-shell account-auth-shell--signup">
+      <section class="account-panel">
+        <h1 class="account-heading">회원가입</h1>
+        <p class="account-copy">이메일로 간단히 가입하고 주문 내역, 기본 주소, 포인트를 관리할 수 있습니다.</p>
+        <p class="account-status js-signup-status" role="status" aria-live="polite"></p>
+
+        <form class="account-form js-signup-request-form" novalidate>
+          <label class="account-field">
+            <span>이름</span>
+            <input type="text" name="fullName" autocomplete="name" inputmode="text" required />
+          </label>
+          <label class="account-field">
+            <span>이메일 주소</span>
+            <input type="email" name="email" autocomplete="email" inputmode="email" required />
+          </label>
+          <button type="submit" class="account-btn">가입용 인증코드 받기</button>
+          <a href="./account.html" class="account-inline-link">이미 계정이 있나요? 로그인으로 돌아가기</a>
+        </form>
+
+        <form class="account-form js-signup-verify-form" hidden novalidate>
+          <p class="account-copy account-auth-email">인증코드를 <strong class="js-signup-email-display"></strong> 로 보냈습니다.</p>
+          <label class="account-field">
+            <span>6자리 인증코드</span>
+            <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
+          </label>
+          <p class="account-auth-debug js-signup-debug" hidden></p>
+          <div class="account-panel-actions">
+            <button type="submit" class="account-btn">회원가입 완료</button>
+            <button type="button" class="account-btn account-btn--secondary js-signup-reset">입력 수정</button>
+          </div>
+        </form>
+
+        <p class="account-copy account-copy--quiet">간편 로그인으로 처음 들어와도 새 계정이 자동으로 생성됩니다.</p>
+      </section>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+    import { initSignupPage } from "./runtime/storefront/scripts/signup.js";
+    import { initCartUI } from "./runtime/storefront/scripts/cart.js";
+
+    initSiteChrome();
+    initCartUI();
+    initSignupPage();
+  </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
    Calls confirmation API to finalize payment.
 ========================= */
 
-import { CART_KEY, ORDER_KEY } from "./utils/storage.js";
+import { CART_KEY, ORDER_KEY, readStoredJson } from "./utils/storage.js";
 
 // ---- Read URL params from Toss redirect ----
 const urlParams  = new URLSearchParams(window.location.search);
@@ -12,6 +12,7 @@ const paymentKey = urlParams.get("paymentKey");
 const orderId    = urlParams.get("orderId");
 const amount     = urlParams.get("amount");
 const PAYMENT_CONFIRM_ENDPOINT = "/api/payments/confirm";
+const pendingOrder = readStoredJson(ORDER_KEY, null);
 
 // ---- DOM refs ----
 const loadingSection = document.getElementById("confirmLoading");
@@ -25,9 +26,14 @@ const errorSection   = document.getElementById("confirmError");
    exposed client-side.
 
   In the current static Pages environment, this endpoint will usually be absent
-  and the catch block below keeps the preview flow usable. Replace it with your
-  real backend before production launch.
+  and a preview order can still bypass confirmation only when the current host
+  does not provide the backend route.
 ========================= */
+
+function canUsePreviewFallback() {
+  const providerMode = String(pendingOrder?.providerMode || "").trim();
+  return providerMode === "local-preview" || providerMode === "preview-no-db";
+}
 
 async function confirmPayment() {
   try {
@@ -44,19 +50,28 @@ async function confirmPayment() {
       body: JSON.stringify({ paymentKey, orderId, amount }),
     });
 
-    if (!response.ok) {
-      throw new Error(`Confirm failed: ${response.status}`);
+    if ((response.status === 404 || response.status === 405) && canUsePreviewFallback()) {
+      showSuccess();
+      return;
+    }
+
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload?.ok) {
+      throw new Error(payload?.error || payload?.message || `Confirm failed: ${response.status}`);
     }
 
     // Payment confirmed — show success UI
-    showSuccess();
+    showSuccess(payload.payment);
   } catch (err) {
     console.error("Payment confirmation error:", err);
 
-    // In test mode without a backend, we show success directly
-    // since the payment request itself was successful.
-    // TODO: In production, handle the error properly.
-    showSuccess();
+    if (err?.name === "TypeError" && canUsePreviewFallback()) {
+      showSuccess();
+      return;
+    }
+
+    showError(err?.message || "결제 확인에 실패했습니다. 관리자에게 문의해주세요.");
   }
 }
 
@@ -64,14 +79,18 @@ async function confirmPayment() {
    UI STATES
 ========================= */
 
-function showSuccess() {
+function showSuccess(payment = null) {
   loadingSection.style.display = "none";
   errorSection.style.display   = "none";
   successSection.style.display = "flex";
 
-  document.getElementById("resultAmount").textContent     = amount ? `₩${Number(amount).toLocaleString("ko-KR")}` : "—";
-  document.getElementById("resultOrderId").textContent    = orderId || "—";
-  document.getElementById("resultPaymentKey").textContent = paymentKey || "—";
+  const confirmedAmount = payment?.amount ?? amount;
+  const confirmedOrderId = payment?.orderId ?? orderId;
+  const confirmedPaymentKey = payment?.paymentKey ?? paymentKey;
+
+  document.getElementById("resultAmount").textContent     = confirmedAmount ? `₩${Number(confirmedAmount).toLocaleString("ko-KR")}` : "—";
+  document.getElementById("resultOrderId").textContent    = confirmedOrderId || "—";
+  document.getElementById("resultPaymentKey").textContent = confirmedPaymentKey || "—";
 
   // Clear cart and pending order after successful payment
   localStorage.removeItem(CART_KEY);

@@ -43,6 +43,11 @@
     <section class="checkout-form-section">
       <h2 class="checkout-section-title">배송 정보</h2>
       <form id="checkoutForm" class="checkout-form" novalidate>
+        <div class="checkout-auth-panel" id="checkoutAuthPanel">
+          <p class="checkout-auth-panel__headline" id="checkoutAuthHeadline">비회원 주문이 가능합니다.</p>
+          <p class="checkout-auth-panel__copy" id="checkoutAuthCopy">로그인하면 기본 주소와 주문 내역을 계정에 연결할 수 있습니다.</p>
+          <a href="./account.html" class="checkout-auth-panel__link" id="checkoutAuthLink">로그인 / 회원가입</a>
+        </div>
         <div class="checkout-field">
           <label for="name">이름 <span class="required">*</span></label>
           <input type="text" id="name" name="name" required placeholder="홍길동" autocomplete="name" />
@@ -71,6 +76,12 @@
         <div class="checkout-field">
           <label for="address2">상세 주소</label>
           <input type="text" id="address2" name="address2" placeholder="동/호수, 층 등" autocomplete="address-line2" />
+        </div>
+        <div class="checkout-save-address" id="checkoutSaveAddressField" hidden>
+          <label>
+            <input type="checkbox" id="saveAsDefaultAddress" name="saveAsDefaultAddress" />
+            <span>이번 배송지를 기본 주소지로 저장</span>
+          </label>
         </div>
         <div class="checkout-field">
           <label for="memo">배송 메모</label>

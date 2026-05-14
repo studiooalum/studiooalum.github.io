@@ -52,6 +52,20 @@
   gap: 12px;
 }
 
+.account-inline-link {
+  width: fit-content;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.72);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.account-auth-shell--signup {
+  max-width: 380px;
+}
+
 .account-social-auth {
   display: grid;
   gap: 10px;
@@ -307,6 +321,21 @@
   color: rgba(17, 17, 17, 0.72);
 }
 
+.account-copy--quiet {
+  color: rgba(17, 17, 17, 0.56);
+}
+
+.account-info-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(17, 17, 17, 0.72);
+}
+
 .account-points {
   display: inline-flex;
   align-items: center;
@@ -332,7 +361,15 @@
     padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
   }
 
-  .account-auth-shell,
+  .account-auth-shell {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-auth-shell--signup {
+    grid-template-columns: minmax(0, 380px);
+    justify-content: start;
+  }
+
   .account-layout {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
