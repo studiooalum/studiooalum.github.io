@@ -59,6 +59,13 @@
 3. 공개 사이트와 로컬 전용 repo를 분리한다.
 4. 다음 storefront 앱의 목적지를 미리 만든다.
 
+## Root Storefront Layout Rule
+
+루트 storefront 페이지는 별도 페이지마다 다른 셸을 쓰지 않고, 데스크톱 기준 3열 좌표계를 공통 규칙으로 유지한다.
+
+- 상세 규칙: `docs/storefront-layout-rules.md`
+- 기준 구현은 `runtime/storefront/styles/layout.css`, `shop.css`, `product.css`, `placeholder-page.css`를 먼저 확인한다.
+
 ## Recommended Production Direction
 
 현재 저장소에는 두 가지 운영 방향이 공존합니다.

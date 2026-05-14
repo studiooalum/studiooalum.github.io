@@ -7,13 +7,14 @@
 }
 
 .account-main {
-  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 40px;
+  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 80px;
 }
 
 .account-auth-shell,
 .account-layout {
   display: grid;
   gap: var(--grid-gap);
+  align-items: start;
 }
 
 .account-panel {
@@ -21,22 +22,8 @@
   display: grid;
   align-content: start;
   gap: 18px;
-}
-
-.account-panel--login,
-.account-panel--signup,
-.account-panel--guest {
-  padding: 22px 20px;
-  border: 1px solid rgba(17, 17, 17, 0.12);
-}
-
-.account-panel--login,
-.account-panel--signup {
-  background: #f3ede4;
-}
-
-.account-panel--guest {
-  background: #f8f7f3;
+  padding-top: 12px;
+  border-top: 1px solid #111;
 }
 
 .account-panel[hidden] {
@@ -68,10 +55,6 @@
   gap: 12px;
 }
 
-.account-auth-shell--signup {
-  max-width: 520px;
-}
-
 .account-panel-actions {
   display: flex;
   flex-wrap: wrap;
@@ -98,14 +81,15 @@
 .account-field input {
   width: 100%;
   height: 30px;
-  padding: 0 8px;
-  border: 1px solid rgba(17, 17, 17, 0.6);
+  padding: 0 10px;
+  border: 1px solid #111;
+  background: #fff;
   font-family: var(--font-kor-body);
   font-size: 11px;
 }
 
 .account-field input[readonly] {
-  background: rgba(17, 17, 17, 0.04);
+  background: transparent;
   color: rgba(17, 17, 17, 0.68);
 }
 
@@ -137,8 +121,8 @@
 }
 
 .account-btn--signup {
-  background: #dccdb5;
-  border-color: #c5b08d;
+  background: transparent;
+  border-color: #111;
   color: #111;
 }
 
@@ -168,7 +152,7 @@
   display: grid;
   gap: 12px;
   padding-top: 14px;
-  border-top: 1px solid rgba(17, 17, 17, 0.18);
+  border-top: 1px solid #111;
 }
 
 .account-guest-head,
@@ -203,7 +187,7 @@
   display: grid;
   gap: 8px;
   padding-top: 14px;
-  border-top: 1px solid rgba(17, 17, 17, 0.18);
+  border-top: 1px solid rgba(17, 17, 17, 0.28);
 }
 
 .account-order:first-child {
@@ -273,9 +257,8 @@
 .account-consent-list {
   display: grid;
   gap: 12px;
-  padding: 14px 12px;
-  border: 1px solid rgba(17, 17, 17, 0.12);
-  background: rgba(255, 255, 255, 0.72);
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 17, 17, 0.28);
 }
 
 .account-checkbox {
@@ -348,12 +331,20 @@
   }
 
   .account-auth-shell {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .account-auth-shell--signup {
-    grid-template-columns: minmax(0, 520px);
-    justify-content: start;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .account-panel--login,
+  .account-panel--signup {
+    grid-column: 1;
+  }
+
+  .account-panel--guest {
+    grid-column: 2;
   }
 
   .account-layout {
