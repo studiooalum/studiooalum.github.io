@@ -8,12 +8,12 @@ const params = new URLSearchParams(window.location.search);
 const productName = params.get("product");
 
 function getShopPath() {
-  return "./shop.html";
+  return "./shop";
 }
 
 function getEditionPath(slug) {
   const encoded = encodeURIComponent(slug || "");
-  return `./edition.html?slug=${encoded}`;
+  return `./edition?slug=${encoded}`;
 }
 
 if (!productName) window.location.href = getShopPath();
@@ -44,7 +44,7 @@ function renderEditionGrid(editions) {
   const description = truncateDescription(
     `${productName} 시리즈의 에디션을 한 페이지에서 살펴보세요. ${getFirstParagraph(representative.description || "")}`,
   );
-  const canonicalUrl = toAbsoluteUrl(`product.html?product=${encodeURIComponent(productName)}`);
+  const canonicalUrl = toAbsoluteUrl(`product?product=${encodeURIComponent(productName)}`);
 
   document.title = `${productName} | Oalum Shop`;
   titleEl.textContent = productName;
@@ -71,13 +71,13 @@ function renderEditionGrid(editions) {
             "@type": "ListItem",
             position: index + 1,
             name: edition.title,
-            url: toAbsoluteUrl(`edition.html?slug=${encodeURIComponent(edition.slug?.current || "")}`),
+            url: toAbsoluteUrl(`edition?slug=${encodeURIComponent(edition.slug?.current || "")}`),
           })),
         },
       },
       buildBreadcrumbList([
         { name: "Studio Oalum", url: toAbsoluteUrl("/") },
-        { name: "Oalum Shop", url: toAbsoluteUrl("/shop.html") },
+        { name: "Oalum Shop", url: toAbsoluteUrl("/shop") },
         { name: productName, url: canonicalUrl },
       ]),
     ],
@@ -148,7 +148,7 @@ async function init() {
     const sortedEditions = sortEditionsForProduct(editions);
 
     if (backEl) {
-      backEl.href = `./shop.html`;
+      backEl.href = `./shop`;
     }
 
     if (sortedEditions.length === 0) {

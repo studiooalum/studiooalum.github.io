@@ -198,7 +198,7 @@ function renderPoster(workshop) {
 
 function renderWorkshopDetails(workshop) {
   const workshopSlug = getWorkshopSlug(workshop) || slug;
-  const canonicalUrl = toAbsoluteUrl(`workshop.html?slug=${encodeURIComponent(workshopSlug)}`);
+  const canonicalUrl = toAbsoluteUrl(`workshop?slug=${encodeURIComponent(workshopSlug)}`);
   const description = truncateDescription(getWorkshopShortDescription(workshop));
   const posterAsset = getWorkshopPoster(workshop);
   const posterUrl = imageUrl(posterAsset, { width: 1200, height: 1600 });
@@ -239,14 +239,14 @@ function renderWorkshopDetails(workshop) {
       courseSchema,
       buildBreadcrumbList([
         { name: "Studio Oalum", url: toAbsoluteUrl("/") },
-        { name: "Oalum Workshops", url: toAbsoluteUrl("/workshops.html") },
+        { name: "Oalum Workshops", url: toAbsoluteUrl("/workshops") },
         { name: workshop.title || "Workshop", url: canonicalUrl },
       ]),
     ],
   });
 
   if (dom.back) {
-    dom.back.href = workshop.category ? `./workshops.html?category=${encodeURIComponent(workshop.category)}` : "./workshops.html";
+    dom.back.href = workshop.category ? `./workshops?category=${encodeURIComponent(workshop.category)}` : "./workshops";
   }
 
   if (dom.kicker) {

@@ -11,7 +11,7 @@ const slug = params.get("slug");
 const lightboxMediaQuery = window.matchMedia("(min-width: 960px)");
 
 function getShopPath() {
-  return "./shop.html";
+  return "./shop";
 }
 
 if (!slug) {
@@ -287,7 +287,7 @@ function renderTags(product) {
   for (const tag of tags) {
     const link = document.createElement("a");
     link.className = "edition-tag";
-    link.href = `./shop.html?tag=${encodeURIComponent(tag)}`;
+    link.href = `./shop?tag=${encodeURIComponent(tag)}`;
     link.textContent = tag;
     tagsEl.appendChild(link);
   }
@@ -444,7 +444,7 @@ function renderRecommendations(allProducts, currentBaseName) {
     const { baseName } = parseProductTitle(item.title);
     const link = document.createElement("a");
     link.className = "edition-recommend-card";
-    link.href = `./product.html?product=${encodeURIComponent(baseName)}`;
+    link.href = `./product?product=${encodeURIComponent(baseName)}`;
 
     const thumb = document.createElement("div");
     thumb.className = "edition-recommend-card__thumb";
@@ -485,9 +485,9 @@ async function init() {
     const tags = getProductTags(product);
 
     // Back link → product page for the base product
-    backEl.href = `./product.html?product=${encodeURIComponent(baseName)}`;
+    backEl.href = `./product?product=${encodeURIComponent(baseName)}`;
 
-    const canonicalUrl = toAbsoluteUrl(`edition.html?slug=${encodeURIComponent(slug)}`);
+    const canonicalUrl = toAbsoluteUrl(`edition?slug=${encodeURIComponent(slug)}`);
     const description = truncateDescription(getFirstParagraph(product.description || `${product.title} 상세 정보`));
     const primaryImageUrl = Array.isArray(product.images) && product.images.length > 0
       ? imageUrl(product.images[0], { width: 1200, height: 1200 })
@@ -533,8 +533,8 @@ async function init() {
         productSchema,
         buildBreadcrumbList([
           { name: "Studio Oalum", url: toAbsoluteUrl("/") },
-          { name: "Oalum Shop", url: toAbsoluteUrl("/shop.html") },
-          { name: baseName, url: toAbsoluteUrl(`product.html?product=${encodeURIComponent(baseName)}`) },
+          { name: "Oalum Shop", url: toAbsoluteUrl("/shop") },
+          { name: baseName, url: toAbsoluteUrl(`product?product=${encodeURIComponent(baseName)}`) },
           { name: product.title, url: canonicalUrl },
         ]),
       ],

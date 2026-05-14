@@ -15,10 +15,10 @@
   var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   var DATA = [
-    { word: 'Archive',    color: '#ffccc3', sw: 55, yOff: 0.2,  url: 'archive.html' },
-    { word: 'Shop',       color: '#e34234', sw: 42, yOff: 0.42, url: 'shop.html' },
-    { word: 'Workshops',  color: '#ffeb53', sw: 48, yOff: 0.66, url: 'workshops.html' },
-    { word: 'Newsletter', color: '#cad5d8', sw: 40, yOff: 0.86, url: 'newsletter.html' }
+    { word: 'Archive',    color: '#ffccc3', sw: 55, yOff: 0.2,  url: 'archive' },
+    { word: 'Shop',       color: '#e34234', sw: 42, yOff: 0.42, url: 'shop' },
+    { word: 'Workshops',  color: '#ffeb53', sw: 48, yOff: 0.66, url: 'workshops' },
+    { word: 'Newsletter', color: '#cad5d8', sw: 40, yOff: 0.86, url: 'newsletter' }
   ];
 
   var yarns = [];
