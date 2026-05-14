@@ -65,6 +65,63 @@ body {
     pointer-events: none;
 }
 
+.home-sections-nav {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: min(520px, calc(100vw - 40px));
+}
+
+.home-sections-nav__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgba(17, 17, 17, 0.16);
+    background: rgba(255, 255, 255, 0.74);
+    color: #111;
+    text-decoration: none;
+    font-family: 'GothamBook', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.home-sections-nav__link--archive {
+    background: rgba(255, 204, 195, 0.82);
+}
+
+.home-sections-nav__link--shop {
+    background: rgba(227, 66, 52, 0.2);
+}
+
+.home-sections-nav__link--workshops {
+    background: rgba(255, 235, 83, 0.72);
+}
+
+.home-sections-nav__link--newsletter {
+    background: rgba(202, 213, 216, 0.82);
+}
+
 @media (max-width: 768px) {
     .yarn-text { font-size: 24px; }
+
+    .home-sections-nav {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        gap: 8px;
+        max-width: none;
+    }
+
+    .home-sections-nav__link {
+        min-height: 30px;
+        padding: 0 10px;
+        font-size: 11px;
+    }
 }

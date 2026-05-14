@@ -2,6 +2,7 @@ import client from "./sanity/client.js";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { getFirstParagraph, parseProductTitle } from "./utils/catalog.js";
+import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
 const params = new URLSearchParams(window.location.search);
 const productName = params.get("product");
@@ -37,10 +38,50 @@ function renderEditionGrid(editions) {
   const price = Number(representative.price) || 0;
   const discountRate = Number(representative.discountRate) || 0;
   const displayPrice = Number(price).toLocaleString("ko-KR");
+  const primaryImageUrl = Array.isArray(representative.images) && representative.images.length > 0
+    ? imageUrl(representative.images[0], { width: 1200, height: 1200 })
+    : null;
+  const description = truncateDescription(
+    `${productName} 시리즈의 에디션을 한 페이지에서 살펴보세요. ${getFirstParagraph(representative.description || "")}`,
+  );
+  const canonicalUrl = toAbsoluteUrl(`product.html?product=${encodeURIComponent(productName)}`);
 
-  document.title = `${productName} Editions — Studio OALUM`;
+  document.title = `${productName} | Oalum Shop`;
   titleEl.textContent = productName;
   introEl.textContent = getFirstParagraph(representative.description || "상품 소개");
+
+  updatePageSeo({
+    title: `${productName} | Oalum Shop`,
+    description,
+    canonicalUrl,
+    imageUrl: primaryImageUrl,
+  });
+
+  setJsonLd("product-page", {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        name: `${productName} | Oalum Shop`,
+        description,
+        url: canonicalUrl,
+        mainEntity: {
+          "@type": "ItemList",
+          itemListElement: editions.map((edition, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: edition.title,
+            url: toAbsoluteUrl(`edition.html?slug=${encodeURIComponent(edition.slug?.current || "")}`),
+          })),
+        },
+      },
+      buildBreadcrumbList([
+        { name: "Studio Oalum", url: toAbsoluteUrl("/") },
+        { name: "Oalum Shop", url: toAbsoluteUrl("/shop.html") },
+        { name: productName, url: canonicalUrl },
+      ]),
+    ],
+  });
 
   if (discountRate > 0) {
     const discounted = Math.round(price * (1 - discountRate / 100));

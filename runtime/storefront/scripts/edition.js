@@ -3,7 +3,8 @@ import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { addToCart, addToCartSilent } from "./cart.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
-import { formatPrice, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
+import { formatPrice, getFirstParagraph, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
+import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
@@ -486,11 +487,59 @@ async function init() {
     // Back link → product page for the base product
     backEl.href = `./product.html?product=${encodeURIComponent(baseName)}`;
 
-    document.title = `${product.title} — Studio OALUM`;
+    const canonicalUrl = toAbsoluteUrl(`edition.html?slug=${encodeURIComponent(slug)}`);
+    const description = truncateDescription(getFirstParagraph(product.description || `${product.title} 상세 정보`));
+    const primaryImageUrl = Array.isArray(product.images) && product.images.length > 0
+      ? imageUrl(product.images[0], { width: 1200, height: 1200 })
+      : null;
+
+    document.title = `${product.title} | Oalum Shop`;
     kickerEl.textContent = tags[0] || "edition";
     titleEl.textContent = baseName;
     numberEl.textContent = editionLabel || product.title;
     descEl.textContent = product.description || "제품 정보";
+
+    updatePageSeo({
+      title: `${product.title} | Oalum Shop`,
+      description,
+      canonicalUrl,
+      imageUrl: primaryImageUrl,
+    });
+
+    const productSchema = {
+      "@type": "Product",
+      name: product.title,
+      description,
+      url: canonicalUrl,
+      brand: {
+        "@type": "Brand",
+        name: "Studio OALUM",
+      },
+      sku: product.slug?.current || slug,
+      category: tags.join(", "),
+      image: primaryImageUrl ? [primaryImageUrl] : undefined,
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "KRW",
+        price: String(Number(product.price) || 0),
+        availability: sold ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+        url: canonicalUrl,
+      },
+    };
+
+    setJsonLd("edition-page", {
+      "@context": "https://schema.org",
+      "@graph": [
+        productSchema,
+        buildBreadcrumbList([
+          { name: "Studio Oalum", url: toAbsoluteUrl("/") },
+          { name: "Oalum Shop", url: toAbsoluteUrl("/shop.html") },
+          { name: baseName, url: toAbsoluteUrl(`product.html?product=${encodeURIComponent(baseName)}`) },
+          { name: product.title, url: canonicalUrl },
+        ]),
+      ],
+    });
+
     renderTags(product);
 
     const price = Number(product.price) || 0;

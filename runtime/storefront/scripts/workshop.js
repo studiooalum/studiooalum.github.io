@@ -4,8 +4,11 @@ import { WORKSHOP_BY_SLUG_QUERY } from "./sanity/queries.js";
 import {
   findFallbackWorkshopBySlug,
   getWorkshopPoster,
+  getWorkshopShortDescription,
+  getWorkshopSlug,
   normalizeWorkshop,
 } from "./utils/workshops.js";
+import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
 const dom = {
   back: document.getElementById("workshopBack"),
@@ -194,7 +197,53 @@ function renderPoster(workshop) {
 }
 
 function renderWorkshopDetails(workshop) {
-  document.title = `Studio OALUM — ${workshop.title || "Workshop"}`;
+  const workshopSlug = getWorkshopSlug(workshop) || slug;
+  const canonicalUrl = toAbsoluteUrl(`workshop.html?slug=${encodeURIComponent(workshopSlug)}`);
+  const description = truncateDescription(getWorkshopShortDescription(workshop));
+  const posterAsset = getWorkshopPoster(workshop);
+  const posterUrl = imageUrl(posterAsset, { width: 1200, height: 1600 });
+
+  document.title = `${workshop.title || "Workshop"} | Oalum Workshops`;
+
+  updatePageSeo({
+    title: `${workshop.title || "Workshop"} | Oalum Workshops`,
+    description,
+    canonicalUrl,
+    imageUrl: posterUrl,
+  });
+
+  const courseSchema = {
+    "@type": "Course",
+    name: workshop.title || "Workshop",
+    description,
+    url: canonicalUrl,
+    provider: {
+      "@type": "Organization",
+      name: "Studio OALUM",
+      url: toAbsoluteUrl("/"),
+    },
+    image: posterUrl ? [posterUrl] : undefined,
+    offers: Number(workshop.price) > 0
+      ? {
+          "@type": "Offer",
+          priceCurrency: "KRW",
+          price: String(Number(workshop.price) || 0),
+          url: canonicalUrl,
+        }
+      : undefined,
+  };
+
+  setJsonLd("workshop-page", {
+    "@context": "https://schema.org",
+    "@graph": [
+      courseSchema,
+      buildBreadcrumbList([
+        { name: "Studio Oalum", url: toAbsoluteUrl("/") },
+        { name: "Oalum Workshops", url: toAbsoluteUrl("/workshops.html") },
+        { name: workshop.title || "Workshop", url: canonicalUrl },
+      ]),
+    ],
+  });
 
   if (dom.back) {
     dom.back.href = workshop.category ? `./workshops.html?category=${encodeURIComponent(workshop.category)}` : "./workshops.html";
