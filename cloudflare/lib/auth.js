@@ -3,6 +3,8 @@ const LOGIN_CODE_TTL_MS = 10 * 60 * 1000;
 const LOGIN_RESEND_WINDOW_MS = 60 * 1000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_HASH_ITERATIONS = 310000;
 
 import { linkGuestWorkshopReservationsToUser, readWorkshopReservationsForIdentity } from "./workshops.js";
 
@@ -92,6 +94,80 @@ async function hashSessionToken(env, token) {
   return sha256Hex(withPepper(env, String(token || "")));
 }
 
+function hexToBytes(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return new Uint8Array();
+  }
+
+  const byteLength = Math.floor(normalized.length / 2);
+  const bytes = new Uint8Array(byteLength);
+
+  for (let index = 0; index < byteLength; index += 1) {
+    bytes[index] = Number.parseInt(normalized.slice(index * 2, index * 2 + 2), 16);
+  }
+
+  return bytes;
+}
+
+function normalizeBoolean(value) {
+  if (value === true || value === false) {
+    return value;
+  }
+
+  if (value === 1 || value === 0) {
+    return Boolean(value);
+  }
+
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+function hasPasswordCredentials(row) {
+  return Boolean(String(row?.password_hash || "").trim() && String(row?.password_salt || "").trim());
+}
+
+async function derivePasswordHash(env, password, saltHex) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(withPepper(env, String(password || ""))),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: hexToBytes(saltHex),
+      iterations: PASSWORD_HASH_ITERATIONS,
+      hash: "SHA-256",
+    },
+    key,
+    256,
+  );
+
+  return Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function createPasswordCredentials(env, password) {
+  const passwordSalt = randomHex(16);
+  const passwordHash = await derivePasswordHash(env, password, passwordSalt);
+
+  return {
+    passwordSalt,
+    passwordHash,
+  };
+}
+
+async function verifyPasswordCredentials(env, password, row) {
+  if (!hasPasswordCredentials(row)) {
+    return false;
+  }
+
+  const candidateHash = await derivePasswordHash(env, password, row.password_salt);
+  return candidateHash === String(row.password_hash || "");
+}
+
 function parseCookies(request) {
   const cookieHeader = request.headers.get("cookie") || "";
   return cookieHeader
@@ -123,6 +199,7 @@ function mapUser(row) {
     zipcode: row.zipcode || "",
     address1: row.address1 || "",
     address2: row.address2 || "",
+    marketingOptIn: normalizeBoolean(row.marketing_opt_in),
     pointsBalance: Number(row.points_balance) || 0,
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
@@ -296,6 +373,133 @@ async function ensureUser(database, email, profile = {}) {
     zipcode: "",
     address1: "",
     address2: "",
+    password_hash: "",
+    password_salt: "",
+    marketing_opt_in: 0,
+    points_balance: 0,
+    created_at: now,
+    updated_at: now,
+    last_login_at: now,
+  });
+}
+
+async function createOrUpdatePasswordUser(database, env, {
+  email,
+  fullName,
+  password,
+  marketingOptIn = false,
+}) {
+  const emailNormalized = normalizeEmail(email);
+  const existing = await findUserByEmail(database, emailNormalized);
+  const now = nowIso();
+  const nextFullName = cleanText(fullName, 120);
+  const { passwordHash, passwordSalt } = await createPasswordCredentials(env, password);
+  const marketingEnabled = marketingOptIn ? 1 : 0;
+  const marketingAcceptedAt = marketingOptIn ? now : null;
+
+  if (existing && hasPasswordCredentials(existing)) {
+    throw Object.assign(new Error("이미 가입된 계정입니다. 로그인해 주세요."), {
+      status: 409,
+    });
+  }
+
+  if (existing) {
+    await database
+      .prepare(`
+        UPDATE users
+        SET email = ?,
+            full_name = ?,
+            password_hash = ?,
+            password_salt = ?,
+            privacy_policy_accepted_at = COALESCE(privacy_policy_accepted_at, ?),
+            terms_accepted_at = COALESCE(terms_accepted_at, ?),
+            marketing_opt_in = ?,
+            marketing_opt_in_at = ?,
+            updated_at = ?,
+            last_login_at = ?
+        WHERE id = ?
+      `)
+      .bind(
+        emailNormalized,
+        nextFullName || existing.full_name || "",
+        passwordHash,
+        passwordSalt,
+        now,
+        now,
+        marketingEnabled,
+        marketingAcceptedAt,
+        now,
+        now,
+        existing.id,
+      )
+      .run();
+
+    return mapUser({
+      ...existing,
+      email: emailNormalized,
+      email_normalized: emailNormalized,
+      full_name: nextFullName || existing.full_name || "",
+      password_hash: passwordHash,
+      password_salt: passwordSalt,
+      marketing_opt_in: marketingEnabled,
+      updated_at: now,
+      last_login_at: now,
+    });
+  }
+
+  const userId = createId("USR");
+  await database
+    .prepare(`
+      INSERT INTO users (
+        id,
+        email,
+        email_normalized,
+        full_name,
+        phone,
+        zipcode,
+        address1,
+        address2,
+        password_hash,
+        password_salt,
+        privacy_policy_accepted_at,
+        terms_accepted_at,
+        marketing_opt_in,
+        marketing_opt_in_at,
+        points_balance,
+        created_at,
+        updated_at,
+        last_login_at
+      ) VALUES (?, ?, ?, ?, '', '', '', '', ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)
+    `)
+    .bind(
+      userId,
+      emailNormalized,
+      emailNormalized,
+      nextFullName,
+      passwordHash,
+      passwordSalt,
+      now,
+      now,
+      marketingEnabled,
+      marketingAcceptedAt,
+      now,
+      now,
+      now,
+    )
+    .run();
+
+  return mapUser({
+    id: userId,
+    email: emailNormalized,
+    email_normalized: emailNormalized,
+    full_name: nextFullName,
+    phone: "",
+    zipcode: "",
+    address1: "",
+    address2: "",
+    password_hash: passwordHash,
+    password_salt: passwordSalt,
+    marketing_opt_in: marketingEnabled,
     points_balance: 0,
     created_at: now,
     updated_at: now,
@@ -660,6 +864,94 @@ export async function verifyLoginCode(env, { email, code, fullName, mode }, requ
 
     user = await touchUserLogin(database, existingUser.id, { fullName: existingUser.full_name || fullName });
   }
+
+  await linkGuestOrdersToUser(database, user.id, user.emailNormalized);
+  await linkGuestWorkshopReservationsToUser(database, user.id, user.emailNormalized);
+  await upsertIdentity(database, {
+    userId: user.id,
+    provider: "direct",
+    providerUserId: user.emailNormalized,
+    providerEmail: user.email,
+  });
+  const session = await createSession(database, env, user.id, request);
+
+  return {
+    user,
+    session,
+  };
+}
+
+export async function loginWithPassword(env, { email, password }, request) {
+  const database = requireDb(env);
+  const emailNormalized = normalizeEmail(email);
+  const existingUser = await findUserByEmail(database, emailNormalized);
+
+  if (!existingUser) {
+    throw Object.assign(new Error("이메일 또는 비밀번호가 올바르지 않습니다."), {
+      status: 401,
+    });
+  }
+
+  if (!hasPasswordCredentials(existingUser)) {
+    throw Object.assign(new Error("비밀번호가 아직 설정되지 않았습니다. 회원가입 페이지에서 비밀번호를 먼저 설정해주세요."), {
+      status: 400,
+    });
+  }
+
+  const isValidPassword = await verifyPasswordCredentials(env, password, existingUser);
+  if (!isValidPassword) {
+    throw Object.assign(new Error("이메일 또는 비밀번호가 올바르지 않습니다."), {
+      status: 401,
+    });
+  }
+
+  const user = await touchUserLogin(database, existingUser.id, {
+    fullName: existingUser.full_name,
+  });
+
+  await linkGuestOrdersToUser(database, user.id, user.emailNormalized);
+  await linkGuestWorkshopReservationsToUser(database, user.id, user.emailNormalized);
+  await upsertIdentity(database, {
+    userId: user.id,
+    provider: "direct",
+    providerUserId: user.emailNormalized,
+    providerEmail: user.email,
+  });
+  const session = await createSession(database, env, user.id, request);
+
+  return {
+    user,
+    session,
+  };
+}
+
+export async function signupWithPassword(env, {
+  email,
+  fullName,
+  password,
+  privacyConsent,
+  termsConsent,
+  marketingConsent,
+}, request) {
+  if (String(password || "").length < PASSWORD_MIN_LENGTH) {
+    throw Object.assign(new Error(`비밀번호는 최소 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다.`), {
+      status: 400,
+    });
+  }
+
+  if (!privacyConsent || !termsConsent) {
+    throw Object.assign(new Error("필수 약관 동의가 필요합니다."), {
+      status: 400,
+    });
+  }
+
+  const database = requireDb(env);
+  const user = await createOrUpdatePasswordUser(database, env, {
+    email,
+    fullName,
+    password,
+    marketingOptIn: marketingConsent,
+  });
 
   await linkGuestOrdersToUser(database, user.id, user.emailNormalized);
   await linkGuestWorkshopReservationsToUser(database, user.id, user.emailNormalized);

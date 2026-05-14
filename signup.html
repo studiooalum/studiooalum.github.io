@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Studio OALUM — Sign Up</title>
+  <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/png" href="./oalum_favicon.png">
 
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
@@ -21,12 +22,12 @@
 
   <main class="account-main">
     <section class="account-auth-shell account-auth-shell--signup">
-      <section class="account-panel">
+      <section class="account-panel account-panel--signup">
         <h1 class="account-heading">회원가입</h1>
-        <p class="account-copy">이메일로 간단히 가입하고 주문 내역, 기본 주소, 포인트를 관리할 수 있습니다.</p>
+        <p class="account-copy">이메일과 비밀번호로 계정을 만들고 주문 내역, 기본 주소, 포인트를 관리할 수 있습니다.</p>
         <p class="account-status js-signup-status" role="status" aria-live="polite"></p>
 
-        <form class="account-form js-signup-request-form" novalidate>
+        <form class="account-form js-signup-form" novalidate>
           <label class="account-field">
             <span>이름</span>
             <input type="text" name="fullName" autocomplete="name" inputmode="text" required />
@@ -35,24 +36,45 @@
             <span>이메일 주소</span>
             <input type="email" name="email" autocomplete="email" inputmode="email" required />
           </label>
-          <button type="submit" class="account-btn">가입용 인증코드 받기</button>
-          <a href="./account.html" class="account-inline-link">이미 계정이 있나요? 로그인으로 돌아가기</a>
-        </form>
-
-        <form class="account-form js-signup-verify-form" hidden novalidate>
-          <p class="account-copy account-auth-email">인증코드를 <strong class="js-signup-email-display"></strong> 로 보냈습니다.</p>
           <label class="account-field">
-            <span>6자리 인증코드</span>
-            <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
+            <span>비밀번호</span>
+            <input type="password" name="password" autocomplete="new-password" minlength="8" required />
           </label>
-          <p class="account-auth-debug js-signup-debug" hidden></p>
-          <div class="account-panel-actions">
-            <button type="submit" class="account-btn">회원가입 완료</button>
-            <button type="button" class="account-btn account-btn--secondary js-signup-reset">입력 수정</button>
+          <label class="account-field">
+            <span>비밀번호 확인</span>
+            <input type="password" name="passwordConfirm" autocomplete="new-password" minlength="8" required />
+          </label>
+
+          <div class="account-consent-list">
+            <label class="account-checkbox">
+              <input type="checkbox" name="privacyConsent" required />
+              <span class="account-checkbox-copy">
+                <strong>개인정보 처리방침에 동의합니다.</strong>
+                <span class="account-consent-tag account-consent-tag--required">필수</span>
+              </span>
+            </label>
+            <label class="account-checkbox">
+              <input type="checkbox" name="termsConsent" required />
+              <span class="account-checkbox-copy">
+                <strong>이용약관에 동의합니다.</strong>
+                <span class="account-consent-tag account-consent-tag--required">필수</span>
+              </span>
+            </label>
+            <label class="account-checkbox">
+              <input type="checkbox" name="marketingConsent" />
+              <span class="account-checkbox-copy">
+                <strong>마케팅 정보 수신에 동의합니다.</strong>
+                <span class="account-consent-tag account-consent-tag--optional">선택</span>
+              </span>
+            </label>
+          </div>
+
+          <p class="account-copy account-copy--quiet">비밀번호는 8자 이상으로 설정해주세요.</p>
+          <div class="account-panel-actions account-panel-actions--auth">
+            <button type="submit" class="account-btn">회원가입</button>
+            <a href="./account.html" class="account-btn account-btn--signup">로그인으로 돌아가기</a>
           </div>
         </form>
-
-        <p class="account-copy account-copy--quiet">간편 로그인으로 처음 들어와도 새 계정이 자동으로 생성됩니다.</p>
       </section>
     </section>
   </main>

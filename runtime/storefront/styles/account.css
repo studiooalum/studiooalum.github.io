@@ -23,6 +23,22 @@
   gap: 18px;
 }
 
+.account-panel--login,
+.account-panel--signup,
+.account-panel--guest {
+  padding: 22px 20px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+}
+
+.account-panel--login,
+.account-panel--signup {
+  background: #f3ede4;
+}
+
+.account-panel--guest {
+  background: #f8f7f3;
+}
+
 .account-panel[hidden] {
   display: none !important;
 }
@@ -52,99 +68,18 @@
   gap: 12px;
 }
 
-.account-inline-link {
-  width: fit-content;
-  font-family: var(--font-kor-body);
-  font-size: 12px;
-  line-height: 1.5;
-  color: rgba(17, 17, 17, 0.72);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 .account-auth-shell--signup {
-  max-width: 380px;
-}
-
-.account-social-auth {
-  display: grid;
-  gap: 10px;
-}
-
-.account-subheading {
-  margin: 0;
-  font-family: var(--font-kor-button);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.3;
-}
-
-.account-provider-grid {
-  display: grid;
-  gap: 10px;
-}
-
-.account-provider-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid rgba(17, 17, 17, 0.16);
-  background: #fff;
-  color: #111;
-  text-decoration: none;
-  font-family: var(--font-kor-button);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.account-provider-btn--kakao {
-  background: #fee500;
-  border-color: #fee500;
-}
-
-.account-provider-btn--naver {
-  background: #03c75a;
-  border-color: #03c75a;
-  color: #fff;
-}
-
-.account-provider-btn--google {
-  background: #fff;
-}
-
-.account-provider-btn.is-disabled,
-.account-provider-btn:disabled {
-  opacity: 0.52;
-  cursor: not-allowed;
-}
-
-.account-provider-help {
-  min-height: 16px;
-  margin: 0;
-  font-family: var(--font-kor-body);
-  font-size: 11px;
-  line-height: 1.5;
-  color: rgba(17, 17, 17, 0.62);
-}
-
-.account-auth-email {
-  margin: 0;
-}
-
-.account-auth-debug {
-  margin: 0;
-  font-family: var(--font-kor-body);
-  font-size: 12px;
-  line-height: 1.5;
-  color: #7e4a00;
+  max-width: 520px;
 }
 
 .account-panel-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.account-panel-actions--auth > * {
+  flex: 1 1 160px;
 }
 
 .account-field {
@@ -175,6 +110,9 @@
 }
 
 .account-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: fit-content;
   min-width: 92px;
   height: 30px;
@@ -182,6 +120,7 @@
   border: 1px solid #111;
   background: #111;
   color: #fff;
+  text-decoration: none;
   font-family: var(--font-kor-button);
   font-size: 14px;
   cursor: pointer;
@@ -194,6 +133,12 @@
 
 .account-btn--secondary {
   background: transparent;
+  color: #111;
+}
+
+.account-btn--signup {
+  background: #dccdb5;
+  border-color: #c5b08d;
   color: #111;
 }
 
@@ -325,15 +270,56 @@
   color: rgba(17, 17, 17, 0.56);
 }
 
-.account-info-list {
-  margin: 0;
-  padding-left: 18px;
+.account-consent-list {
   display: grid;
-  gap: 8px;
+  gap: 12px;
+  padding: 14px 12px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.account-checkbox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
   font-family: var(--font-kor-body);
   font-size: 12px;
   line-height: 1.6;
-  color: rgba(17, 17, 17, 0.72);
+  color: rgba(17, 17, 17, 0.76);
+}
+
+.account-checkbox input {
+  margin-top: 3px;
+}
+
+.account-checkbox-copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.account-consent-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.account-consent-tag--required {
+  background: #111;
+  border-color: #111;
+  color: #fff;
+}
+
+.account-consent-tag--optional {
+  background: rgba(17, 17, 17, 0.04);
+  color: #111;
 }
 
 .account-points {
@@ -362,19 +348,15 @@
   }
 
   .account-auth-shell {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .account-auth-shell--signup {
-    grid-template-columns: minmax(0, 380px);
+    grid-template-columns: minmax(0, 520px);
     justify-content: start;
   }
 
   .account-layout {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .account-provider-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

@@ -20,13 +20,13 @@
 ├─ public/                     # 폰트/이미지 등 정적 자산
 ├─ runtime/
 │  └─ storefront/              # 현재 공개 페이지가 공유하는 스타일/스크립트 런타임
-├─ functions/                  # Cloudflare runtime API surface
+├─ functions/                  # Cloudflare Pages Functions API
 ├─ cloudflare/
-│  └─ d1/                      # Cloudflare libs, bindings, D1 schema/migrations
+│  └─ d1/                      # D1 schema와 migrations
 ├─ apps/
 │  └─ web/                     # 정식 오픈용 Next.js storefront 스캐폴드
 ├─ archive/
-│  ├─ legacy/                  # self-contained 레거시 HTML 셸 스냅샷 보관
+│  ├─ legacy/                  # 더 이상 루트 사이트가 직접 사용하지 않는 이전 HTML 셸 보관
 │  └─ README.md
 └─ docs/
    └─ architecture.md
@@ -57,32 +57,33 @@ npm run web:dev
 ## Auth Notes
 
 - 현재 로그인은 루트 공개 스토어 기준으로 `account.html` + `functions/api/auth/*` + `cloudflare/d1/schema.sql` 조합으로 동작합니다.
-- 인증 방식은 비밀번호 없는 이메일 인증코드 직접가입/로그인과 OAuth 소셜 로그인 조합입니다.
-- 현재 지원 코드는 `direct`(이메일), `kakao`, `naver`, `google`이며 구글은 환경변수가 있을 때만 버튼이 노출됩니다.
+- 현재 루트 스토어프론트 UI는 이메일 + 비밀번호 직접가입/로그인만 노출합니다. 로그인 과정에 별도 이메일 인증은 요구하지 않습니다.
+- 회원가입 시 이름, 이메일, 비밀번호와 함께 개인정보 처리방침 동의, 이용약관 동의, 마케팅 수신 동의를 저장합니다.
+- OAuth 백엔드 스캐폴딩은 남아 있지만 현재 루트 UI에서는 소셜 로그인 버튼을 노출하지 않습니다.
 - 로컬에서 인증 흐름까지 확인하려면 정적 서버가 아니라 `npm run cf:pages:dev`로 실행해야 합니다.
 - 배포 전에는 D1에 최신 `cloudflare/d1/schema.sql`을 반영해야 합니다.
-- 기존 D1을 쓰고 있다면 `cloudflare/d1/migrations/0002_auth_oauth.sql`을 먼저 적용해야 합니다.
+- 기존 D1을 쓰고 있다면 `cloudflare/d1/migrations/0002_auth_oauth.sql` 다음 `cloudflare/d1/migrations/0003_password_auth.sql` 순서로 적용해야 합니다.
 
 필수 또는 권장 환경 변수:
 
 - `OALUM_DB`: Cloudflare Pages D1 binding
-- `AUTH_SECRET`: 세션/인증코드 해시용 시크릿 문자열 권장
-- `RESEND_API_KEY`: 배포용 인증 메일 발송 API 키
-- `RESEND_FROM_EMAIL`: 배포용 발신 이메일 주소
-- `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`: 카카오 로그인
-- `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`: 네이버 로그인
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: 구글 로그인 선택
-- `AUTH_BASE_URL`: OAuth callback 절대 URL을 고정해야 할 때만 사용
-- `AUTH_DEBUG=true`: 메일 없이 개발용 인증코드를 API 응답에 포함할 때만 사용
+- `AUTH_SECRET`: 세션 및 비밀번호 기반 인증 해시에 쓰는 시크릿 문자열 권장
 - `AUTH_COOKIE_INSECURE=true`: 로컬 HTTP 개발 환경에서만 필요할 수 있음
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`: 기존 이메일 코드 인증 플로우를 유지하거나 테스트할 때만 필요
+- `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`: 카카오 로그인 재활성화 시 필요
+- `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`: 네이버 로그인 재활성화 시 필요
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: 구글 로그인 재활성화 시 필요
+- `AUTH_BASE_URL`: OAuth callback 절대 URL을 고정해야 할 때만 사용
+- `AUTH_DEBUG=true`: 기존 이메일 코드 인증 플로우를 로컬에서 디버깅할 때만 사용
 
 기존 D1에 마이그레이션을 적용할 때는 아래처럼 실행합니다.
 
 ```bash
 npx wrangler d1 execute oalum-orders --file=./cloudflare/d1/migrations/0002_auth_oauth.sql
+npx wrangler d1 execute oalum-orders --file=./cloudflare/d1/migrations/0003_password_auth.sql
 ```
 
-OAuth 제공자에 등록할 callback URL 패턴:
+OAuth 제공자에 등록할 callback URL 패턴은 소셜 로그인을 다시 켤 때만 필요합니다.
 
 - 카카오: `/api/auth/oauth/callback?provider=kakao`
 - 네이버: `/api/auth/oauth/callback?provider=naver`
@@ -95,8 +96,8 @@ OAuth 제공자에 등록할 callback URL 패턴:
 - 현재 공개 사이트를 수정할 때는 루트 HTML과 `runtime/storefront` 자산을 먼저 봅니다.
 - `apps/web`는 정식 오픈용 Next.js storefront 스캐폴드입니다. 아직 루트 정적 storefront를 대체하지 않습니다.
 - Sanity Studio가 필요하면 별도 저장소 또는 비추적 로컬 경로로 두는 전제를 유지합니다.
-- `runtime/storefront/`는 현재 공개 정적 셸이 직접 읽는 라이브 런타임입니다.
-- `archive/legacy/`는 self-contained한 이전 HTML 셸 스냅샷만 보관합니다.
+- `runtime/storefront/`는 현재 공개 중인 루트 정적 셸이 직접 읽는 라이브 런타임입니다.
+- `archive/legacy/`는 더 이상 루트 사이트가 직접 사용하지 않는 이전 HTML 셸을 보관합니다.
 
 ## Planning Docs
 

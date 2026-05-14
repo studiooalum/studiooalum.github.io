@@ -50,102 +50,55 @@ function setStatus(target, message = "", type = "info") {
 }
 
 export function initSignupPage() {
-  const requestForm = document.querySelector(".js-signup-request-form");
-  const verifyForm = document.querySelector(".js-signup-verify-form");
+  const form = document.querySelector(".js-signup-form");
   const statusEl = document.querySelector(".js-signup-status");
-  const emailDisplayEl = document.querySelector(".js-signup-email-display");
-  const debugEl = document.querySelector(".js-signup-debug");
-  const resetButton = document.querySelector(".js-signup-reset");
 
-  if (!requestForm || !verifyForm || !statusEl || !emailDisplayEl || !debugEl) {
+  if (!form || !statusEl) {
     return;
   }
 
-  const state = {
-    pendingEmail: "",
-    pendingFullName: "",
-    debugCode: "",
-  };
-
-  function renderFlow() {
-    const isVerifying = Boolean(state.pendingEmail);
-
-    requestForm.hidden = isVerifying;
-    verifyForm.hidden = !isVerifying;
-    requestForm.elements.fullName.value = state.pendingFullName || requestForm.elements.fullName.value || "";
-    requestForm.elements.email.value = state.pendingEmail || requestForm.elements.email.value || "";
-    emailDisplayEl.textContent = state.pendingEmail;
-    debugEl.hidden = !state.debugCode;
-    debugEl.textContent = state.debugCode ? `개발용 인증코드: ${state.debugCode}` : "";
-  }
-
-  requestForm.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const submitButton = requestForm.querySelector("button[type='submit']");
-    const fullName = String(requestForm.elements.fullName.value || "").trim();
-    const email = String(requestForm.elements.email.value || "").trim();
+    const submitButton = form.querySelector("button[type='submit']");
+    const fullName = String(form.elements.fullName.value || "").trim();
+    const email = String(form.elements.email.value || "").trim();
+    const password = String(form.elements.password.value || "");
+    const passwordConfirm = String(form.elements.passwordConfirm.value || "");
+    const privacyConsent = form.elements.privacyConsent.checked === true;
+    const termsConsent = form.elements.termsConsent.checked === true;
+    const marketingConsent = form.elements.marketingConsent.checked === true;
 
-    setButtonLoading(submitButton, true, "발송 중…");
-
-    try {
-      const payload = await requestJson("./api/auth/request", {
-        method: "POST",
-        body: {
-          mode: "signup",
-          fullName,
-          email,
-        },
-      });
-
-      state.pendingFullName = fullName;
-      state.pendingEmail = email;
-      state.debugCode = payload?.debugCode || "";
-      renderFlow();
-      verifyForm.elements.code.value = "";
-      verifyForm.elements.code.focus();
-      setStatus(statusEl, "인증코드를 전송했습니다. 메일함을 확인해주세요.", "success");
-    } catch (error) {
-      setStatus(statusEl, error.message || "인증코드를 전송하지 못했습니다.", "error");
-    } finally {
-      setButtonLoading(submitButton, false, "발송 중…");
+    if (password !== passwordConfirm) {
+      setStatus(statusEl, "비밀번호와 비밀번호 확인이 일치하지 않습니다.", "error");
+      form.elements.passwordConfirm.focus();
+      return;
     }
-  });
 
-  verifyForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const submitButton = verifyForm.querySelector("button[type='submit']");
-    const code = String(verifyForm.elements.code.value || "").trim();
+    if (!privacyConsent || !termsConsent) {
+      setStatus(statusEl, "필수 약관에 모두 동의해주세요.", "error");
+      return;
+    }
 
     setButtonLoading(submitButton, true, "가입 중…");
 
     try {
-      await requestJson("./api/auth/verify", {
+      await requestJson("./api/auth/signup", {
         method: "POST",
         body: {
-          mode: "signup",
-          email: state.pendingEmail,
-          code,
-          fullName: state.pendingFullName,
+          fullName,
+          email,
+          password,
+          privacyConsent,
+          termsConsent,
+          marketingConsent,
         },
       });
 
-      window.location.href = "./account.html?auth=success&provider=direct";
+      window.location.href = "./account.html?auth=signup-success";
     } catch (error) {
       setStatus(statusEl, error.message || "회원가입을 완료하지 못했습니다.", "error");
     } finally {
       setButtonLoading(submitButton, false, "가입 중…");
     }
   });
-
-  resetButton?.addEventListener("click", () => {
-    state.pendingEmail = "";
-    state.pendingFullName = "";
-    state.debugCode = "";
-    verifyForm.reset();
-    renderFlow();
-    requestForm.elements.fullName.focus();
-    setStatus(statusEl, "입력 내용을 수정해주세요.");
-  });
-
-  renderFlow();
 }

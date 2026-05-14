@@ -1,4 +1,3 @@
-import { listOAuthProviders } from "../../../cloudflare/lib/oauth.js";
 import { json, noContent } from "../../../cloudflare/lib/http.js";
 
 export function onRequestOptions(context) {
@@ -10,9 +9,9 @@ export function onRequestGet(context) {
     ok: true,
     direct: {
       key: "direct",
-      label: "이메일로 가입 / 로그인",
+      label: "이메일 로그인",
       enabled: true,
     },
-    providers: listOAuthProviders(context.env),
+    providers: [],
   });
 }

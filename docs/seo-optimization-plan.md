@@ -22,10 +22,11 @@
 - Success
 - Fail
 - Account
+- Signup
 - /api/*
 - archive/legacy/*
 
-현재 noindex 경계는 [_headers](/workspaces/studiooalum.github.io/_headers) 와 [robots.txt](/workspaces/studiooalum.github.io/robots.txt) 기준으로 이미 일부 반영되어 있다.
+현재 noindex 경계는 [_headers](/workspaces/studiooalum.github.io/_headers) 와 [robots.txt](/workspaces/studiooalum.github.io/robots.txt) 기준으로 이미 일부 반영되어 있다. 쿼리 기반 상세 페이지인 [product.html](/workspaces/studiooalum.github.io/product.html), [edition.html](/workspaces/studiooalum.github.io/edition.html), [workshop.html](/workspaces/studiooalum.github.io/workshop.html) 은 기본 상태에서 noindex 로 두고, 실제 상세 데이터가 로드되면 런타임 SEO 유틸이 canonical 과 robots 를 index 상태로 갱신하도록 정리한다.
 
 ## 2. Canonical Domain Strategy
 
@@ -35,7 +36,7 @@
 - 나머지는 301 redirect
 - Search Console 속성도 canonical 기준으로 등록
 
-도메인이 확정되면 sitemap.xml 과 canonical link를 함께 넣는다.
+도메인이 확정되면 sitemap.xml 과 canonical link를 함께 넣는다. 현재 리포는 clean URL canonical 을 기준으로 [sitemap.xml](/workspaces/studiooalum.github.io/sitemap.xml) 과 [_redirects](/workspaces/studiooalum.github.io/_redirects) 를 맞추는 방향이 안전하다.
 
 ## 3. Metadata Plan
 
