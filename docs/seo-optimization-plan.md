@@ -117,6 +117,7 @@ JSON-LD를 페이지 유형별로 나눈다.
 ## 8. Measurement Stack
 
 - Google Search Console 등록
+- Naver Search Advisor 등록
 - Bing Webmaster 등록
 - Cloudflare Web Analytics 연결
 - 상품 클릭, 체크아웃 진입, 결제 완료를 별도 이벤트로 수집
@@ -130,7 +131,7 @@ SEO는 유입만 보면 안 되고, 검색 유입이 실제 탐색과 구매로 
 3. 핵심 페이지 메타데이터 정비
 4. noindex 경계 재검토
 5. Product와 Shop structured data 추가
-6. Search Console 등록과 색인 제출
+6. Google Search Console, Naver Search Advisor 등록과 색인 제출
 7. 검색 의도형 콘텐츠 페이지 확장
 
 ## 10. Immediate Implementation Backlog
@@ -139,4 +140,8 @@ SEO는 유입만 보면 안 되고, 검색 유입이 실제 탐색과 구매로 
 - canonical/og 메타 추가
 - 실제 도메인 기준 sitemap.xml 생성
 - product, edition 페이지용 JSON-LD 추가
-- Search Console 제출용 site verification 메타 또는 DNS 설정
+- Google Search Console, Naver Search Advisor 제출용 site verification 메타 또는 DNS 설정
+
+현재 루트 정적 storefront 는 빌드 시 `NAVER_SITE_VERIFICATION` 환경변수가 있으면 `dist/index.html` 의 `<head>` 에 `naver-site-verification` 메타를 주입하도록 맞춘다.
+
+다만 현재 실제 공개 배포는 GitHub Pages가 루트 소스 HTML을 직접 배포하므로, 네이버 Search Advisor 메타 검증을 라이브에 적용하려면 발급된 값을 루트 [index.html](/workspaces/studiooalum.github.io/index.html) 에 직접 넣고 push 하는 절차가 추가로 필요하다.

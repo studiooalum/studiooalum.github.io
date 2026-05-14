@@ -5,10 +5,25 @@ const rootDir = process.cwd();
 const outputDir = path.join(rootDir, "dist");
 const tossClientKey = String(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || process.env.TOSS_CLIENT_KEY || "").trim();
 const cloudflareWebAnalyticsToken = String(process.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN || "").trim();
+const naverSiteVerificationToken = String(process.env.NAVER_SITE_VERIFICATION || "").trim();
 
 const directoriesToCopy = ["public", "runtime", "styles", "scripts"];
 const rootFilePattern = /\.(html|png|jpe?g|gif|webp|svg|ico)$/i;
 const passthroughFiles = new Set(["_headers", "_redirects", "robots.txt", "sitemap.xml", "_routes.json"]);
+
+function injectNamedMetaTag(source, { name, content }) {
+  if (!content || source.includes(`name="${name}"`)) {
+    return source;
+  }
+
+  const snippet = `  <meta name="${name}" content="${content}">`;
+
+  if (source.includes("</head>")) {
+    return source.replace("</head>", `${snippet}\n</head>`);
+  }
+
+  return `${snippet}\n${source}`;
+}
 
 function injectCloudflareWebAnalytics(source) {
   if (!cloudflareWebAnalyticsToken || source.includes("static.cloudflareinsights.com/beacon.min.js")) {
@@ -32,6 +47,13 @@ function transformHtml(entryName, source) {
       /<meta name="oalum-toss-client-key" content="[^"]*">/,
       `<meta name="oalum-toss-client-key" content="${tossClientKey}">`,
     );
+  }
+
+  if (entryName === "index.html" && naverSiteVerificationToken) {
+    transformed = injectNamedMetaTag(transformed, {
+      name: "naver-site-verification",
+      content: naverSiteVerificationToken,
+    });
   }
 
   return injectCloudflareWebAnalytics(transformed);
@@ -80,4 +102,8 @@ if (tossClientKey) {
 
 if (cloudflareWebAnalyticsToken) {
   console.log("[cf:build] injected Cloudflare Web Analytics beacon into HTML files.");
+}
+
+if (naverSiteVerificationToken) {
+  console.log("[cf:build] injected Naver site verification meta into dist/index.html.");
 }
