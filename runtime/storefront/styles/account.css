@@ -17,6 +17,27 @@
   align-items: start;
 }
 
+.account-auth-tabs {
+  display: none;
+}
+
+.account-auth-tab {
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.22);
+  background: transparent;
+  color: rgba(17, 17, 17, 0.56);
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.account-auth-tab.is-active {
+  border-bottom-color: #111;
+  color: #111;
+}
+
 .account-panel {
   min-width: 0;
   display: grid;
@@ -68,17 +89,6 @@
 
 .account-panel-actions--auth > * {
   flex: 1 1 160px;
-}
-
-.account-panel--login .account-panel-actions--auth {
-  flex-wrap: nowrap;
-  gap: 8px;
-  width: fit-content;
-}
-
-.account-panel--login .account-panel-actions--auth > * {
-  flex: 0 0 112px;
-  width: 112px;
 }
 
 .account-field {
@@ -140,6 +150,19 @@
   background: transparent;
   border-color: #111;
   color: #111;
+}
+
+.account-inline-link-row {
+  margin: -2px 0 0;
+}
+
+.account-inline-link {
+  color: rgba(17, 17, 17, 0.72);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.32);
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .account-status {
@@ -277,6 +300,21 @@
   border-top: 1px solid rgba(17, 17, 17, 0.28);
 }
 
+.account-phase {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 17, 17, 0.28);
+}
+
+.account-debug-code {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(17, 17, 17, 0.56);
+}
+
 .account-checkbox {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -341,13 +379,41 @@
   }
 
   .account-auth-shell {
-    gap: 32px;
+    gap: 20px;
+  }
+
+  .account-auth-tabs {
+    display: flex;
+    gap: 18px;
+  }
+
+  .account-auth-shell[data-active-panel="login"] .account-panel--guest,
+  .account-auth-shell[data-active-panel="guest"] .account-panel--login {
+    display: none;
+  }
+
+  .account-panel--login .account-heading,
+  .account-panel--guest .account-heading {
+    display: none;
+  }
+
+  .account-panel--login .account-panel-actions--auth {
+    width: 100%;
+  }
+
+  .account-panel--login .account-panel-actions--auth > * {
+    flex: 1 1 0;
+    width: auto;
   }
 }
 
 @media (min-width: 960px) {
   .account-main {
     padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+  }
+
+  .account-auth-tabs {
+    display: none;
   }
 
   .account-auth-shell {
@@ -359,7 +425,8 @@
   }
 
   .account-panel--login,
-  .account-panel--signup {
+  .account-panel--signup,
+  .account-panel--recovery {
     grid-column: 1;
   }
 
@@ -367,20 +434,15 @@
     grid-column: 2;
   }
 
-  .account-panel--login,
-  .account-panel--guest {
-    grid-template-rows: auto minmax(calc(1.6em * 2), auto) minmax(18px, auto) auto;
+  .account-panel--login .account-panel-actions--auth {
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: fit-content;
   }
 
-  .account-panel--login .account-copy,
-  .account-panel--guest .account-copy {
-    min-height: calc(1.6em * 2);
-  }
-
-  .account-panel--login .account-form,
-  .account-panel--guest .account-form {
-    grid-template-rows: repeat(2, auto) auto;
-    align-content: start;
+  .account-panel--login .account-panel-actions--auth > * {
+    flex: 0 0 112px;
+    width: 112px;
   }
 
   .account-panel--guest .account-form > .account-btn {

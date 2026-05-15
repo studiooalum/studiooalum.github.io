@@ -71,6 +71,7 @@ async function requestJson(url, { method = "GET", body } = {}) {
 
 export function initAccountPage() {
   const authShell = document.querySelector(".js-account-auth-shell");
+  const authTabButtons = Array.from(document.querySelectorAll(".js-account-auth-tab"));
   const memberLayout = document.querySelector(".js-account-member-layout");
   const loginForm = document.querySelector(".js-account-login-form");
   const guestForm = document.querySelector(".js-account-guest-form");
@@ -102,6 +103,18 @@ export function initAccountPage() {
   const emptyOrdersMarkup = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
   const emptyWorkshopsMarkup = '<div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>';
 
+  function setActiveAuthPanel(panelName = "login") {
+    const nextPanel = panelName === "guest" ? "guest" : "login";
+
+    authShell.dataset.activePanel = nextPanel;
+    authTabButtons.forEach((button) => {
+      const active = button.dataset.authTab === nextPanel;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+      button.tabIndex = active ? 0 : -1;
+    });
+  }
+
   function readStatusFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const auth = String(params.get("auth") || "").trim();
@@ -115,6 +128,13 @@ export function initAccountPage() {
       return {
         type: "success",
         message: "회원가입이 완료되었습니다. 바로 로그인되었습니다.",
+      };
+    }
+
+    if (auth === "password-reset") {
+      return {
+        type: "success",
+        message: "비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해주세요.",
       };
     }
 
@@ -157,6 +177,12 @@ export function initAccountPage() {
     ordersEl.innerHTML = emptyOrdersMarkup;
     workshopsEl.innerHTML = emptyWorkshopsMarkup;
   }
+
+  authTabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveAuthPanel(button.dataset.authTab || "login");
+    });
+  });
 
   function renderOrders(orders) {
     if (!Array.isArray(orders) || orders.length === 0) {
@@ -292,6 +318,14 @@ export function initAccountPage() {
         return;
       }
 
+      if (error.status === 404 || error.status === 405 || error.status === 503) {
+        showLoggedOut();
+        if (!silent) {
+          setStatus(loginStatusEl, "현재 계정 서비스를 사용할 수 없습니다.");
+        }
+        return;
+      }
+
       showLoggedOut();
       setStatus(loginStatusEl, error.message || "계정 정보를 불러오지 못했습니다.", "error");
     }
@@ -303,6 +337,7 @@ export function initAccountPage() {
     const email = String(loginForm.elements.email.value || "").trim();
     const password = String(loginForm.elements.password.value || "");
 
+    setActiveAuthPanel("login");
     setButtonLoading(submitButton, true, "로그인 중…");
 
     try {
@@ -364,6 +399,7 @@ export function initAccountPage() {
     const orderId = String(guestForm.elements.orderId.value || "").trim();
     const email = String(guestForm.elements.email.value || "").trim();
 
+    setActiveAuthPanel("guest");
     setButtonLoading(submitButton, true, "조회 중…");
 
     try {
@@ -407,6 +443,7 @@ export function initAccountPage() {
     loadAccount({ silent: true });
   });
 
+  setActiveAuthPanel(authShell.dataset.activePanel || "login");
   showLoggedOut();
   loadAccount({ silent: true }).finally(() => {
     if (urlMessage) {

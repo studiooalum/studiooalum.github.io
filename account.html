@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260515-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
@@ -21,10 +21,32 @@
   </nav>
 
   <main class="account-main">
-    <section class="account-auth-shell js-account-auth-shell">
-      <section class="account-panel account-panel--login">
+    <section class="account-auth-shell js-account-auth-shell" data-active-panel="login">
+      <div class="account-auth-tabs" role="tablist" aria-label="계정 진입 방식">
+        <button
+          type="button"
+          id="accountAuthTabLogin"
+          class="account-auth-tab js-account-auth-tab is-active"
+          data-auth-tab="login"
+          role="tab"
+          aria-selected="true"
+          aria-controls="accountAuthPanelLogin"
+          tabindex="0"
+        >로그인</button>
+        <button
+          type="button"
+          id="accountAuthTabGuest"
+          class="account-auth-tab js-account-auth-tab"
+          data-auth-tab="guest"
+          role="tab"
+          aria-selected="false"
+          aria-controls="accountAuthPanelGuest"
+          tabindex="-1"
+        >비회원 주문</button>
+      </div>
+
+      <section class="account-panel account-panel--login" id="accountAuthPanelLogin" data-auth-panel="login" role="tabpanel" aria-labelledby="accountAuthTabLogin">
         <h1 class="account-heading">로그인</h1>
-        <p class="account-copy">가입한 이메일과 비밀번호로 로그인하고 주문 내역, 워크숍 예약, 기본 주소, 포인트를 관리할 수 있습니다.</p>
         <p class="account-status js-account-login-status" role="status" aria-live="polite"></p>
 
         <form class="account-form js-account-login-form" novalidate>
@@ -40,12 +62,14 @@
             <button type="submit" class="account-btn">로그인</button>
             <a href="./signup.html" class="account-btn account-btn--signup">회원가입</a>
           </div>
+          <p class="account-inline-link-row">
+            <a href="./forgot-password.html" class="account-inline-link">비밀번호를 잊으셨나요?</a>
+          </p>
         </form>
       </section>
 
-      <section class="account-panel account-panel--guest">
-        <h2 class="account-heading">비회원 주문확인</h2>
-        <p class="account-copy">비회원은 별도 모드 없이 그대로 주문하면 됩니다. 여기서는 주문번호와 이메일로 현재 주문 상태만 확인하면 충분합니다.</p>
+      <section class="account-panel account-panel--guest" id="accountAuthPanelGuest" data-auth-panel="guest" role="tabpanel" aria-labelledby="accountAuthTabGuest">
+        <h2 class="account-heading">비회원 주문</h2>
         <p class="account-status js-account-guest-status" role="status" aria-live="polite"></p>
 
         <form class="account-form js-account-guest-form" novalidate>
@@ -129,7 +153,7 @@
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260515-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
     initSiteChrome();

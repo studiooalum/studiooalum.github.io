@@ -4,7 +4,7 @@ const LOGIN_RESEND_WINDOW_MS = 60 * 1000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_HASH_ITERATIONS = 310000;
+const PASSWORD_HASH_ITERATIONS = 100000;
 
 import { linkGuestWorkshopReservationsToUser, readWorkshopReservationsForIdentity } from "./workshops.js";
 
@@ -82,7 +82,11 @@ async function hashLoginCode(env, email, code) {
 
 function normalizeDirectAuthMode(value) {
   const mode = String(value || "login").trim().toLowerCase();
-  return mode === "signup" ? "signup" : "login";
+  if (mode === "signup" || mode === "reset") {
+    return mode;
+  }
+
+  return "login";
 }
 
 async function hashDirectLoginCode(env, email, code, mode = "login") {
@@ -507,7 +511,56 @@ async function createOrUpdatePasswordUser(database, env, {
   });
 }
 
-async function sendLoginCode(env, { email, code }) {
+async function updateUserPassword(database, env, userId, password) {
+  const existing = await findUserById(database, userId);
+  if (!existing) {
+    return null;
+  }
+
+  const now = nowIso();
+  const { passwordHash, passwordSalt } = await createPasswordCredentials(env, password);
+
+  await database
+    .prepare(`
+      UPDATE users
+      SET password_hash = ?,
+          password_salt = ?,
+          updated_at = ?
+      WHERE id = ?
+    `)
+    .bind(passwordHash, passwordSalt, now, existing.id)
+    .run();
+
+  return mapUser({
+    ...existing,
+    password_hash: passwordHash,
+    password_salt: passwordSalt,
+    updated_at: now,
+  });
+}
+
+function getDirectCodeEmailContent(mode, code) {
+  if (mode === "signup") {
+    return {
+      subject: "Studio OALUM 회원가입 인증코드",
+      intro: "Studio OALUM 회원가입 인증코드입니다.",
+    };
+  }
+
+  if (mode === "reset") {
+    return {
+      subject: "Studio OALUM 비밀번호 재설정 인증코드",
+      intro: "Studio OALUM 비밀번호 재설정 인증코드입니다.",
+    };
+  }
+
+  return {
+    subject: "Studio OALUM 로그인 인증코드",
+    intro: "Studio OALUM 로그인 인증코드입니다.",
+  };
+}
+
+async function sendLoginCode(env, { email, code, mode = "login" }) {
   const debugMode = String(env?.AUTH_DEBUG || "").trim().toLowerCase() === "true";
   const resendApiKey = String(env?.RESEND_API_KEY || "").trim();
 
@@ -531,6 +584,8 @@ async function sendLoginCode(env, { email, code }) {
     });
   }
 
+  const emailContent = getDirectCodeEmailContent(mode, code);
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -540,10 +595,10 @@ async function sendLoginCode(env, { email, code }) {
     body: JSON.stringify({
       from,
       to: [email],
-      subject: "Studio OALUM 로그인 인증코드",
+      subject: emailContent.subject,
       html: `
         <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
-          <p>Studio OALUM 로그인 인증코드입니다.</p>
+          <p>${emailContent.intro}</p>
           <p style="font-size: 28px; font-weight: 700; letter-spacing: 0.2em; margin: 20px 0;">${code}</p>
           <p>이 코드는 10분 동안 유효합니다.</p>
         </div>
@@ -670,6 +725,12 @@ export async function requestLoginCode(env, email) {
     });
   }
 
+  if (authMode === "reset" && !existingUser) {
+    throw Object.assign(new Error("가입된 계정이 없습니다. 이메일 주소를 다시 확인해주세요."), {
+      status: 404,
+    });
+  }
+
   const recent = await database
     .prepare(`
       SELECT id, created_at, consumed_at
@@ -715,6 +776,7 @@ export async function requestLoginCode(env, email) {
     delivery = await sendLoginCode(env, {
       email: emailNormalized,
       code,
+      mode: authMode,
     });
   } catch (error) {
     const codeId = insertResult?.meta?.last_row_id;
@@ -878,6 +940,112 @@ export async function verifyLoginCode(env, { email, code, fullName, mode }, requ
   return {
     user,
     session,
+  };
+}
+
+async function clearUserSessionsByUserId(database, userId) {
+  if (!userId) {
+    return false;
+  }
+
+  await database
+    .prepare(`DELETE FROM auth_sessions WHERE user_id = ?`)
+    .bind(userId)
+    .run();
+
+  return true;
+}
+
+export async function resetPasswordWithCode(env, { email, code, password }) {
+  if (String(password || "").length < PASSWORD_MIN_LENGTH) {
+    throw Object.assign(new Error(`비밀번호는 최소 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다.`), {
+      status: 400,
+    });
+  }
+
+  const database = requireDb(env);
+  const emailNormalized = normalizeEmail(email);
+  const recordsResult = await database
+    .prepare(`
+      SELECT *
+      FROM auth_login_codes
+      WHERE email_normalized = ?
+        AND consumed_at IS NULL
+      ORDER BY id DESC
+      LIMIT 6
+    `)
+    .bind(emailNormalized)
+    .all();
+
+  const records = recordsResult?.results || [];
+  const record = records[0] || null;
+
+  if (records.length === 0) {
+    throw Object.assign(new Error("유효한 인증코드가 없습니다. 다시 요청해주세요."), {
+      status: 400,
+    });
+  }
+
+  const candidateHash = await hashDirectLoginCode(env, emailNormalized, code, "reset");
+  const matchingRecord = records.find((item) => item.code_hash === candidateHash) || null;
+
+  if (!matchingRecord) {
+    const nextAttempts = (Number(record?.attempts) || 0) + 1;
+    if (record) {
+      await markCodeAttempt(
+        database,
+        record.id,
+        nextAttempts,
+        nextAttempts >= MAX_LOGIN_ATTEMPTS ? nowIso() : null,
+      );
+    }
+
+    throw Object.assign(new Error("인증코드가 올바르지 않습니다."), {
+      status: 400,
+    });
+  }
+
+  if (!matchingRecord.expires_at || Date.parse(matchingRecord.expires_at) <= Date.now()) {
+    await markCodeAttempt(database, matchingRecord.id, Number(matchingRecord.attempts) || 0, nowIso());
+    throw Object.assign(new Error("인증코드가 만료되었습니다. 다시 요청해주세요."), {
+      status: 400,
+    });
+  }
+
+  const nextAttempts = (Number(matchingRecord.attempts) || 0) + 1;
+  if (nextAttempts > MAX_LOGIN_ATTEMPTS) {
+    await markCodeAttempt(database, matchingRecord.id, nextAttempts, nowIso());
+    throw Object.assign(new Error("시도 횟수를 초과했습니다. 인증코드를 다시 요청해주세요."), {
+      status: 429,
+    });
+  }
+
+  await markCodeAttempt(database, matchingRecord.id, nextAttempts, nowIso());
+
+  const existingUser = await findUserByEmail(database, emailNormalized);
+  if (!existingUser) {
+    throw Object.assign(new Error("가입된 계정이 없습니다. 이메일 주소를 다시 확인해주세요."), {
+      status: 404,
+    });
+  }
+
+  const user = await updateUserPassword(database, env, existingUser.id, password);
+  if (!user) {
+    throw Object.assign(new Error("비밀번호를 업데이트하지 못했습니다."), {
+      status: 500,
+    });
+  }
+
+  await upsertIdentity(database, {
+    userId: user.id,
+    provider: "direct",
+    providerUserId: user.emailNormalized,
+    providerEmail: user.email,
+  });
+  await clearUserSessionsByUserId(database, user.id);
+
+  return {
+    user,
   };
 }
 

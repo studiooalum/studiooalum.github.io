@@ -8,10 +8,40 @@ const apiHost = useCdn
   : `https://${projectId}.api.sanity.io`;
 
 const baseUrl = `${apiHost}/v${apiVersion}/data/query/${dataset}`;
+const proxyPath = "/api/sanity/query";
 
 export const sanityConfig = { projectId, dataset, apiVersion, useCdn, apiHost, baseUrl };
 
-async function fetchQuery(query, params = {}) {
+function canUseProxy() {
+  return typeof window !== "undefined" && /^https?:$/.test(window.location.protocol);
+}
+
+async function fetchViaProxy(query, params = {}) {
+  const response = await fetch(proxyPath, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    credentials: "same-origin",
+    body: JSON.stringify({
+      query,
+      params,
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    const error = new Error(payload?.error || `Sanity proxy failed: ${response.status} ${response.statusText}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  const payload = await response.json();
+  return payload?.result || [];
+}
+
+async function fetchDirect(query, params = {}) {
   const url = new URL(baseUrl);
   url.searchParams.set('query', query);
 
@@ -30,6 +60,20 @@ async function fetchQuery(query, params = {}) {
     throw new Error(`Sanity query error: ${json.error.description || json.error.message || 'Unknown error'}`);
   }
   return json.result;
+}
+
+async function fetchQuery(query, params = {}) {
+  if (canUseProxy()) {
+    try {
+      return await fetchViaProxy(query, params);
+    } catch (error) {
+      if (Number(error?.status) !== 404) {
+        throw error;
+      }
+    }
+  }
+
+  return fetchDirect(query, params);
 }
 
 export default {

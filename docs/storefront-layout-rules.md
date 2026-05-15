@@ -22,7 +22,10 @@
 
 - `account.html`: 로그인 1열, 비회원 주문확인 2열, 나머지 공간은 비워둔다.
 - `signup.html`: 회원가입 폼은 1열에 둔다.
+- `forgot-password.html`: 비밀번호 찾기 폼은 1열에 둔다.
 - 로그인 후 계정 화면은 3열 grid를 유지한다.
+- 모바일 `account.html` 비로그인 화면은 상단 탭으로 로그인 / 비회원 주문을 전환하고, 본문에는 선택된 섹션만 노출한다.
+- `signup.html`과 `forgot-password.html`은 추가 박스 없이 선과 여백만으로 정리한다.
 
 ## Visual Rule
 

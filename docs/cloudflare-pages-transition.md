@@ -110,6 +110,8 @@ npx --yes wrangler pages project list
 - `TOSS_SECRET_KEY`
 - `TOSS_CLIENT_KEY` 또는 `NEXT_PUBLIC_TOSS_CLIENT_KEY`
 - `OALUM_DB` D1 binding
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
 - `ORDER_SYNC_WEBHOOK_URL` optional, if Google Sheets/email sync is enabled
 - `ORDER_SYNC_SHARED_SECRET` optional but strongly recommended for Google Sheets/email sync
 - `ORDER_NOTIFICATION_EMAILS` optional comma-separated recipients for order alerts
@@ -118,6 +120,7 @@ npx --yes wrangler pages project list
 
 - `TOSS_SECRET_KEY`: 서버 결제 승인용. Pages Functions 런타임에서만 사용한다.
 - `NEXT_PUBLIC_TOSS_CLIENT_KEY` 또는 `TOSS_CLIENT_KEY`: 결제 위젯용 공개 키. `npm run cf:build` 시 `dist/payment.html`의 meta tag에 주입된다.
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`: 비밀번호 찾기와 이메일 인증코드 발송에 사용한다.
 
 로컬에서 공개 키를 넣어 build 하려면 아래처럼 실행한다.
 
