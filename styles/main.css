@@ -65,26 +65,6 @@ body {
     pointer-events: none;
 }
 
-.home-brand-copy {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 20;
-    width: min(280px, calc(100vw - 40px));
-    color: rgba(17, 17, 17, 0.82);
-    font-size: 11px;
-    line-height: 1.5;
-    text-align: right;
-}
-
 @media (max-width: 768px) {
     .yarn-text { font-size: 24px; }
-
-    .home-brand-copy {
-        top: 12px;
-        right: 12px;
-        width: min(220px, calc(100vw - 24px));
-        font-size: 10px;
-        line-height: 1.45;
-    }
 }
