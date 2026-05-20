@@ -406,7 +406,6 @@ function setupForm() {
     const memo = form.memo.value === "custom" ? form.memoCustom.value.trim() : form.memo.value;
     const saveAsDefaultAddress = form.saveAsDefaultAddress?.checked === true;
     const agreedTermsPrivacy = form.querySelector("#agreeTermsPrivacy")?.checked === true;
-    const agreedShipping = form.querySelector("#agreeShipping")?.checked === true;
 
     if (!name || !phone || !email || !zipcode || !address1) {
       alert("필수 항목을 모두 입력해주세요.");
@@ -418,8 +417,8 @@ function setupForm() {
       return;
     }
 
-    if (!agreedTermsPrivacy || !agreedShipping) {
-      alert("필수 동의 항목을 모두 확인해주세요.");
+    if (!agreedTermsPrivacy) {
+      alert("이용약관 및 개인정보 처리방침 동의가 필요합니다.");
       return;
     }
 

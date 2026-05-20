@@ -353,14 +353,6 @@
   margin-top: 8px;
 }
 
-.checkout-field__hint {
-  margin: 2px 0 0;
-  font-family: var(--font-kor-body, sans-serif);
-  font-size: 11px;
-  line-height: 1.5;
-  color: rgba(17, 17, 17, 0.56);
-}
-
 .checkout-save-address {
   font-family: var(--font-kor-body, sans-serif);
   font-size: 12px;

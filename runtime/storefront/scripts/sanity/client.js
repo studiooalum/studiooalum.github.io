@@ -67,7 +67,7 @@ async function fetchQuery(query, params = {}) {
     try {
       return await fetchViaProxy(query, params);
     } catch (error) {
-      if (Number(error?.status) !== 404) {
+      if (![404, 405, 501].includes(Number(error?.status))) {
         throw error;
       }
     }

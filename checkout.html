@@ -77,7 +77,6 @@
           </div>
           <input type="text" id="emailDomainCustom" name="emailDomainCustom" class="checkout-field__email-custom" placeholder="직접 도메인 입력" inputmode="email" autocapitalize="none" spellcheck="false" hidden />
           <input type="hidden" id="email" name="email" />
-          <p class="checkout-field__hint">자주 쓰는 메일 주소를 선택해 오타를 줄일 수 있습니다.</p>
         </div>
         <div class="checkout-field-row">
           <div class="checkout-field checkout-field--zip">
@@ -120,10 +119,6 @@
             <input type="checkbox" id="agreeTermsPrivacy" required />
             <span>주문 내용을 확인했으며, <button type="button" class="checkout-link" data-checkout-policy="terms">이용약관</button> 및 <button type="button" class="checkout-link" data-checkout-policy="privacy">개인정보 처리방침</button>에 동의합니다. <span class="required">*</span></span>
           </label>
-          <label class="checkout-agree__item">
-            <input type="checkbox" id="agreeShipping" required />
-            <span><button type="button" class="checkout-link" data-checkout-policy="shipping">배송 · 교환 · 환불 · 적립금 안내</button>를 확인했습니다. <span class="required">*</span></span>
-          </label>
         </div>
         <button type="submit" class="checkout-submit-btn" id="submitOrderBtn">결제 진행하기</button>
       </form>
@@ -131,15 +126,13 @@
   </main>
 
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <script type="module" src="./runtime/storefront/scripts/checkout.js?v=20260520-02"></script>
+  <script type="module" src="./runtime/storefront/scripts/checkout.js?v=20260520-03"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
-    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
     initSiteChrome();
     initCartUI();
-    initSiteFooter();
   </script>
 </body>
 </html>

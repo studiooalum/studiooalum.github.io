@@ -1,4 +1,4 @@
-import client from "./sanity/client.js?v=20260515-01";
+import client from "./sanity/client.js?v=20260520-03";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { getFirstParagraph, parseProductTitle } from "./utils/catalog.js";
