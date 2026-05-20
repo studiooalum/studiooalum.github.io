@@ -9,6 +9,32 @@ function setButtonLoading(button, loading, loadingText) {
   button.textContent = loading ? loadingText : button.dataset.defaultLabel;
 }
 
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function getFriendlyApiMessage(error, fallbackMessage) {
+  const fieldErrors = error?.details?.fieldErrors || null;
+  if (fieldErrors?.email?.length) {
+    return "이메일 주소를 다시 확인해주세요.";
+  }
+
+  if (fieldErrors?.code?.length) {
+    return "인증코드 6자리를 다시 확인해주세요.";
+  }
+
+  if (fieldErrors?.password?.length) {
+    return "비밀번호는 8자 이상으로 입력해주세요.";
+  }
+
+  const message = String(error?.message || "").trim();
+  if (!message || message === "Invalid request payload." || message === "입력한 내용을 다시 확인해주세요." || message === "Request body must be valid JSON.") {
+    return fallbackMessage;
+  }
+
+  return message;
+}
+
 async function requestJson(url, { method = "GET", body } = {}) {
   const init = {
     method,
@@ -27,7 +53,7 @@ async function requestJson(url, { method = "GET", body } = {}) {
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const error = new Error(payload?.error || "Request failed.");
+    const error = new Error(payload?.error || "요청을 처리하지 못했습니다.");
     error.status = response.status;
     error.details = payload?.details || null;
     throw error;
@@ -78,6 +104,12 @@ export function initForgotPasswordPage() {
     const submitButton = requestForm.querySelector("button[type='submit']");
     const email = String(requestForm.elements.email.value || "").trim();
 
+    if (!isValidEmail(email)) {
+      setStatus(requestStatusEl, "이메일 주소를 다시 확인해주세요.", "error");
+      requestForm.elements.email.focus();
+      return;
+    }
+
     setButtonLoading(submitButton, true, "전송 중…");
     setStatus(requestStatusEl, "");
     setStatus(confirmStatusEl, "");
@@ -95,7 +127,7 @@ export function initForgotPasswordPage() {
     } catch (error) {
       confirmPanel.hidden = true;
       debugEl.hidden = true;
-      setStatus(requestStatusEl, error.message || "인증코드를 전송하지 못했습니다.", "error");
+      setStatus(requestStatusEl, getFriendlyApiMessage(error, "인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요."), "error");
     } finally {
       setButtonLoading(submitButton, false, "전송 중…");
     }
@@ -108,6 +140,18 @@ export function initForgotPasswordPage() {
     const password = String(confirmForm.elements.password.value || "");
     const passwordConfirm = String(confirmForm.elements.passwordConfirm.value || "");
     const email = pendingEmail || String(requestForm.elements.email.value || "").trim();
+
+    if (code.length !== 6) {
+      setStatus(confirmStatusEl, "인증코드 6자리를 입력해주세요.", "error");
+      confirmForm.elements.code.focus();
+      return;
+    }
+
+    if (password.length < 8) {
+      setStatus(confirmStatusEl, "비밀번호는 8자 이상으로 입력해주세요.", "error");
+      confirmForm.elements.password.focus();
+      return;
+    }
 
     if (password !== passwordConfirm) {
       setStatus(confirmStatusEl, "새 비밀번호와 비밀번호 확인이 일치하지 않습니다.", "error");
@@ -130,7 +174,7 @@ export function initForgotPasswordPage() {
 
       window.location.href = "./account.html?auth=password-reset";
     } catch (error) {
-      setStatus(confirmStatusEl, error.message || "비밀번호를 재설정하지 못했습니다.", "error");
+      setStatus(confirmStatusEl, getFriendlyApiMessage(error, "비밀번호를 바꾸지 못했습니다. 잠시 후 다시 시도해주세요."), "error");
     } finally {
       setButtonLoading(submitButton, false, "변경 중…");
       confirmForm.elements.password.value = "";

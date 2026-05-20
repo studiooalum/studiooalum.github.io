@@ -471,6 +471,10 @@ function closePanel() {
   activeTrigger?.focus?.();
 }
 
+export function openSitePolicyPanel(key, trigger = null) {
+  openPanel(key, trigger);
+}
+
 export function initSiteFooter() {
   const footerEl = ensureFooter();
   if (!footerEl) return;

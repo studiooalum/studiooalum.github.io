@@ -33,6 +33,6 @@ export async function onRequestPost(context) {
       },
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to log in.");
+    return errorResponse(context.env, error, "로그인을 진행하지 못했습니다.");
   }
 }

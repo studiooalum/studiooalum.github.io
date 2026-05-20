@@ -39,6 +39,6 @@ export async function onRequestPost(context) {
       debugCode: result.debugCode,
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to request a login code.");
+    return errorResponse(context.env, error, "인증코드를 요청하지 못했습니다.");
   }
 }

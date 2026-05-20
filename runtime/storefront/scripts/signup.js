@@ -9,6 +9,32 @@ function setButtonLoading(button, loading, loadingText) {
   button.textContent = loading ? loadingText : button.dataset.defaultLabel;
 }
 
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function getFriendlyApiMessage(error, fallbackMessage) {
+  const fieldErrors = error?.details?.fieldErrors || null;
+  if (fieldErrors?.fullName?.length) {
+    return "이름을 입력해주세요.";
+  }
+
+  if (fieldErrors?.email?.length) {
+    return "이메일 주소를 다시 확인해주세요.";
+  }
+
+  if (fieldErrors?.password?.length) {
+    return "비밀번호는 8자 이상으로 입력해주세요.";
+  }
+
+  const message = String(error?.message || "").trim();
+  if (!message || message === "Invalid request payload." || message === "입력한 내용을 다시 확인해주세요." || message === "Request body must be valid JSON.") {
+    return fallbackMessage;
+  }
+
+  return message;
+}
+
 async function requestJson(url, { method = "GET", body } = {}) {
   const init = {
     method,
@@ -27,7 +53,7 @@ async function requestJson(url, { method = "GET", body } = {}) {
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const error = new Error(payload?.error || "Request failed.");
+    const error = new Error(payload?.error || "요청을 처리하지 못했습니다.");
     error.status = response.status;
     error.details = payload?.details || null;
     throw error;
@@ -68,6 +94,24 @@ export function initSignupPage() {
     const termsConsent = form.elements.termsConsent.checked === true;
     const marketingConsent = form.elements.marketingConsent.checked === true;
 
+    if (!fullName) {
+      setStatus(statusEl, "이름을 입력해주세요.", "error");
+      form.elements.fullName.focus();
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setStatus(statusEl, "이메일 주소를 다시 확인해주세요.", "error");
+      form.elements.email.focus();
+      return;
+    }
+
+    if (password.length < 8) {
+      setStatus(statusEl, "비밀번호는 8자 이상으로 입력해주세요.", "error");
+      form.elements.password.focus();
+      return;
+    }
+
     if (password !== passwordConfirm) {
       setStatus(statusEl, "비밀번호와 비밀번호 확인이 일치하지 않습니다.", "error");
       form.elements.passwordConfirm.focus();
@@ -96,7 +140,7 @@ export function initSignupPage() {
 
       window.location.href = "./account.html?auth=signup-success";
     } catch (error) {
-      setStatus(statusEl, error.message || "회원가입을 완료하지 못했습니다.", "error");
+      setStatus(statusEl, getFriendlyApiMessage(error, "회원가입을 완료하지 못했습니다. 입력한 내용을 다시 확인해주세요."), "error");
     } finally {
       setButtonLoading(submitButton, false, "가입 중…");
     }

@@ -32,6 +32,6 @@ export async function onRequestPost(context) {
       debugCode: result.debugCode,
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to request password reset code.");
+    return errorResponse(context.env, error, "비밀번호 찾기 메일을 보내지 못했습니다.");
   }
 }

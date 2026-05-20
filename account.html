@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Studio OALUM — Account</title>
+  <title>Studio OALUM — 계정</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/png" href="./oalum_favicon.png">
 
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260515-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260520-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="account-page">
   <nav class="gnb gnb--account">
-    <a href="./shop.html" class="gnb__back">← Shop</a>
-    <span class="gnb__title">Account</span>
+    <a href="./shop.html" class="gnb__back">← 쇼핑</a>
+    <span class="gnb__title">계정</span>
   </nav>
 
   <main class="account-main">
@@ -89,7 +89,7 @@
     </section>
 
     <section class="account-layout js-account-member-layout" data-account-protected hidden>
-      <section class="account-panel">
+      <section class="account-panel account-panel--profile">
         <h2 class="account-heading">내 계정 정보</h2>
         <p class="account-status js-account-member-status" role="status" aria-live="polite"></p>
         <form class="account-form js-account-profile-form">
@@ -107,42 +107,47 @@
           </label>
           <label class="account-field">
             <span>우편번호</span>
-            <input type="text" name="zipcode" value="" autocomplete="postal-code" />
+            <input type="text" name="zipcode" value="" autocomplete="postal-code" readonly />
           </label>
           <label class="account-field">
             <span>주소</span>
-            <input type="text" name="address1" value="" autocomplete="address-line1" />
+            <input type="text" name="address1" value="" autocomplete="address-line1" readonly />
           </label>
+          <div class="account-field account-field--address-tools">
+            <span>주소 검색</span>
+            <div class="account-address-tools">
+              <button type="button" class="account-btn account-btn--secondary js-account-address-search">주소 검색</button>
+              <p class="account-copy account-copy--quiet">우편번호와 기본 주소는 검색을 통해 수정할 수 있습니다.</p>
+            </div>
+          </div>
           <label class="account-field">
             <span>상세 주소</span>
             <input type="text" name="address2" value="" autocomplete="address-line2" />
           </label>
-          <div class="account-field">
-            <span>로그인 방식</span>
-            <div class="account-provider-chips js-account-identities"></div>
-          </div>
           <div class="account-panel-actions">
-            <button type="submit" class="account-btn">계정 업데이트</button>
+            <button type="submit" class="account-btn">변경 내용 저장</button>
             <button type="button" class="account-btn account-btn--secondary js-account-logout">로그아웃</button>
           </div>
         </form>
       </section>
 
-      <section class="account-panel">
-        <h2 class="account-heading">결제 내역</h2>
-        <div class="account-orders js-account-orders">
-          <div class="account-empty">등록된 주문 내역이 없습니다.</div>
-        </div>
-      </section>
+      <div class="account-column account-column--history">
+        <section class="account-panel account-panel--orders">
+          <h2 class="account-heading">결제 내역</h2>
+          <div class="account-orders js-account-orders">
+            <div class="account-empty">등록된 주문 내역이 없습니다.</div>
+          </div>
+        </section>
 
-      <section class="account-panel">
-        <h2 class="account-heading">워크숍 예약</h2>
-        <div class="account-orders js-account-workshops">
-          <div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>
-        </div>
-      </section>
+        <section class="account-panel account-panel--workshops">
+          <h2 class="account-heading">워크숍 예약</h2>
+          <div class="account-orders js-account-workshops">
+            <div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>
+          </div>
+        </section>
+      </div>
 
-      <section class="account-panel">
+      <section class="account-panel account-panel--points">
         <h2 class="account-heading">적립금</h2>
         <p class="account-points js-account-points">0 포인트</p>
         <p class="account-copy">상품 구매시 결제 금액의 3% 적립해드리며 1,000 포인트부터 사용 가능합니다.</p>
@@ -150,10 +155,11 @@
     </section>
   </main>
 
+  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
-    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260515-01";
+    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260520-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
     initSiteChrome();

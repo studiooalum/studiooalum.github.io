@@ -39,6 +39,18 @@ function cleanText(value, maxLength = 200) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+function decodeJson(value, fallback = null) {
+  if (!value) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
 function createId(prefix) {
   const timestamp = Date.now().toString(36);
   return `${prefix}_${timestamp}_${randomHex(6)}`.toUpperCase();
@@ -572,14 +584,14 @@ async function sendLoginCode(env, { email, code, mode = "login" }) {
       };
     }
 
-    throw Object.assign(new Error("Email delivery is not configured. Set RESEND_API_KEY or enable AUTH_DEBUG for development."), {
+    throw Object.assign(new Error("이메일 발송 설정이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요."), {
       status: 503,
     });
   }
 
   const from = String(env?.RESEND_FROM_EMAIL || "").trim();
   if (!from) {
-    throw Object.assign(new Error("RESEND_FROM_EMAIL is required when RESEND_API_KEY is configured."), {
+    throw Object.assign(new Error("발신 이메일 설정이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요."), {
       status: 503,
     });
   }
@@ -608,7 +620,7 @@ async function sendLoginCode(env, { email, code, mode = "login" }) {
 
   if (!response.ok) {
     const details = await response.text();
-    throw Object.assign(new Error("Failed to send login email."), {
+    throw Object.assign(new Error("인증 메일을 보내지 못했습니다."), {
       status: 502,
       details: {
         provider: "resend",
@@ -634,6 +646,20 @@ function formatOrder(row) {
     totalAmount: Number(row.total_amount) || 0,
     currency: row.currency || "KRW",
     createdAt: row.created_at,
+    items: Array.isArray(row.items) ? row.items : [],
+  };
+}
+
+function formatOrderItem(row) {
+  const snapshot = decodeJson(row.snapshot, {});
+
+  return {
+    title: row.title || snapshot.title || "",
+    slug: row.slug || snapshot.slug || "",
+    editionLabel: row.edition_label || snapshot.editionLabel || "",
+    quantity: Number(row.quantity) || 0,
+    unitPrice: Number(row.unit_price) || 0,
+    image: snapshot.image || null,
   };
 }
 
@@ -682,7 +708,27 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
     .bind(userId || null, emailNormalized, limit)
     .all();
 
-  return (result?.results || []).map(formatOrder);
+  const rows = result?.results || [];
+  const orders = [];
+
+  for (const row of rows) {
+    const itemsResult = await database
+      .prepare(`
+        SELECT title, slug, edition_label, quantity, unit_price, snapshot
+        FROM order_items
+        WHERE order_id = ?
+        ORDER BY id ASC
+      `)
+      .bind(row.id)
+      .all();
+
+    orders.push(formatOrder({
+      ...row,
+      items: (itemsResult?.results || []).map(formatOrderItem),
+    }));
+  }
+
+  return orders;
 }
 
 async function readLatestOrderProfile(database, { userId, emailNormalized }) {
@@ -745,7 +791,7 @@ export async function requestLoginCode(env, email) {
   if (recent?.consumed_at == null && recent?.created_at) {
     const elapsed = Date.now() - Date.parse(recent.created_at);
     if (Number.isFinite(elapsed) && elapsed < LOGIN_RESEND_WINDOW_MS) {
-      throw Object.assign(new Error("Please wait a moment before requesting another login code."), {
+      throw Object.assign(new Error("잠시 후 다시 요청해주세요."), {
         status: 429,
       });
     }
@@ -1240,7 +1286,7 @@ export async function readSession(env, request, { touch = true } = {}) {
 export async function requireSession(env, request) {
   const session = await readSession(env, request);
   if (!session) {
-    throw Object.assign(new Error("Authentication is required."), {
+    throw Object.assign(new Error("로그인이 필요합니다."), {
       status: 401,
     });
   }
@@ -1324,7 +1370,7 @@ export async function readAccount(env, userId) {
   const database = requireDb(env);
   const userRow = await findUserById(database, userId);
   if (!userRow) {
-    throw Object.assign(new Error("User account could not be found."), {
+    throw Object.assign(new Error("회원 정보를 찾을 수 없습니다."), {
       status: 404,
     });
   }

@@ -30,6 +30,6 @@ export async function onRequestPost(context) {
       user: result.user,
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to reset password.");
+    return errorResponse(context.env, error, "비밀번호를 바꾸지 못했습니다.");
   }
 }

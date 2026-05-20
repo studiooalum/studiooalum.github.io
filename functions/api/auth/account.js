@@ -26,7 +26,7 @@ export async function onRequestGet(context) {
       account,
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to load account.");
+    return errorResponse(context.env, error, "계정 정보를 불러오지 못했습니다.");
   }
 }
 
@@ -48,6 +48,6 @@ export async function onRequestPost(context) {
       account,
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to update account.");
+    return errorResponse(context.env, error, "계정 정보를 저장하지 못했습니다.");
   }
 }

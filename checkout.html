@@ -9,15 +9,15 @@
 
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260520-02">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="checkout-page">
   <nav class="gnb gnb--shop">
-    <a href="./shop.html" class="gnb__back">← Shop</a>
-    <span class="gnb__title">Checkout</span>
+    <a href="./shop.html" class="gnb__back">← 쇼핑</a>
+    <span class="gnb__title">주문하기</span>
     <span class="gnb__spacer"></span>
   </nav>
 
@@ -58,8 +58,26 @@
           <input type="tel" id="phone" name="phone" required placeholder="010-1234-5678" autocomplete="tel" />
         </div>
         <div class="checkout-field">
-          <label for="email">이메일 <span class="required">*</span></label>
-          <input type="email" id="email" name="email" required placeholder="example@email.com" autocomplete="email" />
+          <label for="emailLocal">이메일 <span class="required">*</span></label>
+          <div class="checkout-email-row">
+            <input type="text" id="emailLocal" name="emailLocal" required placeholder="example" inputmode="email" autocapitalize="none" spellcheck="false" />
+            <span class="checkout-email-at" aria-hidden="true">@</span>
+            <select id="emailDomainSelect" name="emailDomainSelect" aria-label="이메일 도메인 선택">
+              <option value="">선택</option>
+              <option value="naver.com">naver.com</option>
+              <option value="gmail.com">gmail.com</option>
+              <option value="daum.net">daum.net</option>
+              <option value="hanmail.net">hanmail.net</option>
+              <option value="kakao.com">kakao.com</option>
+              <option value="outlook.com">outlook.com</option>
+              <option value="hotmail.com">hotmail.com</option>
+              <option value="icloud.com">icloud.com</option>
+              <option value="custom">기타(직접 입력)</option>
+            </select>
+          </div>
+          <input type="text" id="emailDomainCustom" name="emailDomainCustom" class="checkout-field__email-custom" placeholder="직접 도메인 입력" inputmode="email" autocapitalize="none" spellcheck="false" hidden />
+          <input type="hidden" id="email" name="email" />
+          <p class="checkout-field__hint">자주 쓰는 메일 주소를 선택해 오타를 줄일 수 있습니다.</p>
         </div>
         <div class="checkout-field-row">
           <div class="checkout-field checkout-field--zip">
@@ -98,9 +116,13 @@
         </div>
         <div class="checkout-divider"></div>
         <div class="checkout-agree">
-          <label>
-            <input type="checkbox" id="agreeTerms" required />
-            <span>주문 내용을 확인했으며, <a href="#" class="checkout-link">이용약관</a> 및 <a href="#" class="checkout-link">개인정보 처리방침</a>에 동의합니다. <span class="required">*</span></span>
+          <label class="checkout-agree__item">
+            <input type="checkbox" id="agreeTermsPrivacy" required />
+            <span>주문 내용을 확인했으며, <button type="button" class="checkout-link" data-checkout-policy="terms">이용약관</button> 및 <button type="button" class="checkout-link" data-checkout-policy="privacy">개인정보 처리방침</button>에 동의합니다. <span class="required">*</span></span>
+          </label>
+          <label class="checkout-agree__item">
+            <input type="checkbox" id="agreeShipping" required />
+            <span><button type="button" class="checkout-link" data-checkout-policy="shipping">배송 · 교환 · 환불 · 적립금 안내</button>를 확인했습니다. <span class="required">*</span></span>
           </label>
         </div>
         <button type="submit" class="checkout-submit-btn" id="submitOrderBtn">결제 진행하기</button>
@@ -109,13 +131,15 @@
   </main>
 
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <script type="module" src="./runtime/storefront/scripts/checkout.js"></script>
+  <script type="module" src="./runtime/storefront/scripts/checkout.js?v=20260520-02"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart.js";
 
     initSiteChrome();
     initCartUI();
+    initSiteFooter();
   </script>
 </body>
 </html>

@@ -37,6 +37,6 @@ export async function onRequestPost(context) {
       },
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to sign up.");
+    return errorResponse(context.env, error, "회원가입을 완료하지 못했습니다.");
   }
 }

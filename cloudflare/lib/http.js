@@ -31,7 +31,7 @@ export async function readJson(request) {
   try {
     return await request.json();
   } catch {
-    throw Object.assign(new Error("Request body must be valid JSON."), {
+    throw Object.assign(new Error("입력 형식이 올바르지 않습니다."), {
       status: 400,
     });
   }
@@ -40,7 +40,7 @@ export async function readJson(request) {
 export function validationError(env, zodError) {
   return json(env, {
     ok: false,
-    error: "Invalid request payload.",
+    error: "입력한 내용을 다시 확인해주세요.",
     details: zodError.flatten(),
   }, {
     status: 400,

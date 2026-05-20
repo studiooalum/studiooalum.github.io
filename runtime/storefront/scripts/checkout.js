@@ -3,12 +3,14 @@
 ========================= */
 
 import { imageUrl } from "./sanity/image.js";
+import { openSitePolicyPanel } from "./components/siteFooter.js?v=20260520-02";
 import { removeFromCart, renderCartPanel, updateQty } from "./cart.js";
 import { formatPrice } from "./utils/catalog.js";
 import { CART_KEY, ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
 const ORDER_CREATE_ENDPOINT = "/api/orders";
 const ACCOUNT_ENDPOINT = "./api/auth/account";
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /* =========================
    CART DATA (read-only on this page)
@@ -161,6 +163,118 @@ function openAddressSearch() {
   }).open();
 }
 
+function getEmailFieldElements() {
+  return {
+    localInput: document.getElementById("emailLocal"),
+    domainSelect: document.getElementById("emailDomainSelect"),
+    customDomainInput: document.getElementById("emailDomainCustom"),
+    emailInput: document.getElementById("email"),
+  };
+}
+
+function syncEmailCompositeField() {
+  const {
+    localInput,
+    domainSelect,
+    customDomainInput,
+    emailInput,
+  } = getEmailFieldElements();
+
+  if (!localInput || !domainSelect || !customDomainInput || !emailInput) {
+    return "";
+  }
+
+  const localPart = String(localInput.value || "").trim();
+  const selectedDomain = String(domainSelect.value || "").trim();
+  const domain = selectedDomain === "custom"
+    ? String(customDomainInput.value || "").trim()
+    : selectedDomain;
+  const email = localPart && domain ? `${localPart}@${domain}` : "";
+
+  customDomainInput.hidden = selectedDomain !== "custom";
+  if (selectedDomain !== "custom") {
+    customDomainInput.value = "";
+  }
+
+  emailInput.value = email;
+  return email;
+}
+
+function applyEmailCompositeValue(email) {
+  const {
+    localInput,
+    domainSelect,
+    customDomainInput,
+    emailInput,
+  } = getEmailFieldElements();
+
+  if (!localInput || !domainSelect || !customDomainInput || !emailInput) {
+    return;
+  }
+
+  const normalized = String(email || "").trim();
+  if (!normalized.includes("@")) {
+    localInput.value = normalized;
+    domainSelect.value = "";
+    customDomainInput.value = "";
+    emailInput.value = "";
+    customDomainInput.hidden = true;
+    return;
+  }
+
+  const atIndex = normalized.indexOf("@");
+  const localPart = normalized.slice(0, atIndex);
+  const domain = normalized.slice(atIndex + 1);
+  const optionExists = Array.from(domainSelect.options).some((option) => option.value === domain);
+
+  localInput.value = localPart;
+  if (optionExists) {
+    domainSelect.value = domain;
+    customDomainInput.value = "";
+  } else {
+    domainSelect.value = "custom";
+    customDomainInput.value = domain;
+  }
+
+  customDomainInput.hidden = domainSelect.value !== "custom";
+  emailInput.value = normalized;
+}
+
+function setupEmailField() {
+  const {
+    localInput,
+    domainSelect,
+    customDomainInput,
+  } = getEmailFieldElements();
+
+  if (!localInput || !domainSelect || !customDomainInput) {
+    return;
+  }
+
+  const handleSync = () => {
+    syncEmailCompositeField();
+    if (!customDomainInput.hidden && !customDomainInput.value.trim()) {
+      customDomainInput.focus();
+    }
+  };
+
+  localInput.addEventListener("input", handleSync);
+  domainSelect.addEventListener("change", handleSync);
+  customDomainInput.addEventListener("input", handleSync);
+
+  syncEmailCompositeField();
+}
+
+function setupPolicyLinks() {
+  document.querySelectorAll("[data-checkout-policy]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openSitePolicyPanel(button.dataset.checkoutPolicy, button);
+    });
+  });
+}
+
 function setCheckoutAuthState({ authenticated, message, detail }) {
   const headlineEl = document.getElementById("checkoutAuthHeadline");
   const copyEl = document.getElementById("checkoutAuthCopy");
@@ -195,7 +309,7 @@ function fillShippingForm(user) {
   }
 
   if (user.email && !form.email.value.trim()) {
-    form.email.value = user.email;
+    applyEmailCompositeValue(user.email);
   }
 
   if (user.zipcode && !form.zipcode.value.trim()) {
@@ -285,21 +399,27 @@ function setupForm() {
     // Basic client-side validation
     const name = form.name.value.trim();
     const phone = form.phone.value.trim();
-    const email = form.email.value.trim();
+    const email = syncEmailCompositeField().trim();
     const zipcode = form.zipcode.value.trim();
     const address1 = form.address1.value.trim();
     const address2 = form.address2.value.trim();
     const memo = form.memo.value === "custom" ? form.memoCustom.value.trim() : form.memo.value;
     const saveAsDefaultAddress = form.saveAsDefaultAddress?.checked === true;
-    const agreed = form.querySelector("#agreeTerms").checked;
+    const agreedTermsPrivacy = form.querySelector("#agreeTermsPrivacy")?.checked === true;
+    const agreedShipping = form.querySelector("#agreeShipping")?.checked === true;
 
     if (!name || !phone || !email || !zipcode || !address1) {
       alert("필수 항목을 모두 입력해주세요.");
       return;
     }
 
-    if (!agreed) {
-      alert("이용약관 및 개인정보 처리방침에 동의해주세요.");
+    if (!EMAIL_REGEX.test(email)) {
+      alert("이메일 주소를 다시 확인해주세요.");
+      return;
+    }
+
+    if (!agreedTermsPrivacy || !agreedShipping) {
+      alert("필수 동의 항목을 모두 확인해주세요.");
       return;
     }
 
@@ -331,8 +451,10 @@ function setupForm() {
 ========================= */
 
 renderOrderSummary();
+setupEmailField();
 setupSummaryControls();
 setupMemo();
+setupPolicyLinks();
 setupForm();
 loadCheckoutAccount();
 

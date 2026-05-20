@@ -43,6 +43,6 @@ export async function onRequestPost(context) {
       },
     });
   } catch (error) {
-    return errorResponse(context.env, error, "Failed to verify the login code.");
+    return errorResponse(context.env, error, "인증코드를 확인하지 못했습니다.");
   }
 }
