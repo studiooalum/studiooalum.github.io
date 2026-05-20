@@ -421,9 +421,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-kor-button);
-  font-size: 10px;
-  color: rgba(17, 17, 17, 0.48);
+  background:
+    linear-gradient(135deg, rgba(17, 17, 17, 0.04), rgba(17, 17, 17, 0.08)),
+    repeating-linear-gradient(135deg, rgba(17, 17, 17, 0.04), rgba(17, 17, 17, 0.04) 8px, rgba(255, 255, 255, 0.16) 8px, rgba(255, 255, 255, 0.16) 16px);
 }
 
 .account-record__body {
@@ -459,9 +459,27 @@
   color: rgba(17, 17, 17, 0.62);
 }
 
+.account-order-id,
+.account-order-date,
+.account-order-state,
+.account-guest-meta span {
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .account-record__items {
   display: grid;
   gap: 4px;
+}
+
+.account-record__status-detail,
+.account-guest-status-detail {
+  margin: -2px 0 0;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.58);
 }
 
 .account-record__item--more {

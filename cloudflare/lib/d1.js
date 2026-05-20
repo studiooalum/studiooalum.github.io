@@ -39,6 +39,48 @@ function normalizePaymentStatus(status) {
     .replace(/[\s-]+/g, "_");
 }
 
+function normalizeShipmentStatus(status, fallback = "confirmed") {
+  const normalized = String(status || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+
+  switch (normalized) {
+    case "confirmed":
+    case "ready":
+    case "packing":
+    case "shipped":
+    case "delivered":
+    case "returned":
+      return normalized;
+    default:
+      return fallback;
+  }
+}
+
+function mapShipmentRecord(shipment) {
+  if (!shipment) {
+    return null;
+  }
+
+  return {
+    status: normalizeShipmentStatus(shipment.status),
+    carrierId: shipment.carrier_id || "",
+    carrier: shipment.carrier || "",
+    trackingNumber: shipment.tracking_number || "",
+    trackingUrl: shipment.tracking_url || "",
+    trackerRegisteredAt: normalizeTimestamp(shipment.tracker_registered_at),
+    trackerLastSyncedAt: normalizeTimestamp(shipment.tracker_last_synced_at),
+    trackerLastEventAt: normalizeTimestamp(shipment.tracker_last_event_at),
+    trackerLastEventCode: shipment.tracker_last_event_code || "",
+    trackerLastEventName: shipment.tracker_last_event_name || "",
+    trackerLastEventDescription: shipment.tracker_last_event_description || "",
+    shippedAt: normalizeTimestamp(shipment.shipped_at),
+    deliveredAt: normalizeTimestamp(shipment.delivered_at),
+    updatedAt: normalizeTimestamp(shipment.updated_at),
+  };
+}
+
 function getPaymentLifecycle(status, { defaultToPending = false } = {}) {
   const normalized = normalizePaymentStatus(status);
 
@@ -258,7 +300,38 @@ async function findPaymentRecord(database, { paymentKey, orderId } = {}) {
     .first()) || null;
 }
 
-function mapOrderSyncSnapshot(order, items, payment) {
+async function findShipmentRecord(database, { orderId } = {}) {
+  if (!orderId) {
+    return null;
+  }
+
+  return (await database
+    .prepare(`SELECT * FROM shipments WHERE order_id = ? LIMIT 1`)
+    .bind(orderId)
+    .first()) || null;
+}
+
+async function findShipmentRecordByTracking(database, { carrierId, trackingNumber } = {}) {
+  const safeTrackingNumber = String(trackingNumber || "").trim();
+  if (!safeTrackingNumber) {
+    return null;
+  }
+
+  const safeCarrierId = String(carrierId || "").trim();
+  if (safeCarrierId) {
+    return (await database
+      .prepare(`SELECT * FROM shipments WHERE carrier_id = ? AND tracking_number = ? LIMIT 1`)
+      .bind(safeCarrierId, safeTrackingNumber)
+      .first()) || null;
+  }
+
+  return (await database
+    .prepare(`SELECT * FROM shipments WHERE tracking_number = ? LIMIT 1`)
+    .bind(safeTrackingNumber)
+    .first()) || null;
+}
+
+function mapOrderSyncSnapshot(order, items, payment, shipment) {
   const normalizedItems = items.map((item) => ({
     lineId: item.line_id,
     productId: item.product_id || null,
@@ -299,6 +372,7 @@ function mapOrderSyncSnapshot(order, items, payment) {
     cancelledAt: normalizeTimestamp(order.cancelled_at),
     activePaymentKey: order.active_payment_key || null,
     items: normalizedItems,
+    shipment: mapShipmentRecord(shipment),
     payment: payment ? {
       paymentKey: payment.payment_key,
       provider: payment.provider,
@@ -344,8 +418,227 @@ export async function readOrderSyncSnapshot(env, orderId) {
     .all();
 
   const payment = await findPaymentRecord(database, { orderId });
+  const shipment = await findShipmentRecord(database, { orderId });
 
-  return mapOrderSyncSnapshot(order, itemsResult?.results || [], payment);
+  return mapOrderSyncSnapshot(order, itemsResult?.results || [], payment, shipment);
+}
+
+async function ensureShipmentRecord(database, { orderId, status = "confirmed", now }) {
+  if (!orderId) {
+    return null;
+  }
+
+  const existing = await findShipmentRecord(database, { orderId });
+  const nextStatus = normalizeShipmentStatus(status);
+
+  if (existing) {
+    await database
+      .prepare(`
+        UPDATE shipments
+        SET status = CASE WHEN status = 'confirmed' THEN ? ELSE status END,
+            updated_at = ?
+        WHERE order_id = ?
+      `)
+      .bind(nextStatus, now, orderId)
+      .run();
+
+    return findShipmentRecord(database, { orderId });
+  }
+
+  await database
+    .prepare(`
+      INSERT INTO shipments (
+        order_id,
+        status,
+        carrier_id,
+        carrier,
+        tracking_number,
+        tracking_url,
+        tracker_registered_at,
+        tracker_last_synced_at,
+        tracker_last_event_at,
+        tracker_last_event_code,
+        tracker_last_event_name,
+        tracker_last_event_description,
+        shipped_at,
+        delivered_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, '', '', '', '', NULL, NULL, NULL, '', '', '', NULL, NULL, ?, ?)
+    `)
+    .bind(orderId, nextStatus, now, now)
+    .run();
+
+  return findShipmentRecord(database, { orderId });
+}
+
+export async function updateShipment(env, input) {
+  const database = getDb(env);
+  if (!database || !input?.orderId) return null;
+
+  const now = new Date().toISOString();
+  const existing = await ensureShipmentRecord(database, {
+    orderId: input.orderId,
+    status: input.status || "confirmed",
+    now,
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const nextStatus = normalizeShipmentStatus(input.status, normalizeShipmentStatus(existing.status));
+  const shippedAt =
+    nextStatus === "shipped"
+      ? normalizeTimestamp(input.shippedAt) || normalizeTimestamp(existing.shipped_at) || now
+      : normalizeTimestamp(existing.shipped_at);
+  const deliveredAt =
+    nextStatus === "delivered"
+      ? normalizeTimestamp(input.deliveredAt) || normalizeTimestamp(existing.delivered_at) || now
+      : normalizeTimestamp(existing.delivered_at);
+
+  await database
+    .prepare(`
+      UPDATE shipments
+      SET status = ?,
+          carrier_id = ?,
+          carrier = ?,
+          tracking_number = ?,
+          tracking_url = ?,
+          tracker_registered_at = ?,
+          tracker_last_synced_at = ?,
+          tracker_last_event_at = ?,
+          tracker_last_event_code = ?,
+          tracker_last_event_name = ?,
+          tracker_last_event_description = ?,
+          shipped_at = ?,
+          delivered_at = ?,
+          updated_at = ?
+      WHERE order_id = ?
+    `)
+    .bind(
+      nextStatus,
+      String(input.carrierId ?? existing.carrier_id ?? "").trim(),
+      String(input.carrier ?? existing.carrier ?? "").trim(),
+      String(input.trackingNumber ?? existing.tracking_number ?? "").trim(),
+      String(input.trackingUrl ?? existing.tracking_url ?? "").trim(),
+      normalizeTimestamp(input.trackerRegisteredAt) || normalizeTimestamp(existing.tracker_registered_at),
+      normalizeTimestamp(input.trackerLastSyncedAt) || normalizeTimestamp(existing.tracker_last_synced_at),
+      normalizeTimestamp(input.trackerLastEventAt) || normalizeTimestamp(existing.tracker_last_event_at),
+      String(input.trackerLastEventCode ?? existing.tracker_last_event_code ?? "").trim(),
+      String(input.trackerLastEventName ?? existing.tracker_last_event_name ?? "").trim(),
+      String(input.trackerLastEventDescription ?? existing.tracker_last_event_description ?? "").trim(),
+      shippedAt,
+      deliveredAt,
+      now,
+      input.orderId,
+    )
+    .run();
+
+  return findShipmentRecord(database, { orderId: input.orderId });
+}
+
+export async function updateShipmentByTrackingReference(env, input) {
+  const database = getDb(env);
+  if (!database) return null;
+
+  const existing = await findShipmentRecordByTracking(database, {
+    carrierId: input?.carrierId,
+    trackingNumber: input?.trackingNumber,
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const nextStatus = normalizeShipmentStatus(input?.status, normalizeShipmentStatus(existing.status));
+  const trackerLastEventAt = normalizeTimestamp(input?.trackerLastEventAt) || normalizeTimestamp(existing.tracker_last_event_at);
+  const shippedAt =
+    nextStatus === "shipped"
+      ? trackerLastEventAt || normalizeTimestamp(existing.shipped_at) || now
+      : normalizeTimestamp(existing.shipped_at);
+  const deliveredAt =
+    nextStatus === "delivered"
+      ? trackerLastEventAt || normalizeTimestamp(existing.delivered_at) || now
+      : normalizeTimestamp(existing.delivered_at);
+
+  await database
+    .prepare(`
+      UPDATE shipments
+      SET status = ?,
+          tracking_url = ?,
+          tracker_last_synced_at = ?,
+          tracker_last_event_at = ?,
+          tracker_last_event_code = ?,
+          tracker_last_event_name = ?,
+          tracker_last_event_description = ?,
+          shipped_at = ?,
+          delivered_at = ?,
+          updated_at = ?
+      WHERE id = ?
+    `)
+    .bind(
+      nextStatus,
+      String(input?.trackingUrl ?? existing.tracking_url ?? "").trim(),
+      now,
+      trackerLastEventAt,
+      String(input?.trackerLastEventCode ?? existing.tracker_last_event_code ?? "").trim(),
+      String(input?.trackerLastEventName ?? existing.tracker_last_event_name ?? "").trim(),
+      String(input?.trackerLastEventDescription ?? existing.tracker_last_event_description ?? "").trim(),
+      shippedAt,
+      deliveredAt,
+      now,
+      existing.id,
+    )
+    .run();
+
+  return {
+    orderId: existing.order_id,
+    shipment: await findShipmentRecord(database, { orderId: existing.order_id }),
+  };
+}
+
+export async function readFulfillmentOrders(env, { query = "", limit = 20 } = {}) {
+  const database = getDb(env);
+  if (!database) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 50));
+  const safeQuery = String(query || "").trim();
+  const hasQuery = Boolean(safeQuery);
+  const searchValue = `%${safeQuery.toLowerCase()}%`;
+
+  const result = await database
+    .prepare(`
+      SELECT id
+      FROM orders
+      WHERE (? = '' OR lower(id) LIKE ? OR lower(order_name) LIKE ? OR lower(customer_name) LIKE ? OR lower(customer_email) LIKE ?)
+      ORDER BY created_at DESC
+      LIMIT ?
+    `)
+    .bind(
+      hasQuery ? safeQuery : "",
+      searchValue,
+      searchValue,
+      searchValue,
+      searchValue,
+      safeLimit,
+    )
+    .all();
+
+  const rows = result?.results || [];
+  const orders = [];
+
+  for (const row of rows) {
+    const snapshot = await readOrderSyncSnapshot(env, row.id);
+    if (snapshot) {
+      orders.push(snapshot);
+    }
+  }
+
+  return orders;
 }
 
 function shouldApplyOrderLifecycle({ currentStatus, activePaymentKey, paymentKey, lifecycle }) {
@@ -738,6 +1031,14 @@ export async function persistPayment(env, payment) {
     });
   }
 
+  if (lifecycle.paymentStatus === "confirmed") {
+    await ensureShipmentRecord(database, {
+      orderId: payment.orderId,
+      status: "confirmed",
+      now,
+    });
+  }
+
   await upsertPaymentEvent(database, {
     orderId: payment.orderId,
     paymentId: paymentRecord.id,
@@ -794,6 +1095,14 @@ export async function persistWebhookEvent(env, payload, options = {}) {
     cancelledAt: inferCancelledAt(payload) || paymentRecord?.cancelled_at || null,
     now,
   });
+
+  if (lifecycle?.paymentStatus === "confirmed" && orderId) {
+    await ensureShipmentRecord(database, {
+      orderId,
+      status: "confirmed",
+      now,
+    });
+  }
 
   const eventResult = await upsertPaymentEvent(database, {
     orderId,

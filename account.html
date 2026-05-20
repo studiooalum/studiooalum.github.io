@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260520-01">
-  <link rel="stylesheet" href="./runtime/storefront/styles/cart.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260520-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260520-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="account-page">
@@ -133,7 +133,7 @@
 
       <div class="account-column account-column--history">
         <section class="account-panel account-panel--orders">
-          <h2 class="account-heading">결제 내역</h2>
+          <h2 class="account-heading">주문 / 배송 현황</h2>
           <div class="account-orders js-account-orders">
             <div class="account-empty">등록된 주문 내역이 없습니다.</div>
           </div>
@@ -159,8 +159,8 @@
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260520-01";
-    import { initCartUI } from "./runtime/storefront/scripts/cart.js";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260520-02";
+    import { initCartUI } from "./runtime/storefront/scripts/cart.js?v=20260520-01";
 
     initSiteChrome();
     initCartUI();

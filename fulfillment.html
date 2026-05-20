@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM — Fulfillment</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css">
+</head>
+<body class="fulfillment-page">
+  <nav class="gnb gnb--account">
+    <a href="./shop.html" class="gnb__back">← Shop</a>
+    <span class="gnb__title">Fulfillment</span>
+    <span class="gnb__spacer"></span>
+  </nav>
+
+  <main class="fulfillment-main">
+    <section class="fulfillment-shell">
+      <aside class="fulfillment-sidebar">
+        <section class="fulfillment-panel">
+          <h1 class="fulfillment-heading">내부 배송 관리</h1>
+          <p class="fulfillment-copy">주문 결제 완료 이후 배송 상태, 운송장, Delivery Tracker 자동 추적을 관리합니다.</p>
+
+          <form class="fulfillment-auth-form js-fulfillment-auth-form">
+            <label class="fulfillment-field">
+              <span>관리자 키</span>
+              <input type="password" name="adminSecret" autocomplete="current-password" placeholder="ORDER_ADMIN_SECRET" required>
+            </label>
+            <div class="fulfillment-actions fulfillment-actions--compact">
+              <button type="submit" class="fulfillment-btn">잠금 해제</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-auth-clear">초기화</button>
+            </div>
+          </form>
+
+          <p class="fulfillment-status js-fulfillment-auth-status" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="fulfillment-panel">
+          <div class="fulfillment-toolbar">
+            <label class="fulfillment-field fulfillment-field--toolbar">
+              <span>주문 검색</span>
+              <input type="search" class="js-fulfillment-search-input" placeholder="주문번호, 주문명, 고객명, 이메일">
+            </label>
+            <div class="fulfillment-actions fulfillment-actions--compact">
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-search-btn">조회</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-refresh-btn">최신</button>
+            </div>
+          </div>
+
+          <p class="fulfillment-status js-fulfillment-list-status" role="status" aria-live="polite"></p>
+          <div class="fulfillment-order-list js-fulfillment-order-list">
+            <div class="fulfillment-empty">관리자 키를 입력하면 최근 주문이 여기에 표시됩니다.</div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="fulfillment-content">
+        <section class="fulfillment-panel">
+          <h2 class="fulfillment-subheading">연동 상태</h2>
+          <div class="fulfillment-config js-fulfillment-config">
+            <div class="fulfillment-empty">주문 데이터를 불러오면 연동 상태를 확인할 수 있습니다.</div>
+          </div>
+        </section>
+
+        <section class="fulfillment-panel">
+          <h2 class="fulfillment-subheading">선택한 주문</h2>
+          <div class="fulfillment-selection js-fulfillment-selection">
+            <div class="fulfillment-empty">왼쪽 목록에서 주문을 선택하세요.</div>
+          </div>
+
+          <form class="fulfillment-form js-fulfillment-form" hidden>
+            <input type="hidden" name="orderId">
+
+            <label class="fulfillment-field">
+              <span>배송 상태</span>
+              <select name="status" required>
+                <option value="confirmed">주문 확인 완료</option>
+                <option value="ready">배송 준비 중</option>
+                <option value="packing">포장 중</option>
+                <option value="shipped">배송 중</option>
+                <option value="delivered">배송 완료</option>
+                <option value="returned">반송 완료</option>
+              </select>
+            </label>
+
+            <div class="fulfillment-carrier-search">
+              <label class="fulfillment-field fulfillment-field--grow">
+                <span>택배사 검색</span>
+                <input type="search" name="carrierSearch" placeholder="예: CJ, 우체국">
+              </label>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-carrier-search-btn">택배사 찾기</button>
+            </div>
+
+            <div class="fulfillment-suggestions js-fulfillment-carrier-results" hidden></div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>Delivery Tracker Carrier ID</span>
+                <input type="text" name="carrierId" placeholder="예: kr.cjlogistics">
+              </label>
+              <label class="fulfillment-field">
+                <span>표시용 택배사명</span>
+                <input type="text" name="carrier" placeholder="예: CJ대한통운">
+              </label>
+            </div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>운송장 번호</span>
+                <input type="text" name="trackingNumber" placeholder="운송장 번호 입력">
+              </label>
+              <label class="fulfillment-field">
+                <span>추적 링크</span>
+                <input type="url" name="trackingUrl" placeholder="자동 생성 또는 수동 입력">
+              </label>
+            </div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>배송 시작 시각</span>
+                <input type="datetime-local" name="shippedAt">
+              </label>
+              <label class="fulfillment-field">
+                <span>배송 완료 시각</span>
+                <input type="datetime-local" name="deliveredAt">
+              </label>
+            </div>
+
+            <p class="fulfillment-copy fulfillment-copy--quiet">Carrier ID와 운송장 번호가 함께 저장되면 Delivery Tracker webhook 등록을 시도합니다.</p>
+
+            <div class="fulfillment-actions">
+              <button type="submit" class="fulfillment-btn">저장</button>
+            </div>
+
+            <p class="fulfillment-status js-fulfillment-form-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./runtime/storefront/scripts/fulfillment.js"></script>
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+
+    initSiteChrome({ showActions: false });
+  </script>
+</body>
+</html>

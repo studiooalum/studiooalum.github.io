@@ -41,6 +41,7 @@ export async function onRequestPost(context) {
     const warnings = [];
     let persisted = false;
     let syncTriggered = false;
+    let orderSnapshot = null;
 
     if (hasD1(context.env)) {
       try {
@@ -48,6 +49,10 @@ export async function onRequestPost(context) {
           ...payment,
           rawRequest: data,
         });
+
+        if (persisted) {
+          orderSnapshot = await readOrderSyncSnapshot(context.env, payment.orderId);
+        }
       } catch (error) {
         if (strictPersistence) {
           throw Object.assign(new Error("Payment confirmation succeeded but D1 persistence failed."), {
@@ -66,17 +71,16 @@ export async function onRequestPost(context) {
 
     if (persisted) {
       try {
-        const snapshot = await readOrderSyncSnapshot(context.env, payment.orderId);
         const eventType = getOrderSyncEventType(payment.status);
 
-        if (snapshot) {
+        if (orderSnapshot) {
           syncTriggered = await dispatchOrderSync(context, {
             eventType,
-            order: snapshot,
+            order: orderSnapshot,
             meta: {
               sendEmail: shouldEmailForOrderSyncEvent(eventType),
               syncSource: "api.payments.confirm",
-              providerMode: payment.providerMode || snapshot.payment?.providerMode || null,
+              providerMode: payment.providerMode || orderSnapshot.payment?.providerMode || null,
             },
           });
         }
@@ -94,6 +98,7 @@ export async function onRequestPost(context) {
         ...payment,
         persisted,
       },
+      order: orderSnapshot,
       syncTriggered,
       warnings,
     });

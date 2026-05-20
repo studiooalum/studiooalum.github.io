@@ -1,3 +1,4 @@
+import client from "./sanity/client.js?v=20260520-03";
 import { imageUrl } from "./sanity/image.js";
 import { formatPrice } from "./utils/catalog.js";
 import { getWorkshopPoster } from "./utils/workshops.js";
@@ -38,6 +39,24 @@ function resolveImageUrl(image, options) {
     return "";
   }
 
+  if (Array.isArray(image)) {
+    return resolveImageUrl(image[0], options);
+  }
+
+  if (typeof image === "string") {
+    return image;
+  }
+
+  if (typeof image === "object") {
+    if (typeof image.asset?.url === "string") {
+      return image.asset.url;
+    }
+
+    if (typeof image.url === "string") {
+      return image.url;
+    }
+  }
+
   try {
     return imageUrl(image, options);
   } catch {
@@ -68,6 +87,28 @@ function getFriendlyApiMessage(error, fallbackMessage) {
 }
 
 function formatOrderStatus(order) {
+  const shipmentValue = String(order?.shipment?.status || "").trim().toLowerCase();
+
+  if (shipmentValue === "confirmed") {
+    return "주문 확인 완료";
+  }
+
+  if (["ready", "packing"].includes(shipmentValue)) {
+    return "배송 준비 중";
+  }
+
+  if (shipmentValue === "shipped") {
+    return "배송 중";
+  }
+
+  if (shipmentValue === "delivered") {
+    return "배송 완료";
+  }
+
+  if (shipmentValue === "returned") {
+    return "반송 완료";
+  }
+
   const value = String(order?.paymentStatus || order?.status || "").trim().toLowerCase();
 
   if (["confirmed", "done", "paid", "completed", "success", "succeeded"].includes(value)) {
@@ -95,6 +136,54 @@ function formatOrderStatus(order) {
   }
 
   return "주문 접수";
+}
+
+function getSafeTrackingUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url.toString();
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+}
+
+function getOrderStatusDetail(order) {
+  const shipment = order?.shipment || null;
+  const shipmentValue = String(shipment?.status || "").trim().toLowerCase();
+  const carrier = String(shipment?.carrier || "").trim();
+  const trackingNumber = String(shipment?.trackingNumber || "").trim();
+  const trackingText = [carrier, trackingNumber].filter(Boolean).join(" / ");
+
+  if (!["shipped", "delivered"].includes(shipmentValue) || !trackingText) {
+    return null;
+  }
+
+  return {
+    text: `운송장 ${trackingText}`,
+    url: getSafeTrackingUrl(shipment?.trackingUrl),
+  };
+}
+
+function renderOrderStatusDetail(order, className) {
+  const detail = getOrderStatusDetail(order);
+  if (!detail?.text) {
+    return "";
+  }
+
+  if (detail.url) {
+    return `<p class="${className}"><a class="account-inline-link" href="${escapeHtml(detail.url)}" target="_blank" rel="noreferrer">${escapeHtml(detail.text)}</a></p>`;
+  }
+
+  return `<p class="${className}">${escapeHtml(detail.text)}</p>`;
 }
 
 function formatWorkshopStatus(reservation) {
@@ -210,7 +299,67 @@ export function initAccountPage() {
     workshops: [],
     orderPage: 1,
     workshopPage: 1,
+    guestOrder: null,
+    orderImagesBySlug: {},
   };
+
+  function getOrderItems(order) {
+    return Array.isArray(order?.items) ? order.items : [];
+  }
+
+  function getResolvedOrderItemImage(item) {
+    const slug = String(item?.slug || "").trim();
+    return item?.image || (slug ? state.orderImagesBySlug[slug] || null : null);
+  }
+
+  function collectMissingOrderImageSlugs(orders = []) {
+    const slugs = new Set();
+
+    orders.forEach((order) => {
+      getOrderItems(order).forEach((item) => {
+        const slug = String(item?.slug || "").trim();
+        if (!slug || getResolvedOrderItemImage(item)) {
+          return;
+        }
+
+        slugs.add(slug);
+      });
+    });
+
+    return Array.from(slugs);
+  }
+
+  async function hydrateMissingOrderImages(orders = [], rerender = null) {
+    const slugs = collectMissingOrderImageSlugs(orders);
+    if (slugs.length === 0) {
+      return;
+    }
+
+    try {
+      const products = await client.fetch(
+        `*[_type == "product" && slug.current in $slugs] { "slug": slug.current, images[]{ asset->{url} } }`,
+        { slugs },
+      );
+
+      let changed = false;
+      (Array.isArray(products) ? products : []).forEach((product) => {
+        const slug = String(product?.slug || "").trim();
+        const image = Array.isArray(product?.images) ? product.images[0] || null : null;
+        if (!slug || !image || state.orderImagesBySlug[slug]) {
+          return;
+        }
+
+        state.orderImagesBySlug[slug] = image;
+        changed = true;
+      });
+
+      if (changed && typeof rerender === "function") {
+        rerender();
+      }
+    } catch (error) {
+      console.warn("Failed to hydrate order images for account page.", error);
+    }
+  }
 
   function setActiveAuthPanel(panelName = "login") {
     const nextPanel = panelName === "guest" ? "guest" : "login";
@@ -326,16 +475,18 @@ export function initAccountPage() {
   }
 
   function renderOrderCard(order) {
-    const items = Array.isArray(order?.items) ? order.items : [];
+    const items = getOrderItems(order);
     const primaryItem = items[0] || null;
     const href = getEditionHref(primaryItem?.slug);
-    const thumbUrl = resolveImageUrl(primaryItem?.image, { width: 160, height: 160 });
+    const thumbUrl = resolveImageUrl(getResolvedOrderItemImage(primaryItem), { width: 160, height: 160 });
     const title = escapeHtml(order?.orderName || primaryItem?.title || "주문 상품");
-    const itemsMarkup = items.length > 0
+    const statusLabel = formatOrderStatus(order);
+    const secondaryItems = items.slice(1);
+    const itemsMarkup = secondaryItems.length > 0
       ? `
         <div class="account-record__items">
-          ${items.slice(0, 2).map((item) => `<p class="account-record__item">${formatOrderItemCopy(item)}</p>`).join("")}
-          ${items.length > 2 ? `<p class="account-record__item account-record__item--more">외 ${items.length - 2}개 상품</p>` : ""}
+          ${secondaryItems.slice(0, 2).map((item) => `<p class="account-record__item">${formatOrderItemCopy(item)}</p>`).join("")}
+          ${secondaryItems.length > 2 ? `<p class="account-record__item account-record__item--more">외 ${secondaryItems.length - 2}개 상품</p>` : ""}
         </div>
       `
       : "";
@@ -344,7 +495,7 @@ export function initAccountPage() {
       <article class="account-record">
         <div class="account-record__media">
           ${href ? `<a class="account-record__thumb-link" href="${href}">` : '<div class="account-record__thumb-link">'}
-            ${thumbUrl ? `<img class="account-record__thumb" src="${thumbUrl}" alt="${escapeHtml(primaryItem?.title || order?.orderName || "주문 상품")}" loading="lazy" />` : '<span class="account-record__fallback">상품</span>'}
+            ${thumbUrl ? `<img class="account-record__thumb" src="${thumbUrl}" alt="${escapeHtml(primaryItem?.title || order?.orderName || "주문 상품")}" loading="lazy" />` : '<span class="account-record__fallback" aria-hidden="true"></span>'}
           ${href ? "</a>" : "</div>"}
         </div>
         <div class="account-record__body">
@@ -355,8 +506,9 @@ export function initAccountPage() {
           <div class="account-record__meta">
             <span class="account-order-id">주문번호 ${escapeHtml(order?.orderId || "-")}</span>
             <span class="account-order-date">${escapeHtml(formatDate(order?.createdAt))}</span>
-            <span class="account-order-state">${escapeHtml(formatOrderStatus(order))}</span>
+            <span class="account-order-state">${escapeHtml(statusLabel)}</span>
           </div>
+          ${renderOrderStatusDetail(order, "account-record__status-detail")}
           ${itemsMarkup}
         </div>
       </article>
@@ -404,6 +556,8 @@ export function initAccountPage() {
     const startIndex = (state.orderPage - 1) * PAGE_SIZE;
     const pageItems = state.orders.slice(startIndex, startIndex + PAGE_SIZE);
     ordersEl.innerHTML = `${pageItems.map(renderOrderCard).join("")}${createPaginationMarkup("orders", state.orderPage, totalPages)}`;
+
+    hydrateMissingOrderImages(state.orders, () => renderOrders(state.orders));
   }
 
   function renderWorkshopReservations(reservations) {
@@ -423,15 +577,19 @@ export function initAccountPage() {
 
   function renderGuestOrder(order) {
     if (!order) {
+      state.guestOrder = null;
       guestResultEl.hidden = true;
       guestResultEl.innerHTML = "";
       return;
     }
 
-    const itemsMarkup = Array.isArray(order.items) && order.items.length > 0
+    state.guestOrder = order;
+
+    const guestItems = Array.isArray(order.items) ? order.items.slice(1) : [];
+    const itemsMarkup = guestItems.length > 0
       ? `
         <div class="account-guest-items">
-          ${order.items.map((item) => {
+          ${guestItems.map((item) => {
             const titleParts = [item.title, item.editionLabel].filter(Boolean).join(" / ");
             return `
               <div class="account-guest-item">
@@ -444,6 +602,8 @@ export function initAccountPage() {
       `
       : "";
 
+    const statusLabel = formatOrderStatus(order);
+
     guestResultEl.innerHTML = `
       <div class="account-guest-head">
         <p class="account-order-name">${escapeHtml(order.orderName || "주문 상품")}</p>
@@ -452,13 +612,20 @@ export function initAccountPage() {
       <div class="account-guest-meta">
         <span>${escapeHtml(order.orderId || "-")}</span>
         <span>${escapeHtml(formatDate(order.createdAt))}</span>
-        <span>${escapeHtml(formatOrderStatus(order))}</span>
+        <span>${escapeHtml(statusLabel)}</span>
       </div>
+      ${renderOrderStatusDetail(order, "account-guest-status-detail")}
       ${itemsMarkup}
       <p class="account-copy">${escapeHtml(order.customerName || "주문자")}${order.customerPhone ? ` / ${escapeHtml(order.customerPhone)}` : ""}</p>
       <p class="account-copy">${escapeHtml([order.zipcode, order.address1, order.address2].filter(Boolean).join(" "))}</p>
     `;
     guestResultEl.hidden = false;
+
+    hydrateMissingOrderImages([order], () => {
+      if (state.guestOrder) {
+        renderGuestOrder(state.guestOrder);
+      }
+    });
   }
 
   function renderAuthenticated(account) {

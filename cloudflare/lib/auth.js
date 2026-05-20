@@ -646,6 +646,15 @@ function formatOrder(row) {
     totalAmount: Number(row.total_amount) || 0,
     currency: row.currency || "KRW",
     createdAt: row.created_at,
+    shipment: row.shipment_status ? {
+      status: row.shipment_status,
+      carrier: row.shipment_carrier || "",
+      trackingNumber: row.shipment_tracking_number || "",
+      trackingUrl: row.shipment_tracking_url || "",
+      shippedAt: row.shipment_shipped_at || null,
+      deliveredAt: row.shipment_delivered_at || null,
+      updatedAt: row.shipment_updated_at || null,
+    } : null,
     items: Array.isArray(row.items) ? row.items : [],
   };
 }
@@ -686,23 +695,31 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
   const result = await database
     .prepare(`
       SELECT
-        id,
-        user_id,
-        order_name,
-        status,
-        payment_status,
-        total_amount,
-        currency,
-        customer_name,
-        customer_phone,
-        zipcode,
-        address1,
-        address2,
-        created_at
+        orders.id,
+        orders.user_id,
+        orders.order_name,
+        orders.status,
+        orders.payment_status,
+        orders.total_amount,
+        orders.currency,
+        orders.customer_name,
+        orders.customer_phone,
+        orders.zipcode,
+        orders.address1,
+        orders.address2,
+        orders.created_at,
+        shipments.status AS shipment_status,
+        shipments.carrier AS shipment_carrier,
+        shipments.tracking_number AS shipment_tracking_number,
+        shipments.tracking_url AS shipment_tracking_url,
+        shipments.shipped_at AS shipment_shipped_at,
+        shipments.delivered_at AS shipment_delivered_at,
+        shipments.updated_at AS shipment_updated_at
       FROM orders
+      LEFT JOIN shipments ON shipments.order_id = orders.id
       WHERE user_id = ?
          OR lower(customer_email) = ?
-      ORDER BY created_at DESC
+      ORDER BY orders.created_at DESC
       LIMIT ?
     `)
     .bind(userId || null, emailNormalized, limit)
@@ -1453,21 +1470,29 @@ export async function lookupGuestOrder(env, { orderId, email }) {
   const order = await database
     .prepare(`
       SELECT
-        id,
-        order_name,
-        status,
-        payment_status,
-        total_amount,
-        currency,
-        customer_name,
-        customer_phone,
-        customer_email,
-        zipcode,
-        address1,
-        address2,
-        created_at
+        orders.id,
+        orders.order_name,
+        orders.status,
+        orders.payment_status,
+        orders.total_amount,
+        orders.currency,
+        orders.customer_name,
+        orders.customer_phone,
+        orders.customer_email,
+        orders.zipcode,
+        orders.address1,
+        orders.address2,
+        orders.created_at,
+        shipments.status AS shipment_status,
+        shipments.carrier AS shipment_carrier,
+        shipments.tracking_number AS shipment_tracking_number,
+        shipments.tracking_url AS shipment_tracking_url,
+        shipments.shipped_at AS shipment_shipped_at,
+        shipments.delivered_at AS shipment_delivered_at,
+        shipments.updated_at AS shipment_updated_at
       FROM orders
-      WHERE id = ?
+      LEFT JOIN shipments ON shipments.order_id = orders.id
+      WHERE orders.id = ?
         AND lower(customer_email) = ?
       LIMIT 1
     `)
@@ -1499,6 +1524,15 @@ export async function lookupGuestOrder(env, { orderId, email }) {
       totalAmount: Number(order.total_amount) || 0,
       currency: order.currency || "KRW",
       createdAt: order.created_at,
+      shipment: order.shipment_status ? {
+        status: order.shipment_status,
+        carrier: order.shipment_carrier || "",
+        trackingNumber: order.shipment_tracking_number || "",
+        trackingUrl: order.shipment_tracking_url || "",
+        shippedAt: order.shipment_shipped_at || null,
+        deliveredAt: order.shipment_delivered_at || null,
+        updatedAt: order.shipment_updated_at || null,
+      } : null,
       customerName: order.customer_name,
       customerPhone: order.customer_phone,
       customerEmail: order.customer_email,
