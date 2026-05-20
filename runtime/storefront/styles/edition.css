@@ -11,7 +11,7 @@
 .edition-page-main {
   display: grid;
   gap: 0;
-  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 40px;
+  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 80px;
 }
 
 .edition-stage {

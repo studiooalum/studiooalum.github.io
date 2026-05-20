@@ -7,6 +7,18 @@ import { formatPrice } from "./utils/catalog.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { CART_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
+function resolveCartImageUrl(image) {
+  if (!image) return "";
+  if (Array.isArray(image)) return resolveCartImageUrl(image[0]);
+  if (typeof image === "string") return image;
+
+  try {
+    return imageUrl(image, { width: 120 }) || "";
+  } catch {
+    return typeof image?.asset?.url === "string" ? image.asset.url : "";
+  }
+}
+
 /* =========================
    CART DATA (localStorage)
 ========================= */
@@ -186,10 +198,10 @@ export function renderCartPanel() {
     container.innerHTML = `<p class="cart-panel__empty">장바구니가 비어있습니다</p>`;
   } else {
     container.innerHTML = items.map((item) => {
-      const imgSrc = item.image ? imageUrl(item.image, { width: 120 }) : "";
+      const imgSrc = resolveCartImageUrl(item.image);
       return `
         <div class="cart-item" data-id="${item.lineId || item._id}">
-          ${imgSrc ? `<img class="cart-item__img" src="${imgSrc}" alt="${item.title}" />` : ""}
+          ${imgSrc ? `<img class="cart-item__img" src="${imgSrc}" alt="${item.title}" />` : '<span class="cart-item__fallback" aria-hidden="true"></span>'}
           <div class="cart-item__info">
             <div class="cart-item__title">${item.title}</div>
             <div class="cart-item__price">${formatPrice(item.price)}</div>

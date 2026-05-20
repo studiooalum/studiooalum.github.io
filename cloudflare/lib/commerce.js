@@ -42,6 +42,7 @@ export function normalizeOrderItems(items) {
     title: item.title,
     slug: item.slug || "",
     editionLabel: item.editionLabel || "",
+    image: item.image || null,
     price: Math.round(Number(item.price) || 0),
     qty: Math.max(1, Number(item.qty) || 1),
   }));

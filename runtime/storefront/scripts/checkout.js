@@ -20,6 +20,18 @@ function getCart() {
   return readStoredJson(CART_KEY, []);
 }
 
+function resolveCheckoutImageUrl(image) {
+  if (!image) return "";
+  if (Array.isArray(image)) return resolveCheckoutImageUrl(image[0]);
+  if (typeof image === "string") return image;
+
+  try {
+    return imageUrl(image, { width: 120 }) || "";
+  } catch {
+    return typeof image?.asset?.url === "string" ? image.asset.url : "";
+  }
+}
+
 function generateLocalOrderId() {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).slice(2, 10);
@@ -97,11 +109,11 @@ function renderOrderSummary() {
   submitButton.disabled = false;
 
   container.innerHTML = items.map((item) => {
-    const imgSrc = item.image ? imageUrl(item.image, { width: 120 }) : "";
+    const imgSrc = resolveCheckoutImageUrl(item.image);
     const editionLabel = item.editionNumber ? ` #${String(item.editionNumber).padStart(2, "0")}` : "";
     return `
       <div class="checkout-item">
-        ${imgSrc ? `<img class="checkout-item__img" src="${imgSrc}" alt="${item.title}" />` : ""}
+        ${imgSrc ? `<img class="checkout-item__img" src="${imgSrc}" alt="${item.title}" />` : '<span class="checkout-item__fallback" aria-hidden="true"></span>'}
         <div class="checkout-item__info">
           <div class="checkout-item__top">
             <div class="checkout-item__title">${item.title}${editionLabel}</div>
