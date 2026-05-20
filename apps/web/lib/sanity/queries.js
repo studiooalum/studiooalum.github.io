@@ -1,6 +1,7 @@
 export const ALL_PRODUCTS_QUERY = `
   *[_type == "product"] | order(title asc) {
     _id,
+    isRepresentative,
     title,
     description,
     size,
@@ -28,6 +29,7 @@ export const ALL_PRODUCTS_QUERY = `
 export const PRODUCT_BY_SLUG_QUERY = `
   *[_type == "product" && slug.current == $slug][0] {
     _id,
+    isRepresentative,
     title,
     description,
     size,

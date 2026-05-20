@@ -6,6 +6,7 @@ import {
   getProductTags,
   normalizeShopTag,
   parseProductTitle,
+  pickRepresentativeEdition,
 } from "./utils/catalog.js";
 
 const SHOP_TAGS = [
@@ -150,7 +151,8 @@ function renderProducts(products) {
 
   for (const [baseName, editions] of groups) {
     const fullEditions = allGroups.get(baseName) || editions;
-    const representative = fullEditions[0] || editions[0];
+    const representative = pickRepresentativeEdition(fullEditions) || pickRepresentativeEdition(editions);
+    if (!representative) continue;
     gridEl.appendChild(createProductCard(baseName, representative, fullEditions.length));
   }
 }

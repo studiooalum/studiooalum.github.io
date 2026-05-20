@@ -1,7 +1,7 @@
 import client from "./sanity/client.js?v=20260520-03";
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
-import { getFirstParagraph, parseProductTitle } from "./utils/catalog.js";
+import { getFirstParagraph, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -34,7 +34,8 @@ function sortEditionsForProduct(editions) {
 }
 
 function renderEditionGrid(editions) {
-  const representative = editions[0];
+  const representative = pickRepresentativeEdition(editions);
+  if (!representative) return;
   const price = Number(representative.price) || 0;
   const discountRate = Number(representative.discountRate) || 0;
   const displayPrice = Number(price).toLocaleString("ko-KR");

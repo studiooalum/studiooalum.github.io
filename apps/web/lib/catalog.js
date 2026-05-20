@@ -68,6 +68,12 @@ export function computeFinalPrice(product) {
   return discountRate > 0 ? Math.round(price * (1 - discountRate / 100)) : price;
 }
 
+export function pickRepresentativeEdition(editions) {
+  const safeEditions = Array.isArray(editions) ? editions : [];
+
+  return safeEditions.find((edition) => edition?.isRepresentative) || safeEditions[0] || null;
+}
+
 export function groupProductsByBaseName(products) {
   const groups = new Map();
 
@@ -83,7 +89,7 @@ export function groupProductsByBaseName(products) {
     baseName,
     baseSlug: slugifyBaseName(baseName),
     editions,
-    representative: editions[0],
+    representative: pickRepresentativeEdition(editions),
     tags: Array.from(new Set(editions.flatMap((item) => getProductTags(item)))),
   }));
 }
