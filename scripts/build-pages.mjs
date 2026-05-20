@@ -11,6 +11,10 @@ const naverSiteVerificationToken = String(process.env.NAVER_SITE_VERIFICATION ||
 const directoriesToCopy = ["public", "runtime", "styles", "scripts"];
 const rootFilePattern = /\.(html|png|jpe?g|gif|webp|svg|ico)$/i;
 const passthroughFiles = new Set(["_headers", "_redirects", "robots.txt", "sitemap.xml", "_routes.json"]);
+const strippedOutputFiles = [
+  path.join("scripts", "launch-sanity-studio.sh"),
+  path.join("scripts", "launch-sanity-studio.applescript"),
+];
 
 function injectNamedMetaTag(source, { name, content }) {
   if (!content || source.includes(`name="${name}"`)) {
@@ -100,6 +104,12 @@ for (const directoryName of directoriesToCopy) {
   if (!existsSync(sourceDir)) continue;
   cpSync(sourceDir, path.join(outputDir, directoryName), { recursive: true });
   copiedDirectories.push(directoryName);
+}
+
+for (const relativePath of strippedOutputFiles) {
+  const outputPath = path.join(outputDir, relativePath);
+  if (!existsSync(outputPath)) continue;
+  rmSync(outputPath, { force: true });
 }
 
 console.log(`[cf:build] copied ${copiedRootFiles.length} root files and ${copiedDirectories.length} directories into dist/.`);

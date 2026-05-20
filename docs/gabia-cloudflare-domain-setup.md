@@ -85,6 +85,19 @@ Cloudflare 대시보드에서 아래 순서로 진행한다.
 5. 현재 정적 루트를 배포 대상으로 설정
 6. 배포 완료 후 `Custom domains`에서 도메인 연결
 
+Cloudflare Pages 설정값은 아래처럼 두는 것이 맞다.
+
+- Framework preset: `None`
+- Root directory: 비워두기 또는 repo root
+- Build command: `npm run cf:build`
+- Build output directory: `dist`
+
+주의:
+
+- `Root directory`는 build 전에 이미 repo 안에 존재하는 폴더여야 한다.
+- 따라서 `Root directory`를 `/dist`로 두면 clone 직후 해당 폴더가 없어서 `Failed: root directory not found`가 발생한다.
+- `dist`는 `Build output directory`에만 넣는다.
+
 장점:
 
 - 도메인, SSL, 정적 배포가 한 플랫폼에 모임

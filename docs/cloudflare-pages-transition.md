@@ -19,6 +19,22 @@ npm run cf:pages:dev
 - `cf:build`: 현재 루트 HTML과 정적 자산을 `dist/`로 복사
 - `cf:pages:dev`: `dist/`를 기준으로 Cloudflare Pages 로컬 개발 실행
 
+## Cloudflare Pages Project Settings
+
+Git 연동으로 Pages 프로젝트를 만들 때는 아래처럼 설정해야 한다.
+
+- Framework preset: `None`
+- Root directory: 비워두거나 저장소 루트로 둔다
+- Build command: `npm run cf:build`
+- Build output directory: `dist`
+
+중요:
+
+- `Root directory`에 `/dist` 또는 `dist`를 넣으면 안 된다.
+- `dist`는 저장소에 원래 있는 폴더가 아니라 build 중에 생성되는 출력 폴더다.
+- `Root directory`는 clone 직후 실제로 존재해야 하므로, 잘못 넣으면 `Failed: root directory not found`가 난다.
+- `Build output directory`에는 `dist`를 넣되 앞에 `/`를 붙이지 않는 편이 안전하다.
+
 ## Current Deployment Reality
 
 현재 저장소는 두 경로를 구분해서 봐야 한다.
