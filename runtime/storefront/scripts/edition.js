@@ -493,14 +493,14 @@ async function init() {
       ? imageUrl(product.images[0], { width: 1200, height: 1200 })
       : null;
 
-    document.title = `${product.title} | Oalum Shop`;
+    document.title = `${product.title} | 오알룸 샵 | 스튜디오 오알룸`;
     kickerEl.textContent = tags[0] || "edition";
     titleEl.textContent = baseName;
     numberEl.textContent = editionLabel || product.title;
     descEl.textContent = product.description || "제품 정보";
 
     updatePageSeo({
-      title: `${product.title} | Oalum Shop`,
+      title: `${product.title} | 오알룸 샵 | 스튜디오 오알룸`,
       description,
       canonicalUrl,
       imageUrl: primaryImageUrl,
@@ -514,7 +514,8 @@ async function init() {
       url: canonicalUrl,
       brand: {
         "@type": "Brand",
-        name: "Studio OALUM",
+        name: "스튜디오 오알룸",
+        alternateName: "Studio OALUM",
       },
       sku: product.slug?.current || slug,
       category: tags.join(", "),
@@ -533,8 +534,8 @@ async function init() {
       "@graph": [
         productSchema,
         buildBreadcrumbList([
-          { name: "Studio Oalum", url: toAbsoluteUrl("/") },
-          { name: "Oalum Shop", url: toAbsoluteUrl("/shop") },
+          { name: "오알룸", url: toAbsoluteUrl("/") },
+          { name: "오알룸 샵", url: toAbsoluteUrl("/shop") },
           { name: baseName, url: toAbsoluteUrl(`product?product=${encodeURIComponent(baseName)}`) },
           { name: product.title, url: canonicalUrl },
         ]),

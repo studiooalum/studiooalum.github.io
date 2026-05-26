@@ -203,10 +203,10 @@ function renderWorkshopDetails(workshop) {
   const posterAsset = getWorkshopPoster(workshop);
   const posterUrl = imageUrl(posterAsset, { width: 1200, height: 1600 });
 
-  document.title = `${workshop.title || "Workshop"} | Oalum Workshops`;
+  document.title = `${workshop.title || "Workshop"} | 오알룸 워크숍 | 스튜디오 오알룸`;
 
   updatePageSeo({
-    title: `${workshop.title || "Workshop"} | Oalum Workshops`,
+    title: `${workshop.title || "Workshop"} | 오알룸 워크숍 | 스튜디오 오알룸`,
     description,
     canonicalUrl,
     imageUrl: posterUrl,
@@ -220,7 +220,7 @@ function renderWorkshopDetails(workshop) {
     url: canonicalUrl,
     provider: {
       "@type": "Organization",
-      name: "Studio OALUM",
+      name: "스튜디오 오알룸",
       url: toAbsoluteUrl("/"),
     },
     image: posterUrl ? [posterUrl] : undefined,
@@ -239,8 +239,8 @@ function renderWorkshopDetails(workshop) {
     "@graph": [
       courseSchema,
       buildBreadcrumbList([
-        { name: "Studio Oalum", url: toAbsoluteUrl("/") },
-        { name: "Oalum Workshops", url: toAbsoluteUrl("/workshops") },
+        { name: "오알룸", url: toAbsoluteUrl("/") },
+        { name: "오알룸 워크숍", url: toAbsoluteUrl("/workshops") },
         { name: workshop.title || "Workshop", url: canonicalUrl },
       ]),
     ],

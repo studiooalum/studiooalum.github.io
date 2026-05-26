@@ -46,12 +46,12 @@ function renderEditionGrid(editions) {
   );
   const canonicalUrl = toAbsoluteUrl(`product?product=${encodeURIComponent(productName)}`);
 
-  document.title = `${productName} | Oalum Shop`;
+  document.title = `${productName} | 오알룸 샵 | 스튜디오 오알룸`;
   titleEl.textContent = productName;
   introEl.textContent = getFirstParagraph(representative.description || "상품 소개");
 
   updatePageSeo({
-    title: `${productName} | Oalum Shop`,
+    title: `${productName} | 오알룸 샵 | 스튜디오 오알룸`,
     description,
     canonicalUrl,
     imageUrl: primaryImageUrl,
@@ -63,7 +63,7 @@ function renderEditionGrid(editions) {
     "@graph": [
       {
         "@type": "CollectionPage",
-        name: `${productName} | Oalum Shop`,
+        name: `${productName} | 오알룸 샵`,
         description,
         url: canonicalUrl,
         mainEntity: {
@@ -77,8 +77,8 @@ function renderEditionGrid(editions) {
         },
       },
       buildBreadcrumbList([
-        { name: "Studio Oalum", url: toAbsoluteUrl("/") },
-        { name: "Oalum Shop", url: toAbsoluteUrl("/shop") },
+        { name: "오알룸", url: toAbsoluteUrl("/") },
+        { name: "오알룸 샵", url: toAbsoluteUrl("/shop") },
         { name: productName, url: canonicalUrl },
       ]),
     ],

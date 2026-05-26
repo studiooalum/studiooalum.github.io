@@ -5,6 +5,7 @@ const rootDir = process.cwd();
 const outputDir = path.join(rootDir, "dist");
 const tossClientKey = String(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || process.env.TOSS_CLIENT_KEY || "").trim();
 const cloudflareWebAnalyticsToken = String(process.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN || "").trim();
+const googleSiteVerificationToken = String(process.env.GOOGLE_SITE_VERIFICATION || "").trim();
 const naverSiteVerificationToken = String(process.env.NAVER_SITE_VERIFICATION || "").trim();
 
 const directoriesToCopy = ["public", "runtime", "styles", "scripts"];
@@ -53,6 +54,13 @@ function transformHtml(entryName, source) {
     transformed = injectNamedMetaTag(transformed, {
       name: "naver-site-verification",
       content: naverSiteVerificationToken,
+    });
+  }
+
+  if (entryName === "index.html" && googleSiteVerificationToken) {
+    transformed = injectNamedMetaTag(transformed, {
+      name: "google-site-verification",
+      content: googleSiteVerificationToken,
     });
   }
 
@@ -106,4 +114,8 @@ if (cloudflareWebAnalyticsToken) {
 
 if (naverSiteVerificationToken) {
   console.log("[cf:build] injected Naver site verification meta into dist/index.html.");
+}
+
+if (googleSiteVerificationToken) {
+  console.log("[cf:build] injected Google site verification meta into dist/index.html.");
 }

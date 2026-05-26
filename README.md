@@ -73,6 +73,7 @@ npm run web:dev
 - `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`: 카카오 로그인 재활성화 시 필요
 - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`: 네이버 로그인 재활성화 시 필요
 - `NAVER_SITE_VERIFICATION`: 네이버 Search Advisor 메타 검증 토큰. 설정하면 `npm run cf:build` 시 `dist/index.html` head에 `naver-site-verification` 메타를 주입
+- `GOOGLE_SITE_VERIFICATION`: Google Search Console 메타 검증 토큰. 설정하면 `npm run cf:build` 시 `dist/index.html` head에 `google-site-verification` 메타를 주입
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: 구글 로그인 재활성화 시 필요
 - `AUTH_BASE_URL`: OAuth callback 절대 URL을 고정해야 할 때만 사용
 - `AUTH_DEBUG=true`: 기존 이메일 코드 인증 플로우를 로컬에서 디버깅할 때만 사용
