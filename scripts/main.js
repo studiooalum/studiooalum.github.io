@@ -126,6 +126,7 @@
     this.groupEl.appendChild(this.hitPathEl);
 
     this.hovered = false;
+    this.wasHovered = false;
     this.transitioning = false;
     this.hoverAmt = 0;
     this.letters = [];
@@ -372,7 +373,8 @@
     this.hitPathEl.setAttribute('d', d);
 
     var goal = (this.hovered || this.transitioning) ? 1 : 0;
-    this.hoverAmt += (goal - this.hoverAmt) * 0.18;
+    var hoverResponse = goal > this.hoverAmt ? 0.48 : 0.26;
+    this.hoverAmt += (goal - this.hoverAmt) * hoverResponse;
     // Keep visible thickness fixed after initial render.
     var currentSw = this.renderSw;
     this.pathEl.setAttribute('stroke-width', currentSw);
@@ -422,6 +424,7 @@
     var wallKickSpeed = 18 * speedScale;
     var nearWallBand = 0.88;
     var nearWallCenterPull = 48;
+    var justReleased = this.wasHovered && !this.hovered && !this.transitioning;
 
     // 0a) PC hover/unhover springs.
     if (canHover && !isMobile) {
@@ -430,18 +433,21 @@
         for (var gi = 0; gi < count; gi++) {
           var GL = this.letters[gi];
           var du = shortestArcDelta(GL.u, GL.hoverU, pathLen);
-          GL.vU += du * 68 * dt;
-          GL.vU *= 0.84;
-          GL.vN += (-GL.n) * 48 * dt;
-          GL.vN *= 0.88;
+          GL.vU += du * 204 * dt;
+          GL.vU *= 0.88;
+          GL.vN += (-GL.n) * 144 * dt;
+          GL.vN *= 0.92;
         }
       } else {
-        // Unhover: gently spring back to uniform spacing
+        // Unhover: snap back harder to uniform spacing with an initial release kick.
         for (var gi2 = 0; gi2 < count; gi2++) {
           var GL2 = this.letters[gi2];
           var du2 = shortestArcDelta(GL2.u, GL2.defaultU, pathLen);
-          GL2.vU += du2 * 12 * dt;
-          GL2.vU *= 0.90;
+          if (justReleased) {
+            GL2.vU += clamp(du2 * 0.2, -28, 28);
+          }
+          GL2.vU += du2 * 36 * dt;
+          GL2.vU *= justReleased ? 0.96 : 0.92;
         }
       }
     }
@@ -670,6 +676,8 @@
       C.el.setAttribute('transform', 'rotate(' + ang.toFixed(3) + ',' + renderX + ',' + renderY + ')');
       C.el.style.opacity = 0.9;
     }
+
+    this.wasHovered = this.hovered;
   };
 
   function openPage(yarn) {
@@ -722,6 +730,26 @@
         url: DATA[i].url
       }));
     }
+
+    if (!isMobile) {
+      for (var settle = 0; settle < 42; settle++) {
+        for (var yi = 0; yi < yarns.length; yi++) {
+          yarns[yi].updatePath(1 / 60);
+          yarns[yi].updateLetters(1 / 60);
+        }
+      }
+
+      for (var yi2 = 0; yi2 < yarns.length; yi2++) {
+        var settledLetters = yarns[yi2].letters;
+        for (var li = 0; li < settledLetters.length; li++) {
+          settledLetters[li].vU = 0;
+          settledLetters[li].vN = 0;
+          settledLetters[li].pax = NaN;
+          settledLetters[li].pay = NaN;
+        }
+      }
+    }
+
     lastTs = 0;
   }
 
@@ -738,5 +766,10 @@
 
   window.addEventListener('resize', build);
   build();
+  if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+    document.fonts.ready.then(function () {
+      if (!isPageOpen) build();
+    }).catch(function () {});
+  }
   requestAnimationFrame(loop);
 })();
