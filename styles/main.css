@@ -26,54 +26,6 @@ body {
     letter-spacing: var(--tracking-latin);
 }
 
-.home-brand-caption {
-    position: fixed;
-    left: 24px;
-    bottom: 24px;
-    z-index: 20;
-    display: grid;
-    gap: 8px;
-    max-width: 340px;
-    color: #111;
-}
-
-.home-brand-caption__eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.home-brand-caption__title {
-    font-family: 'GothamBold', 'GothamBook', sans-serif;
-    font-size: 28px;
-    line-height: 1;
-}
-
-.home-brand-caption__copy {
-    font-size: 12px;
-    line-height: 1.5;
-    max-width: 30ch;
-}
-
-.home-brand-caption__nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 12px;
-}
-
-.home-brand-caption__nav a {
-    color: inherit;
-    font-size: 11px;
-    line-height: 1.4;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(17, 17, 17, 0.28);
-}
-
-.home-brand-caption__nav a:hover,
-.home-brand-caption__nav a:focus-visible {
-    border-bottom-color: #111;
-}
-
 #svg-container {
     width: 100vw;
     height: 100vh;
@@ -115,21 +67,4 @@ body {
 
 @media (max-width: 768px) {
     .yarn-text { font-size: 24px; }
-
-    .home-brand-caption {
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
-        max-width: 260px;
-        gap: 6px;
-    }
-
-    .home-brand-caption__title {
-        font-size: 24px;
-    }
-
-    .home-brand-caption__copy,
-    .home-brand-caption__nav a {
-        font-size: 11px;
-    }
 }
