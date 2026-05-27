@@ -580,6 +580,22 @@
     width: auto;
   }
 
+  .account-panel--login .account-form,
+  .account-panel--guest .account-form {
+    grid-template-rows: repeat(2, auto) auto minmax(32px, auto);
+    align-content: start;
+  }
+
+  .account-panel--guest .account-form > .account-btn {
+    width: calc((100% - 10px) / 2);
+    min-width: 0;
+  }
+
+  .account-panel--guest .account-form::after {
+    content: "";
+    display: block;
+  }
+
   .account-record {
     grid-template-columns: 60px minmax(0, 1fr);
   }
