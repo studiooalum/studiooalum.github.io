@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Oalum — Coupons</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260527-02">
+</head>
+<body class="fulfillment-page coupons-page">
+  <nav class="gnb gnb--account">
+    <a href="./shop.html" class="gnb__back">← Shop</a>
+    <span class="gnb__title">쿠폰</span>
+    <span class="gnb__spacer"></span>
+  </nav>
+
+  <main class="fulfillment-main">
+    <section class="fulfillment-shell">
+      <aside class="fulfillment-sidebar">
+        <section class="fulfillment-panel">
+          <h1 class="fulfillment-heading">쿠폰 관리</h1>
+          <p class="fulfillment-copy">신규 회원, CS 보상, 공개 캠페인 쿠폰을 별도 화면에서 발급하고 중지합니다.</p>
+
+          <form class="fulfillment-auth-form js-fulfillment-auth-form">
+            <label class="fulfillment-field">
+              <span>관리자 키</span>
+              <input type="password" name="adminSecret" autocomplete="current-password" placeholder="ORDER_ADMIN_SECRET" required>
+            </label>
+            <div class="fulfillment-actions fulfillment-actions--compact">
+              <button type="submit" class="fulfillment-btn">잠금 해제</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-auth-clear">초기화</button>
+            </div>
+          </form>
+
+          <p class="fulfillment-status js-fulfillment-auth-status" role="status" aria-live="polite"></p>
+          <div class="fulfillment-actions fulfillment-actions--compact">
+            <a href="./admin.html" class="fulfillment-btn fulfillment-btn--secondary">배송 / 주문</a>
+            <a href="./coupons.html" class="fulfillment-btn">쿠폰 관리</a>
+          </div>
+        </section>
+
+        <section class="fulfillment-panel">
+          <div class="fulfillment-toolbar">
+            <label class="fulfillment-field fulfillment-field--toolbar">
+              <span>쿠폰 검색</span>
+              <input type="search" class="js-fulfillment-coupon-search-input" placeholder="코드, 쿠폰명, 대상 이메일">
+            </label>
+            <div class="fulfillment-actions fulfillment-actions--compact">
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-coupon-search-btn">조회</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-coupon-refresh-btn">최신</button>
+            </div>
+          </div>
+
+          <p class="fulfillment-status js-fulfillment-coupon-status" role="status" aria-live="polite"></p>
+          <div class="fulfillment-coupon-list js-fulfillment-coupon-list">
+            <div class="fulfillment-empty">관리자 키를 입력하면 쿠폰 목록이 여기에 표시됩니다.</div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="fulfillment-content">
+        <section class="fulfillment-panel">
+          <h2 class="fulfillment-subheading">쿠폰 상세</h2>
+          <p class="fulfillment-copy">추천 운영은 신규 회원 10% 1회, CS 보상 5,000원 1회, 공개 캠페인은 usageLimit를 넉넉히 둔 public 쿠폰입니다.</p>
+
+          <form class="fulfillment-form js-fulfillment-coupon-form">
+            <input type="hidden" name="couponId">
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>지급 프리셋</span>
+                <select name="preset">
+                  <option value="manual">수동 설정</option>
+                  <option value="welcome">신규 회원 환영 10%</option>
+                  <option value="recovery">CS 보상 5,000원</option>
+                  <option value="campaign">공개 캠페인 10%</option>
+                </select>
+              </label>
+              <label class="fulfillment-field">
+                <span>쿠폰 코드</span>
+                <div class="fulfillment-inline-field">
+                  <input type="text" name="code" maxlength="48" placeholder="예: OALUM-WELCOME">
+                  <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-coupon-generate-btn">생성</button>
+                </div>
+              </label>
+            </div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>쿠폰 이름</span>
+                <input type="text" name="title" maxlength="120" placeholder="예: 신규 회원 환영 10% 쿠폰" required>
+              </label>
+              <label class="fulfillment-field">
+                <span>쿠폰 범위</span>
+                <select name="scope">
+                  <option value="targeted">지정 대상</option>
+                  <option value="public">공개 쿠폰</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>대상 이메일</span>
+                <input type="email" name="targetEmail" placeholder="예: member@example.com">
+              </label>
+              <label class="fulfillment-field">
+                <span>총 사용 가능 횟수</span>
+                <input type="number" name="usageLimit" min="1" step="1" value="1">
+              </label>
+            </div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>할인 방식</span>
+                <select name="discountType">
+                  <option value="fixed">정액</option>
+                  <option value="percent">정률</option>
+                </select>
+              </label>
+              <label class="fulfillment-field">
+                <span>할인 값</span>
+                <input type="number" name="discountValue" min="1" step="1" value="5000">
+              </label>
+            </div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>최소 주문금액</span>
+                <input type="number" name="minimumOrderAmount" min="0" step="100" value="50000">
+              </label>
+              <label class="fulfillment-field">
+                <span>최대 할인금액</span>
+                <input type="number" name="maximumDiscountAmount" min="0" step="100" placeholder="정률 쿠폰일 때 권장">
+              </label>
+            </div>
+
+            <div class="fulfillment-grid">
+              <label class="fulfillment-field">
+                <span>시작 시각</span>
+                <input type="datetime-local" name="startsAt">
+              </label>
+              <label class="fulfillment-field">
+                <span>만료 시각</span>
+                <input type="datetime-local" name="expiresAt">
+              </label>
+            </div>
+
+            <label class="fulfillment-toggle">
+              <input type="checkbox" name="isActive" checked>
+              <span>저장 후 바로 사용 가능</span>
+            </label>
+
+            <div class="fulfillment-actions">
+              <button type="submit" class="fulfillment-btn">쿠폰 저장</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-coupon-reset-btn">새 쿠폰</button>
+            </div>
+
+            <p class="fulfillment-status js-fulfillment-coupon-form-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./runtime/storefront/scripts/fulfillment.js?v=20260527-03"></script>
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+
+    initSiteChrome({ showActions: false });
+  </script>
+</body>
+</html>
