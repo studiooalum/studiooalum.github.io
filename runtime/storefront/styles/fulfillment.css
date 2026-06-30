@@ -15,6 +15,11 @@
   gap: 18px;
 }
 
+.fulfillment-shell--compact {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
 .fulfillment-sidebar,
 .fulfillment-content {
   min-width: 0;
@@ -51,6 +56,36 @@
 
 .fulfillment-copy--quiet {
   color: rgba(17, 17, 17, 0.56);
+}
+
+.fulfillment-tabs,
+.fulfillment-note-list {
+  display: grid;
+  gap: 10px;
+}
+
+.fulfillment-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fulfillment-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+  color: rgba(17, 17, 17, 0.72);
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.fulfillment-tab.is-active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
 }
 
 .fulfillment-status {
@@ -110,6 +145,17 @@
   font-size: 12px;
 }
 
+.fulfillment-inline-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.fulfillment-inline-field .fulfillment-btn {
+  min-width: 88px;
+}
+
 .fulfillment-actions {
   display: flex;
   flex-wrap: wrap;
@@ -146,11 +192,26 @@
 }
 
 .fulfillment-order-list,
+.fulfillment-coupon-list,
 .fulfillment-selection,
 .fulfillment-config,
 .fulfillment-suggestions {
   display: grid;
   gap: 10px;
+}
+
+.fulfillment-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fulfillment-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
 }
 
 .fulfillment-order-card {
@@ -270,5 +331,11 @@
   .fulfillment-carrier-search {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: end;
+  }
+}
+
+@media (max-width: 959px) {
+  .fulfillment-tabs {
+    grid-template-columns: 1fr;
   }
 }

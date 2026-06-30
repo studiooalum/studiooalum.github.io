@@ -57,6 +57,20 @@
   margin: 0;
 }
 
+.payment-order-benefits {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.payment-order-benefit {
+  margin: 0;
+  font-family: var(--font-kor-body, sans-serif);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.68);
+}
+
 /* ---- Toss widget containers ---- */
 .payment-widget-area {
   width: 100%;
