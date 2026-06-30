@@ -6,6 +6,7 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_HASH_ITERATIONS = 100000;
 
+import { readUserPointBalance, settleExpiredPointReservations } from "./d1.js";
 import { linkGuestWorkshopReservationsToUser, readWorkshopReservationsForIdentity } from "./workshops.js";
 
 function getDb(env) {
@@ -659,6 +660,27 @@ function formatOrder(row) {
   };
 }
 
+function hasAccountOrderShipment(row) {
+  return Boolean(String(row?.shipment_status || "").trim());
+}
+
+function hasAccountOrderPaymentActivity(row) {
+  return Boolean(
+    String(row?.active_payment_key || "").trim()
+      || Number(row?.payment_attempt_count) > 0,
+  );
+}
+
+function isPendingAccountDraftOrder(row) {
+  const orderStatus = String(row?.status || "").trim().toLowerCase();
+  const paymentStatus = String(row?.payment_status || "").trim().toLowerCase();
+
+  return !hasAccountOrderShipment(row)
+    && !hasAccountOrderPaymentActivity(row)
+    && orderStatus === "created"
+    && paymentStatus === "pending";
+}
+
 function formatOrderItem(row) {
   const snapshot = decodeJson(row.snapshot, {});
 
@@ -700,6 +722,7 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
         orders.order_name,
         orders.status,
         orders.payment_status,
+        orders.active_payment_key,
         orders.total_amount,
         orders.currency,
         orders.customer_name,
@@ -708,6 +731,11 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
         orders.address1,
         orders.address2,
         orders.created_at,
+        (
+          SELECT COUNT(1)
+          FROM payments
+          WHERE payments.order_id = orders.id
+        ) AS payment_attempt_count,
         shipments.status AS shipment_status,
         shipments.carrier AS shipment_carrier,
         shipments.tracking_number AS shipment_tracking_number,
@@ -725,7 +753,7 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
     .bind(userId || null, emailNormalized, limit)
     .all();
 
-  const rows = result?.results || [];
+  const rows = (result?.results || []).filter((row) => !isPendingAccountDraftOrder(row));
   const orders = [];
 
   for (const row of rows) {
@@ -1385,6 +1413,7 @@ export async function authenticateFederatedIdentity(env, identity, request) {
 
 export async function readAccount(env, userId) {
   const database = requireDb(env);
+  await settleExpiredPointReservations(env, { userId });
   const userRow = await findUserById(database, userId);
   if (!userRow) {
     throw Object.assign(new Error("회원 정보를 찾을 수 없습니다."), {
@@ -1408,10 +1437,12 @@ export async function readAccount(env, userId) {
     userId: user.id,
     emailNormalized: user.emailNormalized,
   });
+  const pointsBalance = await readUserPointBalance(env, user.id, { settleExpired: false });
 
   return {
     user: {
       ...user,
+      pointsBalance,
       linkedProviders,
       fullName: user.fullName || latestOrderProfile?.customer_name || "",
       phone: user.phone || latestOrderProfile?.customer_phone || "",
@@ -1474,6 +1505,7 @@ export async function lookupGuestOrder(env, { orderId, email }) {
         orders.order_name,
         orders.status,
         orders.payment_status,
+        orders.active_payment_key,
         orders.total_amount,
         orders.currency,
         orders.customer_name,
@@ -1483,6 +1515,11 @@ export async function lookupGuestOrder(env, { orderId, email }) {
         orders.address1,
         orders.address2,
         orders.created_at,
+        (
+          SELECT COUNT(1)
+          FROM payments
+          WHERE payments.order_id = orders.id
+        ) AS payment_attempt_count,
         shipments.status AS shipment_status,
         shipments.carrier AS shipment_carrier,
         shipments.tracking_number AS shipment_tracking_number,
@@ -1502,6 +1539,12 @@ export async function lookupGuestOrder(env, { orderId, email }) {
   if (!order) {
     throw Object.assign(new Error("주문번호와 이메일이 일치하는 비회원 주문을 찾을 수 없습니다."), {
       status: 404,
+    });
+  }
+
+  if (isPendingAccountDraftOrder(order)) {
+    throw Object.assign(new Error("아직 결제가 완료되지 않은 주문입니다. 결제 완료 후 다시 확인해주세요."), {
+      status: 409,
     });
   }
 

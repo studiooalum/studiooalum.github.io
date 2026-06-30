@@ -5,8 +5,9 @@ import {
   generateOrderId,
   normalizeOrderItems,
 } from "../../cloudflare/lib/commerce.js";
+import { prepareCouponPricing } from "../../cloudflare/lib/coupons.js";
 import { readSession, updateAccount } from "../../cloudflare/lib/auth.js";
-import { hasD1, persistOrder, readOrderSyncSnapshot } from "../../cloudflare/lib/d1.js";
+import { hasD1, persistOrder, prepareOrderPricing, readOrderSyncSnapshot } from "../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../cloudflare/lib/http.js";
 import { dispatchOrderSync } from "../../cloudflare/lib/order-sync.js";
 import { shouldRequirePersistence } from "../../cloudflare/lib/toss.js";
@@ -33,12 +34,38 @@ export async function onRequestPost(context) {
     }
 
     const items = normalizeOrderItems(parsed.data.items);
-    const total = computeOrderAmount(items);
+    const subtotal = computeOrderAmount(items);
+    const coupon = await prepareCouponPricing(context.env, {
+      userId: session?.user?.id || null,
+      email: parsed.data.shipping?.email || "",
+      subtotalAmount: subtotal,
+      couponCode: parsed.data.couponCode,
+    });
+    const pricing = await prepareOrderPricing(context.env, {
+      userId: session?.user?.id || null,
+      email: parsed.data.shipping?.email || "",
+      subtotalAmount: subtotal,
+      requestedPoints: parsed.data.pointsUsed,
+      coupon,
+    });
     const order = {
       orderId: generateOrderId(),
       userId: session?.user?.id || null,
       orderName: buildOrderName(items),
-      total,
+      subtotalAmount: pricing.subtotalAmount,
+      discountAmount: pricing.discountAmount,
+      total: pricing.totalAmount,
+      couponId: pricing.coupon?.id || null,
+      couponCode: pricing.coupon?.code || "",
+      couponTitle: pricing.coupon?.title || "",
+      couponScope: pricing.coupon?.scope || "",
+      couponDiscountType: pricing.coupon?.discountType || "",
+      couponDiscountValue: pricing.coupon?.discountValue || 0,
+      couponDiscountAmount: pricing.couponDiscountAmount,
+      couponReservationExpiresAt: pricing.couponReservationExpiresAt,
+      pointsUsed: pricing.pointsUsed,
+      pointsEarned: 0,
+      pointsReservationExpiresAt: pricing.pointsReservationExpiresAt,
       items,
       shipping: parsed.data.shipping,
       createdAt: parsed.data.createdAt || new Date().toISOString(),

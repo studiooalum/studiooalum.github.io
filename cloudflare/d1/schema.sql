@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS orders (
   subtotal_amount INTEGER NOT NULL DEFAULT 0,
   shipping_amount INTEGER NOT NULL DEFAULT 0,
   discount_amount INTEGER NOT NULL DEFAULT 0,
+  points_used INTEGER NOT NULL DEFAULT 0,
+  points_earned INTEGER NOT NULL DEFAULT 0,
   total_amount INTEGER NOT NULL,
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
@@ -19,6 +21,24 @@ CREATE TABLE IF NOT EXISTS orders (
   address2 TEXT NOT NULL DEFAULT '',
   note TEXT NOT NULL DEFAULT '',
   active_payment_key TEXT,
+  coupon_id TEXT,
+  coupon_code TEXT NOT NULL DEFAULT '',
+  coupon_title TEXT NOT NULL DEFAULT '',
+  coupon_scope TEXT NOT NULL DEFAULT '',
+  coupon_discount_type TEXT NOT NULL DEFAULT '',
+  coupon_discount_value INTEGER NOT NULL DEFAULT 0,
+  coupon_discount_amount INTEGER NOT NULL DEFAULT 0,
+  coupon_reservation_expires_at TEXT,
+  coupon_reserved_at TEXT,
+  coupon_released_at TEXT,
+  coupon_applied_at TEXT,
+  coupon_reinstated_at TEXT,
+  points_reservation_expires_at TEXT,
+  points_spent_at TEXT,
+  points_released_at TEXT,
+  points_refunded_at TEXT,
+  points_earned_at TEXT,
+  points_earned_reversed_at TEXT,
   paid_at TEXT,
   cancelled_at TEXT,
   created_at TEXT NOT NULL,
@@ -30,6 +50,8 @@ CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status, payment_status);
 CREATE INDEX IF NOT EXISTS idx_orders_active_payment_key ON orders(active_payment_key);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_coupon_reservation ON orders(coupon_id, coupon_reservation_expires_at);
+CREATE INDEX IF NOT EXISTS idx_orders_points_reservation ON orders(user_id, points_reservation_expires_at);
 
 CREATE TABLE IF NOT EXISTS order_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,6 +138,65 @@ CREATE TABLE IF NOT EXISTS payment_events (
 
 CREATE INDEX IF NOT EXISTS idx_payment_events_order_id ON payment_events(order_id, received_at DESC);
 CREATE INDEX IF NOT EXISTS idx_payment_events_type ON payment_events(event_type);
+
+CREATE TABLE IF NOT EXISTS coupons (
+  id TEXT PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'targeted',
+  user_id TEXT,
+  email_normalized TEXT NOT NULL DEFAULT '',
+  discount_type TEXT NOT NULL,
+  discount_value INTEGER NOT NULL,
+  minimum_order_amount INTEGER NOT NULL DEFAULT 0,
+  maximum_discount_amount INTEGER,
+  usage_limit INTEGER NOT NULL DEFAULT 1,
+  starts_at TEXT,
+  expires_at TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
+CREATE INDEX IF NOT EXISTS idx_coupons_target ON coupons(email_normalized, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_coupons_active ON coupons(is_active, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS coupon_redemptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  coupon_id TEXT NOT NULL,
+  order_id TEXT NOT NULL,
+  user_id TEXT,
+  email_normalized TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'reserved',
+  discount_amount INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+  FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE(coupon_id, order_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_coupon_redemptions_coupon ON coupon_redemptions(coupon_id, status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_coupon_redemptions_order ON coupon_redemptions(order_id, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS point_transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  order_id TEXT,
+  kind TEXT NOT NULL,
+  points_delta INTEGER NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE SET NULL,
+  UNIQUE(order_id, kind)
+);
+
+CREATE INDEX IF NOT EXISTS idx_point_transactions_user_id ON point_transactions(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_point_transactions_order_id ON point_transactions(order_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,

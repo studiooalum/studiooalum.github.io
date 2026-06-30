@@ -24,6 +24,8 @@ export const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1),
   shipping: shippingSchema,
   saveAsDefaultAddress: z.boolean().optional().default(false),
+  pointsUsed: z.coerce.number().int().nonnegative().optional().default(0),
+  couponCode: z.string().trim().max(48).optional().default(""),
   total: z.coerce.number().finite().nonnegative().optional(),
   createdAt: z.string().trim().optional(),
 });
