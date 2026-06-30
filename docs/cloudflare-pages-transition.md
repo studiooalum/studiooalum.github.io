@@ -162,6 +162,11 @@ Google Sheets와 이메일 알림 연동 방법은 `docs/google-sheets-order-syn
 현재 스키마는 주문 상태 정규화, 결제 재시도 이력, 웹훅 멱등성까지 반영한 버전이다.
 이미 예전 D1 개발 DB를 만들었다면, 실오픈 전에는 새 DB를 다시 만들거나 스키마 마이그레이션을 적용하는 편이 안전하다.
 
+현재 추가된 후속 마이그레이션:
+
+- `cloudflare/d1/migrations/0005_loyalty_points.sql`: 포인트 예약/적립/환불 ledger
+- `cloudflare/d1/migrations/0006_coupons.sql`: 쿠폰/쿠폰 사용 이력, 주문별 쿠폰 스냅샷 컬럼
+
 ## D1 Setup Commands
 
 처음부터 새로 만드는 기준 명령은 아래와 같다.
@@ -192,6 +197,13 @@ npx wrangler d1 create oalum-orders
 
 ```bash
 npx wrangler d1 execute oalum-orders --file=./cloudflare/d1/schema.sql
+```
+
+기존 원격 DB에는 스키마 전체 재적용 대신 마이그레이션 파일을 순서대로 실행하는 편이 안전하다.
+
+```bash
+npx wrangler d1 execute oalum-orders --remote --file=./cloudflare/d1/migrations/0005_loyalty_points.sql
+npx wrangler d1 execute oalum-orders --remote --file=./cloudflare/d1/migrations/0006_coupons.sql
 ```
 
 Cloudflare Pages 프로젝트에도 같은 이름의 D1 바인딩 `OALUM_DB`를 연결해야 한다.
