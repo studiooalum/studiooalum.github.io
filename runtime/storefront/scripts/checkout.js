@@ -11,6 +11,15 @@ import { CART_KEY, ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/st
 const ORDER_CREATE_ENDPOINT = "/api/orders";
 const ACCOUNT_ENDPOINT = "./api/auth/account";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_REDEEMABLE_POINTS = 1000;
+const POINT_EARN_RATE = 0.03;
+
+const checkoutState = {
+  isAuthenticated: false,
+  availablePoints: 0,
+  appliedPoints: 0,
+  couponCode: "",
+};
 
 /* =========================
    CART DATA (read-only on this page)
@@ -18,6 +27,140 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getCart() {
   return readStoredJson(CART_KEY, []);
+}
+
+function getCartSubtotal() {
+  return getCart().reduce((sum, item) => sum + Math.round(Number(item.price) || 0) * Math.max(1, Number(item.qty) || 1), 0);
+}
+
+function normalizePoints(value) {
+  const points = Math.floor(Number(value) || 0);
+  return Number.isFinite(points) && points > 0 ? points : 0;
+}
+
+function normalizeCouponCode(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/[^A-Z0-9-_]/g, "");
+}
+
+function calculateExpectedEarnedPoints(amount) {
+  return Math.max(0, Math.floor((Math.round(Number(amount) || 0)) * POINT_EARN_RATE));
+}
+
+function getMaxSpendablePoints(subtotal = getCartSubtotal()) {
+  if (!checkoutState.isAuthenticated) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(Math.trunc(Number(checkoutState.availablePoints) || 0), subtotal));
+}
+
+function clampAppliedPoints(subtotal = getCartSubtotal()) {
+  const maxSpendable = getMaxSpendablePoints(subtotal);
+  const nextApplied = Math.min(normalizePoints(checkoutState.appliedPoints), maxSpendable);
+
+  if (nextApplied > 0 && nextApplied < MIN_REDEEMABLE_POINTS) {
+    checkoutState.appliedPoints = 0;
+    return 0;
+  }
+
+  checkoutState.appliedPoints = nextApplied;
+  return checkoutState.appliedPoints;
+}
+
+function getCheckoutTotals() {
+  const subtotal = getCartSubtotal();
+  const pointsUsed = clampAppliedPoints(subtotal);
+  const total = Math.max(0, subtotal - pointsUsed);
+
+  return {
+    subtotal,
+    pointsUsed,
+    total,
+    expectedEarnedPoints: calculateExpectedEarnedPoints(total),
+  };
+}
+
+function renderPointsSection(totals = getCheckoutTotals()) {
+  const section = document.getElementById("checkoutPointsSection");
+  const balanceEl = document.getElementById("checkoutPointsBalance");
+  const inputEl = document.getElementById("checkoutPointsInput");
+  const maxButton = document.getElementById("checkoutPointsMaxBtn");
+  const copyEl = document.getElementById("checkoutPointsCopy");
+  const earnEl = document.getElementById("checkoutPointsEarn");
+
+  if (!section || !balanceEl || !inputEl || !maxButton || !copyEl || !earnEl) {
+    return;
+  }
+
+  section.hidden = !checkoutState.isAuthenticated;
+  if (!checkoutState.isAuthenticated) {
+    inputEl.value = "";
+    inputEl.disabled = true;
+    maxButton.disabled = true;
+    earnEl.textContent = "예상 적립 0 포인트";
+    return;
+  }
+
+  const spendablePoints = getMaxSpendablePoints(totals.subtotal);
+  const availablePoints = Math.trunc(Number(checkoutState.availablePoints) || 0);
+  const canUsePoints = spendablePoints >= MIN_REDEEMABLE_POINTS;
+
+  balanceEl.textContent = `보유 포인트 ${availablePoints.toLocaleString("ko-KR")} 포인트`;
+  inputEl.disabled = !canUsePoints;
+  inputEl.max = String(spendablePoints);
+  inputEl.value = totals.pointsUsed > 0 ? String(totals.pointsUsed) : "";
+  maxButton.disabled = !canUsePoints;
+  earnEl.textContent = `예상 적립 ${totals.expectedEarnedPoints.toLocaleString("ko-KR")} 포인트`;
+
+  if (availablePoints < 0) {
+    copyEl.textContent = "반품/환불 정산으로 포인트 잔액이 일시적으로 0 미만일 수 있습니다. 현재는 포인트를 사용할 수 없습니다.";
+    return;
+  }
+
+  if (!canUsePoints) {
+    copyEl.textContent = `포인트는 ${MIN_REDEEMABLE_POINTS.toLocaleString("ko-KR")}포인트부터 사용할 수 있습니다.`;
+    return;
+  }
+
+  copyEl.textContent = `포인트는 ${MIN_REDEEMABLE_POINTS.toLocaleString("ko-KR")}포인트부터 사용할 수 있으며, 사용 포인트는 결제 진행 후 30분간 예약됩니다. 적립은 배송 완료 후 확정됩니다.`;
+}
+
+function renderCouponSection() {
+  const inputEl = document.getElementById("checkoutCouponInput");
+  const statusEl = document.getElementById("checkoutCouponStatus");
+  const copyEl = document.getElementById("checkoutCouponCopy");
+
+  if (!inputEl || !statusEl || !copyEl) {
+    return;
+  }
+
+  inputEl.value = checkoutState.couponCode;
+
+  if (!checkoutState.couponCode) {
+    statusEl.textContent = "환영/보상 쿠폰은 여기서 입력하세요.";
+    copyEl.textContent = "쿠폰은 주문 생성 단계에서 실시간 검증되고, 결제 진행 후 30분간 예약됩니다. 취소/환불 시 자동으로 복원됩니다.";
+    return;
+  }
+
+  statusEl.textContent = `입력된 쿠폰 ${checkoutState.couponCode}`;
+  copyEl.textContent = "쿠폰 할인 금액은 주문 생성 직후 결제 화면에서 확정됩니다. 지정 쿠폰은 로그인 계정 또는 배송 이메일과 일치해야 합니다.";
+}
+
+function applyPointsInput(rawValue) {
+  const subtotal = getCartSubtotal();
+  const maxSpendable = getMaxSpendablePoints(subtotal);
+  let nextApplied = normalizePoints(rawValue);
+
+  if (nextApplied > 0 && nextApplied < MIN_REDEEMABLE_POINTS) {
+    nextApplied = 0;
+  }
+
+  checkoutState.appliedPoints = Math.min(nextApplied, maxSpendable);
+  renderOrderSummary();
 }
 
 function resolveCheckoutImageUrl(image) {
@@ -56,6 +199,10 @@ function buildLocalPreviewOrder(orderData) {
   };
 }
 
+function hasCheckoutDiscounts(orderData) {
+  return normalizePoints(orderData?.pointsUsed) > 0 || normalizeCouponCode(orderData?.couponCode).length > 0;
+}
+
 async function createPendingOrder(orderData) {
   let response;
 
@@ -68,11 +215,19 @@ async function createPendingOrder(orderData) {
       body: JSON.stringify(orderData),
     });
   } catch (error) {
+    if (hasCheckoutDiscounts(orderData)) {
+      throw new Error("쿠폰 또는 포인트 사용 주문은 주문 API 연결이 필요합니다. 잠시 후 다시 시도해주세요.");
+    }
+
     console.warn("Falling back to local pending order preview.", error);
     return buildLocalPreviewOrder(orderData);
   }
 
   if (response.status === 404 || response.status === 405) {
+    if (hasCheckoutDiscounts(orderData)) {
+      throw new Error("쿠폰 또는 포인트 사용 주문은 주문 API 연결이 필요합니다. 잠시 후 다시 시도해주세요.");
+    }
+
     console.warn("Order API is unavailable on this host. Falling back to local preview order.");
     return buildLocalPreviewOrder(orderData);
   }
@@ -97,12 +252,20 @@ function renderOrderSummary() {
   const items = getCart();
   const container = document.getElementById("checkoutItems");
   const submitButton = document.getElementById("submitOrderBtn");
+  const pointsRow = document.getElementById("checkoutPointsRow");
+  const pointsDiscount = document.getElementById("checkoutPointsDiscount");
+  const totals = getCheckoutTotals();
 
   if (items.length === 0) {
     container.innerHTML = `<p class="checkout-empty">장바구니가 비어있습니다</p>`;
     submitButton.disabled = true;
     document.getElementById("checkoutSubtotal").textContent = formatPrice(0);
     document.getElementById("checkoutTotal").textContent = formatPrice(0);
+    if (pointsRow) {
+      pointsRow.hidden = true;
+    }
+    renderCouponSection();
+    renderPointsSection({ subtotal: 0, pointsUsed: 0, total: 0, expectedEarnedPoints: 0 });
     return;
   }
 
@@ -133,9 +296,16 @@ function renderOrderSummary() {
     `;
   }).join("");
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  document.getElementById("checkoutSubtotal").textContent = formatPrice(subtotal);
-  document.getElementById("checkoutTotal").textContent = formatPrice(subtotal);
+  document.getElementById("checkoutSubtotal").textContent = formatPrice(totals.subtotal);
+  document.getElementById("checkoutTotal").textContent = formatPrice(totals.total);
+
+  if (pointsRow && pointsDiscount) {
+    pointsRow.hidden = totals.pointsUsed <= 0;
+    pointsDiscount.textContent = `-${formatPrice(totals.pointsUsed)}`;
+  }
+
+  renderCouponSection();
+  renderPointsSection(totals);
 }
 
 function setupSummaryControls() {
@@ -306,6 +476,14 @@ function setCheckoutAuthState({ authenticated, message, detail }) {
   } else {
     linkEl.textContent = "로그인 / 회원가입";
   }
+
+  checkoutState.isAuthenticated = authenticated;
+  if (!authenticated) {
+    checkoutState.availablePoints = 0;
+    checkoutState.appliedPoints = 0;
+  }
+
+  renderOrderSummary();
 }
 
 function fillShippingForm(user) {
@@ -355,6 +533,7 @@ async function loadCheckoutAccount() {
     }
 
     fillShippingForm(payload?.account?.user || null);
+    checkoutState.availablePoints = Math.trunc(Number(payload?.account?.user?.pointsBalance) || 0);
     setCheckoutAuthState({
       authenticated: true,
       message: "회원 주문으로 진행 중입니다.",
@@ -398,6 +577,48 @@ function setupMemo() {
   });
 }
 
+function setupPointsField() {
+  const inputEl = document.getElementById("checkoutPointsInput");
+  const maxButton = document.getElementById("checkoutPointsMaxBtn");
+
+  if (!inputEl || !maxButton) {
+    return;
+  }
+
+  inputEl.addEventListener("input", () => {
+    applyPointsInput(inputEl.value);
+  });
+
+  maxButton.addEventListener("click", () => {
+    const subtotal = getCartSubtotal();
+    const maxSpendable = getMaxSpendablePoints(subtotal);
+    const nextApplied = maxSpendable >= MIN_REDEEMABLE_POINTS ? maxSpendable : 0;
+    checkoutState.appliedPoints = nextApplied;
+    renderOrderSummary();
+  });
+}
+
+function setupCouponField() {
+  const inputEl = document.getElementById("checkoutCouponInput");
+  const clearButton = document.getElementById("checkoutCouponClearBtn");
+
+  if (!inputEl || !clearButton) {
+    return;
+  }
+
+  inputEl.addEventListener("input", () => {
+    checkoutState.couponCode = normalizeCouponCode(inputEl.value);
+    renderCouponSection();
+  });
+
+  clearButton.addEventListener("click", () => {
+    checkoutState.couponCode = "";
+    renderCouponSection();
+  });
+
+  renderCouponSection();
+}
+
 /* =========================
    FORM VALIDATION + SUBMIT
 ========================= */
@@ -418,6 +639,7 @@ function setupForm() {
     const memo = form.memo.value === "custom" ? form.memoCustom.value.trim() : form.memo.value;
     const saveAsDefaultAddress = form.saveAsDefaultAddress?.checked === true;
     const agreedTermsPrivacy = form.querySelector("#agreeTermsPrivacy")?.checked === true;
+    const totals = getCheckoutTotals();
 
     if (!name || !phone || !email || !zipcode || !address1) {
       alert("필수 항목을 모두 입력해주세요.");
@@ -438,7 +660,9 @@ function setupForm() {
       items: getCart(),
       shipping: { name, phone, email, zipcode, address1, address2, memo },
       saveAsDefaultAddress,
-      total: getCart().reduce((sum, i) => sum + i.price * i.qty, 0),
+      couponCode: checkoutState.couponCode,
+      pointsUsed: totals.pointsUsed,
+      total: totals.total,
       createdAt: new Date().toISOString(),
     };
 
@@ -463,6 +687,8 @@ function setupForm() {
 
 renderOrderSummary();
 setupEmailField();
+setupCouponField();
+setupPointsField();
 setupSummaryControls();
 setupMemo();
 setupPolicyLinks();

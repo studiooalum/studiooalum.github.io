@@ -44,6 +44,32 @@ function buildPageUrl(fileName) {
   return new URL(`./${fileName}`, window.location.href).toString();
 }
 
+function renderOrderBenefits(order) {
+  const wrapper = document.getElementById("paymentOrderBenefits");
+  const couponEl = document.getElementById("paymentOrderCoupon");
+  const pointsEl = document.getElementById("paymentOrderPoints");
+
+  if (!wrapper || !couponEl || !pointsEl) {
+    return;
+  }
+
+  const couponDiscount = Number(order?.coupon?.discountAmount || 0);
+  const pointsUsed = Number(order?.pointsUsed || 0);
+
+  couponEl.hidden = couponDiscount <= 0;
+  pointsEl.hidden = pointsUsed <= 0;
+
+  if (couponDiscount > 0) {
+    couponEl.textContent = `쿠폰 ${order.coupon.code || ""} 적용 · -${formatPrice(couponDiscount)}`;
+  }
+
+  if (pointsUsed > 0) {
+    pointsEl.textContent = `포인트 사용 · -${formatPrice(pointsUsed)}`;
+  }
+
+  wrapper.hidden = couponEl.hidden && pointsEl.hidden;
+}
+
 /* =========================
    INIT TOSS PAYMENT WIDGET
 ========================= */
@@ -63,6 +89,7 @@ async function initPayment() {
   const orderName = order.orderName || buildOrderName(order.items);
   document.getElementById("paymentOrderName").textContent = orderName;
   document.getElementById("paymentOrderTotal").textContent = formatPrice(order.total);
+  renderOrderBenefits(order);
 
   // ---- Toss Payments SDK ----
   // TossPayments is loaded globally from the CDN script tag

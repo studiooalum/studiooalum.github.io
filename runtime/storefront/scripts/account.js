@@ -88,6 +88,7 @@ function getFriendlyApiMessage(error, fallbackMessage) {
 
 function formatOrderStatus(order) {
   const shipmentValue = String(order?.shipment?.status || "").trim().toLowerCase();
+  const orderValue = String(order?.status || "").trim().toLowerCase();
 
   if (shipmentValue === "confirmed") {
     return "주문 확인 완료";
@@ -111,12 +112,20 @@ function formatOrderStatus(order) {
 
   const value = String(order?.paymentStatus || order?.status || "").trim().toLowerCase();
 
+  if (!shipmentValue && orderValue === "created" && value === "pending") {
+    return "결제 미완료";
+  }
+
   if (["confirmed", "done", "paid", "completed", "success", "succeeded"].includes(value)) {
     return "결제 완료";
   }
 
-  if (["pending", "ready", "waiting", "processing", "in_progress"].includes(value)) {
-    return "결제 확인 중";
+  if (["authorized"].includes(value)) {
+    return "결제 승인 대기";
+  }
+
+  if (["pending", "ready", "waiting", "waiting_for_deposit", "processing", "in_progress", "payment_pending"].includes(value)) {
+    return "결제 진행 중";
   }
 
   if (["canceled", "cancelled"].includes(value)) {

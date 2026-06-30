@@ -8,17 +8,63 @@ const searchButton = document.querySelector(".js-fulfillment-search-btn");
 const refreshButton = document.querySelector(".js-fulfillment-refresh-btn");
 const listStatusEl = document.querySelector(".js-fulfillment-list-status");
 const orderListEl = document.querySelector(".js-fulfillment-order-list");
-const configEl = document.querySelector(".js-fulfillment-config");
 const selectionEl = document.querySelector(".js-fulfillment-selection");
 const formEl = document.querySelector(".js-fulfillment-form");
 const formStatusEl = document.querySelector(".js-fulfillment-form-status");
 const carrierSearchButton = document.querySelector(".js-fulfillment-carrier-search-btn");
 const carrierResultsEl = document.querySelector(".js-fulfillment-carrier-results");
+const couponSearchInput = document.querySelector(".js-fulfillment-coupon-search-input");
+const couponSearchButton = document.querySelector(".js-fulfillment-coupon-search-btn");
+const couponRefreshButton = document.querySelector(".js-fulfillment-coupon-refresh-btn");
+const couponStatusEl = document.querySelector(".js-fulfillment-coupon-status");
+const couponListEl = document.querySelector(".js-fulfillment-coupon-list");
+const couponFormEl = document.querySelector(".js-fulfillment-coupon-form");
+const couponFormStatusEl = document.querySelector(".js-fulfillment-coupon-form-status");
+const couponResetButton = document.querySelector(".js-fulfillment-coupon-reset-btn");
+const couponGenerateButton = document.querySelector(".js-fulfillment-coupon-generate-btn");
+const hasOrderPage = Boolean(orderListEl || selectionEl || formEl || searchInput || searchButton || refreshButton);
+const hasCouponPage = Boolean(couponListEl || couponFormEl || couponSearchInput || couponSearchButton || couponRefreshButton);
+
+const COUPON_PRESETS = {
+  manual: null,
+  welcome: {
+    title: "신규 회원 환영 10%",
+    scope: "targeted",
+    discountType: "percent",
+    discountValue: 10,
+    minimumOrderAmount: 50000,
+    maximumDiscountAmount: 30000,
+    usageLimit: 1,
+    expiresInDays: 30,
+  },
+  recovery: {
+    title: "CS 보상 5,000원",
+    scope: "targeted",
+    discountType: "fixed",
+    discountValue: 5000,
+    minimumOrderAmount: 50000,
+    maximumDiscountAmount: 0,
+    usageLimit: 1,
+    expiresInDays: 14,
+  },
+  campaign: {
+    title: "공개 캠페인 10%",
+    scope: "public",
+    discountType: "percent",
+    discountValue: 10,
+    minimumOrderAmount: 70000,
+    maximumDiscountAmount: 20000,
+    usageLimit: 300,
+    expiresInDays: 7,
+  },
+};
 
 const state = {
   secret: sessionStorage.getItem(ADMIN_SECRET_KEY) || "",
   orders: [],
   selectedOrderId: "",
+  coupons: [],
+  selectedCouponId: "",
   config: null,
 };
 
@@ -67,6 +113,54 @@ function parseDateTimeLocal(value) {
   if (!raw) return undefined;
   const date = new Date(raw);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function formatCouponValue(coupon) {
+  if (!coupon) return "—";
+  return coupon.discountType === "percent"
+    ? `${Number(coupon.discountValue || 0)}%`
+    : formatPrice(coupon.discountValue || 0);
+}
+
+function formatCouponRule(coupon) {
+  if (!coupon) return "—";
+
+  const parts = [formatCouponValue(coupon)];
+  if (Number(coupon.minimumOrderAmount || 0) > 0) {
+    parts.push(`최소 ${formatPrice(coupon.minimumOrderAmount)}`);
+  }
+  if (Number(coupon.maximumDiscountAmount || 0) > 0) {
+    parts.push(`최대 ${formatPrice(coupon.maximumDiscountAmount)}`);
+  }
+
+  return parts.join(" · ");
+}
+
+function resolveCouponTargetLabel(coupon) {
+  if (!coupon) return "—";
+  if (coupon.scope === "public") {
+    return "공개 쿠폰";
+  }
+
+  return coupon.targetEmail || "계정 지정";
+}
+
+function buildPresetExpiry(days) {
+  if (!days) return "";
+  return formatDateTimeLocal(new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString());
+}
+
+function generateCouponCode(scope = "targeted", presetKey = "manual") {
+  const presetPrefix = {
+    welcome: "WELCOME",
+    recovery: "CARE",
+    campaign: "OPEN",
+    manual: scope === "public" ? "OALUM" : "MEM",
+  };
+  const prefix = presetPrefix[presetKey] || presetPrefix.manual;
+  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const tail = Date.now().toString(36).slice(-4).toUpperCase();
+  return `${prefix}-${random}-${tail}`;
 }
 
 function setStatus(target, message = "", type = "info") {
@@ -134,26 +228,6 @@ function resolveShipmentLabel(order) {
   return labels[status] || status || "주문 확인 완료";
 }
 
-function renderConfig(config) {
-  state.config = config || null;
-
-  if (!configEl) return;
-
-  if (!config) {
-    configEl.innerHTML = '<div class="fulfillment-empty">연동 상태를 확인할 수 없습니다.</div>';
-    return;
-  }
-
-  const deliveryTracker = config.deliveryTracker || {};
-  const chips = [
-    `<span class="fulfillment-chip ${deliveryTracker.enabled ? "is-active" : ""}">Delivery Tracker API ${deliveryTracker.enabled ? "활성" : "미설정"}</span>`,
-    `<span class="fulfillment-chip ${deliveryTracker.trackingLinkSupported ? "is-active" : ""}">Tracking Link ${deliveryTracker.trackingLinkSupported ? "활성" : "미설정"}</span>`,
-    `<span class="fulfillment-chip ${deliveryTracker.webhookProtected ? "is-active" : ""}">Webhook Secret ${deliveryTracker.webhookProtected ? "보호됨" : "미설정"}</span>`,
-  ];
-
-  configEl.innerHTML = `<div class="fulfillment-chip-row">${chips.join("")}</div>`;
-}
-
 function renderOrders() {
   if (!orderListEl) return;
 
@@ -187,6 +261,105 @@ function getSelectedOrder() {
   return state.orders.find((order) => order.orderId === state.selectedOrderId) || null;
 }
 
+function getSelectedCoupon() {
+  return state.coupons.find((coupon) => coupon.id === state.selectedCouponId) || null;
+}
+
+function syncCouponTargetField() {
+  if (!couponFormEl) return;
+
+  const isPublic = couponFormEl.elements.scope.value === "public";
+  couponFormEl.elements.targetEmail.disabled = isPublic;
+
+  if (isPublic) {
+    couponFormEl.elements.targetEmail.value = "";
+  }
+}
+
+function renderCoupons() {
+  if (!couponListEl) return;
+
+  if (!state.coupons.length) {
+    couponListEl.innerHTML = '<div class="fulfillment-empty">조회된 쿠폰이 없습니다.</div>';
+    return;
+  }
+
+  couponListEl.innerHTML = state.coupons.map((coupon) => {
+    const activeClass = coupon.id === state.selectedCouponId ? " is-active" : "";
+    const statusLabel = coupon.isActive ? "사용 중" : "중지";
+    const usageLabel = `활성 ${coupon.activeUseCount}/${coupon.usageLimit} · 완료 ${coupon.appliedUseCount}`;
+    const expiryLabel = coupon.expiresAt ? `만료 ${formatDate(coupon.expiresAt)}` : "상시";
+
+    return `
+      <button type="button" class="fulfillment-order-card${activeClass}" data-coupon-id="${escapeHtml(coupon.id)}">
+        <div class="fulfillment-order-card__top">
+          <strong>${escapeHtml(coupon.title)}</strong>
+          <span>${escapeHtml(statusLabel)}</span>
+        </div>
+        <p class="fulfillment-order-card__meta">${escapeHtml(coupon.code)} · ${escapeHtml(formatCouponRule(coupon))}</p>
+        <p class="fulfillment-order-card__meta">${escapeHtml(resolveCouponTargetLabel(coupon))} · ${escapeHtml(usageLabel)}</p>
+        <p class="fulfillment-order-card__meta">${escapeHtml(expiryLabel)}</p>
+      </button>
+    `;
+  }).join("");
+}
+
+function fillCouponForm(coupon = null) {
+  if (!couponFormEl) return;
+
+  couponFormEl.elements.couponId.value = coupon?.id || "";
+  couponFormEl.elements.preset.value = "manual";
+  couponFormEl.elements.code.value = coupon?.code || generateCouponCode("targeted", "manual");
+  couponFormEl.elements.title.value = coupon?.title || "";
+  couponFormEl.elements.scope.value = coupon?.scope || "targeted";
+  couponFormEl.elements.targetEmail.value = coupon?.targetEmail || "";
+  couponFormEl.elements.usageLimit.value = String(coupon?.usageLimit || 1);
+  couponFormEl.elements.discountType.value = coupon?.discountType || "fixed";
+  couponFormEl.elements.discountValue.value = String(coupon?.discountValue || 5000);
+  couponFormEl.elements.minimumOrderAmount.value = String(coupon?.minimumOrderAmount || 0);
+  couponFormEl.elements.maximumDiscountAmount.value = coupon?.maximumDiscountAmount ? String(coupon.maximumDiscountAmount) : "";
+  couponFormEl.elements.startsAt.value = formatDateTimeLocal(coupon?.startsAt);
+  couponFormEl.elements.expiresAt.value = formatDateTimeLocal(coupon?.expiresAt);
+  couponFormEl.elements.isActive.checked = coupon?.isActive !== false;
+  syncCouponTargetField();
+}
+
+function resetCouponForm() {
+  state.selectedCouponId = "";
+  fillCouponForm(null);
+  if (couponFormEl) {
+    couponFormEl.elements.title.value = "";
+    couponFormEl.elements.minimumOrderAmount.value = "50000";
+  }
+  renderCoupons();
+  setStatus(couponFormStatusEl, "");
+}
+
+function applyCouponPreset(presetKey) {
+  if (!couponFormEl) return;
+
+  const preset = COUPON_PRESETS[presetKey];
+  if (!preset) {
+    couponFormEl.elements.code.value = generateCouponCode(couponFormEl.elements.scope.value, presetKey);
+    syncCouponTargetField();
+    return;
+  }
+
+  couponFormEl.elements.title.value = preset.title;
+  couponFormEl.elements.scope.value = preset.scope;
+  couponFormEl.elements.discountType.value = preset.discountType;
+  couponFormEl.elements.discountValue.value = String(preset.discountValue);
+  couponFormEl.elements.minimumOrderAmount.value = String(preset.minimumOrderAmount);
+  couponFormEl.elements.maximumDiscountAmount.value = preset.maximumDiscountAmount ? String(preset.maximumDiscountAmount) : "";
+  couponFormEl.elements.usageLimit.value = String(preset.usageLimit);
+  couponFormEl.elements.expiresAt.value = buildPresetExpiry(preset.expiresInDays);
+  couponFormEl.elements.code.value = generateCouponCode(preset.scope, presetKey);
+  if (preset.scope === "public") {
+    couponFormEl.elements.targetEmail.value = "";
+  }
+  syncCouponTargetField();
+}
+
 function renderSelection() {
   if (!selectionEl || !formEl) return;
 
@@ -202,6 +375,20 @@ function renderSelection() {
     const title = [item.title, item.editionLabel].filter(Boolean).join(" / ");
     return `<li>${escapeHtml(title || "상품")} ${item.quantity > 1 ? `× ${escapeHtml(item.quantity)}` : ""}</li>`;
   }).join("");
+  const benefitLines = [];
+
+  if (Number(order.coupon?.discountAmount || 0) > 0) {
+    benefitLines.push(`쿠폰 ${order.coupon.code || ""} · -${formatPrice(order.coupon.discountAmount)}`);
+  }
+
+  if (Number(order.pointsUsed || 0) > 0) {
+    benefitLines.push(`포인트 사용 · -${formatPrice(order.pointsUsed)}`);
+  }
+
+  if (Number(order.pointsEarned || 0) > 0) {
+    const pointsLabel = order.pointsEarnedAt ? "포인트 적립 확정" : "배송 완료 시 적립";
+    benefitLines.push(`${pointsLabel} · ${Number(order.pointsEarned).toLocaleString("ko-KR")}P`);
+  }
 
   selectionEl.innerHTML = `
     <div class="fulfillment-summary">
@@ -225,6 +412,7 @@ function renderSelection() {
     <div class="fulfillment-order-meta">
       <p>${escapeHtml(order.customer?.name || "")}${order.customer?.email ? ` · ${escapeHtml(order.customer.email)}` : ""}</p>
       <p>${escapeHtml([order.shipping?.zipcode, order.shipping?.address1, order.shipping?.address2].filter(Boolean).join(" "))}</p>
+      ${benefitLines.map((line) => `<p class="fulfillment-copy fulfillment-copy--quiet">${escapeHtml(line)}</p>`).join("")}
       <ul class="fulfillment-order-items">${itemMarkup}</ul>
       ${shipment?.trackerLastEventName || shipment?.trackerLastEventDescription ? `<p class="fulfillment-copy fulfillment-copy--quiet">최근 트래커 이벤트: ${escapeHtml([shipment.trackerLastEventName, shipment.trackerLastEventDescription].filter(Boolean).join(" / "))}</p>` : ""}
     </div>
@@ -266,7 +454,7 @@ async function loadOrders(query = "") {
   try {
     const payload = await requestFulfillment(`/api/orders/fulfillment?limit=20&query=${encodeURIComponent(query)}`);
     state.orders = Array.isArray(payload.orders) ? payload.orders : [];
-    renderConfig(payload.config || null);
+    state.config = payload.config || null;
 
     if (state.selectedOrderId) {
       const stillSelected = state.orders.find((order) => order.orderId === state.selectedOrderId);
@@ -284,14 +472,62 @@ async function loadOrders(query = "") {
     if (error.status === 401) {
       sessionStorage.removeItem(ADMIN_SECRET_KEY);
       state.secret = "";
+      state.orders = [];
+      state.selectedOrderId = "";
+      state.coupons = [];
+      state.selectedCouponId = "";
+      state.config = null;
       renderOrders();
       renderSelection();
+      renderCoupons();
+      fillCouponForm(null);
       setStatus(authStatusEl, "관리자 키가 올바르지 않습니다.", "error");
       setStatus(listStatusEl, "관리자 키를 다시 입력해주세요.", "error");
       return;
     }
 
     setStatus(listStatusEl, error.message || "주문 정보를 불러오지 못했습니다.", "error");
+  }
+}
+
+async function loadCoupons(query = "") {
+  if (!state.secret) {
+    setStatus(couponStatusEl, "관리자 키를 먼저 입력해주세요.", "error");
+    return;
+  }
+
+  setStatus(couponStatusEl, "쿠폰 정보를 불러오는 중입니다.");
+
+  try {
+    const payload = await requestFulfillment(`/api/orders/coupons?limit=30&query=${encodeURIComponent(query)}`);
+    state.coupons = Array.isArray(payload.coupons) ? payload.coupons : [];
+
+    if (state.selectedCouponId) {
+      const stillSelected = state.coupons.find((coupon) => coupon.id === state.selectedCouponId);
+      if (!stillSelected) {
+        state.selectedCouponId = state.coupons[0]?.id || "";
+      }
+    } else {
+      state.selectedCouponId = state.coupons[0]?.id || "";
+    }
+
+    renderCoupons();
+    fillCouponForm(getSelectedCoupon());
+    setStatus(couponStatusEl, state.coupons.length ? `${state.coupons.length}건의 쿠폰을 불러왔습니다.` : "조회된 쿠폰이 없습니다.", "success");
+  } catch (error) {
+    if (error.status === 401) {
+      sessionStorage.removeItem(ADMIN_SECRET_KEY);
+      state.secret = "";
+      state.coupons = [];
+      state.selectedCouponId = "";
+      renderCoupons();
+      fillCouponForm(null);
+      setStatus(authStatusEl, "관리자 키가 올바르지 않습니다.", "error");
+      setStatus(couponStatusEl, "관리자 키를 다시 입력해주세요.", "error");
+      return;
+    }
+
+    setStatus(couponStatusEl, error.message || "쿠폰 정보를 불러오지 못했습니다.", "error");
   }
 }
 
@@ -355,7 +591,7 @@ async function saveShipment(event) {
       },
     });
 
-    renderConfig(payload.config || state.config);
+    state.config = payload.config || state.config || null;
     applySelectedOrder(payload.order);
 
     if (payload.deliveryTracker?.warning) {
@@ -367,6 +603,57 @@ async function saveShipment(event) {
     }
   } catch (error) {
     setStatus(formStatusEl, error.message || "배송 정보를 저장하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(submitButton, false, "저장 중…");
+  }
+}
+
+async function saveCoupon(event) {
+  event.preventDefault();
+
+  if (!couponFormEl) return;
+
+  const submitButton = couponFormEl.querySelector("button[type='submit']");
+  setButtonLoading(submitButton, true, "저장 중…");
+  setStatus(couponFormStatusEl, "쿠폰을 저장하는 중입니다.");
+
+  try {
+    const payload = await requestFulfillment("/api/orders/coupons", {
+      method: "POST",
+      body: {
+        id: String(couponFormEl.elements.couponId.value || "").trim() || undefined,
+        code: String(couponFormEl.elements.code.value || "").trim(),
+        title: String(couponFormEl.elements.title.value || "").trim(),
+        scope: couponFormEl.elements.scope.value,
+        targetEmail: String(couponFormEl.elements.targetEmail.value || "").trim(),
+        discountType: couponFormEl.elements.discountType.value,
+        discountValue: Number(couponFormEl.elements.discountValue.value || 0),
+        minimumOrderAmount: Number(couponFormEl.elements.minimumOrderAmount.value || 0),
+        maximumDiscountAmount: Number(couponFormEl.elements.maximumDiscountAmount.value || 0),
+        usageLimit: Number(couponFormEl.elements.usageLimit.value || 1),
+        startsAt: parseDateTimeLocal(couponFormEl.elements.startsAt.value),
+        expiresAt: parseDateTimeLocal(couponFormEl.elements.expiresAt.value),
+        isActive: couponFormEl.elements.isActive.checked,
+      },
+    });
+
+    const nextCoupon = payload.coupon || null;
+    if (nextCoupon) {
+      const index = state.coupons.findIndex((coupon) => coupon.id === nextCoupon.id);
+      if (index >= 0) {
+        state.coupons.splice(index, 1, nextCoupon);
+      } else {
+        state.coupons.unshift(nextCoupon);
+      }
+      state.selectedCouponId = nextCoupon.id;
+      renderCoupons();
+      fillCouponForm(nextCoupon);
+    }
+
+    setStatus(couponFormStatusEl, "쿠폰을 저장했습니다.", "success");
+    setStatus(couponStatusEl, "쿠폰 목록을 최신 상태로 유지했습니다.", "success");
+  } catch (error) {
+    setStatus(couponFormStatusEl, error.message || "쿠폰을 저장하지 못했습니다.", "error");
   } finally {
     setButtonLoading(submitButton, false, "저장 중…");
   }
@@ -387,7 +674,16 @@ authForm?.addEventListener("submit", async (event) => {
   sessionStorage.setItem(ADMIN_SECRET_KEY, secret);
 
   try {
-    await loadOrders(String(searchInput?.value || "").trim());
+    const tasks = [];
+    if (hasOrderPage) {
+      tasks.push(loadOrders(String(searchInput?.value || "").trim()));
+    }
+    if (hasCouponPage) {
+      tasks.push(loadCoupons(String(couponSearchInput?.value || "").trim()));
+    }
+    if (tasks.length) {
+      await Promise.all(tasks);
+    }
     setStatus(authStatusEl, "관리자 세션을 활성화했습니다.", "success");
   } finally {
     setButtonLoading(submitButton, false, "확인 중…");
@@ -399,13 +695,19 @@ authClearButton?.addEventListener("click", () => {
   state.secret = "";
   state.orders = [];
   state.selectedOrderId = "";
+  state.coupons = [];
+  state.selectedCouponId = "";
+  state.config = null;
   authForm.elements.adminSecret.value = "";
   renderOrders();
   renderSelection();
-  renderConfig(null);
+  renderCoupons();
+  fillCouponForm(null);
   setStatus(authStatusEl, "관리자 세션을 초기화했습니다.");
   setStatus(listStatusEl, "");
   setStatus(formStatusEl, "");
+  setStatus(couponStatusEl, "");
+  setStatus(couponFormStatusEl, "");
 });
 
 searchButton?.addEventListener("click", () => {
@@ -417,6 +719,17 @@ refreshButton?.addEventListener("click", () => {
     searchInput.value = "";
   }
   loadOrders("");
+});
+
+couponSearchButton?.addEventListener("click", () => {
+  loadCoupons(String(couponSearchInput?.value || "").trim());
+});
+
+couponRefreshButton?.addEventListener("click", () => {
+  if (couponSearchInput) {
+    couponSearchInput.value = "";
+  }
+  loadCoupons("");
 });
 
 orderListEl?.addEventListener("click", (event) => {
@@ -445,9 +758,61 @@ carrierResultsEl?.addEventListener("click", (event) => {
 
 formEl?.addEventListener("submit", saveShipment);
 
+couponListEl?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-coupon-id]");
+  if (!button) return;
+
+  state.selectedCouponId = button.dataset.couponId || "";
+  renderCoupons();
+  fillCouponForm(getSelectedCoupon());
+  setStatus(couponFormStatusEl, "");
+});
+
+couponFormEl?.addEventListener("submit", saveCoupon);
+
+couponResetButton?.addEventListener("click", () => {
+  resetCouponForm();
+});
+
+couponGenerateButton?.addEventListener("click", () => {
+  if (!couponFormEl) return;
+  couponFormEl.elements.code.value = generateCouponCode(
+    couponFormEl.elements.scope.value,
+    couponFormEl.elements.preset.value,
+  );
+});
+
+couponFormEl?.elements?.preset?.addEventListener("change", () => {
+  applyCouponPreset(couponFormEl.elements.preset.value);
+});
+
+couponFormEl?.elements?.scope?.addEventListener("change", () => {
+  syncCouponTargetField();
+  if (!couponFormEl.elements.couponId.value) {
+    couponFormEl.elements.code.value = generateCouponCode(
+      couponFormEl.elements.scope.value,
+      couponFormEl.elements.preset.value,
+    );
+  }
+});
+
 if (state.secret) {
   authForm.elements.adminSecret.value = state.secret;
-  loadOrders("").then(() => {
+  const tasks = [];
+  if (hasOrderPage) {
+    tasks.push(loadOrders(""));
+  }
+  if (hasCouponPage) {
+    tasks.push(loadCoupons(""));
+  }
+  Promise.all(tasks).then(() => {
     setStatus(authStatusEl, "관리자 세션이 복원되었습니다.", "success");
   });
+} else {
+  if (hasCouponPage) {
+    fillCouponForm(null);
+    couponFormEl.elements.minimumOrderAmount.value = "50000";
+  }
 }
+
+setActiveTab(readHashAdminTab() || state.activeTab);
