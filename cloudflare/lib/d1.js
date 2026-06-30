@@ -2,9 +2,20 @@ function getDb(env) {
   return env?.OALUM_DB || null;
 }
 
+import {
+  prepareCouponPricing,
+  reserveCouponForOrder,
+  settleExpiredCouponReservations,
+  syncOrderCouponState,
+} from "./coupons.js";
+
 export function hasD1(env) {
   return Boolean(getDb(env));
 }
+
+const POINTS_MIN_REDEEM = 1000;
+const POINTS_EARN_RATE = 0.03;
+const POINTS_RESERVATION_WINDOW_MS = 30 * 60 * 1000;
 
 function roundAmount(value) {
   const amount = Math.round(Number(value) || 0);
@@ -14,6 +25,20 @@ function roundAmount(value) {
 function normalizeTimestamp(value) {
   const timestamp = String(value || "").trim();
   return timestamp || null;
+}
+
+function normalizePoints(value) {
+  const points = Math.floor(Number(value) || 0);
+  return Number.isFinite(points) && points > 0 ? points : 0;
+}
+
+function calculateEarnedPoints(totalAmount) {
+  const amount = roundAmount(totalAmount);
+  return Math.max(0, Math.floor(amount * POINTS_EARN_RATE));
+}
+
+function buildPointsReservationExpiry(now) {
+  return new Date(new Date(now).getTime() + POINTS_RESERVATION_WINDOW_MS).toISOString();
 }
 
 function encodeJson(value, fallback = {}) {
@@ -300,6 +325,457 @@ async function findPaymentRecord(database, { paymentKey, orderId } = {}) {
     .first()) || null;
 }
 
+async function findOrderRecord(database, orderId) {
+  if (!orderId) {
+    return null;
+  }
+
+  return (await database
+    .prepare(`SELECT * FROM orders WHERE id = ? LIMIT 1`)
+    .bind(orderId)
+    .first()) || null;
+}
+
+async function findPointTransaction(database, { orderId, kind } = {}) {
+  if (!orderId || !kind) {
+    return null;
+  }
+
+  return (await database
+    .prepare(`SELECT * FROM point_transactions WHERE order_id = ? AND kind = ? LIMIT 1`)
+    .bind(orderId, kind)
+    .first()) || null;
+}
+
+async function insertPointTransaction(database, {
+  userId,
+  orderId,
+  kind,
+  pointsDelta,
+  note = "",
+  createdAt,
+}) {
+  if (!userId || !kind) {
+    return false;
+  }
+
+  const existing = orderId ? await findPointTransaction(database, { orderId, kind }) : null;
+  if (existing) {
+    return false;
+  }
+
+  await database
+    .prepare(`
+      INSERT INTO point_transactions (
+        user_id,
+        order_id,
+        kind,
+        points_delta,
+        note,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `)
+    .bind(
+      userId,
+      orderId || null,
+      kind,
+      Math.trunc(Number(pointsDelta) || 0),
+      String(note || "").trim(),
+      createdAt,
+    )
+    .run();
+
+  return true;
+}
+
+async function readPointTransactionSum(database, userId) {
+  if (!userId) {
+    return 0;
+  }
+
+  const row = await database
+    .prepare(`SELECT COALESCE(SUM(points_delta), 0) AS total FROM point_transactions WHERE user_id = ?`)
+    .bind(userId)
+    .first();
+
+  return Math.trunc(Number(row?.total) || 0);
+}
+
+async function readUserBasePoints(database, userId) {
+  if (!userId) {
+    return 0;
+  }
+
+  const row = await database
+    .prepare(`SELECT points_balance FROM users WHERE id = ? LIMIT 1`)
+    .bind(userId)
+    .first();
+
+  return Math.trunc(Number(row?.points_balance) || 0);
+}
+
+async function readAvailablePoints(database, userId) {
+  if (!userId) {
+    return 0;
+  }
+
+  return (await readUserBasePoints(database, userId)) + (await readPointTransactionSum(database, userId));
+}
+
+function isPaymentConfirmedForPoints(order) {
+  const orderStatus = String(order?.status || "").trim().toLowerCase();
+  const paymentStatus = String(order?.payment_status || "").trim().toLowerCase();
+
+  return ["paid"].includes(orderStatus)
+    || ["confirmed", "paid", "done", "completed", "success", "succeeded"].includes(paymentStatus);
+}
+
+function isPaymentRevertedForPoints(order) {
+  const orderStatus = String(order?.status || "").trim().toLowerCase();
+  const paymentStatus = String(order?.payment_status || "").trim().toLowerCase();
+
+  return ["payment_failed", "cancelled", "refunded"].includes(orderStatus)
+    || ["failed", "cancelled", "canceled", "refunded", "refund"].includes(paymentStatus);
+}
+
+async function captureReservedPoints(database, order, now) {
+  const pointsUsed = normalizePoints(order?.points_used);
+  if (!order?.user_id || pointsUsed <= 0 || order?.points_spent_at || order?.points_refunded_at) {
+    return false;
+  }
+
+  const released = Boolean(order?.points_released_at || await findPointTransaction(database, {
+    orderId: order.id,
+    kind: "reserve_release",
+  }));
+  const hasReserve = Boolean(await findPointTransaction(database, {
+    orderId: order.id,
+    kind: "reserve",
+  }));
+
+  await insertPointTransaction(database, {
+    userId: order.user_id,
+    orderId: order.id,
+    kind: "spend_capture",
+    pointsDelta: released || !hasReserve ? -pointsUsed : 0,
+    note: released ? "Released reservation captured at payment confirmation." : "Point reservation captured at payment confirmation.",
+    createdAt: now,
+  });
+
+  await database
+    .prepare(`
+      UPDATE orders
+      SET points_spent_at = COALESCE(points_spent_at, ?),
+          points_released_at = NULL,
+          points_reservation_expires_at = NULL,
+          updated_at = ?
+      WHERE id = ?
+    `)
+    .bind(now, now, order.id)
+    .run();
+
+  return true;
+}
+
+async function releaseReservedPoints(database, order, now, note) {
+  const pointsUsed = normalizePoints(order?.points_used);
+  if (!order?.user_id || pointsUsed <= 0 || order?.points_spent_at || order?.points_released_at || order?.points_refunded_at) {
+    return false;
+  }
+
+  await insertPointTransaction(database, {
+    userId: order.user_id,
+    orderId: order.id,
+    kind: "reserve_release",
+    pointsDelta: pointsUsed,
+    note,
+    createdAt: now,
+  });
+
+  await database
+    .prepare(`
+      UPDATE orders
+      SET points_released_at = COALESCE(points_released_at, ?),
+          points_reservation_expires_at = NULL,
+          updated_at = ?
+      WHERE id = ?
+    `)
+    .bind(now, now, order.id)
+    .run();
+
+  return true;
+}
+
+async function refundSpentPoints(database, order, now, note) {
+  const pointsUsed = normalizePoints(order?.points_used);
+  if (!order?.user_id || pointsUsed <= 0 || !order?.points_spent_at || order?.points_refunded_at) {
+    return false;
+  }
+
+  await insertPointTransaction(database, {
+    userId: order.user_id,
+    orderId: order.id,
+    kind: "spend_refund",
+    pointsDelta: pointsUsed,
+    note,
+    createdAt: now,
+  });
+
+  await database
+    .prepare(`
+      UPDATE orders
+      SET points_refunded_at = COALESCE(points_refunded_at, ?),
+          updated_at = ?
+      WHERE id = ?
+    `)
+    .bind(now, now, order.id)
+    .run();
+
+  return true;
+}
+
+async function awardEarnedPoints(database, order, now) {
+  if (!order?.user_id || !isPaymentConfirmedForPoints(order) || order?.points_earned_at) {
+    return false;
+  }
+
+  const earnedPoints = normalizePoints(order?.points_earned) || calculateEarnedPoints(order?.total_amount);
+  if (earnedPoints <= 0) {
+    return false;
+  }
+
+  await insertPointTransaction(database, {
+    userId: order.user_id,
+    orderId: order.id,
+    kind: "earn",
+    pointsDelta: earnedPoints,
+    note: "Points awarded after delivery completed.",
+    createdAt: now,
+  });
+
+  await database
+    .prepare(`
+      UPDATE orders
+      SET points_earned = ?,
+          points_earned_at = COALESCE(points_earned_at, ?),
+          updated_at = ?
+      WHERE id = ?
+    `)
+    .bind(earnedPoints, now, now, order.id)
+    .run();
+
+  return true;
+}
+
+async function reverseEarnedPoints(database, order, now, note) {
+  const earnedPoints = normalizePoints(order?.points_earned);
+  if (!order?.user_id || earnedPoints <= 0 || !order?.points_earned_at || order?.points_earned_reversed_at) {
+    return false;
+  }
+
+  await insertPointTransaction(database, {
+    userId: order.user_id,
+    orderId: order.id,
+    kind: "earn_reversal",
+    pointsDelta: -earnedPoints,
+    note,
+    createdAt: now,
+  });
+
+  await database
+    .prepare(`
+      UPDATE orders
+      SET points_earned_reversed_at = COALESCE(points_earned_reversed_at, ?),
+          updated_at = ?
+      WHERE id = ?
+    `)
+    .bind(now, now, order.id)
+    .run();
+
+  return true;
+}
+
+async function syncOrderPointsState(database, orderId, now, shipment = null) {
+  const order = await findOrderRecord(database, orderId);
+  if (!order || !order.user_id) {
+    return false;
+  }
+
+  const currentShipment = shipment || await findShipmentRecord(database, { orderId });
+  const shipmentStatus = String(currentShipment?.status || "").trim().toLowerCase();
+
+  if (isPaymentConfirmedForPoints(order)) {
+    await captureReservedPoints(database, order, now);
+  }
+
+  if (isPaymentRevertedForPoints(order)) {
+    if (order?.points_spent_at) {
+      await refundSpentPoints(database, order, now, "Points returned after payment was cancelled or refunded.");
+    } else {
+      await releaseReservedPoints(database, order, now, "Point reservation released after payment did not complete.");
+    }
+
+    await reverseEarnedPoints(database, order, now, "Awarded points reversed after payment was cancelled or refunded.");
+    return true;
+  }
+
+  if (shipmentStatus === "delivered") {
+    await awardEarnedPoints(database, order, now);
+  }
+
+  if (shipmentStatus === "returned") {
+    await reverseEarnedPoints(database, order, now, "Awarded points reversed after order return.");
+  }
+
+  return true;
+}
+
+export async function settleExpiredPointReservations(env, {
+  userId = null,
+  excludeOrderId = null,
+  now = new Date().toISOString(),
+} = {}) {
+  const database = getDb(env);
+  if (!database) {
+    return 0;
+  }
+
+  const result = await database
+    .prepare(`
+      SELECT *
+      FROM orders
+      WHERE user_id IS NOT NULL
+        AND (? IS NULL OR user_id = ?)
+        AND (? IS NULL OR id != ?)
+        AND points_used > 0
+        AND points_spent_at IS NULL
+        AND points_released_at IS NULL
+        AND points_refunded_at IS NULL
+        AND points_reservation_expires_at IS NOT NULL
+        AND points_reservation_expires_at <= ?
+    `)
+    .bind(userId, userId, excludeOrderId, excludeOrderId, now)
+    .all();
+
+  let settled = 0;
+
+  for (const order of result?.results || []) {
+    const changed = await releaseReservedPoints(database, order, now, "Point reservation expired.");
+    if (changed) {
+      settled += 1;
+    }
+  }
+
+  return settled;
+}
+
+export async function readUserPointBalance(env, userId, options = {}) {
+  const database = getDb(env);
+  if (!database || !userId) {
+    return 0;
+  }
+
+  if (options.settleExpired !== false) {
+    await settleExpiredPointReservations(env, {
+      userId,
+      excludeOrderId: options.excludeOrderId || null,
+    });
+  }
+
+  return readAvailablePoints(database, userId);
+}
+
+export async function prepareOrderPricing(env, {
+  userId = null,
+  email = "",
+  subtotalAmount = 0,
+  requestedPoints = 0,
+  coupon = null,
+} = {}) {
+  const subtotal = roundAmount(subtotalAmount);
+  let pointsUsed = normalizePoints(requestedPoints);
+  const activeCoupon = coupon || await prepareCouponPricing(env, {
+    userId,
+    email,
+    subtotalAmount: subtotal,
+    couponCode: "",
+  });
+  const couponDiscountAmount = roundAmount(activeCoupon?.discountAmount);
+
+  if (!getDb(env)) {
+    if (couponDiscountAmount > 0 || pointsUsed > 0) {
+      throw Object.assign(new Error("쿠폰 또는 포인트 사용 주문은 주문 API 연결이 필요합니다. 잠시 후 다시 시도해주세요."), {
+        status: 503,
+      });
+    }
+
+    return {
+      subtotalAmount: subtotal,
+      discountAmount: 0,
+      couponDiscountAmount: 0,
+      coupon: null,
+      couponReservationExpiresAt: null,
+      totalAmount: subtotal,
+      pointsUsed: 0,
+      pointsReservationExpiresAt: null,
+      availablePoints: 0,
+    };
+  }
+
+  if (!userId && pointsUsed > 0) {
+    throw Object.assign(new Error("포인트는 로그인한 회원만 사용할 수 있습니다."), {
+      status: 401,
+    });
+  }
+
+  if (!userId || pointsUsed <= 0) {
+    return {
+      subtotalAmount: subtotal,
+      discountAmount: couponDiscountAmount,
+      couponDiscountAmount,
+      coupon: activeCoupon,
+      couponReservationExpiresAt: activeCoupon?.reservationExpiresAt || null,
+      totalAmount: Math.max(0, subtotal - couponDiscountAmount),
+      pointsUsed: 0,
+      pointsReservationExpiresAt: null,
+      availablePoints: userId ? await readUserPointBalance(env, userId) : 0,
+    };
+  }
+
+  if (pointsUsed < POINTS_MIN_REDEEM) {
+    throw Object.assign(new Error(`포인트는 ${POINTS_MIN_REDEEM.toLocaleString("ko-KR")}포인트부터 사용할 수 있습니다.`), {
+      status: 400,
+    });
+  }
+
+  pointsUsed = Math.min(pointsUsed, Math.max(0, subtotal - couponDiscountAmount));
+  await settleExpiredCouponReservations(env);
+  const availablePoints = await readUserPointBalance(env, userId);
+
+  if (pointsUsed > availablePoints) {
+    throw Object.assign(new Error("사용 가능한 포인트를 초과했습니다. 다시 확인해주세요."), {
+      status: 400,
+      details: {
+        availablePoints,
+      },
+    });
+  }
+
+  const now = new Date().toISOString();
+
+  return {
+    subtotalAmount: subtotal,
+    discountAmount: couponDiscountAmount + pointsUsed,
+    couponDiscountAmount,
+    coupon: activeCoupon,
+    couponReservationExpiresAt: activeCoupon?.reservationExpiresAt || null,
+    totalAmount: Math.max(0, subtotal - couponDiscountAmount - pointsUsed),
+    pointsUsed,
+    pointsReservationExpiresAt: buildPointsReservationExpiry(now),
+    availablePoints,
+  };
+}
+
 async function findShipmentRecord(database, { orderId } = {}) {
   if (!orderId) {
     return null;
@@ -353,6 +829,22 @@ function mapOrderSyncSnapshot(order, items, payment, shipment) {
     subtotalAmount: roundAmount(order.subtotal_amount),
     shippingAmount: roundAmount(order.shipping_amount),
     discountAmount: roundAmount(order.discount_amount),
+    coupon: order.coupon_id ? {
+      couponId: order.coupon_id,
+      code: order.coupon_code || "",
+      title: order.coupon_title || "",
+      scope: order.coupon_scope || "",
+      discountType: order.coupon_discount_type || "",
+      discountValue: roundAmount(order.coupon_discount_value),
+      discountAmount: roundAmount(order.coupon_discount_amount),
+      reservationExpiresAt: normalizeTimestamp(order.coupon_reservation_expires_at),
+      reservedAt: normalizeTimestamp(order.coupon_reserved_at),
+      releasedAt: normalizeTimestamp(order.coupon_released_at),
+      appliedAt: normalizeTimestamp(order.coupon_applied_at),
+      reinstatedAt: normalizeTimestamp(order.coupon_reinstated_at),
+    } : null,
+    pointsUsed: normalizePoints(order.points_used),
+    pointsEarned: normalizePoints(order.points_earned),
     totalAmount: roundAmount(order.total_amount),
     itemCount: normalizedItems.reduce((sum, item) => sum + Math.max(item.quantity, 0), 0),
     customer: {
@@ -371,6 +863,12 @@ function mapOrderSyncSnapshot(order, items, payment, shipment) {
     paidAt: normalizeTimestamp(order.paid_at),
     cancelledAt: normalizeTimestamp(order.cancelled_at),
     activePaymentKey: order.active_payment_key || null,
+    pointsReservationExpiresAt: normalizeTimestamp(order.points_reservation_expires_at),
+    pointsSpentAt: normalizeTimestamp(order.points_spent_at),
+    pointsReleasedAt: normalizeTimestamp(order.points_released_at),
+    pointsRefundedAt: normalizeTimestamp(order.points_refunded_at),
+    pointsEarnedAt: normalizeTimestamp(order.points_earned_at),
+    pointsEarnedReversedAt: normalizeTimestamp(order.points_earned_reversed_at),
     items: normalizedItems,
     shipment: mapShipmentRecord(shipment),
     payment: payment ? {
@@ -398,10 +896,7 @@ export async function readOrderSyncSnapshot(env, orderId) {
     return null;
   }
 
-  const order = await database
-    .prepare(`SELECT * FROM orders WHERE id = ? LIMIT 1`)
-    .bind(orderId)
-    .first();
+  const order = await findOrderRecord(database, orderId);
 
   if (!order) {
     return null;
@@ -535,7 +1030,9 @@ export async function updateShipment(env, input) {
     )
     .run();
 
-  return findShipmentRecord(database, { orderId: input.orderId });
+  const shipment = await findShipmentRecord(database, { orderId: input.orderId });
+  await syncOrderPointsState(database, input.orderId, now, shipment);
+  return shipment;
 }
 
 export async function updateShipmentByTrackingReference(env, input) {
@@ -593,6 +1090,8 @@ export async function updateShipmentByTrackingReference(env, input) {
     )
     .run();
 
+  await syncOrderPointsState(database, existing.order_id, now);
+
   return {
     orderId: existing.order_id,
     shipment: await findShipmentRecord(database, { orderId: existing.order_id }),
@@ -614,12 +1113,13 @@ export async function readFulfillmentOrders(env, { query = "", limit = 20 } = {}
     .prepare(`
       SELECT id
       FROM orders
-      WHERE (? = '' OR lower(id) LIKE ? OR lower(order_name) LIKE ? OR lower(customer_name) LIKE ? OR lower(customer_email) LIKE ?)
+      WHERE (? = '' OR lower(id) LIKE ? OR lower(order_name) LIKE ? OR lower(customer_name) LIKE ? OR lower(customer_email) LIKE ? OR lower(coupon_code) LIKE ?)
       ORDER BY created_at DESC
       LIMIT ?
     `)
     .bind(
       hasQuery ? safeQuery : "",
+      searchValue,
       searchValue,
       searchValue,
       searchValue,
@@ -917,6 +1417,8 @@ export async function persistOrder(env, order) {
         subtotal_amount,
         shipping_amount,
         discount_amount,
+        points_used,
+        points_earned,
         total_amount,
         customer_name,
         customer_phone,
@@ -925,9 +1427,22 @@ export async function persistOrder(env, order) {
         address1,
         address2,
         note,
+        coupon_id,
+        coupon_code,
+        coupon_title,
+        coupon_scope,
+        coupon_discount_type,
+        coupon_discount_value,
+        coupon_discount_amount,
+        coupon_reservation_expires_at,
+        coupon_reserved_at,
+        coupon_released_at,
+        coupon_applied_at,
+        coupon_reinstated_at,
+        points_reservation_expires_at,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       order.orderId,
       order.userId || null,
@@ -935,9 +1450,11 @@ export async function persistOrder(env, order) {
       order.status || "created",
       order.paymentStatus || "pending",
       "KRW",
-      order.total,
+      order.subtotalAmount ?? order.total,
       0,
-      0,
+      order.discountAmount ?? 0,
+      order.pointsUsed ?? 0,
+      order.pointsEarned ?? 0,
       order.total,
       order.shipping.name,
       order.shipping.phone,
@@ -946,6 +1463,19 @@ export async function persistOrder(env, order) {
       order.shipping.address1,
       order.shipping.address2 || "",
       order.shipping.memo || "",
+      order.couponId || null,
+      order.couponCode || "",
+      order.couponTitle || "",
+      order.couponScope || "",
+      order.couponDiscountType || "",
+      order.couponDiscountValue || 0,
+      order.couponDiscountAmount || 0,
+      order.couponReservationExpiresAt || null,
+      null,
+      null,
+      null,
+      null,
+      order.pointsReservationExpiresAt || null,
       createdAt,
       updatedAt,
     ),
@@ -982,6 +1512,40 @@ export async function persistOrder(env, order) {
   }
 
   await database.batch(statements);
+
+  if (order.couponCode) {
+    try {
+      await reserveCouponForOrder(env, order, createdAt);
+    } catch (error) {
+      await database.prepare(`DELETE FROM orders WHERE id = ?`).bind(order.orderId).run();
+      throw error;
+    }
+  }
+
+  if (order.userId && normalizePoints(order.pointsUsed) > 0) {
+    const availablePoints = await readAvailablePoints(database, order.userId);
+    if (order.pointsUsed > availablePoints) {
+      await database.prepare(`DELETE FROM orders WHERE id = ?`).bind(order.orderId).run();
+      throw Object.assign(new Error("사용 가능한 포인트가 부족합니다. 다시 시도해주세요."), {
+        status: 409,
+      });
+    }
+
+    try {
+      await insertPointTransaction(database, {
+        userId: order.userId,
+        orderId: order.orderId,
+        kind: "reserve",
+        pointsDelta: -normalizePoints(order.pointsUsed),
+        note: "Point reservation created at order checkout.",
+        createdAt,
+      });
+    } catch (error) {
+      await database.prepare(`DELETE FROM orders WHERE id = ?`).bind(order.orderId).run();
+      throw error;
+    }
+  }
+
   return true;
 }
 
@@ -1038,6 +1602,9 @@ export async function persistPayment(env, payment) {
       now,
     });
   }
+
+  await syncOrderCouponState(env, payment.orderId, { now });
+  await syncOrderPointsState(database, payment.orderId, now);
 
   await upsertPaymentEvent(database, {
     orderId: payment.orderId,
@@ -1102,6 +1669,11 @@ export async function persistWebhookEvent(env, payload, options = {}) {
       status: "confirmed",
       now,
     });
+  }
+
+  if (orderId) {
+    await syncOrderCouponState(env, orderId, { now });
+    await syncOrderPointsState(database, orderId, now);
   }
 
   const eventResult = await upsertPaymentEvent(database, {
