@@ -89,6 +89,15 @@ function getFriendlyApiMessage(error, fallbackMessage) {
 function formatOrderStatus(order) {
   const shipmentValue = String(order?.shipment?.status || "").trim().toLowerCase();
   const orderValue = String(order?.status || "").trim().toLowerCase();
+  const value = String(order?.paymentStatus || order?.status || "").trim().toLowerCase();
+
+  if (["cancelled", "canceled"].includes(shipmentValue) || ["cancelled", "canceled"].includes(orderValue) || ["cancelled", "canceled"].includes(value)) {
+    return "주문 취소";
+  }
+
+  if (["refunded", "refund"].includes(orderValue) || ["refunded", "refund", "partial_refunded", "partial-refunded"].includes(value)) {
+    return "환불 완료";
+  }
 
   if (shipmentValue === "confirmed") {
     return "주문 확인 완료";
@@ -109,8 +118,6 @@ function formatOrderStatus(order) {
   if (shipmentValue === "returned") {
     return "반송 완료";
   }
-
-  const value = String(order?.paymentStatus || order?.status || "").trim().toLowerCase();
 
   if (!shipmentValue && orderValue === "created" && value === "pending") {
     return "결제 미완료";
@@ -145,6 +152,18 @@ function formatOrderStatus(order) {
   }
 
   return "주문 접수";
+}
+
+function buildOrderCancellationNote(cancellation) {
+  if (!cancellation?.message) {
+    return "";
+  }
+
+  if (cancellation.request?.requestedAt && cancellation.status === "pending_approval") {
+    return `${cancellation.message} (${formatDate(cancellation.request.requestedAt)} 요청)`;
+  }
+
+  return cancellation.message;
 }
 
 function getSafeTrackingUrl(value) {
@@ -446,6 +465,12 @@ export function initAccountPage() {
   });
 
   ordersEl.addEventListener("click", (event) => {
+    const cancelButton = event.target.closest("[data-account-cancel]");
+    if (cancelButton) {
+      void handleOrderCancellation(cancelButton);
+      return;
+    }
+
     const button = event.target.closest("[data-account-page-type='orders']");
     if (!button) return;
 
@@ -481,6 +506,34 @@ export function initAccountPage() {
     const titleParts = [item?.title, item?.editionLabel].filter(Boolean).join(" / ");
     const quantity = Number(item?.quantity) || 0;
     return `${escapeHtml(titleParts || "상품")}${quantity > 1 ? ` × ${quantity}` : ""}`;
+  }
+
+  function renderOrderCancellationControls(order) {
+    const cancellation = order?.cancellation || null;
+    if (!cancellation) {
+      return "";
+    }
+
+    const note = buildOrderCancellationNote(cancellation);
+    const noteMarkup = note
+      ? `<p class="account-record__notice">${escapeHtml(note)}</p>`
+      : "";
+
+    if (!cancellation.action || !cancellation.buttonLabel) {
+      return noteMarkup;
+    }
+
+    return `
+      <div class="account-record__actions">
+        <button
+          type="button"
+          class="account-btn account-btn--secondary account-record__action-btn"
+          data-account-cancel="${escapeHtml(order?.orderId || "")}" 
+          data-account-cancel-mode="${escapeHtml(cancellation.action)}"
+        >${escapeHtml(cancellation.buttonLabel)}</button>
+      </div>
+      ${noteMarkup}
+    `;
   }
 
   function renderOrderCard(order) {
@@ -519,6 +572,7 @@ export function initAccountPage() {
           </div>
           ${renderOrderStatusDetail(order, "account-record__status-detail")}
           ${itemsMarkup}
+          ${renderOrderCancellationControls(order)}
         </div>
       </article>
     `;
@@ -701,6 +755,40 @@ export function initAccountPage() {
 
       showLoggedOut();
       setStatus(loginStatusEl, getFriendlyApiMessage(error, "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."), "error");
+    }
+  }
+
+  async function handleOrderCancellation(button) {
+    const orderId = String(button?.dataset?.accountCancel || "").trim();
+    const mode = String(button?.dataset?.accountCancelMode || "").trim();
+    if (!orderId) {
+      return;
+    }
+
+    const confirmMessage = mode === "request_approval"
+      ? "배송 준비 단계 주문입니다. 판매자 승인 요청을 보내시겠어요? 승인되면 자동으로 주문 취소와 환불이 진행됩니다."
+      : "이 주문을 취소하시겠어요? 결제도 함께 자동으로 취소됩니다.";
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setButtonLoading(button, true, mode === "request_approval" ? "요청 중…" : "취소 중…");
+
+    try {
+      const payload = await requestJson("./api/auth/orders/cancel", {
+        method: "POST",
+        body: {
+          orderId,
+        },
+      });
+
+      await loadAccount({ silent: true });
+      setStatus(memberStatusEl, payload?.message || "주문 취소 요청을 처리했습니다.", "success");
+    } catch (error) {
+      setStatus(memberStatusEl, getFriendlyApiMessage(error, "주문 취소를 처리하지 못했습니다."), "error");
+    } finally {
+      setButtonLoading(button, false, mode === "request_approval" ? "요청 중…" : "취소 중…");
     }
   }
 

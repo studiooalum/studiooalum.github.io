@@ -78,6 +78,9 @@ function normalizeShipmentStatus(status, fallback = "confirmed") {
     case "delivered":
     case "returned":
       return normalized;
+    case "cancelled":
+    case "canceled":
+      return "cancelled";
     default:
       return fallback;
   }

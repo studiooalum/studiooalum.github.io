@@ -12,7 +12,7 @@ import { errorResponse, json, noContent, readJson, validationError } from "../..
 
 const shipmentUpdateSchema = z.object({
   orderId: z.string().trim().min(1).max(80),
-  status: z.enum(["confirmed", "ready", "packing", "shipped", "delivered", "returned"]),
+  status: z.enum(["confirmed", "ready", "packing", "shipped", "delivered", "returned", "cancelled"]),
   carrierId: z.string().trim().max(120).optional().default(""),
   carrier: z.string().trim().max(120).optional().default(""),
   trackingNumber: z.string().trim().max(120).optional().default(""),

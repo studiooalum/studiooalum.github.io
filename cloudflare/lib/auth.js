@@ -7,6 +7,7 @@ const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_HASH_ITERATIONS = 100000;
 
 import { readUserPointBalance, settleExpiredPointReservations } from "./d1.js";
+import { getCustomerOrderCancellationState, readLatestOrderCancellationRequest } from "./order-cancellation.js";
 import { linkGuestWorkshopReservationsToUser, readWorkshopReservationsForIdentity } from "./workshops.js";
 
 function getDb(env) {
@@ -637,8 +638,8 @@ async function sendLoginCode(env, { email, code, mode = "login" }) {
   };
 }
 
-function formatOrder(row) {
-  return {
+function formatOrder(row, { cancellationRequest = null } = {}) {
+  const order = {
     orderId: row.id,
     userId: row.user_id || null,
     orderName: row.order_name,
@@ -657,6 +658,12 @@ function formatOrder(row) {
       updatedAt: row.shipment_updated_at || null,
     } : null,
     items: Array.isArray(row.items) ? row.items : [],
+  };
+
+  return {
+    ...order,
+    cancellationRequest,
+    cancellation: getCustomerOrderCancellationState(order, cancellationRequest),
   };
 }
 
@@ -767,9 +774,15 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
       .bind(row.id)
       .all();
 
+    const cancellationRequest = await readLatestOrderCancellationRequest(database, {
+      orderId: row.id,
+    });
+
     orders.push(formatOrder({
       ...row,
       items: (itemsResult?.results || []).map(formatOrderItem),
+    }, {
+      cancellationRequest,
     }));
   }
 

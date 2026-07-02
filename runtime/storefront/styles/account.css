@@ -482,6 +482,28 @@
   color: rgba(17, 17, 17, 0.58);
 }
 
+.account-record__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.account-record__action-btn {
+  min-width: 112px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.account-record__notice {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.58);
+}
+
 .account-record__item--more {
   color: rgba(17, 17, 17, 0.56);
 }
