@@ -7,6 +7,7 @@ import {
   registerDeliveryTrackerWebhook,
   searchDeliveryTrackerCarriers,
 } from "../../../cloudflare/lib/delivery-tracker.js";
+import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
 import { readFulfillmentOrders, readOrderSyncSnapshot, updateShipment } from "../../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
@@ -68,38 +69,13 @@ function buildWebhookExpirationTime() {
   return new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
 }
 
-function getAdminKey(request) {
-  const authHeader = String(request.headers.get("authorization") || "").trim();
-  if (authHeader.toLowerCase().startsWith("bearer ")) {
-    return authHeader.slice(7).trim();
-  }
-
-  return String(request.headers.get("x-order-admin-key") || "").trim();
-}
-
-function requireAdminKey(context) {
-  const expected = String(context.env.ORDER_ADMIN_SECRET || "").trim();
-  if (!expected) {
-    throw Object.assign(new Error("ORDER_ADMIN_SECRET must be configured before fulfillment updates can be used."), {
-      status: 503,
-    });
-  }
-
-  const provided = getAdminKey(context.request);
-  if (!provided || provided !== expected) {
-    throw Object.assign(new Error("Unauthorized fulfillment update request."), {
-      status: 401,
-    });
-  }
-}
-
 export function onRequestOptions(context) {
   return noContent(context.env);
 }
 
 export async function onRequestGet(context) {
   try {
-    requireAdminKey(context);
+    await requireAdminAccess(context);
 
     const url = new URL(context.request.url);
     const orderId = String(url.searchParams.get("orderId") || "").trim();
@@ -150,7 +126,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   try {
-    requireAdminKey(context);
+    await requireAdminAccess(context);
 
     const payload = await readJson(context.request);
     const parsed = shipmentUpdateSchema.safeParse(payload);

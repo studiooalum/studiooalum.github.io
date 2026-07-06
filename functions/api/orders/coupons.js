@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
 import { readCoupons, upsertCoupon } from "../../../cloudflare/lib/coupons.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
@@ -20,38 +21,13 @@ const couponSchema = z.object({
   isActive: z.boolean().optional().default(true),
 });
 
-function getAdminKey(request) {
-  const authHeader = String(request.headers.get("authorization") || "").trim();
-  if (authHeader.toLowerCase().startsWith("bearer ")) {
-    return authHeader.slice(7).trim();
-  }
-
-  return String(request.headers.get("x-order-admin-key") || "").trim();
-}
-
-function requireAdminKey(context) {
-  const expected = String(context.env.ORDER_ADMIN_SECRET || "").trim();
-  if (!expected) {
-    throw Object.assign(new Error("ORDER_ADMIN_SECRET must be configured before coupon management can be used."), {
-      status: 503,
-    });
-  }
-
-  const provided = getAdminKey(context.request);
-  if (!provided || provided !== expected) {
-    throw Object.assign(new Error("Unauthorized coupon management request."), {
-      status: 401,
-    });
-  }
-}
-
 export function onRequestOptions(context) {
   return noContent(context.env);
 }
 
 export async function onRequestGet(context) {
   try {
-    requireAdminKey(context);
+    await requireAdminAccess(context);
 
     const url = new URL(context.request.url);
     const query = String(url.searchParams.get("query") || "").trim();
@@ -69,7 +45,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   try {
-    requireAdminKey(context);
+    await requireAdminAccess(context);
 
     const payload = await readJson(context.request);
     const parsed = couponSchema.safeParse(payload);

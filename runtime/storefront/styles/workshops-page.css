@@ -53,11 +53,7 @@
 }
 
 .workshops-card {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-height: 100%;
-  border: 1px solid rgba(17, 17, 17, 0.12);
-  background: linear-gradient(180deg, #fffdfa 0%, #f7f0e6 100%);
+  display: block;
   color: inherit;
   text-decoration: none;
 }
@@ -74,25 +70,9 @@
 
 .workshops-card__poster {
   position: relative;
-  aspect-ratio: 0.92 / 1;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: #f7f2e9;
-}
-
-.workshops-card__poster[data-category="beginning"] {
-  background: radial-gradient(circle at 28% 26%, rgba(255, 235, 83, 0.92) 0 72px, transparent 73px), #faf7ef;
-}
-
-.workshops-card__poster[data-category="repair"] {
-  background: linear-gradient(135deg, rgba(227, 66, 52, 0.2), transparent 58%), #f6eee8;
-}
-
-.workshops-card__poster[data-category="making"] {
-  background: linear-gradient(180deg, rgba(17, 17, 17, 0.08), transparent 48%), #f3f1eb;
-}
-
-.workshops-card__poster[data-category="for kids"] {
-  background: radial-gradient(circle at 72% 28%, rgba(255, 204, 195, 0.92) 0 68px, transparent 69px), #f8f4ef;
+  background: #fff;
 }
 
 .workshops-card__poster img {
@@ -103,138 +83,45 @@
 }
 
 .workshops-card__poster-fallback {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  max-width: calc(100% - 32px);
-  font-family: var(--font-bold);
-  font-size: 22px;
-  line-height: 0.98;
-  text-transform: uppercase;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-book);
+  font-size: 11px;
+  letter-spacing: var(--tracking-latin);
+  color: rgba(17, 17, 17, 0.5);
 }
 
 .workshops-card__body {
-  display: grid;
-  align-content: start;
-  gap: 14px;
-  padding: 18px 16px 16px;
+  padding-top: 14px;
 }
 
-.workshops-card__eyebrow {
-  margin: 0;
-  font-family: var(--font-medium);
-  font-size: 11px;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(17, 17, 17, 0.72);
+.workshops-card.is-compact .workshops-card__body {
+  padding-top: 0;
 }
 
 .workshops-card__title {
   margin: 0;
-  font-family: var(--font-bold);
-  font-size: 24px;
-  line-height: 0.96;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-book);
+  font-size: 15px;
+  line-height: 1.3;
 }
 
 .workshops-card__copy {
-  margin: 0;
-  font-family: var(--font-kor-body);
-  font-size: 13px;
-  letter-spacing: var(--tracking-korean);
-  line-height: 1.55;
-  color: rgba(17, 17, 17, 0.76);
-}
-
-.workshops-card__meta {
-  display: grid;
-  gap: 10px;
-}
-
-.workshops-card__meta-item {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  align-items: start;
-  gap: 10px;
-}
-
-.workshops-card__meta-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-}
-
-.workshops-card__meta-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.workshops-card__meta-copy {
-  display: grid;
-  gap: 1px;
-}
-
-.workshops-card__meta-label {
-  font-family: var(--font-medium);
-  font-size: 10px;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(17, 17, 17, 0.54);
-}
-
-.workshops-card__meta-value {
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.workshops-card__footer {
-  margin-top: auto;
+  margin-top: 6px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(17, 17, 17, 0.12);
-}
-
-.workshops-card__duration,
-.workshops-card__category {
-  white-space: nowrap;
-}
-
-.workshops-card__cta {
-  font-family: var(--font-medium);
-  font-size: 11px;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.workshops-card__arrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-}
-
-.workshops-card__arrow svg {
-  width: 100%;
-  height: 100%;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  font-family: var(--font-book);
+  font-size: 14px;
+  color: rgba(17, 17, 17, 0.82);
 }
 
 .workshops-card.is-link {
   cursor: pointer;
-}
-
-.workshops-card.is-link:hover .workshops-card__arrow {
-  transform: translate(2px, -2px);
 }
 
 .workshops-state {
@@ -284,9 +171,5 @@
 
   .workshops-main {
     padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
-  }
-
-  .workshops-card__title {
-    font-size: 21px;
   }
 }

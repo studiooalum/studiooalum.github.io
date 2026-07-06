@@ -238,8 +238,17 @@ export function renderCartPanel() {
 ========================= */
 
 export function openCart() {
+  initCartUI();
+  renderCartPanel();
   document.body.classList.add("cart-open");
-  lockBodyScroll("cart-panel");
+  if (window.matchMedia("(max-width: 959px)").matches) {
+    lockBodyScroll("cart-panel");
+  } else {
+    unlockBodyScroll("cart-panel");
+    document.body.classList.remove("is-scroll-locked");
+    document.body.style.removeProperty("--scroll-lock-top");
+    document.body.style.removeProperty("--scroll-lock-scrollbar-gap");
+  }
 }
 
 export function closeCart() {
@@ -248,6 +257,8 @@ export function closeCart() {
 }
 
 export function toggleCart() {
+  initCartUI();
+  renderCartPanel();
   if (document.body.classList.contains("cart-open")) {
     closeCart();
     return;

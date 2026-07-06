@@ -4,7 +4,7 @@
     "site:serve": "python3 -m http.server 4173",
     "cf:build": "node ./scripts/build-pages.mjs",
     "cf:pages:dev": "npm run cf:build && npx wrangler pages dev dist",
-    "cf:pages:deploy": "npm run cf:build && npx wrangler pages deploy dist",
+    "cf:pages:deploy": "npm run cf:build && npx wrangler pages deploy dist --project-name studiooalum",
     "web:dev": "next dev ./apps/web",
     "web:build": "next build ./apps/web",
     "web:start": "next start ./apps/web"

@@ -233,8 +233,9 @@ export function normalizeWorkshop(workshop = {}) {
   };
 }
 
-export const FALLBACK_WORKSHOPS = [
-  normalizeWorkshop({
+export function getFallbackWorkshops() {
+  return [
+    normalizeWorkshop({
     title: "Visible Mending",
     slug: "visible-mending",
     description: "구멍 난 옷을 관찰하고 실과 천으로 이어가는 시간입니다. 흔적을 남기는 수선 방식과 오알룸이 자주 사용하는 기본 스티치를 함께 익힙니다.\n\n직접 가져온 옷 한 벌을 중심으로 수선의 기준점을 잡고, 실습 후에도 혼자 이어갈 수 있도록 작은 가이드를 함께 드립니다.",
@@ -247,8 +248,8 @@ export const FALLBACK_WORKSHOPS = [
     materials: ["기본 수선 실과 바늘", "패치용 원단", "실습용 작은 키트"],
     thingsToBring: ["수선하고 싶은 옷 1벌", "필요하면 참고 이미지"],
     bookingNotice: "예약 확정 후 준비물과 입실 안내를 개별 메일로 드립니다.",
-  }),
-  normalizeWorkshop({
+    }),
+    normalizeWorkshop({
     title: "Begin with Yarn",
     slug: "begin-with-yarn",
     description: "천천히 실을 다루는 기본 손감각과 가장 쉬운 스티치부터 익히는 입문 워크숍입니다. 손이 느린 사람도 따라올 수 있게 속도를 맞춥니다.\n\n작은 샘플 스와치를 만들며 재료를 이해하고, 다음 단계 작업으로 이어질 수 있는 기본 감각을 익힙니다.",
@@ -261,8 +262,8 @@ export const FALLBACK_WORKSHOPS = [
     materials: ["기본 실 세트", "입문용 바늘", "연습용 패브릭"],
     thingsToBring: ["편한 복장"],
     bookingNotice: "입문 클래스라 재료는 모두 제공됩니다.",
-  }),
-  normalizeWorkshop({
+    }),
+    normalizeWorkshop({
     title: "Soft Object Making",
     slug: "soft-object-making",
     description: "오알룸이 좋아하는 질감과 색 조합으로 작은 패브릭 오브제를 함께 만드는 메이킹 클래스입니다. 패턴을 단순하게 이해하고, 손으로 조립하는 리듬을 경험합니다.",
@@ -274,8 +275,8 @@ export const FALLBACK_WORKSHOPS = [
     maxCapacity: 5,
     materials: ["겉감/안감 패브릭", "충전재", "기본 봉제 도구"],
     thingsToBring: ["작업 결과물을 담아갈 가벼운 가방"],
-  }),
-  normalizeWorkshop({
+    }),
+    normalizeWorkshop({
     title: "Tiny Hands Club",
     slug: "tiny-hands-club",
     description: "아이들이 실과 천을 안전하게 만지며 형태를 만드는 과정을 즐길 수 있도록 구성한 키즈 워크숍입니다. 보호자 1인 동반을 권장합니다.",
@@ -287,10 +288,13 @@ export const FALLBACK_WORKSHOPS = [
     maxCapacity: 4,
     materials: ["안전 가위", "색실", "펠트 조각"],
     thingsToBring: ["아이용 물병"],
-  }),
-];
+    }),
+  ];
+}
+
+export const FALLBACK_WORKSHOPS = getFallbackWorkshops();
 
 export function findFallbackWorkshopBySlug(slug) {
   const normalizedSlug = String(slug || "").trim();
-  return FALLBACK_WORKSHOPS.find((workshop) => workshop.slug === normalizedSlug) || null;
+  return getFallbackWorkshops().find((workshop) => workshop.slug === normalizedSlug) || null;
 }

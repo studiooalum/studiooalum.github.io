@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260527-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260702-01">
 </head>
 <body class="fulfillment-page coupons-page">
   <nav class="gnb gnb--account">
@@ -24,13 +24,25 @@
     <section class="fulfillment-shell">
       <aside class="fulfillment-sidebar">
         <section class="fulfillment-panel">
+          <nav class="fulfillment-tabs" aria-label="관리자 기능">
+            <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
+            <a href="./coupons.html" class="fulfillment-tab is-active" aria-current="page">쿠폰 관리</a>
+            <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
+          </nav>
+
           <h1 class="fulfillment-heading">쿠폰 관리</h1>
-          <p class="fulfillment-copy">신규 회원, CS 보상, 공개 캠페인 쿠폰을 별도 화면에서 발급하고 중지합니다.</p>
+          <p class="fulfillment-copy">신규 회원, CS 보상, 공개 캠페인 쿠폰을 별도 화면에서 발급하고 중지합니다. 인증 전에는 관리 패널을 열지 않습니다.</p>
+
+          <div class="fulfillment-access-summary">
+            <strong class="fulfillment-access-badge js-fulfillment-access-badge">잠금 상태</strong>
+            <p class="fulfillment-copy js-fulfillment-access-copy">관리자 인증 전에는 주문/쿠폰 데이터가 로드되지 않습니다. 이 브라우저에는 ORDER_ADMIN_SECRET 원문을 저장하지 않습니다.</p>
+            <p class="fulfillment-copy fulfillment-copy--quiet js-fulfillment-access-meta">우발 접근 시에도 데이터와 수정 패널은 잠금 상태를 유지합니다.</p>
+          </div>
 
           <form class="fulfillment-auth-form js-fulfillment-auth-form">
             <label class="fulfillment-field">
               <span>관리자 키</span>
-              <input type="password" name="adminSecret" autocomplete="current-password" placeholder="ORDER_ADMIN_SECRET" required>
+              <input type="password" name="adminSecret" autocomplete="off" placeholder="ORDER_ADMIN_SECRET" required>
             </label>
             <div class="fulfillment-actions fulfillment-actions--compact">
               <button type="submit" class="fulfillment-btn">잠금 해제</button>
@@ -39,13 +51,9 @@
           </form>
 
           <p class="fulfillment-status js-fulfillment-auth-status" role="status" aria-live="polite"></p>
-          <div class="fulfillment-actions fulfillment-actions--compact">
-            <a href="./admin.html" class="fulfillment-btn fulfillment-btn--secondary">배송 / 주문</a>
-            <a href="./coupons.html" class="fulfillment-btn">쿠폰 관리</a>
-          </div>
         </section>
 
-        <section class="fulfillment-panel">
+        <section class="fulfillment-panel" data-fulfillment-auth-guard hidden>
           <div class="fulfillment-toolbar">
             <label class="fulfillment-field fulfillment-field--toolbar">
               <span>쿠폰 검색</span>
@@ -59,12 +67,12 @@
 
           <p class="fulfillment-status js-fulfillment-coupon-status" role="status" aria-live="polite"></p>
           <div class="fulfillment-coupon-list js-fulfillment-coupon-list">
-            <div class="fulfillment-empty">관리자 키를 입력하면 쿠폰 목록이 여기에 표시됩니다.</div>
+            <div class="fulfillment-empty">관리자 인증 후 쿠폰 목록이 여기에 표시됩니다.</div>
           </div>
         </section>
       </aside>
 
-      <section class="fulfillment-content">
+      <section class="fulfillment-content" data-fulfillment-auth-guard hidden>
         <section class="fulfillment-panel">
           <h2 class="fulfillment-subheading">쿠폰 상세</h2>
           <p class="fulfillment-copy">추천 운영은 신규 회원 10% 1회, CS 보상 5,000원 1회, 공개 캠페인은 usageLimit를 넉넉히 둔 public 쿠폰입니다.</p>
@@ -169,7 +177,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/fulfillment.js?v=20260527-03"></script>
+  <script type="module" src="./runtime/storefront/scripts/fulfillment.js?v=20260702-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
 

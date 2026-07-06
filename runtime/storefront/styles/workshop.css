@@ -2,10 +2,9 @@
   min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
-  background:
-    radial-gradient(circle at 16% 18%, rgba(255, 235, 83, 0.34), transparent 26%),
-    linear-gradient(180deg, #fffdfa 0%, #fff8ea 46%, #ffffff 100%);
+  background: #fff;
   color: #111;
+  font-family: var(--font-base);
 }
 
 .workshop-main {
@@ -29,10 +28,7 @@
   aspect-ratio: 0.9 / 1;
   overflow: hidden;
   border: 1px solid rgba(17, 17, 17, 0.12);
-  background:
-    radial-gradient(circle at 20% 22%, rgba(255, 235, 83, 0.62), transparent 20%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.48), rgba(17, 17, 17, 0.03)),
-    #f3ead8;
+  background: #fff;
 }
 
 .workshop-poster img {
@@ -47,11 +43,10 @@
   height: 100%;
   align-content: end;
   padding: 18px;
-  font-family: var(--font-bold);
-  font-size: clamp(30px, 4vw, 48px);
-  line-height: 0.9;
-  letter-spacing: -0.05em;
-  text-transform: uppercase;
+  font-family: var(--font-book);
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1;
+  letter-spacing: var(--tracking-latin);
 }
 
 .workshop-stage__content {
@@ -67,21 +62,19 @@
 
 .workshop-kicker {
   margin: 0;
-  font-family: var(--font-medium);
+  font-family: var(--font-book);
   font-size: 11px;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-latin);
   color: rgba(17, 17, 17, 0.66);
 }
 
 .workshop-title {
   margin: 0;
-  font-family: var(--font-bold);
-  font-size: clamp(34px, 4vw, 54px);
-  line-height: 0.92;
-  letter-spacing: -0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-book);
+  font-size: clamp(26px, 3.2vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .workshop-meta-row {
@@ -93,14 +86,14 @@
 .workshop-meta-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border: 1px solid rgba(17, 17, 17, 0.16);
-  background: rgba(255, 255, 255, 0.72);
-  font-size: 11px;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  min-height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-book);
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-latin);
 }
 
 .workshop-body-copy {
@@ -130,7 +123,7 @@
 
 .workshop-fact__title {
   margin: 0;
-  font-family: var(--font-medium);
+  font-family: var(--font-book);
   font-size: 11px;
   line-height: 1;
   letter-spacing: 0.08em;
@@ -169,10 +162,10 @@
 }
 
 .workshop-apply-btn {
-  width: 100%;
+  width: fit-content;
   min-height: 48px;
   border: 1px solid #111;
-  padding: 0 16px;
+  padding: 0 26px;
   background: #111;
   color: #fff;
   font-family: var(--font-kor-button);
@@ -191,30 +184,51 @@
 }
 
 .workshop-stage__rail {
-  position: relative;
+  position: static;
   min-height: 100px;
 }
 
-.workshop-rail__empty,
-.workshop-rail__panel {
-  position: sticky;
-  top: calc(var(--gnb-height, 40px) + 20px);
-  border: 1px solid rgba(17, 17, 17, 0.12);
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.workshop-rail__empty {
-  display: grid;
-  gap: 10px;
-  padding: 18px;
+.workshop-rail__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 997;
+  border: 0;
+  padding: 0;
+  background: rgba(17, 17, 17, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 }
 
 .workshop-rail__panel {
+  position: fixed;
+  top: var(--gnb-height, 40px);
+  right: 0;
+  z-index: 998;
+  width: min(36vw, 560px);
+  max-width: calc(100vw - 24px);
+  height: calc(100vh - var(--gnb-height, 40px));
   display: grid;
-  gap: 16px;
-  padding: 18px;
+  align-content: start;
+  gap: 24px;
+  padding: 18px 24px 28px;
+  border-left: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+  box-shadow: -18px 0 36px rgba(17, 17, 17, 0.08);
+  pointer-events: none;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow-y: auto;
+}
+
+body.workshop-booking-open .workshop-rail__backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.workshop-booking-open .workshop-rail__panel {
+  pointer-events: auto;
+  transform: translateX(0);
 }
 
 .workshop-rail__header {
@@ -224,20 +238,11 @@
   gap: 12px;
 }
 
-.workshop-rail__eyebrow {
+.workshop-rail__title {
   margin: 0;
-  font-family: var(--font-medium);
-  font-size: 11px;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.workshop-rail__message {
-  margin: 0;
-  font-family: var(--font-kor-body);
-  font-size: 13px;
-  line-height: 1.6;
+  font-family: var(--font-kor-button);
+  font-size: 18px;
+  line-height: 1.2;
   letter-spacing: var(--tracking-korean);
 }
 
@@ -278,104 +283,116 @@
   gap: 12px;
 }
 
+.workshop-calendar__summary {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.workshop-calendar__summary-meta {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
 .workshop-calendar__toolbar {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: end;
+  align-items: center;
   gap: 10px;
-}
-
-.workshop-calendar__headline {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
 }
 
 .workshop-calendar__month,
 .workshop-calendar__year {
   font-family: var(--font-bold);
-  line-height: 0.9;
-  text-transform: uppercase;
-  color: transparent;
-  -webkit-text-stroke: 1px #111;
+  line-height: 0.82;
 }
 
 .workshop-calendar__month {
-  font-size: 28px;
-  letter-spacing: -0.05em;
+  font-size: clamp(42px, 4vw, 56px);
+  letter-spacing: -0.06em;
+  color: transparent;
+  -webkit-text-stroke: 1.4px #ffeb53;
 }
 
 .workshop-calendar__year {
-  font-size: 18px;
-  letter-spacing: 0.02em;
+  display: inline-block;
+  font-size: clamp(42px, 4vw, 56px);
+  letter-spacing: -0.04em;
+  color: #111;
+}
+
+.workshop-calendar__spacer {
+  min-height: 1px;
 }
 
 .workshop-calendar__nav {
   min-width: 28px;
   min-height: 28px;
-  border: 1px solid rgba(17, 17, 17, 0.16);
+  border: 0;
   padding: 0;
-  background: #fff;
+  background: transparent;
   font: inherit;
   cursor: pointer;
 }
 
 .workshop-calendar {
   display: grid;
-  gap: 6px;
+  gap: 10px;
 }
 
 .workshop-calendar__weekdays,
 .workshop-calendar__grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
+  gap: 0;
 }
 
 .workshop-calendar__weekday {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  font-size: 10px;
+  justify-content: flex-start;
+  min-height: 18px;
+  font-family: var(--font-book);
+  font-size: 11px;
   line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(17, 17, 17, 0.54);
+  letter-spacing: var(--tracking-latin);
+  text-transform: lowercase;
+  color: rgba(17, 17, 17, 0.8);
 }
 
 .workshop-calendar__day,
 .workshop-calendar__blank {
-  min-height: 42px;
+  min-height: 92px;
 }
 
 .workshop-calendar__blank {
-  border: 1px solid transparent;
+  background: transparent;
 }
 
 .workshop-calendar__day {
-  border: 1px solid rgba(17, 17, 17, 0.12);
-  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  border: 0;
+  padding: 8px 6px;
   background: #fff;
-  font-family: var(--font-medium);
-  font-size: 12px;
+  font-family: var(--font-bold);
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -0.04em;
   cursor: pointer;
 }
 
-.workshop-calendar__day.is-empty {
-  color: rgba(17, 17, 17, 0.28);
+.workshop-calendar__day.is-blocked,
+.workshop-calendar__day.is-past {
+  background: #ffeb53;
+  color: transparent;
   cursor: default;
 }
 
-.workshop-calendar__day.is-blocked {
-  background: #ffeb53;
-  color: rgba(17, 17, 17, 0.78);
-}
-
 .workshop-calendar__day.is-selected {
-  border-color: #111;
-  background: #111;
-  color: #fff;
+  box-shadow: inset 0 0 0 2px #111;
 }
 
 .workshop-slots__header {
@@ -385,11 +402,10 @@
 
 .workshop-slots__title {
   margin: 0;
-  font-family: var(--font-medium);
-  font-size: 11px;
+  font-family: var(--font-kor-button);
+  font-size: 16px;
   line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-korean);
 }
 
 .workshop-slots__date {
@@ -403,18 +419,20 @@
 .workshop-slots__list {
   display: grid;
   gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .workshop-slot-btn {
-  display: grid;
-  gap: 3px;
-  justify-items: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  border: 1px solid rgba(17, 17, 17, 0.12);
-  padding: 10px 12px;
+  min-height: 34px;
+  border: 1px solid rgba(17, 17, 17, 0.6);
+  padding: 0 8px;
   background: #fff;
   color: #111;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -424,23 +442,11 @@
   color: #fff;
 }
 
-.workshop-slot-btn.is-blocked {
-  background: #ffeb53;
-  border-color: rgba(17, 17, 17, 0.18);
-  cursor: default;
-}
-
 .workshop-slot-btn__time {
-  font-family: var(--font-medium);
-  font-size: 12px;
+  font-family: var(--font-book);
+  font-size: 14px;
   line-height: 1.2;
-}
-
-.workshop-slot-btn__status {
-  font-family: var(--font-kor-body);
-  font-size: 11px;
-  line-height: 1.5;
-  letter-spacing: var(--tracking-korean);
+  letter-spacing: var(--tracking-latin);
 }
 
 .workshop-booking-form__field {
@@ -449,19 +455,19 @@
 }
 
 .workshop-booking-form__field span {
-  font-family: var(--font-medium);
-  font-size: 10px;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
   line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-korean);
 }
 
 .workshop-booking-form__field input,
+.workshop-booking-form__field select,
 .workshop-booking-form__field textarea {
   width: 100%;
-  border: 1px solid rgba(17, 17, 17, 0.14);
+  border: 1px solid rgba(17, 17, 17, 0.6);
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.92);
+  background: #fff;
   color: #111;
   font: inherit;
 }
@@ -476,6 +482,19 @@
   font-family: var(--font-kor-button);
   font-size: 14px;
   letter-spacing: var(--tracking-korean);
+  cursor: pointer;
+}
+
+.workshop-booking-form__cancel {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-korean);
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -506,6 +525,18 @@
   .workshop-stage {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .workshop-stage__poster {
+    grid-column: 1;
+  }
+
+  .workshop-stage__content {
+    grid-column: 2;
+  }
+
+  .workshop-stage__rail {
+    grid-column: 3;
+  }
 }
 
 @media (max-width: 959px) {
@@ -513,9 +544,13 @@
     padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
   }
 
-  .workshop-poster,
-  .workshop-rail__empty,
-  .workshop-rail__panel {
+  .workshop-poster {
     position: static;
+  }
+
+  .workshop-rail__panel {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px 16px 24px;
   }
 }

@@ -1,8 +1,13 @@
-const ADMIN_SECRET_KEY = "studiooalum:order-admin-secret";
+const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
+const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
 
 const authForm = document.querySelector(".js-fulfillment-auth-form");
 const authClearButton = document.querySelector(".js-fulfillment-auth-clear");
 const authStatusEl = document.querySelector(".js-fulfillment-auth-status");
+const authGuardEls = Array.from(document.querySelectorAll("[data-fulfillment-auth-guard]"));
+const accessBadgeEl = document.querySelector(".js-fulfillment-access-badge");
+const accessCopyEl = document.querySelector(".js-fulfillment-access-copy");
+const accessMetaEl = document.querySelector(".js-fulfillment-access-meta");
 const searchInput = document.querySelector(".js-fulfillment-search-input");
 const searchButton = document.querySelector(".js-fulfillment-search-btn");
 const refreshButton = document.querySelector(".js-fulfillment-refresh-btn");
@@ -60,7 +65,9 @@ const COUPON_PRESETS = {
 };
 
 const state = {
-  secret: sessionStorage.getItem(ADMIN_SECRET_KEY) || "",
+  accessToken: sessionStorage.getItem(ADMIN_ACCESS_TOKEN_KEY) || "",
+  accessExpiresAt: sessionStorage.getItem(ADMIN_ACCESS_EXPIRES_AT_KEY) || "",
+  isAuthorized: false,
   orders: [],
   selectedOrderId: "",
   coupons: [],
@@ -113,6 +120,28 @@ function parseDateTimeLocal(value) {
   if (!raw) return undefined;
   const date = new Date(raw);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function formatRemainingSession(value) {
+  if (!value) return "";
+  const expiresAt = new Date(value);
+  if (Number.isNaN(expiresAt.getTime())) {
+    return "";
+  }
+
+  const diffMs = expiresAt.getTime() - Date.now();
+  if (diffMs <= 0) {
+    return "곧";
+  }
+
+  const totalMinutes = Math.max(1, Math.ceil(diffMs / 60000));
+  if (totalMinutes >= 60) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return minutes ? `${hours}시간 ${minutes}분` : `${hours}시간`;
+  }
+
+  return `${totalMinutes}분`;
 }
 
 function formatCouponValue(coupon) {
@@ -181,11 +210,96 @@ function setButtonLoading(button, loading, loadingText) {
   button.textContent = loading ? loadingText : button.dataset.defaultLabel;
 }
 
+function persistAdminAccess(token, expiresAt = "") {
+  state.accessToken = String(token || "").trim();
+  state.accessExpiresAt = String(expiresAt || "").trim();
+
+  if (state.accessToken) {
+    sessionStorage.setItem(ADMIN_ACCESS_TOKEN_KEY, state.accessToken);
+  } else {
+    sessionStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
+  }
+
+  if (state.accessExpiresAt) {
+    sessionStorage.setItem(ADMIN_ACCESS_EXPIRES_AT_KEY, state.accessExpiresAt);
+  } else {
+    sessionStorage.removeItem(ADMIN_ACCESS_EXPIRES_AT_KEY);
+  }
+}
+
+function clearAdminAccess() {
+  persistAdminAccess("", "");
+  state.isAuthorized = false;
+}
+
+function resetAdminData() {
+  state.orders = [];
+  state.selectedOrderId = "";
+  state.coupons = [];
+  state.selectedCouponId = "";
+  state.config = null;
+
+  renderOrders();
+  renderSelection();
+  renderCoupons();
+  fillCouponForm(null);
+}
+
+function applyAccessState() {
+  const unlocked = Boolean(state.isAuthorized && state.accessToken);
+
+  authGuardEls.forEach((element) => {
+    element.hidden = !unlocked;
+  });
+
+  if (accessBadgeEl) {
+    accessBadgeEl.textContent = unlocked ? "세션 활성" : "잠금 상태";
+    accessBadgeEl.classList.toggle("is-success", unlocked);
+  }
+
+  if (accessCopyEl) {
+    accessCopyEl.textContent = unlocked
+      ? "주문 및 쿠폰 관리 패널이 열려 있습니다. 이 브라우저에는 원문 관리자 키를 저장하지 않고 짧은 관리자 세션만 유지합니다."
+      : "관리자 인증 전에는 주문/쿠폰 데이터가 로드되지 않습니다. 이 브라우저에는 ORDER_ADMIN_SECRET 원문을 저장하지 않습니다.";
+  }
+
+  if (accessMetaEl) {
+    accessMetaEl.textContent = unlocked
+      ? (state.accessExpiresAt
+        ? `세션 만료 예정: ${formatDate(state.accessExpiresAt)} · 약 ${formatRemainingSession(state.accessExpiresAt)} 후 다시 인증됩니다.`
+        : "관리자 세션이 활성화되었습니다.")
+      : "우발 접근 시에도 데이터와 수정 패널은 잠금 상태를 유지합니다.";
+  }
+}
+
+function clearRuntimeStatuses() {
+  setStatus(listStatusEl, "");
+  setStatus(formStatusEl, "");
+  setStatus(couponStatusEl, "");
+  setStatus(couponFormStatusEl, "");
+}
+
+function lockAdminSurface(authMessage = "", type = "info") {
+  clearAdminAccess();
+  resetAdminData();
+  applyAccessState();
+  clearRuntimeStatuses();
+  if (authForm) {
+    authForm.elements.adminSecret.value = "";
+  }
+  if (authMessage !== null) {
+    setStatus(authStatusEl, authMessage, type);
+  }
+}
+
 function getAuthHeaders(includeJson = false) {
   const headers = {
     Accept: "application/json",
-    Authorization: `Bearer ${state.secret}`,
   };
+
+  if (state.accessToken) {
+    headers.Authorization = `Bearer ${state.accessToken}`;
+  }
 
   if (includeJson) {
     headers["Content-Type"] = "application/json";
@@ -210,6 +324,31 @@ async function requestFulfillment(url, { method = "GET", body } = {}) {
   }
 
   return payload;
+}
+
+async function createAdminSession(secret) {
+  const response = await fetch("/api/orders/admin-session", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ adminSecret: secret }),
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    const error = new Error(payload?.error || `Request failed: ${response.status}`);
+    error.status = response.status;
+    error.details = payload?.details || null;
+    throw error;
+  }
+
+  return payload;
+}
+
+async function verifyAdminSession() {
+  return requestFulfillment("/api/orders/admin-session");
 }
 
 function resolveShipmentLabel(order) {
@@ -444,9 +583,17 @@ function applySelectedOrder(order) {
 }
 
 async function loadOrders(query = "") {
-  if (!state.secret) {
-    setStatus(listStatusEl, "관리자 키를 먼저 입력해주세요.", "error");
-    return;
+  let options = {};
+  if (typeof query === "object") {
+    options = query || {};
+    query = options.query || "";
+  }
+
+  const { fatalOnAuthError = false } = options;
+
+  if (!state.isAuthorized || !state.accessToken) {
+    setStatus(listStatusEl, "관리자 세션을 먼저 활성화해주세요.", "error");
+    return false;
   }
 
   setStatus(listStatusEl, "주문 정보를 불러오는 중입니다.");
@@ -468,32 +615,43 @@ async function loadOrders(query = "") {
     renderOrders();
     renderSelection();
     setStatus(listStatusEl, state.orders.length ? `${state.orders.length}건의 주문을 불러왔습니다.` : "조회된 주문이 없습니다.", "success");
+    return true;
   } catch (error) {
     if (error.status === 401) {
-      sessionStorage.removeItem(ADMIN_SECRET_KEY);
-      state.secret = "";
-      state.orders = [];
-      state.selectedOrderId = "";
-      state.coupons = [];
-      state.selectedCouponId = "";
-      state.config = null;
-      renderOrders();
-      renderSelection();
-      renderCoupons();
-      fillCouponForm(null);
-      setStatus(authStatusEl, "관리자 키가 올바르지 않습니다.", "error");
-      setStatus(listStatusEl, "관리자 키를 다시 입력해주세요.", "error");
-      return;
+      lockAdminSurface("관리자 세션이 만료되었거나 유효하지 않습니다. 다시 잠금 해제해주세요.", "error");
+      setStatus(listStatusEl, "관리자 세션을 다시 확인해주세요.", "error");
+      if (fatalOnAuthError) {
+        throw error;
+      }
+      return false;
+    }
+
+    if (error.status === 503) {
+      lockAdminSurface("이 배포 환경에는 관리자 기능이 아직 활성화되어 있지 않습니다. ORDER_ADMIN_SECRET 설정을 확인해주세요.", "error");
+      setStatus(listStatusEl, error.message || "관리자 기능이 아직 활성화되어 있지 않습니다.", "error");
+      if (fatalOnAuthError) {
+        throw error;
+      }
+      return false;
     }
 
     setStatus(listStatusEl, error.message || "주문 정보를 불러오지 못했습니다.", "error");
+    return false;
   }
 }
 
 async function loadCoupons(query = "") {
-  if (!state.secret) {
-    setStatus(couponStatusEl, "관리자 키를 먼저 입력해주세요.", "error");
-    return;
+  let options = {};
+  if (typeof query === "object") {
+    options = query || {};
+    query = options.query || "";
+  }
+
+  const { fatalOnAuthError = false } = options;
+
+  if (!state.isAuthorized || !state.accessToken) {
+    setStatus(couponStatusEl, "관리자 세션을 먼저 활성화해주세요.", "error");
+    return false;
   }
 
   setStatus(couponStatusEl, "쿠폰 정보를 불러오는 중입니다.");
@@ -514,20 +672,28 @@ async function loadCoupons(query = "") {
     renderCoupons();
     fillCouponForm(getSelectedCoupon());
     setStatus(couponStatusEl, state.coupons.length ? `${state.coupons.length}건의 쿠폰을 불러왔습니다.` : "조회된 쿠폰이 없습니다.", "success");
+    return true;
   } catch (error) {
     if (error.status === 401) {
-      sessionStorage.removeItem(ADMIN_SECRET_KEY);
-      state.secret = "";
-      state.coupons = [];
-      state.selectedCouponId = "";
-      renderCoupons();
-      fillCouponForm(null);
-      setStatus(authStatusEl, "관리자 키가 올바르지 않습니다.", "error");
-      setStatus(couponStatusEl, "관리자 키를 다시 입력해주세요.", "error");
-      return;
+      lockAdminSurface("관리자 세션이 만료되었거나 유효하지 않습니다. 다시 잠금 해제해주세요.", "error");
+      setStatus(couponStatusEl, "관리자 세션을 다시 확인해주세요.", "error");
+      if (fatalOnAuthError) {
+        throw error;
+      }
+      return false;
+    }
+
+    if (error.status === 503) {
+      lockAdminSurface("이 배포 환경에는 관리자 기능이 아직 활성화되어 있지 않습니다. ORDER_ADMIN_SECRET 설정을 확인해주세요.", "error");
+      setStatus(couponStatusEl, error.message || "관리자 기능이 아직 활성화되어 있지 않습니다.", "error");
+      if (fatalOnAuthError) {
+        throw error;
+      }
+      return false;
     }
 
     setStatus(couponStatusEl, error.message || "쿠폰 정보를 불러오지 못했습니다.", "error");
+    return false;
   }
 }
 
@@ -670,44 +836,47 @@ authForm?.addEventListener("submit", async (event) => {
   }
 
   setButtonLoading(submitButton, true, "확인 중…");
-  state.secret = secret;
-  sessionStorage.setItem(ADMIN_SECRET_KEY, secret);
+  setStatus(authStatusEl, "관리자 세션을 확인하는 중입니다.");
 
   try {
+    const session = await createAdminSession(secret);
+    persistAdminAccess(session.accessToken, session.expiresAt);
+    state.isAuthorized = true;
+    authForm.elements.adminSecret.value = "";
+    applyAccessState();
+
     const tasks = [];
     if (hasOrderPage) {
-      tasks.push(loadOrders(String(searchInput?.value || "").trim()));
+      tasks.push(loadOrders({ query: String(searchInput?.value || "").trim(), fatalOnAuthError: true }));
     }
     if (hasCouponPage) {
-      tasks.push(loadCoupons(String(couponSearchInput?.value || "").trim()));
+      tasks.push(loadCoupons({ query: String(couponSearchInput?.value || "").trim(), fatalOnAuthError: true }));
     }
     if (tasks.length) {
       await Promise.all(tasks);
     }
-    setStatus(authStatusEl, "관리자 세션을 활성화했습니다.", "success");
+
+    const remaining = formatRemainingSession(session.expiresAt);
+    setStatus(authStatusEl, remaining ? `관리자 세션을 활성화했습니다. 약 ${remaining} 후 다시 인증됩니다.` : "관리자 세션을 활성화했습니다.", "success");
+  } catch (error) {
+    if (error.status === 401) {
+      lockAdminSurface("관리자 키를 다시 확인해주세요.", "error");
+      return;
+    }
+
+    if (error.status === 503) {
+      lockAdminSurface("이 배포 환경에는 관리자 기능이 아직 활성화되어 있지 않습니다. ORDER_ADMIN_SECRET 설정을 확인해주세요.", "error");
+      return;
+    }
+
+    setStatus(authStatusEl, error.message || "관리자 세션을 활성화하지 못했습니다.", "error");
   } finally {
     setButtonLoading(submitButton, false, "확인 중…");
   }
 });
 
 authClearButton?.addEventListener("click", () => {
-  sessionStorage.removeItem(ADMIN_SECRET_KEY);
-  state.secret = "";
-  state.orders = [];
-  state.selectedOrderId = "";
-  state.coupons = [];
-  state.selectedCouponId = "";
-  state.config = null;
-  authForm.elements.adminSecret.value = "";
-  renderOrders();
-  renderSelection();
-  renderCoupons();
-  fillCouponForm(null);
-  setStatus(authStatusEl, "관리자 세션을 초기화했습니다.");
-  setStatus(listStatusEl, "");
-  setStatus(formStatusEl, "");
-  setStatus(couponStatusEl, "");
-  setStatus(couponFormStatusEl, "");
+  lockAdminSurface("관리자 세션을 초기화했습니다.");
 });
 
 searchButton?.addEventListener("click", () => {
@@ -796,23 +965,47 @@ couponFormEl?.elements?.scope?.addEventListener("change", () => {
   }
 });
 
-if (state.secret) {
-  authForm.elements.adminSecret.value = state.secret;
-  const tasks = [];
-  if (hasOrderPage) {
-    tasks.push(loadOrders(""));
-  }
-  if (hasCouponPage) {
-    tasks.push(loadCoupons(""));
-  }
-  Promise.all(tasks).then(() => {
-    setStatus(authStatusEl, "관리자 세션이 복원되었습니다.", "success");
-  });
-} else {
-  if (hasCouponPage) {
-    fillCouponForm(null);
+applyAccessState();
+
+if (hasCouponPage) {
+  fillCouponForm(null);
+  if (couponFormEl) {
     couponFormEl.elements.minimumOrderAmount.value = "50000";
   }
 }
 
-setActiveTab(readHashAdminTab() || state.activeTab);
+if (state.accessToken) {
+  verifyAdminSession()
+    .then(async (payload) => {
+      state.isAuthorized = true;
+      persistAdminAccess(state.accessToken, payload.expiresAt || state.accessExpiresAt);
+      applyAccessState();
+
+      const tasks = [];
+      if (hasOrderPage) {
+        tasks.push(loadOrders({ query: "", fatalOnAuthError: true }));
+      }
+      if (hasCouponPage) {
+        tasks.push(loadCoupons({ query: "", fatalOnAuthError: true }));
+      }
+      if (tasks.length) {
+        await Promise.all(tasks);
+      }
+
+      const remaining = formatRemainingSession(state.accessExpiresAt);
+      setStatus(authStatusEl, remaining ? `관리자 세션이 복원되었습니다. 약 ${remaining} 후 다시 인증됩니다.` : "관리자 세션이 복원되었습니다.", "success");
+    })
+    .catch((error) => {
+      if (error.status === 401) {
+        lockAdminSurface("저장된 관리자 세션이 만료되었거나 유효하지 않습니다. 다시 잠금 해제해주세요.", "error");
+        return;
+      }
+
+      if (error.status === 503) {
+        lockAdminSurface("이 배포 환경에는 관리자 기능이 아직 활성화되어 있지 않습니다. ORDER_ADMIN_SECRET 설정을 확인해주세요.", "error");
+        return;
+      }
+
+      lockAdminSurface(error.message || "관리자 세션을 확인하지 못했습니다. 다시 잠금 해제해주세요.", "error");
+    });
+}

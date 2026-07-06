@@ -11,6 +11,7 @@ import {
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
 const dom = {
+  stage: document.getElementById("workshopStage"),
   back: document.getElementById("workshopBack"),
   poster: document.getElementById("workshopPoster"),
   kicker: document.getElementById("workshopKicker"),
@@ -25,10 +26,12 @@ const dom = {
   bring: document.getElementById("workshopBring"),
   notice: document.getElementById("workshopNotice"),
   apply: document.getElementById("workshopApplyBtn"),
-  railEmpty: document.getElementById("workshopRailEmpty"),
+  rail: document.getElementById("workshopRail"),
+  railBackdrop: document.getElementById("workshopRailBackdrop"),
   railPanel: document.getElementById("workshopRailPanel"),
   railClose: document.getElementById("workshopRailClose"),
   calendar: document.getElementById("workshopCalendar"),
+  calendarToolbar: document.getElementById("calendarToolbar"),
   calendarMonth: document.getElementById("calendarMonth"),
   calendarYear: document.getElementById("calendarYear"),
   calendarPrev: document.getElementById("calendarPrevBtn"),
@@ -36,11 +39,13 @@ const dom = {
   selectedDate: document.getElementById("workshopSelectedDate"),
   slotList: document.getElementById("workshopSlotList"),
   form: document.getElementById("workshopBookingForm"),
+  attendeeCount: document.getElementById("bookingAttendeeCount"),
   bookingName: document.getElementById("bookingName"),
   bookingEmail: document.getElementById("bookingEmail"),
   bookingPhone: document.getElementById("bookingPhone"),
   bookingNote: document.getElementById("bookingNote"),
   submit: document.getElementById("workshopBookingSubmit"),
+  cancel: document.getElementById("workshopBookingCancel"),
   feedback: document.getElementById("workshopBookingFeedback"),
 };
 
@@ -55,6 +60,71 @@ const state = {
   monthKeys: [],
   activeMonthIndex: 0,
 };
+
+const WORKSHOP_TIME_ZONE = "Asia/Seoul";
+
+function formatDatePartsInZone(date, timeZone = WORKSHOP_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  return parts.reduce((accumulator, part) => {
+    if (part.type === "year" || part.type === "month" || part.type === "day") {
+      accumulator[part.type] = part.value;
+    }
+    return accumulator;
+  }, {});
+}
+
+function getTodayDateKey() {
+  const parts = formatDatePartsInZone(new Date());
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function addDaysToDateKey(dateKey, days) {
+  const [year, month, day] = String(dateKey || "").split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+function parseDateKey(dateKey) {
+  const [year, month, day] = String(dateKey || "").split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function getMonthKey(dateKey) {
+  return String(dateKey || "").slice(0, 7);
+}
+
+function enumerateMonthKeys(startMonthKey, endMonthKey) {
+  const keys = [];
+  const [startYear, startMonth] = String(startMonthKey || "").split("-").map(Number);
+  const [endYear, endMonth] = String(endMonthKey || "").split("-").map(Number);
+  if (!startYear || !startMonth || !endYear || !endMonth) {
+    return keys;
+  }
+
+  let cursor = new Date(Date.UTC(startYear, startMonth - 1, 1));
+  const last = new Date(Date.UTC(endYear, endMonth - 1, 1));
+
+  while (cursor.getTime() <= last.getTime()) {
+    keys.push(`${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`);
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+
+  return keys;
+}
+
+function formatSlotDisplayTime(value) {
+  const [hourText = "00", minuteText = "00"] = String(value || "").split(":");
+  const hour = Number(hourText);
+  const minute = String(minuteText).padStart(2, "0");
+  const suffix = hour < 12 ? "AM" : "PM";
+  return `${String(hour).padStart(2, "0")}:${minute} ${suffix}`;
+}
 
 async function requestJson(url, { method = "GET", body } = {}) {
   const init = {
@@ -103,7 +173,7 @@ function formatCurrency(amount) {
 }
 
 function formatReadableDate(dateText) {
-  const value = new Date(`${dateText}T00:00:00`);
+  const value = parseDateKey(dateText);
   if (Number.isNaN(value.getTime())) {
     return dateText;
   }
@@ -119,7 +189,8 @@ function formatReadableDate(dateText) {
 function formatSlotTime(slot) {
   const start = String(slot?.startTime || "").trim();
   const end = String(slot?.endTime || "").trim();
-  return end ? `${start} - ${end}` : start;
+  if (!start) return slot?.label || "";
+  return end ? `${formatSlotDisplayTime(start)} - ${formatSlotDisplayTime(end)}` : formatSlotDisplayTime(start);
 }
 
 function splitParagraphs(text) {
@@ -157,13 +228,56 @@ function groupSlotsByDate(slots) {
 }
 
 function deriveMonthKeys(slots) {
-  return Array.from(new Set(slots.map((slot) => slot.date.slice(0, 7)))).sort();
+  const sortedDates = Array.from(new Set((slots || []).map((slot) => String(slot.date || "").trim()).filter(Boolean))).sort();
+  const startMonthKey = getMonthKey(getTodayDateKey());
+  const endMonthKey = getMonthKey(sortedDates[sortedDates.length - 1] || startMonthKey);
+  return enumerateMonthKeys(startMonthKey, endMonthKey);
 }
 
 function findFirstAvailableDate() {
   const slots = state.workshop?.scheduleSlots || [];
-  const first = slots.find((slot) => slot.status !== "blocked");
-  return first?.date || slots[0]?.date || "";
+  const tomorrowKey = addDaysToDateKey(getTodayDateKey(), 1);
+  const first = slots.find((slot) => slot.status !== "blocked" && slot.date >= tomorrowKey);
+  return first?.date || "";
+}
+
+function getOpenSlotsForDate(dateKey) {
+  if (!dateKey) return [];
+  return (state.workshop?.scheduleSlots || []).filter((slot) => slot.date === dateKey && slot.status !== "blocked");
+}
+
+function getSelectedSlot() {
+  return (state.workshop?.scheduleSlots || []).find((slot) => slot.key === state.selectedSlotKey) || null;
+}
+
+function getDateAvailability(dateKey) {
+  const todayKey = getTodayDateKey();
+  const slots = (state.workshop?.scheduleSlots || []).filter((slot) => slot.date === dateKey);
+  const openSlots = slots.filter((slot) => slot.status !== "blocked");
+  const pastOrToday = dateKey <= todayKey;
+  const explicitBlocked = slots.length > 0 && openSlots.length === 0;
+  const selectable = !pastOrToday && openSlots.length > 0;
+
+  return {
+    slots,
+    openSlots,
+    selectable,
+    pastOrToday,
+    explicitBlocked,
+  };
+}
+
+function syncSelectedSlot() {
+  const openSlots = getOpenSlotsForDate(state.selectedDate);
+  if (openSlots.length === 0) {
+    state.selectedSlotKey = "";
+    return;
+  }
+
+  const stillSelected = openSlots.find((slot) => slot.key === state.selectedSlotKey);
+  if (!stillSelected) {
+    state.selectedSlotKey = openSlots[0].key;
+  }
 }
 
 function syncMonthIndex() {
@@ -303,7 +417,7 @@ function renderWorkshopDetails(workshop) {
 }
 
 function createWeekdayRow() {
-  const weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
   const row = document.createElement("div");
   row.className = "workshop-calendar__weekdays";
 
@@ -321,13 +435,14 @@ function createMonthGrid(monthKey) {
   const [yearText, monthText] = monthKey.split("-");
   const year = Number(yearText);
   const month = Number(monthText);
-  const slotsByDate = groupSlotsByDate(state.workshop?.scheduleSlots || []);
   const firstDate = new Date(year, month - 1, 1);
   const lastDate = new Date(year, month, 0);
   const grid = document.createElement("div");
   grid.className = "workshop-calendar__grid";
 
-  for (let emptyIndex = 0; emptyIndex < firstDate.getDay(); emptyIndex += 1) {
+  const mondayFirstIndex = (firstDate.getDay() + 6) % 7;
+
+  for (let emptyIndex = 0; emptyIndex < mondayFirstIndex; emptyIndex += 1) {
     const blank = document.createElement("span");
     blank.className = "workshop-calendar__blank";
     grid.appendChild(blank);
@@ -335,20 +450,20 @@ function createMonthGrid(monthKey) {
 
   for (let day = 1; day <= lastDate.getDate(); day += 1) {
     const date = `${monthKey}-${String(day).padStart(2, "0")}`;
-    const slots = slotsByDate.get(date) || [];
-    const available = slots.some((slot) => slot.status !== "blocked");
-    const blocked = slots.length > 0 && slots.every((slot) => slot.status === "blocked");
+    const availability = getDateAvailability(date);
 
     const button = document.createElement("button");
     button.type = "button";
     button.className = "workshop-calendar__day";
     button.textContent = String(day);
 
-    if (slots.length === 0) {
-      button.classList.add("is-empty");
+    if (availability.pastOrToday) {
+      button.classList.add("is-past");
       button.disabled = true;
-    } else if (blocked) {
+    } else if (availability.explicitBlocked) {
       button.classList.add("is-blocked");
+      button.disabled = true;
+    } else if (!availability.selectable) {
       button.disabled = true;
     }
 
@@ -356,10 +471,10 @@ function createMonthGrid(monthKey) {
       button.classList.add("is-selected");
     }
 
-    if (available) {
+    if (availability.selectable) {
       button.addEventListener("click", () => {
         state.selectedDate = date;
-        const firstOpenSlot = slots.find((slot) => slot.status !== "blocked");
+        const firstOpenSlot = availability.openSlots[0];
         state.selectedSlotKey = firstOpenSlot?.key || "";
         renderBookingRail();
       });
@@ -376,24 +491,27 @@ function renderCalendar() {
 
   dom.calendar.innerHTML = "";
   if (state.monthKeys.length === 0) {
-    dom.calendarMonth.textContent = "TBD";
-    dom.calendarYear.textContent = "----";
+    dom.calendarMonth.textContent = "00";
+    dom.calendarYear.innerHTML = "00<br>00";
+    if (dom.calendarToolbar) dom.calendarToolbar.hidden = true;
     return;
   }
 
   const monthKey = state.monthKeys[state.activeMonthIndex] || state.monthKeys[0];
   const [yearText, monthText] = monthKey.split("-");
-  const monthDate = new Date(Number(yearText), Number(monthText) - 1, 1);
 
-  dom.calendarMonth.textContent = new Intl.DateTimeFormat("en-US", { month: "long" }).format(monthDate);
-  dom.calendarYear.textContent = yearText;
+  dom.calendarMonth.textContent = monthText;
+  dom.calendarYear.innerHTML = `${yearText.slice(0, 2)}<br>${yearText.slice(2)}`;
+  if (dom.calendarToolbar) {
+    dom.calendarToolbar.hidden = state.monthKeys.length <= 1;
+  }
   dom.calendar.append(createWeekdayRow(), createMonthGrid(monthKey));
 }
 
 function renderSlots() {
   if (!dom.slotList || !dom.selectedDate) return;
 
-  const selectedSlots = (state.workshop?.scheduleSlots || []).filter((slot) => slot.date === state.selectedDate);
+  const selectedSlots = getOpenSlotsForDate(state.selectedDate);
   dom.slotList.innerHTML = "";
   dom.selectedDate.textContent = formatReadableDate(state.selectedDate);
 
@@ -410,11 +528,6 @@ function renderSlots() {
     button.type = "button";
     button.className = "workshop-slot-btn";
 
-    if (slot.status === "blocked") {
-      button.classList.add("is-blocked");
-      button.disabled = true;
-    }
-
     if (slot.key === state.selectedSlotKey) {
       button.classList.add("is-active");
     }
@@ -423,22 +536,33 @@ function renderSlots() {
     time.className = "workshop-slot-btn__time";
     time.textContent = formatSlotTime(slot) || slot.label;
 
-    const status = document.createElement("span");
-    status.className = "workshop-slot-btn__status";
-    status.textContent = slot.status === "blocked"
-      ? slot.blockedReason || "예약 불가"
-      : `${slot.capacity}명 정원 / 예약 가능`;
+    button.addEventListener("click", () => {
+      state.selectedSlotKey = slot.key;
+      renderBookingRail();
+    });
 
-    if (slot.status !== "blocked") {
-      button.addEventListener("click", () => {
-        state.selectedSlotKey = slot.key;
-        renderBookingRail();
-      });
-    }
-
-    button.append(time, status);
+    button.append(time);
     dom.slotList.appendChild(button);
   }
+}
+
+function renderAttendeeOptions() {
+  if (!dom.attendeeCount) return;
+
+  const selectedSlot = getSelectedSlot();
+  const maxCount = Math.max(1, Math.min(4, Number(selectedSlot?.remainingCapacity || selectedSlot?.capacity || 1)));
+  const previousValue = Number(dom.attendeeCount.value || 1);
+  dom.attendeeCount.innerHTML = "";
+
+  for (let count = 1; count <= maxCount; count += 1) {
+    const option = document.createElement("option");
+    option.value = String(count);
+    option.textContent = `${count}명`;
+    dom.attendeeCount.appendChild(option);
+  }
+
+  dom.attendeeCount.value = String(Math.min(previousValue, maxCount));
+  dom.attendeeCount.disabled = !selectedSlot;
 }
 
 function updateSubmitState() {
@@ -455,15 +579,17 @@ function applyViewer(viewer) {
 
 function renderBookingRail() {
   syncMonthIndex();
+  syncSelectedSlot();
   renderCalendar();
   renderSlots();
+  renderAttendeeOptions();
   updateSubmitState();
 }
 
 function openBookingRail() {
   state.bookingOpen = true;
-  if (dom.railEmpty) dom.railEmpty.hidden = true;
-  if (dom.railPanel) dom.railPanel.hidden = false;
+  document.body.classList.add("workshop-booking-open");
+  dom.rail?.setAttribute("aria-hidden", "false");
 
   if (!state.selectedDate) {
     state.selectedDate = findFirstAvailableDate();
@@ -479,8 +605,8 @@ function openBookingRail() {
 
 function closeBookingRail() {
   state.bookingOpen = false;
-  if (dom.railEmpty) dom.railEmpty.hidden = false;
-  if (dom.railPanel) dom.railPanel.hidden = true;
+  document.body.classList.remove("workshop-booking-open");
+  dom.rail?.setAttribute("aria-hidden", "true");
 }
 
 async function loadWorkshop() {
@@ -520,6 +646,7 @@ async function loadWorkshop() {
 function attachEvents() {
   dom.apply?.addEventListener("click", openBookingRail);
   dom.railClose?.addEventListener("click", closeBookingRail);
+  dom.railBackdrop?.addEventListener("click", closeBookingRail);
 
   dom.calendarPrev?.addEventListener("click", () => {
     state.activeMonthIndex = Math.max(0, state.activeMonthIndex - 1);
@@ -530,6 +657,8 @@ function attachEvents() {
     state.activeMonthIndex = Math.min(state.monthKeys.length - 1, state.activeMonthIndex + 1);
     renderCalendar();
   });
+
+  dom.cancel?.addEventListener("click", closeBookingRail);
 
   dom.form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -546,6 +675,7 @@ function attachEvents() {
         body: {
           slug: state.workshop.slug,
           slotKey: state.selectedSlotKey,
+          attendeeCount: Number(dom.attendeeCount?.value || 1),
           fullName: dom.bookingName?.value || "",
           email: dom.bookingEmail?.value || "",
           phone: dom.bookingPhone?.value || "",
@@ -586,7 +716,7 @@ async function init() {
     state.workshop = workshop;
     state.monthKeys = deriveMonthKeys(workshop.scheduleSlots || []);
     state.selectedDate = findFirstAvailableDate();
-    state.selectedSlotKey = (workshop.scheduleSlots || []).find((slot) => slot.status !== "blocked")?.key || "";
+    state.selectedSlotKey = getOpenSlotsForDate(state.selectedDate)[0]?.key || "";
     renderWorkshopDetails(workshop);
     closeBookingRail();
   } catch (error) {
