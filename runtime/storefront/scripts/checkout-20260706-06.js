@@ -4,7 +4,7 @@
 
 import { imageUrl } from "./sanity/image.js";
 import { openSitePolicyPanel } from "./components/siteFooter.js?v=20260520-02";
-import { removeFromCart, renderCartPanel, updateQty } from "./cart.js";
+import { removeFromCart, renderCartPanel, updateQty } from "./cart-20260706-06.js";
 import { formatPrice } from "./utils/catalog.js";
 import { CART_KEY, ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
