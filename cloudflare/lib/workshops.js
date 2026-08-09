@@ -1,11 +1,16 @@
-import { ALL_WORKSHOPS_QUERY, WORKSHOP_BY_SLUG_QUERY } from "../../runtime/storefront/scripts/sanity/queries.js";
-import { findFallbackWorkshopBySlug, getFallbackWorkshops, normalizeWorkshop } from "../../runtime/storefront/scripts/utils/workshops.js";
+import { normalizeWorkshop } from "../../runtime/storefront/scripts/utils/workshops.js";
+import {
+  archiveWorkshopContent,
+  readPublicWorkshopBySlug,
+  readPublicWorkshopCatalog,
+  readStoredWorkshopCatalog,
+  readStoredWorkshopContentBySlug,
+  readWorkshopAdminCatalog,
+  upsertWorkshopContent,
+} from "./workshop-content.js";
 
-const SANITY_PROJECT_ID = "9bsud0bl";
-const SANITY_DATASET = "production";
-const SANITY_API_VERSION = "2023-01-01";
-const SANITY_BASE_URL = `https://${SANITY_PROJECT_ID}.apicdn.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}`;
 const WORKSHOP_TIME_ZONE = "Asia/Seoul";
+const GLOBAL_WORKSHOP_BLOCK_SLUG = "*";
 
 function getDb(env) {
   return env?.OALUM_DB || null;
@@ -107,55 +112,6 @@ function formatReservation(row) {
   };
 }
 
-async function fetchSanityQuery(query, params = {}) {
-  const url = new URL(SANITY_BASE_URL);
-  url.searchParams.set("query", query);
-
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(`$${key}`, JSON.stringify(value));
-  }
-
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(`Sanity query failed: ${response.status} ${response.statusText}${body ? `\n${body}` : ""}`);
-  }
-
-  const payload = await response.json();
-  return payload?.result || null;
-}
-
-async function fetchWorkshopSource(slug) {
-  try {
-    const workshop = await fetchSanityQuery(WORKSHOP_BY_SLUG_QUERY, { slug });
-    if (workshop) {
-      return workshop;
-    }
-  } catch (error) {
-    console.error("Failed to fetch workshop from Sanity.", {
-      slug,
-      message: error?.message || String(error),
-    });
-  }
-
-  return findFallbackWorkshopBySlug(slug);
-}
-
-async function fetchWorkshopCatalogSources() {
-  try {
-    const workshops = await fetchSanityQuery(ALL_WORKSHOPS_QUERY);
-    if (Array.isArray(workshops) && workshops.length > 0) {
-      return workshops;
-    }
-  } catch (error) {
-    console.error("Failed to fetch workshop catalog from Sanity.", {
-      message: error?.message || String(error),
-    });
-  }
-
-  return getFallbackWorkshops();
-}
-
 async function readSlotReservationCounts(database, slotKeys = []) {
   if (!Array.isArray(slotKeys) || slotKeys.length === 0) {
     return new Map();
@@ -194,15 +150,18 @@ async function readWorkshopDateBlockMap(database, workshopSlug, dates = []) {
     .prepare(`
       SELECT *
       FROM workshop_schedule_blocks
-      WHERE workshop_slug = ?
+      WHERE workshop_slug IN (?, ?)
         AND slot_date IN (${placeholders})
+      ORDER BY CASE WHEN workshop_slug = ? THEN 0 ELSE 1 END
     `)
-    .bind(cleanText(workshopSlug, 120), ...normalizedDates)
+    .bind(GLOBAL_WORKSHOP_BLOCK_SLUG, cleanText(workshopSlug, 120), ...normalizedDates, GLOBAL_WORKSHOP_BLOCK_SLUG)
     .all();
 
-  return new Map((result?.results || []).map((row) => [
-    String(row.slot_date || "").trim(),
-    {
+  const map = new Map();
+  for (const row of (result?.results || [])) {
+    const key = String(row.slot_date || "").trim();
+    if (!key || map.has(key)) continue;
+    map.set(key, {
       id: row.id,
       workshopSlug: row.workshop_slug,
       workshopTitle: row.workshop_title || "",
@@ -210,8 +169,11 @@ async function readWorkshopDateBlockMap(database, workshopSlug, dates = []) {
       reason: row.reason || "예약 불가 일정입니다.",
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-    },
-  ]));
+      isGlobal: String(row.workshop_slug || "").trim() === GLOBAL_WORKSHOP_BLOCK_SLUG,
+    });
+  }
+
+  return map;
 }
 
 function formatWorkshopDateBlock(row) {
@@ -221,6 +183,7 @@ function formatWorkshopDateBlock(row) {
     id: row.id,
     workshopSlug: row.workshop_slug,
     workshopTitle: row.workshop_title || "",
+    isGlobal: String(row.workshop_slug || "").trim() === GLOBAL_WORKSHOP_BLOCK_SLUG,
     slotDate: row.slot_date,
     reason: row.reason || "예약 불가 일정입니다.",
     createdAt: row.created_at,
@@ -246,8 +209,40 @@ async function readWorkshopDateBlocks(database, { limit = 60 } = {}) {
   return (result?.results || []).map(formatWorkshopDateBlock).filter(Boolean);
 }
 
-function enrichWorkshopSlots(workshop, reservationCounts = new Map(), scheduleBlocks = new Map()) {
+async function readScheduledWorkshopDateBlockMap(database, dates = []) {
+  if (!database || !Array.isArray(dates) || dates.length === 0) {
+    return new Map();
+  }
+
+  const dateSet = new Set(dates.map((value) => normalizeDateText(value)).filter(Boolean));
+  if (!dateSet.size) return new Map();
+
+  const result = await database
+    .prepare(`SELECT title, schedule_slots_json, booking_config_json FROM workshops WHERE status = 'published'`)
+    .all();
+  const blocks = new Map();
+
+  for (const row of (result?.results || [])) {
+    const config = decodeJson(row.booking_config_json, {});
+    if (String(config?.mode || "scheduled") !== "scheduled") continue;
+
+    const slots = decodeJson(row.schedule_slots_json, []);
+    for (const slot of Array.isArray(slots) ? slots : []) {
+      const date = normalizeDateText(slot?.date);
+      const isBlocked = slot?.isBlocked === true || String(slot?.status || "").trim().toLowerCase() === "blocked";
+      if (!date || isBlocked || !dateSet.has(date) || blocks.has(date)) continue;
+      blocks.set(date, `${cleanText(row.title, 160) || "다회성 워크숍"} 일정`);
+    }
+  }
+
+  return blocks;
+}
+
+function enrichWorkshopSlots(workshop, reservationCounts = new Map(), scheduleBlocks = new Map(), scheduledDateBlocks = new Map()) {
   const todayIso = getTodayIsoInTimeZone();
+  const bookingConfig = workshop.bookingConfig || {};
+  const isDailyClass = bookingConfig.mode === "daily";
+  const isExclusiveDaily = isDailyClass && bookingConfig.allowSharedBookings !== true;
 
   return {
     ...workshop,
@@ -256,7 +251,8 @@ function enrichWorkshopSlots(workshop, reservationCounts = new Map(), scheduleBl
       const remainingCapacity = Math.max((Number(slot.capacity) || 0) - reservedCount, 0);
       const pastOrToday = String(slot.date || "") <= todayIso;
       const manualBlock = scheduleBlocks.get(String(slot.date || "")) || null;
-      const isBlocked = slot.status === "blocked" || Boolean(manualBlock) || remainingCapacity <= 0 || pastOrToday;
+      const scheduledBlockReason = scheduledDateBlocks.get(String(slot.date || "")) || "";
+      const isBlocked = slot.status === "blocked" || Boolean(manualBlock) || Boolean(scheduledBlockReason) || remainingCapacity <= 0 || pastOrToday || (isExclusiveDaily && reservedCount > 0);
 
       return {
         ...slot,
@@ -267,8 +263,12 @@ function enrichWorkshopSlots(workshop, reservationCounts = new Map(), scheduleBl
           ? slot.blockedReason || "예약 불가 일정입니다."
           : manualBlock
             ? manualBlock.reason || "예약 불가 일정입니다."
+          : scheduledBlockReason
+            ? `${scheduledBlockReason}로 해당 날짜는 예약할 수 없습니다.`
           : pastOrToday
             ? "당일 및 지난 날짜는 온라인 예약이 마감되었습니다."
+          : isExclusiveDaily && reservedCount > 0
+            ? "이미 예약된 일일 클래스 날짜입니다."
           : remainingCapacity <= 0
             ? "예약 마감"
             : "",
@@ -277,9 +277,9 @@ function enrichWorkshopSlots(workshop, reservationCounts = new Map(), scheduleBl
   };
 }
 
-export async function readWorkshopCatalog(slug) {
+export async function readWorkshopCatalog(env, slug) {
   const normalizedSlug = cleanText(slug, 120);
-  const source = await fetchWorkshopSource(normalizedSlug);
+  const source = await readPublicWorkshopBySlug(env, normalizedSlug);
 
   if (!source) {
     throw Object.assign(new Error("워크숍 정보를 찾을 수 없습니다."), {
@@ -290,15 +290,15 @@ export async function readWorkshopCatalog(slug) {
   return normalizeWorkshop(source);
 }
 
-export async function readWorkshopAvailability(env, slug) {
-  const workshop = await readWorkshopCatalog(slug);
+async function enrichWorkshopAvailability(env, workshop) {
   const database = getDb(env);
 
   if (!database) {
     return workshop;
   }
 
-  const [reservationCounts, scheduleBlocks] = await Promise.all([
+  const isDailyClass = workshop.bookingConfig?.mode === "daily";
+  const [reservationCounts, scheduleBlocks, scheduledDateBlocks] = await Promise.all([
     readSlotReservationCounts(
       database,
       workshop.scheduleSlots.map((slot) => slot.key),
@@ -308,9 +308,28 @@ export async function readWorkshopAvailability(env, slug) {
       workshop.slug,
       workshop.scheduleSlots.map((slot) => slot.date),
     ),
+    isDailyClass
+      ? readScheduledWorkshopDateBlockMap(database, workshop.scheduleSlots.map((slot) => slot.date))
+      : Promise.resolve(new Map()),
   ]);
 
-  return enrichWorkshopSlots(workshop, reservationCounts, scheduleBlocks);
+  return enrichWorkshopSlots(workshop, reservationCounts, scheduleBlocks, scheduledDateBlocks);
+}
+
+export async function readWorkshopAvailability(env, slug) {
+  const workshop = await readWorkshopCatalog(env, slug);
+  return enrichWorkshopAvailability(env, workshop);
+}
+
+export async function readWorkshopAdminAvailability(env, slug) {
+  const workshop = await readStoredWorkshopContentBySlug(env, cleanText(slug, 120), { includeDraft: true });
+  if (!workshop) {
+    throw Object.assign(new Error("워크숍 초안을 찾을 수 없습니다."), {
+      status: 404,
+    });
+  }
+
+  return enrichWorkshopAvailability(env, normalizeWorkshop(workshop));
 }
 
 async function readWorkshopReservationsForAdmin(database, {
@@ -338,6 +357,7 @@ async function readWorkshopReservationsForAdmin(database, {
         OR workshop_title LIKE ?
         OR workshop_slug LIKE ?
         OR full_name LIKE ?
+        OR phone LIKE ?
         OR email LIKE ?
         OR slot_date LIKE ?
       )
@@ -347,6 +367,7 @@ async function readWorkshopReservationsForAdmin(database, {
     `)
     .bind(
       normalizedQuery,
+      likeQuery,
       likeQuery,
       likeQuery,
       likeQuery,
@@ -367,25 +388,17 @@ export async function readWorkshopAdminSnapshot(env, {
   limit = 40,
 } = {}) {
   const database = requireDb(env);
-  const [reservations, blocks, workshops] = await Promise.all([
+  const [reservations, blocks, catalog] = await Promise.all([
     readWorkshopReservationsForAdmin(database, { query, status, limit }),
     readWorkshopDateBlocks(database),
-    fetchWorkshopCatalogSources(),
+    readWorkshopAdminCatalog(env),
   ]);
-
-  const workshopOptions = workshops
-    .map((workshop) => normalizeWorkshop(workshop))
-    .filter((workshop) => workshop?.slug)
-    .map((workshop) => ({
-      slug: workshop.slug,
-      title: workshop.title || workshop.slug,
-    }))
-    .sort((left, right) => left.title.localeCompare(right.title, "ko"));
 
   return {
     reservations,
     blocks,
-    workshops: workshopOptions,
+    workshops: catalog.workshopOptions,
+    contentItems: catalog.contentItems,
   };
 }
 
@@ -429,19 +442,17 @@ export async function updateWorkshopReservationStatus(env, { reservationId, stat
 }
 
 export async function createWorkshopDateBlock(env, {
-  workshopSlug,
-  workshopTitle,
   slotDate,
   reason,
 }) {
   const database = requireDb(env);
-  const normalizedSlug = cleanText(workshopSlug, 120);
-  const normalizedTitle = cleanText(workshopTitle, 160) || normalizedSlug;
+  const normalizedSlug = GLOBAL_WORKSHOP_BLOCK_SLUG;
+  const normalizedTitle = "전역 일정 차단";
   const normalizedDate = normalizeDateText(slotDate);
   const normalizedReason = cleanText(reason || "예약 불가 일정입니다.", 200) || "예약 불가 일정입니다.";
 
-  if (!normalizedSlug || !normalizedDate) {
-    throw Object.assign(new Error("워크숍과 날짜를 모두 선택해주세요."), {
+  if (!normalizedDate) {
+    throw Object.assign(new Error("차단 날짜를 선택해주세요."), {
       status: 400,
     });
   }
@@ -582,6 +593,14 @@ export async function createWorkshopReservation(env, input, { userId = null, acc
     });
   }
 
+  const bookingConfig = workshop.bookingConfig || {};
+  const attendeePrices = bookingConfig.attendeePrices && typeof bookingConfig.attendeePrices === "object"
+    ? bookingConfig.attendeePrices
+    : {};
+  const reservationPrice = bookingConfig.mode === "daily"
+    ? Math.max(0, Number(attendeePrices[attendeeCount]) || Number(workshop.price) || 0)
+    : Math.max(0, Number(workshop.price) || 0);
+
   const email = normalizeEmail(userId ? (accountEmail || input.email) : input.email);
   const fullName = cleanText(userId ? (accountFullName || input.fullName) : input.fullName, 120);
   const phone = cleanText(userId ? (accountPhone || input.phone) : input.phone, 40);
@@ -664,7 +683,9 @@ export async function createWorkshopReservation(env, input, { userId = null, acc
         category: workshop.category || "",
         locationName: workshop.locationName || "",
         locationAddress: workshop.locationAddress || "",
-        price: workshop.price || 0,
+        price: reservationPrice,
+        bookingMode: bookingConfig.mode || "scheduled",
+        attendeeCount,
       }),
       encodeJson(slot),
       now,
@@ -682,3 +703,5 @@ export async function createWorkshopReservation(env, input, { userId = null, acc
     workshop: await readWorkshopAvailability(env, workshop.slug),
   };
 }
+
+export { upsertWorkshopContent, archiveWorkshopContent, readPublicWorkshopCatalog, readStoredWorkshopCatalog };

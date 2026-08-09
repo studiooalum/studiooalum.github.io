@@ -53,7 +53,8 @@
     <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
     <link rel="stylesheet" href="./runtime/storefront/styles/placeholder-page.css">
-    <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260706-07.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/archive.css?v=20260809-01">
+    <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
     <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="placeholder-page archive-page">
@@ -67,84 +68,23 @@
             <header class="archive-intro__hero">
                 <p class="placeholder-eyebrow">Studio OALUM Archive</p>
                 <h1 class="placeholder-title">오알룸 아카이브</h1>
-                <p class="placeholder-copy">작품, 과거 포스터, 수선 과정의 이미지와 단편적인 메모를 한 화면 안에 쌓아두는 아카이브를 준비하고 있습니다. 정식 오픈 전까지는 잡지처럼 편집된 샘플 구조로 방향을 먼저 보여줍니다.</p>
+                <p class="placeholder-copy">작품, 포스터, 수선 과정의 이미지와 짧은 캡션을 한 화면에 쌓아두는 보드형 아카이브입니다. 기록을 정리하는 순서대로 공개합니다.</p>
             </header>
 
             <aside class="archive-intro__note">
                 <p class="placeholder-note__label">Format</p>
-                <p class="placeholder-note__body">이미지는 각 원본 비율을 유지한 채 3열 보드에 배치됩니다. 포스터, 디테일 컷, 작업 기록, 텍스트 노트가 서로 다른 높이로 섞이도록 설계했습니다.</p>
+                <p class="placeholder-note__body">Sanity에 아카이브 컬렉션이 연결되면 이미지와 설명 캡션만 같은 레이아웃으로 보여줍니다. 데스크톱에서는 3그리드, 모바일에서는 1열로 내려갑니다.</p>
+                <p class="archive-intro__status js-archive-status" role="status" aria-live="polite">아카이브 게시물을 불러오는 중입니다.</p>
             </aside>
         </section>
 
-        <section class="archive-board" aria-label="Archive board preview">
-            <article class="archive-entry archive-entry--poster">
-                <div class="archive-entry__media archive-entry__media--poster-a">
-                    <span class="archive-entry__kicker">Poster / 2021</span>
-                    <span class="archive-entry__headline">Visible Repair<br>Open Studio</span>
-                </div>
-                <div class="archive-entry__caption">
-                    <h2 class="archive-entry__title">Open Studio Poster</h2>
-                    <p class="archive-entry__text">과거 포스터를 세로 비율 그대로 쌓아두는 영역입니다. 실제 공개 시에는 원본 이미지 비율을 그대로 유지합니다.</p>
-                </div>
-            </article>
+        <section class="archive-board-shell">
+            <div class="archive-board-meta">
+                <p class="placeholder-note__label">Archive Board</p>
+                <p class="placeholder-note__body">게시된 기록이 있을 때만 보드를 표시합니다.</p>
+            </div>
 
-            <article class="archive-entry">
-                <div class="archive-entry__media archive-entry__media--detail-a">
-                    <span class="archive-entry__chip">Work Detail</span>
-                </div>
-                <div class="archive-entry__caption">
-                    <h2 class="archive-entry__title">Patch Surface Study</h2>
-                    <p class="archive-entry__text">실의 방향과 패치의 겹침을 확대해서 보여주는 작업 이미지 샘플입니다.</p>
-                </div>
-            </article>
-
-            <article class="archive-entry archive-entry--note">
-                <div class="archive-entry__caption archive-entry__caption--note">
-                    <p class="archive-entry__note-label">Note</p>
-                    <p class="archive-entry__text">작은 메모 카드도 이미지 사이에 섞입니다. 작업 배경, 수선 이유, 소재 이야기처럼 짧은 텍스트가 들어갈 자리입니다.</p>
-                </div>
-            </article>
-
-            <article class="archive-entry">
-                <div class="archive-entry__media archive-entry__media--landscape-a">
-                    <span class="archive-entry__chip">Process</span>
-                </div>
-                <div class="archive-entry__caption">
-                    <h2 class="archive-entry__title">Table View</h2>
-                    <p class="archive-entry__text">작업대 위 장면이나 진행 과정 사진은 가로 비율을 유지한 채 들어옵니다.</p>
-                </div>
-            </article>
-
-            <article class="archive-entry archive-entry--poster">
-                <div class="archive-entry__media archive-entry__media--poster-b">
-                    <span class="archive-entry__kicker">Poster / 2023</span>
-                    <span class="archive-entry__headline">Patch Atlas<br>Edition</span>
-                </div>
-                <div class="archive-entry__caption">
-                    <h2 class="archive-entry__title">Edition Announcement</h2>
-                    <p class="archive-entry__text">세로형 포스터가 다른 비율의 이미지와 함께 섞여도 3열 흐름을 유지하도록 구성했습니다.</p>
-                </div>
-            </article>
-
-            <article class="archive-entry">
-                <div class="archive-entry__media archive-entry__media--square-a">
-                    <span class="archive-entry__chip">Artwork</span>
-                </div>
-                <div class="archive-entry__caption">
-                    <h2 class="archive-entry__title">Numbered Piece</h2>
-                    <p class="archive-entry__text">정사각형 작품 이미지도 별도 크롭 없이 원본 비율에 맞는 카드 높이로 들어갑니다.</p>
-                </div>
-            </article>
-
-            <article class="archive-entry">
-                <div class="archive-entry__media archive-entry__media--portrait-a">
-                    <span class="archive-entry__chip">Archive Image</span>
-                </div>
-                <div class="archive-entry__caption">
-                    <h2 class="archive-entry__title">Repair Diary</h2>
-                    <p class="archive-entry__text">세로 사진, 포스터, 가로 컷이 함께 섞이는 pinterest 스타일 보드의 기본 카드 예시입니다.</p>
-                </div>
-            </article>
+            <section class="archive-board" data-archive-board aria-label="Archive board preview"></section>
         </section>
 
         <footer class="site-footer site-footer--grid">
@@ -184,10 +124,12 @@ studio.oalum@gmail.com</p>
         import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
         import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
+        import { initArchiveBoard } from "./runtime/storefront/scripts/archive.js?v=20260809-01";
 
         initSiteChrome();
         initCartUI();
         initSiteFooter();
+        initArchiveBoard();
     </script>
 </body>
 </html>

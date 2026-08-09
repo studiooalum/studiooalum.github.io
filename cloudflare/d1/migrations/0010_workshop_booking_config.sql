@@ -1,0 +1,1 @@
+ALTER TABLE workshops ADD COLUMN booking_config_json TEXT NOT NULL DEFAULT '{}';

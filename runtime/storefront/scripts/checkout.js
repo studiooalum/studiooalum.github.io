@@ -9,6 +9,7 @@ import { formatPrice } from "./utils/catalog.js";
 import { CART_KEY, ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
 const ORDER_CREATE_ENDPOINT = "/api/orders";
+const ORDER_QUOTE_ENDPOINT = "/api/orders/quote";
 const ACCOUNT_ENDPOINT = "./api/auth/account";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_REDEEMABLE_POINTS = 1000;
@@ -19,7 +20,13 @@ const checkoutState = {
   availablePoints: 0,
   appliedPoints: 0,
   couponCode: "",
+  pricingQuote: null,
+  pricingQuoteKey: "",
+  pricingQuoteLoading: false,
+  pricingQuoteError: "",
 };
+
+let pricingQuoteTimer = null;
 
 /* =========================
    CART DATA (read-only on this page)
@@ -50,6 +57,41 @@ function calculateExpectedEarnedPoints(amount) {
   return Math.max(0, Math.floor((Math.round(Number(amount) || 0)) * POINT_EARN_RATE));
 }
 
+function buildPricingQuoteKey({ couponCode, pointsUsed, email }) {
+  return JSON.stringify({
+    couponCode: normalizeCouponCode(couponCode),
+    pointsUsed: normalizePoints(pointsUsed),
+    email: String(email || "").trim().toLowerCase(),
+    subtotal: getCartSubtotal(),
+  });
+}
+
+function getPricingRequestState() {
+  const subtotal = getCartSubtotal();
+  const pointsUsed = checkoutState.isAuthenticated ? clampAppliedPoints(subtotal) : 0;
+  const couponCode = normalizeCouponCode(checkoutState.couponCode);
+  const email = syncEmailCompositeField();
+
+  return {
+    subtotal,
+    pointsUsed,
+    couponCode,
+    email,
+    key: buildPricingQuoteKey({ couponCode, pointsUsed, email }),
+  };
+}
+
+function schedulePricingQuoteRefresh() {
+  if (pricingQuoteTimer) {
+    clearTimeout(pricingQuoteTimer);
+  }
+
+  pricingQuoteTimer = setTimeout(() => {
+    pricingQuoteTimer = null;
+    requestPricingQuote();
+  }, 350);
+}
+
 function getMaxSpendablePoints(subtotal = getCartSubtotal()) {
   if (!checkoutState.isAuthenticated) {
     return 0;
@@ -72,15 +114,39 @@ function clampAppliedPoints(subtotal = getCartSubtotal()) {
 }
 
 function getCheckoutTotals() {
-  const subtotal = getCartSubtotal();
-  const pointsUsed = clampAppliedPoints(subtotal);
+  const requestState = getPricingRequestState();
+  const quote = checkoutState.pricingQuote;
+
+  if (quote && checkoutState.pricingQuoteKey === requestState.key) {
+    return {
+      subtotal: requestState.subtotal,
+      couponDiscountAmount: Math.max(0, Math.round(Number(quote.couponDiscountAmount) || 0)),
+      pointsUsed: Math.max(0, Math.round(Number(quote.pointsUsed) || 0)),
+      total: Math.max(0, Math.round(Number(quote.totalAmount) || 0)),
+      expectedEarnedPoints: calculateExpectedEarnedPoints(quote.totalAmount),
+      couponTitle: String(quote.couponTitle || "").trim(),
+      couponCode: String(quote.couponCode || requestState.couponCode || "").trim(),
+      couponReservationExpiresAt: String(quote.couponReservationExpiresAt || "").trim(),
+      pricingReady: true,
+      pricingError: "",
+    };
+  }
+
+  const subtotal = requestState.subtotal;
+  const pointsUsed = requestState.pointsUsed;
   const total = Math.max(0, subtotal - pointsUsed);
 
   return {
     subtotal,
+    couponDiscountAmount: 0,
     pointsUsed,
     total,
     expectedEarnedPoints: calculateExpectedEarnedPoints(total),
+    couponTitle: requestState.couponCode ? checkoutState.pricingQuoteError : "",
+    couponCode: requestState.couponCode,
+    couponReservationExpiresAt: "",
+    pricingReady: false,
+    pricingError: checkoutState.pricingQuoteError,
   };
 }
 
@@ -133,6 +199,7 @@ function renderCouponSection() {
   const inputEl = document.getElementById("checkoutCouponInput");
   const statusEl = document.getElementById("checkoutCouponStatus");
   const copyEl = document.getElementById("checkoutCouponCopy");
+  const totals = getCheckoutTotals();
 
   if (!inputEl || !statusEl || !copyEl) {
     return;
@@ -140,14 +207,32 @@ function renderCouponSection() {
 
   inputEl.value = checkoutState.couponCode;
 
+  if (checkoutState.pricingQuoteLoading) {
+    statusEl.textContent = "쿠폰 할인 계산 중입니다.";
+    copyEl.textContent = "입력한 쿠폰의 적용 가능 여부와 할인 금액을 서버에서 확인하고 있습니다.";
+    return;
+  }
+
+  if (totals.pricingError) {
+    statusEl.textContent = totals.pricingError;
+    copyEl.textContent = "쿠폰 코드를 다시 확인하거나, 대상 이메일/회원 계정이 맞는지 확인해주세요.";
+    return;
+  }
+
   if (!checkoutState.couponCode) {
     statusEl.textContent = "환영/보상 쿠폰은 여기서 입력하세요.";
-    copyEl.textContent = "쿠폰은 주문 생성 단계에서 실시간 검증되고, 결제 진행 후 30분간 예약됩니다. 취소/환불 시 자동으로 복원됩니다.";
+    copyEl.textContent = "쿠폰은 입력 즉시 적용 가능 여부를 확인합니다. 총 결제금액과 할인 금액이 아래에 바로 반영됩니다.";
+    return;
+  }
+
+  if (totals.couponDiscountAmount > 0) {
+    statusEl.textContent = `${totals.couponCode || checkoutState.couponCode} 적용됨`;
+    copyEl.textContent = `쿠폰 할인 ${formatPrice(totals.couponDiscountAmount)}이 총 결제금액에 반영되었습니다.`;
     return;
   }
 
   statusEl.textContent = `입력된 쿠폰 ${checkoutState.couponCode}`;
-  copyEl.textContent = "쿠폰 할인 금액은 주문 생성 직후 결제 화면에서 확정됩니다. 지정 쿠폰은 로그인 계정 또는 배송 이메일과 일치해야 합니다.";
+  copyEl.textContent = "쿠폰 적용 여부를 확인하는 중입니다.";
 }
 
 function applyPointsInput(rawValue) {
@@ -244,6 +329,54 @@ async function createPendingOrder(orderData) {
   };
 }
 
+async function requestPricingQuote() {
+  const requestState = getPricingRequestState();
+
+  if (!requestState.couponCode && requestState.pointsUsed <= 0) {
+    checkoutState.pricingQuote = null;
+    checkoutState.pricingQuoteKey = requestState.key;
+    checkoutState.pricingQuoteError = "";
+    checkoutState.pricingQuoteLoading = false;
+    renderOrderSummary();
+    return;
+  }
+
+  checkoutState.pricingQuoteLoading = true;
+  checkoutState.pricingQuoteError = "";
+  renderOrderSummary();
+
+  try {
+    const response = await fetch(ORDER_QUOTE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        items: getCart(),
+        shippingEmail: requestState.email,
+        couponCode: requestState.couponCode,
+        pointsUsed: requestState.pointsUsed,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok || !payload?.quote) {
+      throw new Error(payload?.error || payload?.message || `Quote API failed: ${response.status}`);
+    }
+
+    checkoutState.pricingQuote = payload.quote;
+    checkoutState.pricingQuoteKey = requestState.key;
+    checkoutState.pricingQuoteError = "";
+  } catch (error) {
+    checkoutState.pricingQuote = null;
+    checkoutState.pricingQuoteKey = requestState.key;
+    checkoutState.pricingQuoteError = error.message || "쿠폰 적용 여부를 확인하지 못했습니다.";
+  } finally {
+    checkoutState.pricingQuoteLoading = false;
+    renderOrderSummary();
+  }
+}
+
 /* =========================
    RENDER ORDER SUMMARY
 ========================= */
@@ -252,6 +385,8 @@ function renderOrderSummary() {
   const items = getCart();
   const container = document.getElementById("checkoutItems");
   const submitButton = document.getElementById("submitOrderBtn");
+  const couponRow = document.getElementById("checkoutCouponDiscountRow");
+  const couponDiscount = document.getElementById("checkoutCouponDiscount");
   const pointsRow = document.getElementById("checkoutPointsRow");
   const pointsDiscount = document.getElementById("checkoutPointsDiscount");
   const totals = getCheckoutTotals();
@@ -261,6 +396,9 @@ function renderOrderSummary() {
     submitButton.disabled = true;
     document.getElementById("checkoutSubtotal").textContent = formatPrice(0);
     document.getElementById("checkoutTotal").textContent = formatPrice(0);
+    if (couponRow) {
+      couponRow.hidden = true;
+    }
     if (pointsRow) {
       pointsRow.hidden = true;
     }
@@ -299,6 +437,11 @@ function renderOrderSummary() {
   document.getElementById("checkoutSubtotal").textContent = formatPrice(totals.subtotal);
   document.getElementById("checkoutTotal").textContent = formatPrice(totals.total);
 
+  if (couponRow && couponDiscount) {
+    couponRow.hidden = totals.couponDiscountAmount <= 0;
+    couponDiscount.textContent = `-${formatPrice(totals.couponDiscountAmount)}`;
+  }
+
   if (pointsRow && pointsDiscount) {
     pointsRow.hidden = totals.pointsUsed <= 0;
     pointsDiscount.textContent = `-${formatPrice(totals.pointsUsed)}`;
@@ -317,6 +460,7 @@ function setupSummaryControls() {
       removeFromCart(removeButton.getAttribute("data-checkout-remove"));
       renderOrderSummary();
       renderCartPanel();
+      schedulePricingQuoteRefresh();
       return;
     }
 
@@ -328,6 +472,7 @@ function setupSummaryControls() {
     updateQty(itemId, delta);
     renderOrderSummary();
     renderCartPanel();
+    schedulePricingQuoteRefresh();
   });
 }
 
@@ -438,6 +583,7 @@ function setupEmailField() {
     if (!customDomainInput.hidden && !customDomainInput.value.trim()) {
       customDomainInput.focus();
     }
+    schedulePricingQuoteRefresh();
   };
 
   localInput.addEventListener("input", handleSync);
@@ -539,6 +685,7 @@ async function loadCheckoutAccount() {
       message: "회원 주문으로 진행 중입니다.",
       detail: "저장된 기본 주소를 불러왔습니다. 필요하면 수정 후 결제해주세요.",
     });
+    schedulePricingQuoteRefresh();
   } catch (error) {
     if (error?.status === 401 || error?.message === "guest") {
       setCheckoutAuthState({
@@ -555,6 +702,7 @@ async function loadCheckoutAccount() {
       message: "비회원 주문이 가능합니다.",
       detail: "계정 정보를 불러오지 못해도 비회원 주문은 계속 진행할 수 있습니다.",
     });
+    schedulePricingQuoteRefresh();
   }
 }
 
@@ -587,6 +735,7 @@ function setupPointsField() {
 
   inputEl.addEventListener("input", () => {
     applyPointsInput(inputEl.value);
+    schedulePricingQuoteRefresh();
   });
 
   maxButton.addEventListener("click", () => {
@@ -595,6 +744,7 @@ function setupPointsField() {
     const nextApplied = maxSpendable >= MIN_REDEEMABLE_POINTS ? maxSpendable : 0;
     checkoutState.appliedPoints = nextApplied;
     renderOrderSummary();
+    schedulePricingQuoteRefresh();
   });
 }
 
@@ -609,11 +759,19 @@ function setupCouponField() {
   inputEl.addEventListener("input", () => {
     checkoutState.couponCode = normalizeCouponCode(inputEl.value);
     renderCouponSection();
+    schedulePricingQuoteRefresh();
+  });
+
+  inputEl.addEventListener("blur", () => {
+    checkoutState.couponCode = normalizeCouponCode(inputEl.value);
+    renderCouponSection();
+    schedulePricingQuoteRefresh();
   });
 
   clearButton.addEventListener("click", () => {
     checkoutState.couponCode = "";
     renderCouponSection();
+    schedulePricingQuoteRefresh();
   });
 
   renderCouponSection();
@@ -639,7 +797,20 @@ function setupForm() {
     const memo = form.memo.value === "custom" ? form.memoCustom.value.trim() : form.memo.value;
     const saveAsDefaultAddress = form.saveAsDefaultAddress?.checked === true;
     const agreedTermsPrivacy = form.querySelector("#agreeTermsPrivacy")?.checked === true;
+    if (checkoutState.couponCode || checkoutState.appliedPoints > 0) {
+      await requestPricingQuote();
+    }
     const totals = getCheckoutTotals();
+
+    if (checkoutState.pricingQuoteLoading) {
+      alert("쿠폰 적용 금액을 확인하는 중입니다. 잠시만 기다려주세요.");
+      return;
+    }
+
+    if (checkoutState.couponCode && !totals.couponDiscountAmount && checkoutState.pricingQuoteError) {
+      alert("쿠폰 적용이 실패했습니다. 코드를 다시 확인해주세요.");
+      return;
+    }
 
     if (!name || !phone || !email || !zipcode || !address1) {
       alert("필수 항목을 모두 입력해주세요.");
@@ -694,5 +865,7 @@ setupMemo();
 setupPolicyLinks();
 setupForm();
 loadCheckoutAccount();
+
+schedulePricingQuoteRefresh();
 
 document.getElementById("searchZipBtn").addEventListener("click", openAddressSearch);

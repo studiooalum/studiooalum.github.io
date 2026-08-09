@@ -1,0 +1,408 @@
+.workshop-admin-page .fulfillment-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.workshop-admin-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.workshop-admin-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workshop-admin-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workshop-admin-grid--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.workshop-admin-screen {
+  padding: 0;
+}
+
+.workshop-admin-content {
+  min-width: 0;
+}
+
+.workshop-admin-workshops-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.workshop-admin-workshop-list-panel,
+.workshop-admin-workshop-editor-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.workshop-admin-accordion {
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+  padding: 0;
+}
+
+.workshop-admin-accordion > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  letter-spacing: var(--tracking-korean);
+  color: #111;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.workshop-admin-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.workshop-admin-accordion[open] > summary {
+  background: #fff;
+}
+
+.workshop-admin-accordion__body {
+  display: grid;
+  gap: 14px;
+  padding: 14px 16px 16px;
+}
+
+.workshop-admin-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+  backdrop-filter: blur(10px);
+}
+
+.workshop-admin-activity-log {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  padding: 9px 12px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+}
+
+.workshop-admin-thumb-card {
+  display: grid;
+  grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+}
+
+.workshop-admin-thumb-card--gallery,
+.workshop-admin-thumb-card--slot {
+  align-items: start;
+}
+
+.workshop-admin-thumb-card__media {
+  min-width: 0;
+}
+
+.workshop-admin-thumb-card__media .workshop-admin-image-preview {
+  max-width: 100%;
+}
+
+.workshop-admin-thumb-card__body {
+  display: grid;
+  gap: 10px;
+}
+
+.workshop-admin-thumb-card__body--stacked {
+  gap: 12px;
+}
+
+.workshop-admin-thumb-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.workshop-admin-repeater-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workshop-admin-image-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-width: none;
+  object-fit: cover;
+}
+
+.workshop-admin-inline-actions {
+  margin-bottom: 12px;
+}
+
+.workshop-admin-mode-panel {
+  gap: 0;
+}
+
+.workshop-admin-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.workshop-admin-mode-tab {
+  min-height: 34px;
+  border: 1px solid rgba(17, 17, 17, 0.2);
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  letter-spacing: var(--tracking-korean);
+  text-align: left;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.workshop-admin-mode-tab.is-active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.workshop-admin-search-field {
+  min-width: 220px;
+}
+
+.workshop-admin-toolbar-help {
+  color: rgba(17, 17, 17, 0.56);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.workshop-admin-multi-actions {
+  align-self: end;
+}
+
+.workshop-admin-content-quick-field {
+  margin-bottom: 12px;
+}
+
+.workshop-admin-block,
+.workshop-admin-section-head,
+.workshop-admin-section-actions,
+.workshop-admin-content-list,
+.workshop-admin-repeater {
+  display: grid;
+  gap: 12px;
+}
+
+.workshop-admin-section-head {
+  align-items: start;
+}
+
+.workshop-admin-content-card,
+.workshop-admin-repeater-item {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+}
+
+.workshop-admin-new-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #111;
+  padding: 0;
+  background: #111;
+  color: #fff;
+  font-family: var(--font-book);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.workshop-admin-content-card {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workshop-admin-content-card.is-active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.workshop-admin-content-card.is-active .fulfillment-copy,
+.workshop-admin-content-card.is-active .workshop-admin-content-meta {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.workshop-admin-content-meta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.64);
+}
+
+.workshop-admin-content-head,
+.workshop-admin-repeater-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workshop-admin-content-head strong,
+.workshop-admin-repeater-head strong {
+  font-family: var(--font-kor-button);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.workshop-admin-repeater-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workshop-admin-repeater-grid--wide {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workshop-admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.workshop-admin-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.workshop-admin-combo-custom {
+  margin-top: 8px;
+}
+
+.workshop-admin-section-actions {
+  justify-items: start;
+}
+
+.workshop-admin-booking-config {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+}
+
+.workshop-admin-booking-mode-field {
+  max-width: 280px;
+}
+
+.workshop-admin-dropzone {
+  border: 1px dashed rgba(17, 17, 17, 0.3);
+  background: rgba(17, 17, 17, 0.03);
+  color: rgba(17, 17, 17, 0.72);
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.workshop-admin-dropzone.is-dragover {
+  border-color: #111;
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.workshop-admin-image-item {
+  cursor: move;
+}
+
+.workshop-admin-image-item.is-dragging {
+  opacity: 0.6;
+}
+
+.workshop-admin-image-preview {
+  width: 100%;
+  max-width: 220px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+}
+
+.workshop-admin-advanced {
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: rgba(17, 17, 17, 0.02);
+  padding: 12px 14px;
+}
+
+.workshop-admin-advanced summary {
+  cursor: pointer;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  color: #111;
+}
+
+.workshop-admin-advanced__body {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (min-width: 960px) {
+  .workshop-admin-section-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .workshop-admin-workshops-shell {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .workshop-admin-workshop-list-panel {
+    position: sticky;
+    top: 14px;
+  }
+}
+
+@media (max-width: 959px) {
+  .workshop-admin-grid--two,
+  .workshop-admin-grid--three,
+  .workshop-admin-grid--four,
+  .workshop-admin-repeater-grid,
+  .workshop-admin-repeater-grid--wide {
+    grid-template-columns: 1fr;
+  }
+
+  .workshop-admin-thumb-card {
+    grid-template-columns: 1fr;
+  }
+
+  .workshop-admin-action-bar {
+    position: static;
+  }
+}

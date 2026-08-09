@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio OALUM - Newsletter Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260706-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260809-01">
+</head>
+<body class="fulfillment-page newsletter-admin-page">
+  <nav class="gnb gnb--account">
+    <a href="./shop.html" class="gnb__back">← Shop</a>
+    <span class="gnb__title">뉴스레터</span>
+    <span class="gnb__spacer"></span>
+  </nav>
+
+  <main class="fulfillment-main">
+    <section class="fulfillment-shell">
+      <aside class="fulfillment-sidebar">
+        <section class="fulfillment-panel">
+          <nav class="fulfillment-tabs" aria-label="관리자 기능">
+            <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
+            <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
+            <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
+            <a href="./newsletter-admin.html" class="fulfillment-tab is-active" aria-current="page">뉴스레터</a>
+          </nav>
+
+          <h1 class="fulfillment-heading">뉴스레터</h1>
+          <p class="fulfillment-copy">초안과 발행 글을 관리합니다.</p>
+
+          <form class="fulfillment-auth-form js-newsletter-admin-auth-form">
+            <label class="fulfillment-field">
+              <span>관리자 키</span>
+              <input type="password" name="adminSecret" autocomplete="off" required>
+            </label>
+            <div class="fulfillment-actions fulfillment-actions--compact">
+              <button type="submit" class="fulfillment-btn">잠금 해제</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-auth-clear">초기화</button>
+            </div>
+          </form>
+          <p class="fulfillment-status js-newsletter-admin-auth-status" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="fulfillment-panel newsletter-admin-list-panel" data-newsletter-admin-auth-guard hidden>
+          <div class="newsletter-admin-list-head">
+            <h2 class="fulfillment-subheading">글</h2>
+            <button type="button" class="newsletter-admin-new-button js-newsletter-admin-new-btn" aria-label="새 글" title="새 글">+</button>
+          </div>
+          <div class="newsletter-admin-post-list js-newsletter-admin-post-list">
+            <div class="fulfillment-empty">관리자 인증 후 작성한 글이 표시됩니다.</div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="fulfillment-content newsletter-admin-content" data-newsletter-admin-auth-guard hidden>
+        <section class="fulfillment-panel">
+          <form class="newsletter-admin-form js-newsletter-admin-form">
+            <input type="hidden" name="id">
+            <input type="hidden" name="coverImageUrl">
+            <input type="hidden" name="coverImageR2Key">
+
+            <header class="newsletter-admin-editor-head">
+              <h2 class="fulfillment-subheading">글 편집</h2>
+              <p class="newsletter-admin-status-label js-newsletter-admin-post-status">새 초안</p>
+            </header>
+
+            <label class="fulfillment-field">
+              <span>제목</span>
+              <input type="text" name="title" maxlength="200" required>
+            </label>
+            <label class="fulfillment-field">
+              <span>요약</span>
+              <textarea name="excerpt" rows="3" maxlength="500"></textarea>
+            </label>
+
+            <section class="newsletter-admin-cover">
+              <div class="newsletter-admin-cover__head">
+                <h3 class="fulfillment-subheading">커버</h3>
+                <div class="newsletter-admin-cover__actions">
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" hidden class="js-newsletter-admin-cover-input">
+                  <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-cover-upload">이미지 추가</button>
+                  <button type="button" class="newsletter-admin-icon-button js-newsletter-admin-cover-remove" aria-label="커버 이미지 제거" title="커버 이미지 제거" hidden>×</button>
+                </div>
+              </div>
+              <div class="newsletter-admin-cover__preview js-newsletter-admin-cover-preview" hidden></div>
+              <label class="fulfillment-field newsletter-admin-cover__alt" hidden>
+                <span>대체 텍스트</span>
+                <input type="text" name="coverImageAlt" maxlength="200">
+              </label>
+            </section>
+
+            <section class="newsletter-admin-editor-shell">
+              <div class="newsletter-admin-toolbar" role="toolbar" aria-label="본문 서식">
+                <button type="button" class="newsletter-admin-tool" data-editor-command="bold" aria-label="굵게" title="굵게"><strong>B</strong></button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="italic" aria-label="기울임" title="기울임"><em>I</em></button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="underline" aria-label="밑줄" title="밑줄"><u>U</u></button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="h2" aria-label="제목 2" title="제목 2">H2</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="h3" aria-label="제목 3" title="제목 3">H3</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="quote" aria-label="인용" title="인용">“</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="bullet" aria-label="글머리 목록" title="글머리 목록">•</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="number" aria-label="번호 목록" title="번호 목록">1.</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="link" aria-label="링크" title="링크">↗</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="clear" aria-label="서식 제거" title="서식 제거">×</button>
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" hidden class="js-newsletter-admin-inline-image-input">
+                <button type="button" class="newsletter-admin-tool js-newsletter-admin-inline-image-upload" aria-label="본문 이미지 추가" title="본문 이미지 추가">+</button>
+              </div>
+              <div class="newsletter-admin-editor js-newsletter-admin-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="본문을 작성하세요."></div>
+            </section>
+
+            <details class="newsletter-admin-settings">
+              <summary>URL 및 발행 시각</summary>
+              <div class="newsletter-admin-settings__body">
+                <label class="fulfillment-field">
+                  <span>Slug</span>
+                  <input type="text" name="slug" maxlength="120">
+                </label>
+                <label class="fulfillment-field">
+                  <span>발행 시각</span>
+                  <input type="datetime-local" name="publishedAt">
+                </label>
+              </div>
+            </details>
+
+            <div class="newsletter-admin-action-bar" aria-label="뉴스레터 저장 작업">
+              <button type="button" class="fulfillment-btn js-newsletter-admin-save-draft">초안 저장</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-preview">미리보기</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-publish">게시</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-archive">보관</button>
+            </div>
+            <p class="fulfillment-status newsletter-admin-activity-log js-newsletter-admin-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <dialog class="newsletter-admin-preview-dialog js-newsletter-admin-preview-dialog">
+    <div class="newsletter-admin-preview-dialog__head">
+      <p class="newsletter-admin-preview-dialog__label">Preview</p>
+      <button type="button" class="newsletter-admin-icon-button js-newsletter-admin-preview-close" aria-label="미리보기 닫기" title="미리보기 닫기">×</button>
+    </div>
+    <article class="newsletter-admin-preview js-newsletter-admin-preview"></article>
+  </dialog>
+
+  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.js?v=20260809-01"></script>
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+
+    initSiteChrome({ showActions: false });
+  </script>
+</body>
+</html>

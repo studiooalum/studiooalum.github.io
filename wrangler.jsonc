@@ -7,7 +7,14 @@
 		{
 			"binding": "OALUM_DB",
 			"database_name": "oalum-orders",
-			"database_id": "3dcf3c2e-9176-471c-8da2-ffca1dc2e9cb"
+			"database_id": "3dcf3c2e-9176-471c-8da2-ffca1dc2e9cb",
+			"migrations_dir": "./cloudflare/d1/migrations"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "OALUM_R2",
+			"bucket_name": "oalum-db"
 		}
 	]
 }

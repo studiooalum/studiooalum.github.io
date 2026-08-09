@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
   <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260527-01">
-  <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260706-07.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="checkout-page">
@@ -34,6 +34,10 @@
           <span>배송비</span>
           <span id="checkoutShipping">무료</span>
         </div>
+        <div class="checkout-totals__row" id="checkoutCouponDiscountRow" hidden>
+          <span>쿠폰 할인</span>
+          <span id="checkoutCouponDiscount">-₩0</span>
+        </div>
         <div class="checkout-totals__row" id="checkoutPointsRow" hidden>
           <span>포인트 사용</span>
           <span id="checkoutPointsDiscount">-₩0</span>
@@ -43,6 +47,17 @@
           <span id="checkoutTotal">₩0</span>
         </div>
       </div>
+      <section class="checkout-coupon" id="checkoutCouponSection">
+        <div class="checkout-coupon__head">
+          <p class="checkout-coupon__title">쿠폰 코드</p>
+          <p class="checkout-coupon__status" id="checkoutCouponStatus">환영/보상 쿠폰은 여기서 입력하세요.</p>
+        </div>
+        <div class="checkout-coupon__controls">
+          <input type="text" id="checkoutCouponInput" maxlength="48" placeholder="예: OALUM-WELCOME" autocapitalize="characters" spellcheck="false">
+          <button type="button" class="checkout-btn--outline checkout-btn--outline-small" id="checkoutCouponClearBtn">지우기</button>
+        </div>
+        <p class="checkout-coupon__copy" id="checkoutCouponCopy">쿠폰은 입력 즉시 적용 가능 여부를 확인합니다. 총 결제금액과 할인 금액이 아래에 바로 반영됩니다.</p>
+      </section>
     </section>
 
     <section class="checkout-form-section">
@@ -53,17 +68,6 @@
           <p class="checkout-auth-panel__copy" id="checkoutAuthCopy">로그인하면 기본 주소와 주문 내역을 계정에 연결할 수 있습니다.</p>
           <a href="./account.html" class="checkout-auth-panel__link" id="checkoutAuthLink">로그인 / 회원가입</a>
         </div>
-        <section class="checkout-coupon" id="checkoutCouponSection">
-          <div class="checkout-coupon__head">
-            <p class="checkout-coupon__title">쿠폰 코드</p>
-            <p class="checkout-coupon__status" id="checkoutCouponStatus">환영/보상 쿠폰은 여기서 입력하세요.</p>
-          </div>
-          <div class="checkout-coupon__controls">
-            <input type="text" id="checkoutCouponInput" maxlength="48" placeholder="예: OALUM-WELCOME" autocapitalize="characters" spellcheck="false">
-            <button type="button" class="checkout-btn--outline checkout-btn--outline-small" id="checkoutCouponClearBtn">지우기</button>
-          </div>
-          <p class="checkout-coupon__copy" id="checkoutCouponCopy">쿠폰은 주문 생성 단계에서 실시간 검증되고, 결제 진행 후 30분간 예약됩니다. 취소/환불 시 자동으로 복원됩니다.</p>
-        </section>
         <section class="checkout-points" id="checkoutPointsSection" hidden>
           <div class="checkout-points__head">
             <p class="checkout-points__title">포인트 사용</p>
@@ -153,7 +157,7 @@
   </main>
 
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <script type="module" src="./runtime/storefront/scripts/checkout-20260706-06.js"></script>
+  <script type="module" src="./runtime/storefront/scripts/checkout-20260802-01.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";

@@ -289,6 +289,63 @@ CREATE TABLE IF NOT EXISTS auth_sessions (
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id, expires_at DESC);
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expires_at);
 
+CREATE TABLE IF NOT EXISTS workshops (
+  id TEXT PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT '',
+  summary TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  duration_label TEXT NOT NULL DEFAULT '',
+  level_label TEXT NOT NULL DEFAULT '',
+  audience_label TEXT NOT NULL DEFAULT '',
+  max_capacity INTEGER NOT NULL DEFAULT 0,
+  capacity_label TEXT NOT NULL DEFAULT '',
+  price INTEGER NOT NULL DEFAULT 0,
+  booking_notice TEXT NOT NULL DEFAULT '',
+  host_name TEXT NOT NULL DEFAULT '',
+  location_name TEXT NOT NULL DEFAULT '',
+  location_address TEXT NOT NULL DEFAULT '',
+  location_detail TEXT NOT NULL DEFAULT '',
+  materials_json TEXT NOT NULL DEFAULT '[]',
+  things_to_bring_json TEXT NOT NULL DEFAULT '[]',
+  poster_image_url TEXT NOT NULL DEFAULT '',
+  poster_image_r2_key TEXT NOT NULL DEFAULT '',
+  poster_image_alt TEXT NOT NULL DEFAULT '',
+  gallery_images_json TEXT NOT NULL DEFAULT '[]',
+  schedule_slots_json TEXT NOT NULL DEFAULT '[]',
+  booking_config_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'draft',
+  source_mode TEXT NOT NULL DEFAULT 'd1',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  published_at TEXT,
+  archived_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_workshops_status_sort ON workshops(status, sort_order, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_workshops_slug_status ON workshops(slug, status);
+
+CREATE TABLE IF NOT EXISTS newsletter_posts (
+  id TEXT PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  excerpt TEXT NOT NULL DEFAULT '',
+  content_html TEXT NOT NULL DEFAULT '',
+  cover_image_url TEXT NOT NULL DEFAULT '',
+  cover_image_r2_key TEXT NOT NULL DEFAULT '',
+  cover_image_alt TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'draft',
+  published_at TEXT,
+  archived_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_newsletter_posts_status_published
+  ON newsletter_posts(status, published_at DESC, updated_at DESC);
+
 CREATE TABLE IF NOT EXISTS workshop_reservations (
   id TEXT PRIMARY KEY,
   user_id TEXT,

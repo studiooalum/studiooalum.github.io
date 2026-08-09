@@ -7,7 +7,7 @@ import {
   getWorkshopShortDescription,
   getWorkshopSlug,
   normalizeWorkshop,
-} from "./utils/workshops.js";
+} from "./utils/workshops-20260809-02.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
 const dom = {

@@ -1,0 +1,265 @@
+function getDb(env) {
+  return env?.OALUM_DB || null;
+}
+
+function requireDb(env) {
+  const database = getDb(env);
+  if (!database) {
+    throw Object.assign(new Error("D1 바인딩이 아직 준비되지 않았습니다."), { status: 503 });
+  }
+  return database;
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function cleanText(value, maxLength = 2000) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function normalizeStatus(value) {
+  const status = String(value || "draft").trim().toLowerCase();
+  return ["draft", "published", "archived"].includes(status) ? status : "draft";
+}
+
+function createId(prefix) {
+  return `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`.toUpperCase();
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function readAttribute(source, name) {
+  const pattern = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i");
+  const match = String(source || "").match(pattern);
+  return match ? (match[1] || match[2] || match[3] || "") : "";
+}
+
+function sanitizeUrl(value) {
+  const raw = cleanText(value, 2000);
+  if (!raw) return "";
+  if (raw.startsWith("/")) return raw;
+
+  try {
+    const url = new URL(raw);
+    return ["http:", "https:"].includes(url.protocol) ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+const ALLOWED_RICH_TEXT_TAGS = new Set([
+  "p",
+  "br",
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "h2",
+  "h3",
+  "blockquote",
+  "ul",
+  "ol",
+  "li",
+  "a",
+  "figure",
+  "figcaption",
+  "img",
+  "hr",
+]);
+
+export function sanitizeNewsletterHtml(value) {
+  const source = cleanText(value, 50000).replace(/<!--[^]*?-->/g, "");
+
+  return source.replace(/<[^>]*>/g, (token) => {
+    const match = token.match(/^<\s*(\/?)\s*([a-z0-9]+)([^>]*)>$/i);
+    if (!match) return "";
+
+    const [, closing, rawTagName, attributes] = match;
+    const tagName = rawTagName.toLowerCase();
+    if (!ALLOWED_RICH_TEXT_TAGS.has(tagName)) return "";
+    if (closing) return `</${tagName}>`;
+
+    if (tagName === "a") {
+      const href = sanitizeUrl(readAttribute(attributes, "href"));
+      return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">` : "<a>";
+    }
+
+    if (tagName === "img") {
+      const src = sanitizeUrl(readAttribute(attributes, "src"));
+      if (!src) return "";
+      const alt = cleanText(readAttribute(attributes, "alt"), 200);
+      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
+    }
+
+    return `<${tagName}>`;
+  });
+}
+
+export function slugifyNewsletterTitle(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+}
+
+function textFromHtml(value) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatNewsletterPost(row) {
+  if (!row) return null;
+
+  const contentHtml = sanitizeNewsletterHtml(row.content_html);
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt || textFromHtml(contentHtml).slice(0, 220),
+    contentHtml,
+    coverImageUrl: row.cover_image_url || "",
+    coverImageR2Key: row.cover_image_r2_key || "",
+    coverImageAlt: row.cover_image_alt || "",
+    status: normalizeStatus(row.status),
+    publishedAt: row.published_at || "",
+    archivedAt: row.archived_at || "",
+    createdAt: row.created_at || "",
+    updatedAt: row.updated_at || "",
+  };
+}
+
+export async function readNewsletterAdminSnapshot(env) {
+  const database = requireDb(env);
+  const result = await database
+    .prepare(`SELECT * FROM newsletter_posts ORDER BY updated_at DESC, created_at DESC`)
+    .all();
+
+  return {
+    posts: (result?.results || []).map(formatNewsletterPost).filter(Boolean),
+  };
+}
+
+export async function readPublicNewsletterPosts(env, slug = "") {
+  const database = getDb(env);
+  if (!database) {
+    return slug ? null : [];
+  }
+
+  const normalizedSlug = cleanText(slug, 120);
+  if (normalizedSlug) {
+    const row = await database
+      .prepare(`SELECT * FROM newsletter_posts WHERE slug = ? AND status = 'published' LIMIT 1`)
+      .bind(normalizedSlug)
+      .first();
+    return formatNewsletterPost(row);
+  }
+
+  const result = await database
+    .prepare(`SELECT * FROM newsletter_posts WHERE status = 'published' ORDER BY published_at DESC, updated_at DESC`)
+    .all();
+  return (result?.results || []).map(formatNewsletterPost).filter(Boolean);
+}
+
+export async function upsertNewsletterPost(env, input) {
+  const database = requireDb(env);
+  const title = cleanText(input.title, 200);
+  const slug = cleanText(input.slug, 120) || slugifyNewsletterTitle(title);
+  if (!title || !slug) {
+    throw Object.assign(new Error("뉴스레터 제목과 slug를 확인해주세요."), { status: 400 });
+  }
+
+  const existing = await database.prepare(`SELECT * FROM newsletter_posts WHERE slug = ? LIMIT 1`).bind(slug).first();
+  const now = nowIso();
+  const status = normalizeStatus(input.status);
+  const contentHtml = sanitizeNewsletterHtml(input.contentHtml);
+  const publishedAt = status === "published"
+    ? cleanText(input.publishedAt, 40) || existing?.published_at || now
+    : null;
+  const archivedAt = status === "archived" ? existing?.archived_at || now : null;
+  const id = cleanText(input.id, 80) || existing?.id || createId("NLP");
+
+  await database
+    .prepare(`
+      INSERT INTO newsletter_posts (
+        id,
+        slug,
+        title,
+        excerpt,
+        content_html,
+        cover_image_url,
+        cover_image_r2_key,
+        cover_image_alt,
+        status,
+        published_at,
+        archived_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(slug) DO UPDATE SET
+        title = excluded.title,
+        excerpt = excluded.excerpt,
+        content_html = excluded.content_html,
+        cover_image_url = excluded.cover_image_url,
+        cover_image_r2_key = excluded.cover_image_r2_key,
+        cover_image_alt = excluded.cover_image_alt,
+        status = excluded.status,
+        published_at = excluded.published_at,
+        archived_at = excluded.archived_at,
+        updated_at = excluded.updated_at
+    `)
+    .bind(
+      id,
+      slug,
+      title,
+      cleanText(input.excerpt, 500),
+      contentHtml,
+      sanitizeUrl(input.coverImageUrl),
+      cleanText(input.coverImageR2Key, 500),
+      cleanText(input.coverImageAlt, 200),
+      status,
+      publishedAt,
+      archivedAt,
+      existing?.created_at || now,
+      now,
+    )
+    .run();
+
+  const row = await database.prepare(`SELECT * FROM newsletter_posts WHERE slug = ? LIMIT 1`).bind(slug).first();
+  return formatNewsletterPost(row);
+}
+
+export async function archiveNewsletterPost(env, { slug }) {
+  const database = requireDb(env);
+  const normalizedSlug = cleanText(slug, 120);
+  if (!normalizedSlug) {
+    throw Object.assign(new Error("뉴스레터 slug를 확인해주세요."), { status: 400 });
+  }
+
+  const existing = await database.prepare(`SELECT * FROM newsletter_posts WHERE slug = ? LIMIT 1`).bind(normalizedSlug).first();
+  if (!existing) {
+    throw Object.assign(new Error("뉴스레터 글을 찾을 수 없습니다."), { status: 404 });
+  }
+
+  const now = nowIso();
+  await database
+    .prepare(`UPDATE newsletter_posts SET status = 'archived', archived_at = ?, updated_at = ? WHERE slug = ?`)
+    .bind(existing.archived_at || now, now, normalizedSlug)
+    .run();
+
+  const row = await database.prepare(`SELECT * FROM newsletter_posts WHERE slug = ? LIMIT 1`).bind(normalizedSlug).first();
+  return formatNewsletterPost(row);
+}

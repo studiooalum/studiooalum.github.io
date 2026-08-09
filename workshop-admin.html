@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260706-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/workshop-admin-20260809-02.css">
 </head>
 <body class="fulfillment-page workshop-admin-page">
   <nav class="gnb gnb--account">
@@ -28,16 +29,11 @@
             <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
             <a href="./workshop-admin.html" class="fulfillment-tab is-active" aria-current="page">워크숍 예약</a>
+            <a href="./newsletter-admin.html" class="fulfillment-tab">뉴스레터</a>
           </nav>
 
-          <h1 class="fulfillment-heading">워크숍 예약 관리</h1>
-          <p class="fulfillment-copy">예약 조회, 예약 취소 복원, 날짜 차단/해제를 한 화면에서 관리합니다.</p>
-
-          <div class="fulfillment-access-summary">
-            <strong class="fulfillment-access-badge js-workshop-admin-access-badge">잠금 상태</strong>
-            <p class="fulfillment-copy js-workshop-admin-access-copy">관리자 인증 전에는 예약 데이터와 차단 일정이 로드되지 않습니다.</p>
-            <p class="fulfillment-copy fulfillment-copy--quiet js-workshop-admin-access-meta">ORDER_ADMIN_SECRET 원문은 브라우저에 저장하지 않습니다.</p>
-          </div>
+          <h1 class="fulfillment-heading">워크숍 운영</h1>
+          <p class="fulfillment-copy">클래스 구성과 예약 일정을 관리합니다.</p>
 
           <form class="fulfillment-auth-form js-workshop-admin-auth-form">
             <label class="fulfillment-field">
@@ -53,11 +49,271 @@
           <p class="fulfillment-status js-workshop-admin-auth-status" role="status" aria-live="polite"></p>
         </section>
 
-        <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden>
+        <section class="fulfillment-panel workshop-admin-mode-panel" data-workshop-admin-auth-guard hidden>
+          <nav class="workshop-admin-mode-tabs" role="tablist" aria-label="워크숍 관리 모드">
+            <button type="button" class="workshop-admin-mode-tab is-active js-workshop-admin-mode-btn" data-mode="workshops" role="tab" aria-selected="true">워크숍 구성</button>
+            <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="reservations" role="tab" aria-selected="false">예약 관리</button>
+            <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="blocked-dates" role="tab" aria-selected="false">차단 일정</button>
+          </nav>
+        </section>
+      </aside>
+
+      <section class="fulfillment-content workshop-admin-content" data-workshop-admin-auth-guard hidden>
+        <section class="fulfillment-panel workshop-admin-screen" data-workshop-admin-mode="workshops">
+          <div class="workshop-admin-workshops-shell">
+            <section class="workshop-admin-workshop-list-panel">
+              <div class="workshop-admin-section-head">
+                <div>
+                  <h2 class="fulfillment-subheading">워크숍 list</h2>
+                  <p class="fulfillment-copy">저장된 워크숍을 선택해 편집하세요.</p>
+                </div>
+                <button type="button" class="workshop-admin-new-button js-workshop-admin-content-new-btn" aria-label="새 워크숍" title="새 워크숍">+</button>
+              </div>
+              <div class="workshop-admin-content-list js-workshop-admin-content-list">
+                <div class="fulfillment-empty">저장된 워크숍 콘텐츠가 아직 없습니다.</div>
+              </div>
+              <p class="fulfillment-status js-workshop-admin-content-list-status" role="status" aria-live="polite"></p>
+            </section>
+
+            <section class="workshop-admin-workshop-editor-panel">
+              <h2 class="fulfillment-subheading">Workshop editor</h2>
+              <form class="fulfillment-form js-workshop-admin-content-form" id="workshopEditorForm">
+                <input type="hidden" name="id">
+                <input type="hidden" name="slug">
+                <input type="hidden" name="publishedAt">
+                <input type="hidden" name="sourceMode" value="d1-r2-ready">
+
+                <details class="workshop-admin-accordion" open>
+                  <summary>Basic information</summary>
+                  <div class="workshop-admin-accordion__body">
+                    <label class="fulfillment-field">
+                      <span>Title</span>
+                      <input type="text" name="title" maxlength="160" required>
+                    </label>
+                    <div class="workshop-admin-grid workshop-admin-grid--two">
+                      <label class="fulfillment-field">
+                        <span>Category</span>
+                        <select name="categoryPreset" class="js-workshop-admin-category-select">
+                          <option value="">선택</option>
+                          <option value="공예">공예</option>
+                          <option value="리페어">리페어</option>
+                          <option value="패밀리">패밀리</option>
+                          <option value="아트">아트</option>
+                          <option value="교육">교육</option>
+                          <option value="기타">기타</option>
+                          <option value="custom">직접 입력</option>
+                        </select>
+                        <input type="text" name="category" class="workshop-admin-combo-custom js-workshop-admin-category-custom" maxlength="80" placeholder="직접 입력" hidden>
+                      </label>
+                      <label class="fulfillment-field">
+                        <span>Duration</span>
+                        <select name="durationLabel" class="js-workshop-admin-duration-select">
+                          <option value="1시간">1시간</option>
+                          <option value="2시간">2시간</option>
+                          <option value="3시간">3시간</option>
+                          <option value="4시간">4시간</option>
+                          <option value="5시간">5시간</option>
+                          <option value="6시간">6시간</option>
+                          <option value="7시간">7시간</option>
+                          <option value="8시간">8시간</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="workshop-admin-grid workshop-admin-grid--two">
+                      <label class="fulfillment-field">
+                        <span>Short description</span>
+                        <textarea name="summary" rows="3" maxlength="400" placeholder="목록에서 보여줄 짧은 설명"></textarea>
+                      </label>
+                      <label class="fulfillment-field">
+                        <span>Difficulty</span>
+                        <select name="difficultyLabel" class="js-workshop-admin-difficulty-select">
+                          <option value="Beginner">Beginner</option>
+                          <option value="Elementary">Elementary</option>
+                          <option value="Intermediate">Intermediate</option>
+                          <option value="Advanced">Advanced</option>
+                          <option value="Expert">Expert</option>
+                          <option value="Master">Master</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label class="fulfillment-field workshop-admin-booking-mode-field">
+                      <span>예약 방식</span>
+                      <select name="bookingMode" class="js-workshop-admin-booking-mode">
+                        <option value="daily">일일 클래스</option>
+                        <option value="scheduled">다회성 워크숍</option>
+                      </select>
+                    </label>
+                    <div class="workshop-admin-booking-config js-workshop-admin-daily-config">
+                      <div class="workshop-admin-grid workshop-admin-grid--three">
+                        <label class="fulfillment-field">
+                          <span>일일 시작 시간</span>
+                          <input type="time" name="dailyStartTime" value="10:00">
+                        </label>
+                        <label class="fulfillment-field">
+                          <span>일일 종료 시간</span>
+                          <input type="time" name="dailyEndTime" value="13:00">
+                        </label>
+                        <label class="fulfillment-field">
+                          <span>일일 최대 인원</span>
+                          <input type="number" name="dailyCapacity" min="1" max="4" step="1" value="4">
+                        </label>
+                      </div>
+                      <div class="workshop-admin-grid workshop-admin-grid--four">
+                        <label class="fulfillment-field"><span>1인 가격</span><input type="number" name="priceOne" min="0" step="1000" value="120000"></label>
+                        <label class="fulfillment-field"><span>2인 가격</span><input type="number" name="priceTwo" min="0" step="1000" value="200000"></label>
+                        <label class="fulfillment-field"><span>3인 가격</span><input type="number" name="priceThree" min="0" step="1000" value="270000"></label>
+                        <label class="fulfillment-field"><span>4인 가격</span><input type="number" name="priceFour" min="0" step="1000" value="300000"></label>
+                      </div>
+                      <label class="fulfillment-toggle">
+                        <input type="checkbox" name="allowSharedBookings">
+                        <span>다른 신청자와 같은 시간에 참여 가능</span>
+                      </label>
+                      <p class="fulfillment-copy">기본값은 한 팀이 예약하면 해당 날짜를 차단합니다. 공유를 허용하면 정원까지 추가 예약을 받습니다.</p>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="workshop-admin-accordion js-workshop-admin-scheduled-config" open>
+                  <summary>다회성 워크숍 일정</summary>
+                  <div class="workshop-admin-accordion__body">
+                    <div class="workshop-admin-section-head">
+                      <div>
+                        <h3 class="fulfillment-subheading">Session list</h3>
+                        <p class="fulfillment-copy">다회성 워크숍의 날짜, 시간, 정원을 직접 추가하세요. 공개된 일정은 일일 클래스 달력에서 자동으로 차단됩니다.</p>
+                      </div>
+                      <div class="workshop-admin-section-actions">
+                        <label class="fulfillment-field">
+                          <span>기본 정원</span>
+                          <input type="number" name="maxCapacity" min="1" max="100" step="1" value="4">
+                        </label>
+                        <label class="fulfillment-field">
+                          <span>게시 가격</span>
+                          <input type="number" name="price" min="0" step="1000" value="0">
+                        </label>
+                        <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-slot-add-btn">세션 추가</button>
+                      </div>
+                    </div>
+                    <div class="workshop-admin-repeater js-workshop-admin-slot-list"></div>
+                  </div>
+                </details>
+
+                <details class="workshop-admin-accordion">
+                  <summary>Location and booking</summary>
+                  <div class="workshop-admin-accordion__body">
+                    <div class="workshop-admin-grid workshop-admin-grid--two">
+                      <label class="fulfillment-field">
+                        <span>Location</span>
+                        <input type="text" name="locationName" maxlength="160">
+                      </label>
+                      <label class="fulfillment-field">
+                        <span>Instructor</span>
+                        <input type="text" name="hostName" maxlength="120">
+                      </label>
+                    </div>
+                    <label class="fulfillment-field">
+                      <span>Booking notice</span>
+                      <textarea name="bookingNotice" rows="3" maxlength="500"></textarea>
+                    </label>
+                  </div>
+                </details>
+
+                <details class="workshop-admin-accordion">
+                  <summary>Description and images</summary>
+                  <div class="workshop-admin-accordion__body">
+                    <div class="workshop-admin-block">
+                      <div class="workshop-admin-section-head">
+                        <div>
+                          <h3 class="fulfillment-subheading">Main poster image</h3>
+                          <p class="fulfillment-copy">대표 포스터는 한 장만 사용합니다.</p>
+                        </div>
+                        <div class="workshop-admin-section-actions">
+                          <input type="file" accept="image/*" hidden class="js-workshop-admin-poster-upload-input">
+                          <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-poster-upload-btn">포스터 업로드</button>
+                        </div>
+                      </div>
+                      <div class="workshop-admin-dropzone js-workshop-admin-poster-dropzone" tabindex="0" role="button" aria-label="포스터 이미지 드롭 영역">
+                        포스터 이미지를 여기로 드롭하거나 업로드 버튼을 눌러 선택하세요.
+                      </div>
+                      <div class="workshop-admin-repeater js-workshop-admin-poster-list"></div>
+                    </div>
+
+                    <div class="workshop-admin-block">
+                      <div class="workshop-admin-section-head">
+                        <div>
+                          <h3 class="fulfillment-subheading">Gallery images</h3>
+                          <p class="fulfillment-copy">상세 이미지만 등록하세요. 썸네일로 보이도록 구성합니다.</p>
+                        </div>
+                        <div class="workshop-admin-section-actions">
+                          <input type="file" accept="image/*" multiple hidden class="js-workshop-admin-gallery-upload-input">
+                          <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-gallery-upload-btn">이미지 업로드</button>
+                        </div>
+                      </div>
+                      <div class="workshop-admin-dropzone js-workshop-admin-gallery-dropzone" tabindex="0" role="button" aria-label="상세 이미지 드롭 영역">
+                        상세 이미지를 여기로 드롭하거나 업로드 버튼을 눌러 선택하세요.
+                      </div>
+                      <div class="workshop-admin-repeater js-workshop-admin-gallery-list"></div>
+                    </div>
+
+                    <label class="fulfillment-field">
+                      <span>Detailed description</span>
+                      <textarea name="description" rows="8" maxlength="12000" placeholder="문단 사이를 한 줄 띄워 입력하세요."></textarea>
+                    </label>
+                  </div>
+                </details>
+
+                <details class="workshop-admin-accordion">
+                  <summary>Advanced settings</summary>
+                  <div class="workshop-admin-accordion__body">
+                    <div class="workshop-admin-grid workshop-admin-grid--two">
+                      <label class="fulfillment-field">
+                        <span>Materials</span>
+                        <textarea name="materials" rows="4" placeholder="한 줄에 하나씩 입력"></textarea>
+                      </label>
+                      <label class="fulfillment-field">
+                        <span>Things to bring</span>
+                        <textarea name="thingsToBring" rows="4" placeholder="한 줄에 하나씩 입력"></textarea>
+                      </label>
+                    </div>
+                    <div class="workshop-admin-grid workshop-admin-grid--two">
+                      <label class="fulfillment-field">
+                        <span>Address detail</span>
+                        <input type="text" name="locationDetail" maxlength="240">
+                      </label>
+                      <label class="fulfillment-field">
+                        <span>Slug and sort order</span>
+                        <div class="workshop-admin-grid workshop-admin-grid--two">
+                          <input type="text" name="slug" maxlength="120" placeholder="slug">
+                          <input type="number" name="sortOrder" step="1" value="0" placeholder="0">
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </details>
+
+                <div class="workshop-admin-action-bar" aria-label="워크숍 저장 작업">
+                  <button type="button" class="fulfillment-btn js-workshop-admin-save-draft-btn">초안 저장</button>
+                  <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-preview-btn">미리보기</button>
+                  <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-publish-btn">게시</button>
+                  <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-archive-btn">보관</button>
+                </div>
+                <p class="fulfillment-status workshop-admin-activity-log js-workshop-admin-content-status" role="status" aria-live="polite"></p>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden data-workshop-admin-mode="reservations">
           <div class="fulfillment-toolbar">
             <label class="fulfillment-field fulfillment-field--toolbar">
-              <span>예약 검색</span>
-              <input type="search" class="js-workshop-admin-search-input" placeholder="워크숍명, 예약자명, 이메일, 날짜">
+              <span>워크숍</span>
+              <select class="js-workshop-admin-reservation-workshop-filter">
+                <option value="all">전체</option>
+              </select>
+            </label>
+            <label class="fulfillment-field fulfillment-field--toolbar workshop-admin-search-field">
+              <span>통합 검색</span>
+              <input type="search" class="js-workshop-admin-search-input" placeholder="이름, 전화번호, 이메일, 워크숍명">
+              <small class="workshop-admin-toolbar-help">예: 홍길동 / 010 / gmail / visible mending</small>
             </label>
             <label class="fulfillment-field fulfillment-field--toolbar">
               <span>상태</span>
@@ -77,25 +333,33 @@
           <div class="fulfillment-order-list js-workshop-admin-reservation-list">
             <div class="fulfillment-empty">관리자 인증 후 워크숍 예약 목록이 여기에 표시됩니다.</div>
           </div>
+
+          <section class="fulfillment-panel workshop-admin-reservation-detail">
+            <h2 class="fulfillment-subheading">신청자 관리</h2>
+            <div class="fulfillment-selection js-workshop-admin-detail">
+              <div class="fulfillment-empty">왼쪽 목록에서 예약을 선택하세요.</div>
+            </div>
+            <div class="fulfillment-actions js-workshop-admin-detail-actions" hidden>
+              <button type="button" class="fulfillment-btn js-workshop-admin-cancel-btn">예약 취소</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-restore-btn">취소 복원</button>
+            </div>
+            <p class="fulfillment-status js-workshop-admin-detail-status" role="status" aria-live="polite"></p>
+          </section>
         </section>
 
-        <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden>
-          <h2 class="fulfillment-subheading">날짜 차단 관리</h2>
+        <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden data-workshop-admin-mode="blocked-dates">
+          <h2 class="fulfillment-subheading">Blocked dates</h2>
           <form class="fulfillment-form js-workshop-admin-block-form">
-            <label class="fulfillment-field">
-              <span>워크숍</span>
-              <select name="workshopSlug" class="js-workshop-admin-workshop-select" required></select>
-            </label>
             <label class="fulfillment-field">
               <span>차단 날짜</span>
               <input type="date" name="slotDate" required>
             </label>
             <label class="fulfillment-field">
               <span>사유</span>
-              <input type="text" name="reason" maxlength="200" placeholder="예: 개인 일정, 마감" required>
+              <input type="text" name="reason" maxlength="200" placeholder="예: 운영자 개인 일정, 외부 일정" required>
             </label>
             <div class="fulfillment-actions">
-              <button type="submit" class="fulfillment-btn">날짜 차단</button>
+              <button type="submit" class="fulfillment-btn">전역 날짜 차단</button>
             </div>
             <p class="fulfillment-status js-workshop-admin-block-status" role="status" aria-live="polite"></p>
           </form>
@@ -104,25 +368,11 @@
             <div class="fulfillment-empty">현재 등록된 차단 일정이 없습니다.</div>
           </div>
         </section>
-      </aside>
-
-      <section class="fulfillment-content" data-workshop-admin-auth-guard hidden>
-        <section class="fulfillment-panel">
-          <h2 class="fulfillment-subheading">선택한 예약</h2>
-          <div class="fulfillment-selection js-workshop-admin-detail">
-            <div class="fulfillment-empty">왼쪽 목록에서 예약을 선택하세요.</div>
-          </div>
-          <div class="fulfillment-actions js-workshop-admin-detail-actions" hidden>
-            <button type="button" class="fulfillment-btn js-workshop-admin-cancel-btn">예약 취소</button>
-            <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-restore-btn">취소 복원</button>
-          </div>
-          <p class="fulfillment-status js-workshop-admin-detail-status" role="status" aria-live="polite"></p>
-        </section>
       </section>
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/workshop-admin.js?v=20260706-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/workshop-admin-20260809-02.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
 

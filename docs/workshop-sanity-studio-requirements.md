@@ -1,12 +1,14 @@
 # Workshop Sanity Studio Requirements
 
-이 문서는 워크숍 상세/예약 기능을 위한 Sanity 편집면 작업을 나중에 진행할 때 필요한 범위를 정리한 문서다.
+이 문서는 예전의 Workshop Sanity 편집면 검토 메모를 보관하기 위한 문서다. 현재 기본 방향은 Sanity가 아니라 D1 + 자체 admin 이다.
+
+현재 운영 기준 문서는 `docs/workshop-d1-admin.md` 를 먼저 본다.
 
 ## 현재 상태
 
 - 현재 storefront와 예약 API는 워크숍 문서에서 아래 필드가 오면 그대로 사용한다.
 - 이 저장소에는 실제 Studio 앱이나 schema 정의가 없다.
-- 따라서 지금은 public query + fallback 데이터로 동작하고 있다.
+- 현재는 D1 `workshops` 테이블 + workshop admin이 1순위이며, Sanity는 필요 시 재검토할 보조안으로 남아 있다.
 
 ## 필요한 저장소/환경
 

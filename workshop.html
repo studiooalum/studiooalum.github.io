@@ -22,8 +22,8 @@
     <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
-    <link rel="stylesheet" href="./runtime/storefront/styles/workshop.css?v=20260706-02">
-    <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260706-07.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/workshop-20260809-02.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
     <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
 </head>
 <body class="workshop-page">
@@ -76,6 +76,14 @@
                     <button class="workshop-apply-btn" id="workshopApplyBtn" type="button">신청하기</button>
                     <p class="workshop-note" id="workshopNotice"></p>
                 </div>
+
+                <section class="workshop-gallery" id="workshopGallerySection" hidden>
+                    <div class="workshop-gallery__head">
+                        <h2 class="workshop-fact__title">gallery</h2>
+                        <p class="workshop-note">워크숍 상세 이미지를 보여줍니다.</p>
+                    </div>
+                    <div class="workshop-gallery__grid" id="workshopGalleryList"></div>
+                </section>
             </section>
 
             <aside class="workshop-stage__rail" id="workshopRail" aria-hidden="true">
@@ -114,6 +122,7 @@
                             <span>인원</span>
                             <select id="bookingAttendeeCount" name="attendeeCount" required></select>
                         </label>
+                        <p class="workshop-booking-form__price" id="workshopBookingPrice" aria-live="polite" hidden></p>
                         <label class="workshop-booking-form__field">
                             <span>이름</span>
                             <input type="text" id="bookingName" name="fullName" autocomplete="name" required>
@@ -171,7 +180,7 @@ studio.oalum@gmail.com</p>
         </footer>
     </main>
 
-    <script type="module" src="./runtime/storefront/scripts/workshop.js?v=20260706-02"></script>
+    <script type="module" src="./runtime/storefront/scripts/workshop-20260809-02.js"></script>
     <script type="module">
         import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";

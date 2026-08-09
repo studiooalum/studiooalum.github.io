@@ -33,6 +33,13 @@
 
 인증, 주문 생성, 결제 승인, 웹훅 처리, D1 저장은 이 경로를 통해 동작합니다.
 
+추가로 Workshop 운영 콘텐츠는 이제 Sanity 편집면이 아니라 Cloudflare D1 + admin page 방향으로 이동합니다.
+
+- 공개 조회: `functions/api/workshops/catalog`, `functions/api/workshops/availability`
+- 운영 편집: `workshop-admin.html`, `runtime/storefront/scripts/workshop-admin.js`
+- 저장 구조: `cloudflare/d1/schema.sql`의 `workshops`, `workshop_reservations`, `workshop_schedule_blocks`
+- 이미지 전략: 우선 `poster_image_url`, `gallery_images_json[].url` 또는 R2 key 메타를 저장하고, 실제 업로드 바인딩은 이후 R2 연결 시 추가
+
 ### 5. Optional local-only workspaces
 
 - `apps/studio/` 같은 co-located Sanity Studio 경로
@@ -99,6 +106,7 @@
 
 - `docs/cloudflare-low-cost-stack.md`: 최저비용 운영 구조 정리
 - `docs/gabia-cloudflare-domain-setup.md`: 가비아 도메인 + Cloudflare 운영 절차
+- `docs/workshop-d1-admin.md`: Workshop 콘텐츠와 예약을 D1/admin으로 운영하는 현재 방향
 
 ## Migration Order
 

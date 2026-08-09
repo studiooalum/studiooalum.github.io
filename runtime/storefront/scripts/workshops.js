@@ -68,7 +68,7 @@ function renderTags() {
   }
 }
 
-function createWorkshopCard(workshop) {
+function createWorkshopCard(workshop, { isSample = false } = {}) {
   const href = getWorkshopHref(workshop);
   const posterAsset = getWorkshopPoster(workshop);
   const posterUrl = imageUrl(posterAsset, { width: 1200, height: 1200 });
@@ -95,7 +95,15 @@ function createWorkshopCard(workshop) {
     poster.appendChild(img);
     card.appendChild(poster);
   } else {
-    card.classList.add("is-compact");
+    const poster = document.createElement("div");
+    poster.className = "workshops-card__poster workshops-card__poster--sample";
+    poster.innerHTML = `
+      <div class="workshops-card__poster-fallback">
+        <span class="workshops-card__sample-eyebrow">${isSample ? "Sample Workshop" : "Studio OALUM"}</span>
+        <strong class="workshops-card__sample-title">${workshop?.title || "Workshop"}</strong>
+      </div>
+    `;
+    card.appendChild(poster);
   }
 
   const body = document.createElement("div");
@@ -118,10 +126,13 @@ function createWorkshopCard(workshop) {
 }
 
 function renderWorkshops(workshops) {
-  const items = (Array.isArray(workshops) && workshops.length > 0 ? workshops : getFallbackWorkshops()).map(normalizeWorkshop);
+  const items = (Array.isArray(workshops) && workshops.length > 0
+    ? workshops.map((workshop) => ({ workshop: normalizeWorkshop(workshop), isSample: false }))
+    : getFallbackWorkshops().map((workshop) => ({ workshop: normalizeWorkshop(workshop), isSample: true }))
+  );
   const filtered = activeCategory === "all"
     ? items
-    : items.filter((workshop) => getWorkshopCategory(workshop) === activeCategory);
+    : items.filter(({ workshop }) => getWorkshopCategory(workshop) === activeCategory);
 
   gridEl.innerHTML = "";
 
@@ -130,8 +141,8 @@ function renderWorkshops(workshops) {
     return;
   }
 
-  for (const workshop of filtered) {
-    gridEl.appendChild(createWorkshopCard(workshop));
+  for (const item of filtered) {
+    gridEl.appendChild(createWorkshopCard(item.workshop, { isSample: item.isSample }));
   }
 }
 
@@ -140,6 +151,22 @@ async function init() {
   gridEl.innerHTML = '<p class="workshops-state">Loading workshops...</p>';
 
   try {
+    try {
+      const response = await fetch("./api/workshops/catalog", {
+        headers: {
+          Accept: "application/json",
+        },
+        credentials: "same-origin",
+      });
+      const payload = await response.json().catch(() => null);
+      if (response.ok && payload?.ok && Array.isArray(payload.workshops)) {
+        renderWorkshops(payload.workshops);
+        return;
+      }
+    } catch (error) {
+      console.warn("Workshop catalog API is unavailable; falling back to public Sanity query.", error);
+    }
+
     const workshops = await client.fetch(ALL_WORKSHOPS_QUERY);
     renderWorkshops(workshops);
   } catch (error) {

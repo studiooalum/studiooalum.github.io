@@ -105,6 +105,8 @@ OAuth 제공자에 등록할 callback URL 패턴은 소셜 로그인을 다시 �
 - Sanity Studio가 필요하면 별도 저장소 또는 비추적 로컬 경로로 두는 전제를 유지합니다.
 - `runtime/storefront/`는 현재 공개 중인 루트 정적 셸이 직접 읽는 라이브 런타임입니다.
 - `archive/legacy/`는 더 이상 루트 사이트가 직접 사용하지 않는 이전 HTML 셸을 보관합니다.
+- 현재 Workshop 운영은 Sanity 편집면 대신 `workshop-admin.html` + `functions/api/workshops/*` + D1 `workshops` 테이블 기준으로 이동했습니다. 포스터/후기 이미지는 우선 URL 또는 R2 key 메타를 저장하고, 실제 업로드 바인딩은 이후 R2 연결 시 붙입니다.
+- 현재 Shop과 Archive는 계속 Sanity를 읽고, Newsletter와 Workshop은 자체 admin + D1(+ 추후 R2) 방향을 우선합니다.
 
 ## Planning Docs
 
@@ -116,6 +118,7 @@ OAuth 제공자에 등록할 callback URL 패턴은 소셜 로그인을 다시 �
 - `docs/seo-optimization-plan.md`: 정적 사이트 기준 SEO 우선순위와 실행 계획
 - `docs/apps-web-deploy.md`: `apps/web` 기반 확장 경로
 - `docs/commerce-schema.sql`: 주문/결제 스키마 초안
+- `docs/workshop-d1-admin.md`: Workshop D1/admin/R2-ready 운영 메모
 
 ## Next Step
 
