@@ -3,9 +3,13 @@ import { z } from "zod";
 import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
 import {
   archiveWorkshopContent,
+  cancelWorkshopGroup,
   createWorkshopDateBlock,
   deleteWorkshopDateBlock,
+  finalizeWorkshopGroup,
   readWorkshopAdminSnapshot,
+  refundWorkshopPayment,
+  sendWorkshopPaymentRequest,
   upsertWorkshopContent,
   updateWorkshopReservationStatus,
 } from "../../../cloudflare/lib/workshops.js";
@@ -32,20 +36,46 @@ const workshopSlotSchema = z.object({
   reason: z.string().trim().max(200).optional().default(""),
 });
 
-const workshopBookingConfigSchema = z.object({
-  mode: z.enum(["daily", "scheduled"]).optional().default("scheduled"),
+const workshopTypeSchema = z.enum(["daily", "event", "multiSession"]);
+const legacyWorkshopTypeSchema = z.enum(["daily", "event", "multiSession", "one_day_open", "one_day_fixed", "multi_session"]);
+
+function resolveWorkshopType(workshopType, legacyType, mode) {
+  if (workshopType) return workshopType;
+  if (legacyType === "one_day_open") return "daily";
+  if (legacyType === "one_day_fixed") return "event";
+  if (legacyType === "multi_session") return "multiSession";
+  if (legacyType) return legacyType;
+  return mode === "daily" ? "daily" : "event";
+}
+
+const workshopBookingConfigSchema = z.preprocess((value) => (
+  value && typeof value === "object" && !Array.isArray(value) ? value : {}
+), z.object({
+  workshopType: workshopTypeSchema.optional(),
+  type: legacyWorkshopTypeSchema.optional(),
+  mode: z.enum(["daily", "scheduled"]).optional(),
   dailyStartTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional().default("10:00"),
   dailyEndTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional().default("13:00"),
   dailyCapacity: z.number().int().min(1).max(4).optional().default(4),
   maxBookingMonths: z.number().int().min(1).max(6).optional().default(6),
-  allowSharedBookings: z.boolean().optional().default(false),
   attendeePrices: z.object({
     1: z.number().int().min(0).max(100000000).optional().default(120000),
     2: z.number().int().min(0).max(100000000).optional().default(200000),
     3: z.number().int().min(0).max(100000000).optional().default(270000),
     4: z.number().int().min(0).max(100000000).optional().default(300000),
   }).optional().default({}),
-}).optional().default({});
+  fixedPrice: z.number().int().min(0).max(100000000).optional().default(0),
+  minParticipants: z.number().int().min(1).max(100).optional().default(1),
+  maxParticipants: z.number().int().min(1).max(100).optional().default(4),
+  paymentDeadlineHours: z.number().int().min(1).max(720).optional().default(48),
+}).transform(({ type, workshopType, mode, ...config }) => {
+  const resolvedWorkshopType = resolveWorkshopType(workshopType, type, mode);
+  return {
+    ...config,
+    workshopType: resolvedWorkshopType,
+    mode: resolvedWorkshopType === "daily" ? "daily" : "scheduled",
+  };
+}));
 
 const workshopContentInputSchema = z.object({
   id: z.string().trim().max(80).optional().default(""),
@@ -77,6 +107,68 @@ const workshopContentInputSchema = z.object({
   sortOrder: z.number().int().min(-9999).max(9999).optional().default(0),
   sourceMode: z.string().trim().max(40).optional().default("d1-r2-ready"),
   publishedAt: z.string().trim().max(40).optional().default(""),
+}).superRefine((workshop, context) => {
+  const bookingConfig = workshop.bookingConfig;
+  const workshopType = bookingConfig.workshopType;
+
+  if (workshopType === "daily" && workshop.scheduleSlots.length > 0) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["scheduleSlots"],
+      message: "일일 워크샵은 개별 세션 일정을 저장할 수 없습니다.",
+    });
+  }
+
+  if (bookingConfig.minParticipants > bookingConfig.maxParticipants) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["bookingConfig", "minParticipants"],
+      message: "최소 모집 인원은 최대 모집 인원보다 클 수 없습니다.",
+    });
+  }
+
+  if (workshop.status !== "published") return;
+
+  if (workshopType === "daily") {
+    if (bookingConfig.dailyStartTime >= bookingConfig.dailyEndTime) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["bookingConfig", "dailyEndTime"],
+        message: "일일 워크샵의 종료 시간은 시작 시간보다 늦어야 합니다.",
+      });
+    }
+
+    for (const attendeeCount of [1, 2, 3, 4]) {
+      if (bookingConfig.attendeePrices[attendeeCount] <= 0) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["bookingConfig", "attendeePrices", attendeeCount],
+          message: "일일 워크샵의 1~4인 가격을 모두 입력해주세요.",
+        });
+        break;
+      }
+    }
+    return;
+  }
+
+  const requiredSlotCount = workshopType === "event" ? 1 : 2;
+  if (workshop.scheduleSlots.length !== requiredSlotCount && (workshopType === "event" || workshop.scheduleSlots.length < requiredSlotCount)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["scheduleSlots"],
+      message: workshopType === "event"
+        ? "일일 워크샵 이벤트는 세션을 정확히 1개 입력해야 합니다."
+        : "다회차 워크샵은 세션을 2개 이상 입력해야 합니다.",
+    });
+  }
+
+  if (bookingConfig.fixedPrice <= 0) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["bookingConfig", "fixedPrice"],
+      message: "이벤트 및 다회차 워크샵의 고정 가격을 입력해주세요.",
+    });
+  }
 });
 
 const workshopAdminActionSchema = z.discriminatedUnion("action", [
@@ -104,6 +196,23 @@ const workshopAdminActionSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("archiveWorkshopContent"),
     slug: z.string().trim().min(1).max(120),
+  }),
+  z.object({
+    action: z.literal("finalizeWorkshopGroup"),
+    groupId: z.string().trim().min(1).max(80),
+  }),
+  z.object({
+    action: z.literal("cancelWorkshopGroup"),
+    groupId: z.string().trim().min(1).max(80),
+  }),
+  z.object({
+    action: z.literal("sendWorkshopPaymentRequest"),
+    groupId: z.string().trim().min(1).max(80),
+  }),
+  z.object({
+    action: z.literal("refundWorkshopPayment"),
+    reservationId: z.string().trim().min(1).max(80),
+    cancelReason: z.string().trim().max(200).optional().default("관리자 요청으로 워크숍 결제를 취소했습니다."),
   }),
 ]);
 
@@ -222,6 +331,7 @@ export async function onRequestPost(context) {
 
     const data = parsed.data;
     let resultMessage = "";
+    let actionResult = {};
 
     if (data.action === "cancelReservation") {
       await updateWorkshopReservationStatus(context.env, {
@@ -251,6 +361,23 @@ export async function onRequestPost(context) {
     } else if (data.action === "archiveWorkshopContent") {
       await archiveWorkshopContent(context.env, { slug: data.slug });
       resultMessage = "워크숍 콘텐츠를 보관 상태로 변경했습니다.";
+    } else if (data.action === "finalizeWorkshopGroup") {
+      actionResult = await finalizeWorkshopGroup(context.env, data);
+      resultMessage = "그룹 모집을 마감하고 최종 결제 금액을 계산했습니다.";
+    } else if (data.action === "cancelWorkshopGroup") {
+      actionResult = { group: await cancelWorkshopGroup(context.env, data) };
+      resultMessage = "워크숍 그룹과 미결제 신청을 취소했습니다.";
+    } else if (data.action === "sendWorkshopPaymentRequest") {
+      actionResult = await sendWorkshopPaymentRequest(context.env, {
+        ...data,
+        origin: new URL(context.request.url).origin,
+      });
+      resultMessage = actionResult.sentCount > 0
+        ? `${actionResult.sentCount}명에게 결제 요청 메일을 보냈습니다.`
+        : "결제 링크를 준비했습니다. 메일 설정이 없으면 링크를 복사해 전달해주세요.";
+    } else if (data.action === "refundWorkshopPayment") {
+      actionResult = await refundWorkshopPayment(context.env, data);
+      resultMessage = "워크숍 결제를 환불 처리했습니다.";
     }
 
     const snapshot = await readWorkshopAdminSnapshot(context.env, {
@@ -262,6 +389,8 @@ export async function onRequestPost(context) {
     return json(context.env, {
       ok: true,
       message: resultMessage,
+      actionResult,
+      ...actionResult,
       ...snapshot,
     });
   } catch (error) {

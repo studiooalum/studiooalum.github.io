@@ -33,18 +33,21 @@
 .gnb--archive    { background: rgba(255, 204, 195, 0.92); color: #111; }
 .gnb--workshops  { background: rgba(255, 235, 83, 0.92); color: #111; }
 .gnb--newsletter { background: rgba(202, 213, 216, 0.92); color: #111; }
+.gnb--repair     { background: rgba(207, 228, 220, 0.92); color: #111; }
 .gnb--account    { background: #e5e5e1; color: #111; }
 
 .gnb--shop       { --gnb-surface: rgba(227, 66, 52, 0.92); }
 .gnb--archive    { --gnb-surface: rgba(255, 204, 195, 0.92); }
 .gnb--workshops  { --gnb-surface: rgba(255, 235, 83, 0.92); }
 .gnb--newsletter { --gnb-surface: rgba(202, 213, 216, 0.92); }
+.gnb--repair     { --gnb-surface: rgba(207, 228, 220, 0.92); }
 .gnb--account    { --gnb-surface: #e5e5e1; }
 
 .gnb--shop       { --gnb-surface-opaque: #e34234; }
 .gnb--archive    { --gnb-surface-opaque: #ffccc3; }
 .gnb--workshops  { --gnb-surface-opaque: #ffeb53; }
 .gnb--newsletter { --gnb-surface-opaque: #cad5d8; }
+.gnb--repair     { --gnb-surface-opaque: #cfe4dc; }
 .gnb--account    { --gnb-surface-opaque: #e5e5e1; }
 
 .gnb__title {

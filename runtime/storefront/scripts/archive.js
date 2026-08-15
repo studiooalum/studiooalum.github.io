@@ -1,126 +1,195 @@
 import sanityClient from "./sanity/client.js";
-import { imageUrl } from "./sanity/image.js";
+import { ARCHIVE_QUERY } from "./sanity/queries.js";
 
-const ARCHIVE_QUERY = `
-  *[_type in ["archive", "archiveItem", "archiveEntry"]] | order(coalesce(publishedAt, _createdAt) desc) {
-    _id,
-    title,
-    caption,
-    description,
-    note,
-    year,
-    type,
-    category,
-    span,
-    mediaType,
-    image { asset->{url} },
-    posterImage { asset->{url} },
-    mainImage { asset->{url} },
-    galleryImages[] { asset->{url} }
-  }
-`;
+const TAG_PRIORITY = ["all", "work", "repair", "collaboration", "exhibition", "research"];
 
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+const state = {
+  items: [],
+  selectedTag: "all",
+};
+
+function normalizeTag(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
-function normalizeArchiveItem(item, index) {
-  const image = item?.image || item?.posterImage || item?.mainImage || item?.galleryImages?.[0] || null;
-  const imageSrc = imageUrl(image, { width: 1200 }) || "";
+function getYear(value) {
+  const match = String(value || "").match(/\d{4}/);
+  return match ? match[0] : "";
+}
 
+function normalizeArchiveImage(image, index, title) {
+  const asset = image?.asset;
+  const source = String(asset?.url || "").trim();
+  if (!source) return null;
+
+  const dimensions = asset?.metadata?.dimensions || {};
   return {
-    id: item?._id || `mock-${index}`,
-    title: String(item?.title || `Archive ${index + 1}`).trim(),
-    caption: String(item?.caption || item?.category || item?.type || "Archive").trim(),
-    description: String(item?.description || item?.note || "").trim(),
-    note: String(item?.note || "").trim(),
-    year: String(item?.year || "").trim(),
-    type: String(item?.type || "archive").trim(),
-    span: Math.max(1, Math.min(2, Number(item?.span) || 1)),
-    aspect: String(item?.mediaType || item?.aspect || "square").trim(),
-    imageSrc,
-    accent: String(item?.accent || "").trim(),
+    id: asset?._id || `${title}-${index}`,
+    src: source,
+    alt: `${title} 이미지 ${index + 1}`,
+    width: Number(dimensions.width || 0),
+    height: Number(dimensions.height || 0),
   };
 }
 
-function renderMedia(item, index) {
-  const aspectClass = item.imageSrc ? "archive-card__media--image" : `archive-card__media--${item.aspect}`;
-  const accentClass = item.accent || ["archive-card--accent-coral", "archive-card--accent-sand", "archive-card--accent-olive", "archive-card--accent-mustard", "archive-card--accent-plum", "archive-card--accent-rose"][index % 6];
+function normalizeArchiveItem(item, index) {
+  const title = String(item?.title || `Archive ${index + 1}`).trim();
+  const images = Array.isArray(item?.images)
+    ? item.images.map((image, imageIndex) => normalizeArchiveImage(image, imageIndex, title)).filter(Boolean)
+    : [];
 
-  if (item.imageSrc) {
-    return `
-      <figure class="archive-card__media ${aspectClass}">
-        <img src="${escapeHtml(item.imageSrc)}" alt="${escapeHtml(item.title)}">
-        <figcaption class="archive-card__badge">${escapeHtml(item.caption)}</figcaption>
-      </figure>
-    `;
-  }
-
-  return `
-    <div class="archive-card__media ${aspectClass} ${accentClass}">
-      <div class="archive-card__overlay">
-        <p class="archive-card__eyebrow">${escapeHtml(item.year || "Archive")}</p>
-        <h2 class="archive-card__headline">${escapeHtml(item.title)}</h2>
-      </div>
-      <span class="archive-card__badge">${escapeHtml(item.caption)}</span>
-    </div>
-  `;
+  return {
+    id: item?._id || `archive-${index}`,
+    title,
+    createdDate: String(item?.createdDate || "").trim(),
+    tags: Array.isArray(item?.tags)
+      ? item.tags.map(normalizeTag).filter(Boolean)
+      : [],
+    images,
+  };
 }
 
-function renderArchiveBoard(board, items) {
-  if (!board) return;
+function getOrderedTags(items) {
+  const available = new Set(items.flatMap((item) => item.tags));
+  const priority = TAG_PRIORITY.filter((tag) => tag === "all" || available.has(tag));
+  const extras = Array.from(available)
+    .filter((tag) => !TAG_PRIORITY.includes(tag))
+    .sort((left, right) => left.localeCompare(right, "ko"));
 
-  board.innerHTML = items.map((item, index) => {
-    const spanClass = item.span === 2 ? " archive-card--span-2" : "";
-    return `
-      <article class="archive-card${spanClass}" data-archive-card>
-        ${renderMedia(item, index)}
-        <div class="archive-card__body">
-          <p class="archive-card__kicker">${escapeHtml(item.type || "archive")}</p>
-          <h2 class="archive-card__title">${escapeHtml(item.title)}</h2>
-          <p class="archive-card__caption">${escapeHtml(item.description)}</p>
-          ${item.note ? `<p class="archive-card__note">${escapeHtml(item.note)}</p>` : ""}
-        </div>
-      </article>
-    `;
-  }).join("");
+  return [...priority, ...extras];
 }
 
-async function loadArchiveItems() {
+function getFilteredItems() {
+  if (state.selectedTag === "all") return state.items;
+  return state.items.filter((item) => item.tags.includes(state.selectedTag));
+}
+
+function applyAverageColor(card, image) {
   try {
-    const items = await sanityClient.fetch(ARCHIVE_QUERY);
-    return Array.isArray(items) ? items.map(normalizeArchiveItem).filter((item) => item.imageSrc) : [];
+    const canvas = document.createElement("canvas");
+    canvas.width = 16;
+    canvas.height = 16;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return;
+
+    context.drawImage(image, 0, 0, 16, 16);
+    const pixels = context.getImageData(0, 0, 16, 16).data;
+    let red = 0;
+    let green = 0;
+    let blue = 0;
+    let count = 0;
+
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index + 3] < 32) continue;
+      red += pixels[index];
+      green += pixels[index + 1];
+      blue += pixels[index + 2];
+      count += 1;
+    }
+
+    if (count) {
+      card.style.setProperty("--archive-hover-rgb", `${Math.round(red / count)}, ${Math.round(green / count)}, ${Math.round(blue / count)}`);
+    }
   } catch {
-    return [];
+    // Cross-origin image pixels may be unavailable; the black overlay remains readable.
   }
 }
 
-export async function initArchiveBoard() {
-  const board = document.querySelector("[data-archive-board]");
-  const status = document.querySelector(".js-archive-status");
-  if (!board) return;
+function createArchiveCard(item, imageData) {
+  const card = document.createElement("article");
+  card.className = "archive-card";
+  card.tabIndex = 0;
 
-  const items = await loadArchiveItems();
+  const media = document.createElement("figure");
+  media.className = "archive-card__media";
+  const image = document.createElement("img");
+  image.className = "archive-card__image";
+  image.crossOrigin = "anonymous";
+  image.src = imageData.src;
+  image.alt = imageData.alt;
+  image.loading = "lazy";
+  if (imageData.width) image.width = imageData.width;
+  if (imageData.height) image.height = imageData.height;
+  image.addEventListener("load", () => applyAverageColor(card, image), { once: true });
+
+  const overlay = document.createElement("div");
+  overlay.className = "archive-card__overlay";
+  const title = document.createElement("span");
+  title.className = "archive-card__overlay-title";
+  title.textContent = item.title;
+  const year = document.createElement("span");
+  year.className = "archive-card__overlay-year";
+  year.textContent = getYear(item.createdDate) || "-";
+  overlay.append(title, year);
+  media.append(image, overlay);
+  card.append(media);
+  return card;
+}
+
+function renderTags(tagsElement) {
+  if (!tagsElement) return;
+  const fragment = document.createDocumentFragment();
+  for (const tag of getOrderedTags(state.items)) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "archive-tags__button";
+    button.dataset.archiveTag = tag;
+    button.textContent = tag;
+    button.setAttribute("aria-pressed", String(tag === state.selectedTag));
+    fragment.append(button);
+  }
+  tagsElement.replaceChildren(fragment);
+}
+
+function renderBoard(board, status) {
+  if (!board) return;
+  const items = getFilteredItems();
+  board.innerHTML = "";
+
   if (!items.length) {
-    board.innerHTML = `
-      <section class="archive-preparing" aria-label="아카이브 준비 중">
-        <p class="archive-preparing__label">Studio OALUM Archive</p>
-        <h2>아카이브 준비 중</h2>
-        <p>이미지와 기록을 정리한 뒤 이곳에 차례로 공개합니다.</p>
-      </section>
-    `;
-    if (status) status.textContent = "아카이브 게시물을 준비하고 있습니다.";
+    const empty = document.createElement("p");
+    empty.className = "archive-empty";
+    empty.textContent = state.items.length
+      ? "선택한 태그의 아카이브 기록이 없습니다."
+      : "아카이브 게시물을 준비하고 있습니다.";
+    board.append(empty);
+    if (status) status.textContent = empty.textContent;
     return;
   }
 
-  renderArchiveBoard(board, items);
-
-  if (status) {
-    status.textContent = "Sanity 아카이브 데이터를 표시하고 있습니다.";
+  const fragment = document.createDocumentFragment();
+  for (const item of items) {
+    for (const imageData of item.images) {
+      fragment.append(createArchiveCard(item, imageData));
+    }
   }
+  board.append(fragment);
+  if (status) status.textContent = `${items.length}개의 아카이브 기록을 표시하고 있습니다.`;
+}
+
+export async function initArchiveBoard() {
+  const board = document.querySelector("#archiveBoard");
+  const tagsElement = document.querySelector("#archiveTags");
+  const status = document.querySelector(".js-archive-status");
+  if (!board) return;
+
+  try {
+    const result = await sanityClient.fetch(ARCHIVE_QUERY);
+    state.items = Array.isArray(result)
+      ? result.map(normalizeArchiveItem).filter((item) => item.images.length > 0)
+      : [];
+  } catch {
+    state.items = [];
+  }
+
+  renderTags(tagsElement);
+  renderBoard(board, status);
+
+  tagsElement?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-archive-tag]");
+    if (!button) return;
+    state.selectedTag = button.dataset.archiveTag || "all";
+    renderTags(tagsElement);
+    renderBoard(board, status);
+  });
 }

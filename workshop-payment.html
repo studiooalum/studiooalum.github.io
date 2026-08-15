@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>워크숍 결제 | Studio OALUM</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/payment.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
+</head>
+<body class="payment-page workshop-payment-page">
+  <nav class="gnb gnb--workshops">
+    <a href="./workshops" class="gnb__back">← Workshops</a>
+    <span class="gnb__title">워크숍 결제</span>
+    <span class="gnb__spacer"></span>
+  </nav>
+
+  <main class="payment-layout" id="workshopPaymentLayout">
+    <section class="payment-order-brief">
+      <h1 class="payment-section-title">워크숍 결제</h1>
+      <p class="payment-order-name" id="workshopPaymentOrderName">결제 정보를 불러오는 중입니다.</p>
+      <p class="payment-order-total" id="workshopPaymentOrderTotal">—</p>
+      <p class="payment-order-benefit" id="workshopPaymentStatus" aria-live="polite"></p>
+    </section>
+
+    <section class="payment-widget-section" id="workshopPaymentMethodsSection">
+      <div id="workshop-payment-method" class="payment-widget-area"></div>
+    </section>
+
+    <section class="payment-agreement-section" id="workshopPaymentAgreementSection">
+      <div id="workshop-agreement" class="payment-widget-area"></div>
+    </section>
+
+    <div class="payment-btn-wrapper" id="workshopPaymentButtonSection">
+      <button id="workshop-payment-request-button" class="payment-submit-btn" type="button" disabled>결제하기</button>
+    </div>
+  </main>
+
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <script type="module" src="./runtime/storefront/scripts/workshop-payment.js"></script>
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+
+    initSiteChrome({ showActions: false });
+  </script>
+</body>
+</html>

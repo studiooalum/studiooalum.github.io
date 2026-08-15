@@ -1,15 +1,7 @@
-import { ALL_WORKSHOPS_QUERY, WORKSHOP_BY_SLUG_QUERY } from "../../runtime/storefront/scripts/sanity/queries.js";
 import {
-  findFallbackWorkshopBySlug,
-  getFallbackWorkshops,
   normalizeWorkshop,
   slugifyWorkshopTitle,
 } from "../../runtime/storefront/scripts/utils/workshops.js";
-
-const SANITY_PROJECT_ID = "9bsud0bl";
-const SANITY_DATASET = "production";
-const SANITY_API_VERSION = "2023-01-01";
-const SANITY_BASE_URL = `https://${SANITY_PROJECT_ID}.apicdn.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}`;
 
 function getDb(env) {
   return env?.OALUM_DB || null;
@@ -175,72 +167,6 @@ function formatWorkshopRow(row) {
   };
 }
 
-async function fetchSanityQuery(query, params = {}) {
-  const url = new URL(SANITY_BASE_URL);
-  url.searchParams.set("query", query);
-
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(`$${key}`, JSON.stringify(value));
-  }
-
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(`Sanity query failed: ${response.status} ${response.statusText}${body ? `\n${body}` : ""}`);
-  }
-
-  const payload = await response.json();
-  return payload?.result || null;
-}
-
-async function fetchFallbackWorkshopBySlug(slug) {
-  try {
-    const workshop = await fetchSanityQuery(WORKSHOP_BY_SLUG_QUERY, { slug });
-    if (workshop) {
-      return normalizeWorkshop(workshop);
-    }
-  } catch (error) {
-    console.error("Failed to fetch workshop from Sanity.", {
-      slug,
-      message: error?.message || String(error),
-    });
-  }
-
-  return findFallbackWorkshopBySlug(slug);
-}
-
-async function fetchFallbackWorkshopCatalog() {
-  try {
-    const workshops = await fetchSanityQuery(ALL_WORKSHOPS_QUERY);
-    if (Array.isArray(workshops) && workshops.length > 0) {
-      return workshops.map((workshop) => normalizeWorkshop(workshop));
-    }
-  } catch (error) {
-    console.error("Failed to fetch workshop catalog from Sanity.", {
-      message: error?.message || String(error),
-    });
-  }
-
-  return getFallbackWorkshops();
-}
-
-function mergeWorkshops(primary = [], secondary = []) {
-  const merged = new Map();
-
-  for (const workshop of [...primary, ...secondary]) {
-    const normalized = normalizeWorkshop(workshop);
-    const slug = cleanText(normalized.slug, 120);
-    if (!slug || merged.has(slug)) continue;
-    merged.set(slug, normalized);
-  }
-
-  return Array.from(merged.values()).sort((left, right) => {
-    const sortDelta = (Number(left.sortOrder) || 0) - (Number(right.sortOrder) || 0);
-    if (sortDelta !== 0) return sortDelta;
-    return String(left.title || left.slug).localeCompare(String(right.title || right.slug), "ko");
-  });
-}
-
 export async function readStoredWorkshopContentBySlug(env, slug, { includeDraft = false } = {}) {
   const database = getDb(env);
   if (!database) return null;
@@ -267,33 +193,23 @@ export async function readStoredWorkshopCatalog(env, { includeDraft = false } = 
 }
 
 export async function readPublicWorkshopBySlug(env, slug) {
-  const stored = await readStoredWorkshopContentBySlug(env, slug);
-  if (stored) return stored;
-  return fetchFallbackWorkshopBySlug(slug);
+  return readStoredWorkshopContentBySlug(env, slug);
 }
 
 export async function readPublicWorkshopCatalog(env) {
-  const [stored, fallback] = await Promise.all([
-    readStoredWorkshopCatalog(env),
-    fetchFallbackWorkshopCatalog(),
-  ]);
-
-  return mergeWorkshops(stored, fallback);
+  return readStoredWorkshopCatalog(env);
 }
 
 export async function readWorkshopAdminCatalog(env) {
-  const [storedAll, fallback] = await Promise.all([
-    readStoredWorkshopCatalog(env, { includeDraft: true }),
-    fetchFallbackWorkshopCatalog(),
-  ]);
+  const storedAll = await readStoredWorkshopCatalog(env, { includeDraft: true });
 
   return {
     contentItems: storedAll,
-    workshopOptions: mergeWorkshops(storedAll, fallback).map((workshop) => ({
+    workshopOptions: storedAll.map((workshop) => ({
       slug: workshop.slug,
       title: workshop.title || workshop.slug,
-      status: workshop.status || (storedAll.find((item) => item.slug === workshop.slug) ? "draft" : "external"),
-      source: workshop.source || "fallback",
+      status: workshop.status || "draft",
+      source: workshop.source || "d1",
     })),
   };
 }

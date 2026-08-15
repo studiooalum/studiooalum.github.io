@@ -40,6 +40,14 @@
 - 저장 구조: `cloudflare/d1/schema.sql`의 `workshops`, `workshop_reservations`, `workshop_schedule_blocks`
 - 이미지 전략: 우선 `poster_image_url`, `gallery_images_json[].url` 또는 R2 key 메타를 저장하고, 실제 업로드 바인딩은 이후 R2 연결 시 추가
 
+Repair Studio는 같은 Cloudflare 경계 안에서 D1 + private R2를 사용합니다.
+
+- 공개 접수: `repair.html` -> `POST /api/repairs`
+- 운영 관리: `repair-admin.html` -> `GET/POST /api/repairs/admin`
+- 원본 이미지: D1에는 R2 key만 보관하고, `functions/api/repairs/images/[id].js`가 인증된 관리자 세션에만 스트리밍
+- 공개 `/api/r2`는 `repairs/` 접두사 객체를 404로 차단
+- 저장 구조: `repair_requests`, `repair_request_images` (`0013_repair_requests.sql`)
+
 ### 5. Optional local-only workspaces
 
 - `apps/studio/` 같은 co-located Sanity Studio 경로
@@ -107,6 +115,7 @@
 - `docs/cloudflare-low-cost-stack.md`: 최저비용 운영 구조 정리
 - `docs/gabia-cloudflare-domain-setup.md`: 가비아 도메인 + Cloudflare 운영 절차
 - `docs/workshop-d1-admin.md`: Workshop 콘텐츠와 예약을 D1/admin으로 운영하는 현재 방향
+- `docs/repair-studio.md`: Repair 원본 이미지 보안과 운영 경계
 
 ## Migration Order
 

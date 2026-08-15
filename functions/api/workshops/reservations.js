@@ -6,12 +6,16 @@ import { createWorkshopReservation } from "../../../cloudflare/lib/workshops.js"
 
 const reservationSchema = z.object({
   slug: z.string().trim().min(1).max(120),
-  slotKey: z.string().trim().min(1).max(160),
+  slotKey: z.string().trim().max(160).optional().default(""),
+  requestedDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().default(""),
+  joinPolicy: z.enum(["open", "private"]).optional().default("private"),
+  allowAdditionalAttendees: z.boolean().optional().default(false),
+  groupMode: z.enum(["open", "private"]).optional(),
   fullName: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(1).max(40),
   note: z.string().trim().max(500).optional().default(""),
-  attendeeCount: z.number().int().min(1).max(4).optional().default(1),
+  attendeeCount: z.number().int().min(1).max(100).optional().default(1),
 });
 
 export function onRequestOptions(context) {
@@ -39,6 +43,13 @@ export async function onRequestPost(context) {
       ok: true,
       reservation: result.reservation,
       workshop: result.workshop,
+      requiresPayment: Boolean(result.requiresPayment || result.reservation?.checkoutId),
+      checkoutId: result.checkoutId || result.reservation?.checkoutId || null,
+      payment: result.requiresPayment || result.reservation?.checkoutId ? {
+        amount: result.reservation?.finalAmount ?? result.reservation?.amountDue ?? 0,
+        orderName: result.reservation?.workshopTitle || "워크샵",
+        redirectUrl: `./workshop-payment?checkoutId=${encodeURIComponent(result.checkoutId || result.reservation?.checkoutId || "")}`,
+      } : null,
       linkedToAccount: Boolean(session?.user?.id),
     }, { status: 201 });
   } catch (error) {

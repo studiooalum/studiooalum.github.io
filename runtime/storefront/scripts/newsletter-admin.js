@@ -18,6 +18,9 @@ const dom = {
   coverAlt: document.querySelector(".newsletter-admin-cover__alt"),
   editor: document.querySelector(".js-newsletter-admin-editor"),
   toolbar: document.querySelector(".newsletter-admin-toolbar"),
+  imageLayout: document.querySelector(".js-newsletter-admin-image-layout"),
+  imageSize: document.querySelector(".js-newsletter-admin-image-size"),
+  imagePosition: document.querySelector(".js-newsletter-admin-image-position"),
   inlineImageInput: document.querySelector(".js-newsletter-admin-inline-image-input"),
   inlineImageButton: document.querySelector(".js-newsletter-admin-inline-image-upload"),
   saveDraftButton: document.querySelector(".js-newsletter-admin-save-draft"),
@@ -37,6 +40,19 @@ const state = {
   selectedSlug: "",
   isDirty: false,
   editorRange: null,
+  selectedImageFigure: null,
+};
+
+const IMAGE_LAYOUT_DEFAULTS = {
+  align: "center",
+  size: "full",
+  position: "inline",
+};
+
+const IMAGE_LAYOUT_VALUES = {
+  align: new Set(["left", "center", "right"]),
+  size: new Set(["small", "medium", "large", "full"]),
+  position: new Set(["inline", "breakout"]),
 };
 
 function escapeHtml(value) {
@@ -216,6 +232,8 @@ function resetForm(post = null) {
   dom.form.elements.coverImageAlt.value = item.coverImageAlt || "";
   dom.form.elements.publishedAt.value = formatDateTimeLocal(item.publishedAt);
   dom.editor.innerHTML = item.contentHtml || "";
+  state.selectedImageFigure = null;
+  syncImageLayoutControls();
   renderCover(item);
   if (dom.postStatus) dom.postStatus.textContent = item.slug ? getStatusLabel(item.status) : "새 초안";
   setDirty(false);
@@ -357,6 +375,61 @@ function restoreEditorRange() {
   selection?.addRange(state.editorRange);
 }
 
+function normalizeImageLayoutValue(type, value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return IMAGE_LAYOUT_VALUES[type].has(normalized) ? normalized : IMAGE_LAYOUT_DEFAULTS[type];
+}
+
+function getImageFigureFromNode(node) {
+  const element = node instanceof Element ? node : node?.parentElement;
+  const figure = element?.closest("figure");
+  return figure?.querySelector("img") ? figure : null;
+}
+
+function getSelectedImageFigure() {
+  if (state.selectedImageFigure?.isConnected && dom.editor?.contains(state.selectedImageFigure)) {
+    return state.selectedImageFigure;
+  }
+
+  const selection = window.getSelection();
+  return selection?.rangeCount ? getImageFigureFromNode(selection.anchorNode) : null;
+}
+
+function syncImageLayoutControls(figure = getSelectedImageFigure()) {
+  if (!dom.imageLayout) return;
+  const selected = figure || null;
+  state.selectedImageFigure = selected;
+  dom.imageLayout.hidden = !selected;
+  if (!selected) return;
+
+  const align = normalizeImageLayoutValue("align", selected.getAttribute("data-image-align"));
+  const size = normalizeImageLayoutValue("size", selected.getAttribute("data-image-size"));
+  const position = normalizeImageLayoutValue("position", selected.getAttribute("data-image-position"));
+  if (dom.imageSize) dom.imageSize.value = size;
+  if (dom.imagePosition) dom.imagePosition.value = position;
+  dom.imageLayout.querySelectorAll("[data-image-align]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.imageAlign === align));
+  });
+}
+
+function applyImageLayout(type, value) {
+  const figure = getSelectedImageFigure();
+  if (!figure) {
+    setStatus(dom.status, "레이아웃을 바꿀 본문 이미지를 선택해주세요.", "error");
+    return;
+  }
+
+  const normalized = normalizeImageLayoutValue(type, value);
+  const attribute = {
+    align: "data-image-align",
+    size: "data-image-size",
+    position: "data-image-position",
+  }[type];
+  figure.setAttribute(attribute, normalized);
+  syncImageLayoutControls(figure);
+  markEditorDirty();
+}
+
 function markEditorDirty() {
   setDirty(true);
 }
@@ -439,7 +512,10 @@ async function uploadInlineImage(file) {
     const url = String(payload.image?.url || "").trim();
     if (!url) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
     const alt = window.prompt("이미지 설명", "") || "";
-    insertHtmlAtSelection(`<figure><img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}"><figcaption>${escapeHtml(alt)}</figcaption></figure>`);
+    insertHtmlAtSelection(`<figure data-image-align="center" data-image-size="full" data-image-position="inline"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}"><figcaption>${escapeHtml(alt)}</figcaption></figure>`);
+    const insertedFigures = Array.from(dom.editor?.querySelectorAll("figure") || []);
+    const inserted = insertedFigures.reverse().find((figure) => figure.querySelector("img")?.getAttribute("src") === url);
+    syncImageLayoutControls(inserted || null);
     setStatus(dom.status, "본문 이미지를 추가했습니다.", "success");
   } catch (error) {
     setStatus(dom.status, error.message || "본문 이미지를 업로드하지 못했습니다.", "error");
@@ -532,9 +608,18 @@ function attachEvents() {
     markEditorDirty();
   });
 
-  dom.editor?.addEventListener("keyup", saveEditorRange);
-  dom.editor?.addEventListener("mouseup", saveEditorRange);
+  dom.editor?.addEventListener("keyup", () => {
+    saveEditorRange();
+    syncImageLayoutControls();
+  });
+  dom.editor?.addEventListener("mouseup", () => {
+    saveEditorRange();
+    syncImageLayoutControls();
+  });
   dom.editor?.addEventListener("focus", saveEditorRange);
+  dom.editor?.addEventListener("click", (event) => {
+    syncImageLayoutControls(getImageFigureFromNode(event.target));
+  });
   dom.editor?.addEventListener("input", markEditorDirty);
   dom.editor?.addEventListener("paste", (event) => {
     event.preventDefault();
@@ -550,6 +635,12 @@ function attachEvents() {
     const button = event.target.closest("[data-editor-command]");
     if (button) applyEditorCommand(button.dataset.editorCommand || "");
   });
+  dom.imageLayout?.addEventListener("click", (event) => {
+    const alignmentButton = event.target.closest("[data-image-align]");
+    if (alignmentButton) applyImageLayout("align", alignmentButton.dataset.imageAlign || "");
+  });
+  dom.imageSize?.addEventListener("change", () => applyImageLayout("size", dom.imageSize.value));
+  dom.imagePosition?.addEventListener("change", () => applyImageLayout("position", dom.imagePosition.value));
   dom.inlineImageButton?.addEventListener("click", () => dom.inlineImageInput?.click());
   dom.inlineImageInput?.addEventListener("change", (event) => uploadInlineImage(event.target.files?.[0]));
 

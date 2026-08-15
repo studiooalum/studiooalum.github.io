@@ -76,6 +76,15 @@ const ALLOWED_RICH_TEXT_TAGS = new Set([
   "hr",
 ]);
 
+const IMAGE_ALIGNMENTS = new Set(["left", "center", "right"]);
+const IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
+const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
+
+function sanitizeImageLayoutValue(value, allowedValues) {
+  const normalized = cleanText(value, 20).toLowerCase();
+  return allowedValues.has(normalized) ? normalized : "";
+}
+
 export function sanitizeNewsletterHtml(value) {
   const source = cleanText(value, 50000).replace(/<!--[^]*?-->/g, "");
 
@@ -98,6 +107,18 @@ export function sanitizeNewsletterHtml(value) {
       if (!src) return "";
       const alt = cleanText(readAttribute(attributes, "alt"), 200);
       return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
+    }
+
+    if (tagName === "figure") {
+      const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-align"), IMAGE_ALIGNMENTS);
+      const size = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-size"), IMAGE_SIZES);
+      const position = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-position"), IMAGE_POSITIONS);
+      const layoutAttributes = [
+        alignment ? ` data-image-align="${alignment}"` : "",
+        size ? ` data-image-size="${size}"` : "",
+        position ? ` data-image-position="${position}"` : "",
+      ].join("");
+      return `<figure${layoutAttributes}>`;
     }
 
     return `<${tagName}>`;

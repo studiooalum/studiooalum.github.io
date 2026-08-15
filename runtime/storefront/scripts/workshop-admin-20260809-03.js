@@ -1,6 +1,7 @@
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
 const DEFAULT_BOOKING_NOTICE = "예약일 3일 전까지 100% 환불 가능합니다. 이후 환불은 불가하며, 양도는 가능합니다.";
+const ADMIN_MODES = ["workshops", "reservations", "groups", "blocked-dates"];
 
 const dom = {
   authForm: document.querySelector(".js-workshop-admin-auth-form"),
@@ -25,6 +26,10 @@ const dom = {
   detailStatus: document.querySelector(".js-workshop-admin-detail-status"),
   cancelButton: document.querySelector(".js-workshop-admin-cancel-btn"),
   restoreButton: document.querySelector(".js-workshop-admin-restore-btn"),
+  refundButton: document.querySelector(".js-workshop-admin-refund-btn"),
+  groupList: document.querySelector(".js-workshop-admin-group-list"),
+  groupStatus: document.querySelector(".js-workshop-admin-group-status"),
+  groupRefreshButton: document.querySelector(".js-workshop-admin-group-refresh-btn"),
   blockForm: document.querySelector(".js-workshop-admin-block-form"),
   blockStatus: document.querySelector(".js-workshop-admin-block-status"),
   blockList: document.querySelector(".js-workshop-admin-block-list"),
@@ -61,6 +66,7 @@ const state = {
   accessExpiresAt: sessionStorage.getItem(ADMIN_ACCESS_EXPIRES_AT_KEY) || "",
   isAuthorized: false,
   reservations: [],
+  groups: [],
   blocks: [],
   workshops: [],
   contentItems: [],
@@ -119,6 +125,14 @@ function formatDate(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("ko-KR", {
+    style: "currency",
+    currency: "KRW",
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, Number(value) || 0));
 }
 
 function formatSessionRemaining(value) {
@@ -242,26 +256,55 @@ function getWorkshopStatusLabel(value) {
   return "초안";
 }
 
+function normalizeWorkshopType(value, fallback = "event") {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["daily", "one_day_open"].includes(normalized)) return "daily";
+  if (["event", "one_day_fixed"].includes(normalized)) return "event";
+  if (["multisession", "multi_session"].includes(normalized)) return "multiSession";
+  return fallback;
+}
+
 function getBookingConfig(workshop = {}) {
   const raw = workshop.bookingConfig && typeof workshop.bookingConfig === "object" ? workshop.bookingConfig : {};
-  const prices = raw.attendeePrices && typeof raw.attendeePrices === "object" ? raw.attendeePrices : {};
+  const hasScheduledSlots = Array.isArray(workshop.scheduleSlots) && workshop.scheduleSlots.length > 0;
+  const type = normalizeWorkshopType(
+    raw.workshopType || raw.type,
+    raw.mode === "daily" || !hasScheduledSlots ? "daily" : "event",
+  );
+  const prices = raw.priceTiers && typeof raw.priceTiers === "object"
+    ? raw.priceTiers
+    : raw.attendeePrices && typeof raw.attendeePrices === "object"
+      ? raw.attendeePrices
+      : {};
+  const maxParticipants = Math.max(1, Number(raw.maxParticipants || raw.dailyCapacity || workshop.maxCapacity) || 4);
   return {
-    mode: raw.mode === "daily" ? "daily" : (Array.isArray(workshop.scheduleSlots) && workshop.scheduleSlots.length ? "scheduled" : "daily"),
+    workshopType: type,
+    mode: type === "daily" ? "daily" : "scheduled",
     dailyStartTime: /^\d{2}:\d{2}$/.test(String(raw.dailyStartTime || "")) ? raw.dailyStartTime : "10:00",
     dailyEndTime: /^\d{2}:\d{2}$/.test(String(raw.dailyEndTime || "")) ? raw.dailyEndTime : "13:00",
-    dailyCapacity: Math.max(1, Math.min(4, Number(raw.dailyCapacity) || 4)),
-    maxBookingMonths: 6,
+    dailyCapacity: Math.max(1, Math.min(4, Number(raw.dailyCapacity) || maxParticipants)),
+    maxBookingMonths: Math.max(1, Math.min(6, Number(raw.maxBookingMonths) || 6)),
     attendeePrices: {
       1: Math.max(0, Number(prices[1]) || 120000),
       2: Math.max(0, Number(prices[2]) || 200000),
       3: Math.max(0, Number(prices[3]) || 270000),
       4: Math.max(0, Number(prices[4]) || 300000),
     },
+    priceTiers: {
+      1: Math.max(0, Number(prices[1]) || 120000),
+      2: Math.max(0, Number(prices[2]) || 200000),
+      3: Math.max(0, Number(prices[3]) || 270000),
+      4: Math.max(0, Number(prices[4]) || 300000),
+    },
+    fixedPrice: Math.max(0, Number(raw.fixedPrice) || Number(workshop.price) || 0),
+    minParticipants: Math.min(maxParticipants, Math.max(1, Number(raw.minParticipants) || 1)),
+    maxParticipants,
+    paymentDeadlineHours: Math.max(1, Number(raw.paymentDeadlineHours) || 48),
   };
 }
 
-function applyBookingModeUi(mode = "scheduled") {
-  const isDaily = mode === "daily";
+function applyBookingModeUi(type = "event") {
+  const isDaily = normalizeWorkshopType(type) === "daily";
   for (const element of dom.dailyConfig) element.hidden = !isDaily;
   for (const element of dom.scheduledConfig) element.hidden = isDaily;
 }
@@ -342,6 +385,7 @@ function getSelectedContentItem() {
 
 function applySnapshotPayload(payload) {
   state.reservations = Array.isArray(payload?.reservations) ? payload.reservations : [];
+  state.groups = Array.isArray(payload?.groups) ? payload.groups : [];
   state.blocks = Array.isArray(payload?.blocks) ? payload.blocks : [];
   state.workshops = Array.isArray(payload?.workshops) ? payload.workshops : [];
   state.contentItems = Array.isArray(payload?.contentItems) ? payload.contentItems : [];
@@ -377,7 +421,7 @@ function applyAccessState() {
 }
 
 function applyUiMode() {
-  const mode = state.uiMode === "reservations" || state.uiMode === "blocked-dates" ? state.uiMode : "workshops";
+  const mode = ADMIN_MODES.includes(state.uiMode) ? state.uiMode : "workshops";
   const unlocked = Boolean(state.isAuthorized && state.accessToken);
 
   for (const section of dom.modeSections || []) {
@@ -396,13 +440,33 @@ function applyUiMode() {
       ? "워크숍 신규 등록, 포스터/상세 이미지 업로드, 세션 편집을 관리합니다."
       : mode === "reservations"
         ? "예약 조회/취소와 신청자 정보를 관리합니다."
+        : mode === "groups"
+          ? "날짜 신청형 워크숍의 그룹 모집과 결제 요청을 관리합니다."
         : "전역 날짜 차단과 해제를 관리합니다.";
   }
 }
 
-function setUiMode(mode) {
-  state.uiMode = ["workshops", "reservations", "blocked-dates"].includes(mode) ? mode : "workshops";
+function getUiModeFromHash() {
+  const mode = String(window.location.hash || "").replace(/^#/, "").trim();
+  return ADMIN_MODES.includes(mode) ? mode : "workshops";
+}
+
+function syncUiModeHash(mode, { replace = false } = {}) {
+  const hash = `#${mode}`;
+  if (window.location.hash === hash) return;
+
+  const url = `${window.location.pathname}${window.location.search}${hash}`;
+  if (replace) {
+    window.history.replaceState(null, "", url);
+  } else {
+    window.history.pushState(null, "", url);
+  }
+}
+
+function setUiMode(mode, { syncHash = true } = {}) {
+  state.uiMode = ADMIN_MODES.includes(mode) ? mode : "workshops";
   applyUiMode();
+  if (syncHash) syncUiModeHash(state.uiMode);
 }
 
 function getAuthHeaders(includeJson = false) {
@@ -517,11 +581,42 @@ function renderReservations() {
       <button type="button" class="fulfillment-order-card${activeClass}" data-reservation-id="${escapeHtml(reservation.reservationId)}">
         <div class="fulfillment-order-card__top">
           <strong>${escapeHtml(reservation.workshopTitle || reservation.workshopSlug || "워크숍")}</strong>
-          <span>${escapeHtml(reservation.status === "cancelled" ? "취소" : "확정")}</span>
+          <span>${escapeHtml(reservation.statusLabel || reservation.status || "확정")}</span>
         </div>
         <p class="fulfillment-order-card__meta">${escapeHtml(reservation.fullName || "예약자")} · ${escapeHtml(reservation.email || "")}</p>
         <p class="fulfillment-order-card__meta">${escapeHtml(reservation.slotDate || "")} · ${escapeHtml([reservation.slotStartTime, reservation.slotEndTime].filter(Boolean).join(" - ") || reservation.slotLabel || "")}</p>
       </button>
+    `;
+  }).join("");
+}
+
+function renderGroups() {
+  if (!dom.groupList) return;
+
+  if (!state.groups.length) {
+    dom.groupList.innerHTML = '<div class="fulfillment-empty">현재 모집 중이거나 최근 종료된 그룹이 없습니다.</div>';
+    return;
+  }
+
+  dom.groupList.innerHTML = state.groups.map((group) => {
+    const canFinalize = group.status === "open";
+    const canSendPayment = group.status === "finalized" && Number(group.paymentDueParticipants || 0) > 0;
+    const canCancel = group.status === "open" || group.status === "finalized";
+    return `
+      <article class="fulfillment-order-card">
+        <div class="fulfillment-order-card__top">
+          <strong>${escapeHtml(group.workshopTitle || group.workshopSlug || "워크숍")}</strong>
+          <span>${escapeHtml(group.statusLabel || group.status || "모집 중")}</span>
+        </div>
+        <p class="fulfillment-order-card__meta">${escapeHtml(group.requestedDate || "날짜 미정")} · ${escapeHtml(group.groupMode === "private" ? "우리 팀" : "공개 모집")}</p>
+        <p class="fulfillment-order-card__meta">${escapeHtml(group.currentParticipants || 0)} / ${escapeHtml(group.maxParticipants || 0)}명 · 결제 완료 ${escapeHtml(group.paidParticipants || 0)}명</p>
+        <p class="fulfillment-order-card__meta">${group.finalAmount > 0 ? `최종 그룹 총액 ${escapeHtml(formatCurrency(group.finalAmount))}` : "최종 금액 미확정"}${group.paymentDeadlineAt ? ` · 결제 기한 ${escapeHtml(formatDate(group.paymentDeadlineAt))}` : ""}</p>
+        <div class="fulfillment-actions">
+          ${canFinalize ? `<button type="button" class="fulfillment-btn" data-group-action="finalize" data-group-id="${escapeHtml(group.groupId)}">그룹 마감</button>` : ""}
+          ${canSendPayment ? `<button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-group-action="send-payment" data-group-id="${escapeHtml(group.groupId)}">결제 요청</button>` : ""}
+          ${canCancel ? `<button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-group-action="cancel" data-group-id="${escapeHtml(group.groupId)}">그룹 취소</button>` : ""}
+        </div>
+      </article>
     `;
   }).join("");
 }
@@ -561,7 +656,7 @@ function renderDetail() {
       </div>
       <div>
         <p class="fulfillment-summary__kicker">상태</p>
-        <strong>${escapeHtml(reservation.status === "cancelled" ? "취소" : "확정")}</strong>
+        <strong>${escapeHtml(reservation.statusLabel || reservation.status || "확정")}</strong>
       </div>
       <div>
         <p class="fulfillment-summary__kicker">예약일</p>
@@ -577,6 +672,8 @@ function renderDetail() {
       <p>${escapeHtml(reservation.phone || "")}</p>
       <p>${escapeHtml(reservation.workshopLocation || "Studio OALUM")}</p>
       <p>${escapeHtml(reservation.attendeeCount || 1)}명 예약</p>
+      <p>예약 유형 · ${escapeHtml(reservation.bookingType || "event")}</p>
+      <p>결제 상태 · ${escapeHtml(reservation.paymentStatus || "not_required")}${reservation.amountDue > 0 ? ` · 결제 예정 ${escapeHtml(formatCurrency(reservation.amountDue))}` : ""}</p>
       ${reservation.note ? `<p class="fulfillment-copy fulfillment-copy--quiet">메모 · ${escapeHtml(reservation.note)}</p>` : ""}
       <p class="fulfillment-copy fulfillment-copy--quiet">생성 시각 · ${escapeHtml(formatDate(reservation.createdAt))}</p>
     </div>
@@ -591,6 +688,9 @@ function renderDetail() {
   }
   if (dom.restoreButton) {
     dom.restoreButton.hidden = reservation.status !== "cancelled";
+  }
+  if (dom.refundButton) {
+    dom.refundButton.hidden = reservation.paymentStatus !== "paid";
   }
 }
 
@@ -799,15 +899,20 @@ function resetContentForm(seed = {}) {
   dom.contentForm.elements.sourceMode.value = workshop.sourceMode || "d1-r2-ready";
 
   const bookingConfig = getBookingConfig(workshop);
-  dom.bookingModeSelect.value = bookingConfig.mode;
+  dom.bookingModeSelect.value = bookingConfig.workshopType;
   dom.contentForm.elements.dailyStartTime.value = bookingConfig.dailyStartTime;
   dom.contentForm.elements.dailyEndTime.value = bookingConfig.dailyEndTime;
   dom.contentForm.elements.dailyCapacity.value = String(bookingConfig.dailyCapacity);
+  dom.contentForm.elements.maxBookingMonths.value = String(bookingConfig.maxBookingMonths);
   dom.contentForm.elements.priceOne.value = String(bookingConfig.attendeePrices[1]);
   dom.contentForm.elements.priceTwo.value = String(bookingConfig.attendeePrices[2]);
   dom.contentForm.elements.priceThree.value = String(bookingConfig.attendeePrices[3]);
   dom.contentForm.elements.priceFour.value = String(bookingConfig.attendeePrices[4]);
-  applyBookingModeUi(bookingConfig.mode);
+  dom.contentForm.elements.fixedPrice.value = String(bookingConfig.fixedPrice);
+  dom.contentForm.elements.minParticipants.value = String(bookingConfig.minParticipants);
+  dom.contentForm.elements.maxParticipants.value = String(bookingConfig.maxParticipants);
+  dom.contentForm.elements.paymentDeadlineHours.value = String(bookingConfig.paymentDeadlineHours);
+  applyBookingModeUi(bookingConfig.workshopType);
 
   setCategoryValue(workshop.category);
 
@@ -892,20 +997,30 @@ function collectWorkshopPayload(statusOverride) {
   }));
 
   const scheduleSlots = collectSlotItems();
-  const bookingMode = String(dom.bookingModeSelect?.value || "scheduled") === "daily" ? "daily" : "scheduled";
+  const workshopType = normalizeWorkshopType(dom.bookingModeSelect?.value);
+  const bookingMode = workshopType === "daily" ? "daily" : "scheduled";
   const attendeePrices = {
     1: Math.max(0, Number(form.elements.priceOne.value || 120000)),
     2: Math.max(0, Number(form.elements.priceTwo.value || 200000)),
     3: Math.max(0, Number(form.elements.priceThree.value || 270000)),
     4: Math.max(0, Number(form.elements.priceFour.value || 300000)),
   };
+  const dailyCapacity = Math.max(1, Math.min(4, Number(form.elements.dailyCapacity.value || 4)));
+  const maxParticipants = Math.max(1, Number(form.elements.maxParticipants.value || 4));
+  const minParticipants = Math.min(maxParticipants, Math.max(1, Number(form.elements.minParticipants.value || 1)));
+  const fixedPrice = Math.max(0, Number(form.elements.fixedPrice.value || 0));
   const bookingConfig = {
+    workshopType,
     mode: bookingMode,
     dailyStartTime: String(form.elements.dailyStartTime.value || "10:00").trim(),
     dailyEndTime: String(form.elements.dailyEndTime.value || "13:00").trim(),
-    dailyCapacity: Math.max(1, Math.min(4, Number(form.elements.dailyCapacity.value || 4))),
-    maxBookingMonths: 6,
+    dailyCapacity,
+    maxBookingMonths: Math.max(1, Math.min(6, Number(form.elements.maxBookingMonths.value || 6))),
     attendeePrices,
+    fixedPrice,
+    minParticipants,
+    maxParticipants,
+    paymentDeadlineHours: Math.max(1, Number(form.elements.paymentDeadlineHours.value || 48)),
   };
 
   return {
@@ -917,10 +1032,10 @@ function collectWorkshopPayload(statusOverride) {
     durationLabel: String(dom.durationSelect?.value || "1시간").trim(),
     levelLabel: difficulty,
     audienceLabel: "",
-    price: bookingMode === "daily" ? attendeePrices[1] : Math.max(0, Number(form.elements.price.value || 0)),
-    maxCapacity: bookingMode === "daily" ? bookingConfig.dailyCapacity : maxCapacity,
-    capacityLabel: (bookingMode === "daily" ? bookingConfig.dailyCapacity : maxCapacity) > 0
-      ? `최대 ${bookingMode === "daily" ? bookingConfig.dailyCapacity : maxCapacity}명`
+    price: workshopType === "daily" ? attendeePrices[1] : fixedPrice,
+    maxCapacity: workshopType === "daily" ? bookingConfig.dailyCapacity : maxCapacity,
+    capacityLabel: (workshopType === "daily" ? bookingConfig.dailyCapacity : maxCapacity) > 0
+      ? `최대 ${workshopType === "daily" ? bookingConfig.dailyCapacity : maxCapacity}명`
       : "",
     summary: String(form.elements.summary.value || "").trim(),
     description: String(form.elements.description.value || "").trim(),
@@ -935,7 +1050,7 @@ function collectWorkshopPayload(statusOverride) {
     posterImageR2Key: primaryImage.r2Key,
     posterImageAlt: primaryImage.caption || title,
     galleryImages,
-    scheduleSlots: bookingMode === "daily" ? [] : scheduleSlots,
+    scheduleSlots: workshopType === "daily" ? [] : scheduleSlots,
     bookingConfig,
     status: statusOverride || current?.status || "draft",
     sourceMode: String(form.elements.sourceMode.value || "d1-r2-ready").trim() || "d1-r2-ready",
@@ -956,6 +1071,7 @@ function renderAll() {
   renderWorkshopOptions();
   syncSelectedReservation();
   renderReservations();
+  renderGroups();
   renderBlocks();
   renderDetail();
   renderContentList();
@@ -970,6 +1086,7 @@ function renderAll() {
 
 function resetUi() {
   state.reservations = [];
+  state.groups = [];
   state.blocks = [];
   state.workshops = [];
   state.contentItems = [];
@@ -981,6 +1098,7 @@ function resetUi() {
   renderAll();
   applyAccessState();
   setStatus(dom.listStatus, "");
+  setStatus(dom.groupStatus, "");
   setStatus(dom.blockStatus, "");
   setStatus(dom.detailStatus, "");
   setStatus(dom.contentListStatus, "");
@@ -1066,16 +1184,28 @@ async function saveWorkshopContent(nextStatus, button) {
   }
 
   if (nextStatus === "published") {
-    if (workshop.bookingConfig.mode === "scheduled" && !workshop.scheduleSlots.length) {
-      focusWorkshopField(dom.slotList?.querySelector('[name="slotDate"]'), "다회성 워크숍은 최소 1개의 날짜와 시작 시간을 입력해주세요.");
+    if (workshop.bookingConfig.workshopType === "event" && workshop.scheduleSlots.length !== 1) {
+      focusWorkshopField(dom.slotList?.querySelector('[name="slotDate"]'), "일일 워크샵 이벤트는 날짜와 시작 시간이 있는 세션을 정확히 1개 입력해주세요.");
       return null;
     }
-    if (workshop.bookingConfig.mode === "daily" && workshop.bookingConfig.dailyStartTime >= workshop.bookingConfig.dailyEndTime) {
-      focusWorkshopField("dailyEndTime", "일일 클래스의 종료 시간은 시작 시간보다 늦어야 합니다.");
+    if (workshop.bookingConfig.workshopType === "multiSession" && workshop.scheduleSlots.length < 2) {
+      focusWorkshopField(dom.slotList?.querySelector('[name="slotDate"]'), "다회차 워크샵은 날짜와 시작 시간이 있는 세션을 2개 이상 입력해주세요.");
       return null;
     }
-    if (workshop.bookingConfig.mode === "daily" && workshop.bookingConfig.attendeePrices[1] <= 0) {
-      focusWorkshopField("priceOne", "일일 클래스의 1인 참가비를 입력해주세요.");
+    if (workshop.bookingConfig.workshopType === "daily" && workshop.bookingConfig.dailyStartTime >= workshop.bookingConfig.dailyEndTime) {
+      focusWorkshopField("dailyEndTime", "날짜 신청형 워크숍의 종료 시간은 시작 시간보다 늦어야 합니다.");
+      return null;
+    }
+    if (workshop.bookingConfig.minParticipants > workshop.bookingConfig.maxParticipants) {
+      focusWorkshopField("minParticipants", "최소 모집 인원은 최대 모집 인원보다 클 수 없습니다.");
+      return null;
+    }
+    if (workshop.bookingConfig.workshopType === "daily" && Object.values(workshop.bookingConfig.attendeePrices).some((price) => price <= 0)) {
+      focusWorkshopField("priceOne", "일일 워크샵의 1~4인 가격을 모두 입력해주세요.");
+      return null;
+    }
+    if (workshop.bookingConfig.workshopType !== "daily" && workshop.bookingConfig.fixedPrice <= 0) {
+      focusWorkshopField("fixedPrice", "확정형 또는 다회차 워크숍의 고정 가격을 입력해주세요.");
       return null;
     }
     if (!workshop.posterImageUrl && !workshop.posterImageR2Key) {
@@ -1273,12 +1403,28 @@ function attachEvents() {
     loadSnapshot({ query: "", status: "all" });
   });
 
+  dom.groupRefreshButton?.addEventListener("click", () => {
+    loadSnapshot({ query: String(dom.searchInput?.value || ""), status: String(dom.statusFilter?.value || "all") });
+  });
+
   dom.modeButtons.forEach((button) => {
     button.addEventListener("click", () => {
       if (!confirmDiscardUnsavedChanges()) return;
       setUiMode(String(button.dataset.mode || "workshops"));
     });
   });
+
+  const syncModeFromLocation = () => {
+    const nextMode = getUiModeFromHash();
+    if (nextMode === state.uiMode) return;
+    if (!confirmDiscardUnsavedChanges()) {
+      syncUiModeHash(state.uiMode, { replace: true });
+      return;
+    }
+    setUiMode(nextMode, { syncHash: false });
+  };
+  window.addEventListener("hashchange", syncModeFromLocation);
+  window.addEventListener("popstate", syncModeFromLocation);
 
   dom.reservationWorkshopFilter?.addEventListener("change", () => {
     state.reservationWorkshopFilter = String(dom.reservationWorkshopFilter.value || "all");
@@ -1357,6 +1503,53 @@ function attachEvents() {
       successMessage: "예약을 다시 확정 상태로 되돌렸습니다.",
       loadingButton: dom.restoreButton,
       loadingText: "복원 중…",
+    });
+  });
+
+  dom.refundButton?.addEventListener("click", async () => {
+    const reservation = getSelectedReservation();
+    if (!reservation || reservation.paymentStatus !== "paid") return;
+    if (!window.confirm("이 워크숍 결제를 전액 환불하고 신청을 취소할까요?")) return;
+
+    await submitAdminAction({
+      action: "refundWorkshopPayment",
+      reservationId: reservation.reservationId,
+    }, {
+      successTarget: dom.detailStatus,
+      successMessage: "워크숍 결제를 환불 처리했습니다.",
+      loadingButton: dom.refundButton,
+      loadingText: "환불 중…",
+    });
+  });
+
+  dom.groupList?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-group-action]");
+    if (!button) return;
+
+    const groupId = String(button.dataset.groupId || "").trim();
+    const groupAction = String(button.dataset.groupAction || "").trim();
+    if (!groupId || !groupAction) return;
+
+    if (groupAction === "cancel" && !window.confirm("미결제 신청을 취소하고 이 그룹을 종료할까요?")) {
+      return;
+    }
+
+    const action = groupAction === "finalize"
+      ? "finalizeWorkshopGroup"
+      : groupAction === "send-payment"
+        ? "sendWorkshopPaymentRequest"
+        : "cancelWorkshopGroup";
+    const successMessage = groupAction === "finalize"
+      ? "그룹을 마감하고 최종 결제 금액을 계산했습니다."
+      : groupAction === "send-payment"
+        ? "결제 요청을 처리했습니다."
+        : "워크숍 그룹을 취소했습니다.";
+
+    await submitAdminAction({ action, groupId }, {
+      successTarget: dom.groupStatus,
+      successMessage,
+      loadingButton: button,
+      loadingText: groupAction === "finalize" ? "마감 중…" : groupAction === "send-payment" ? "요청 중…" : "취소 중…",
     });
   });
 
@@ -1563,6 +1756,8 @@ function attachEvents() {
   });
 }
 
+state.uiMode = getUiModeFromHash();
+if (!window.location.hash) syncUiModeHash(state.uiMode, { replace: true });
 attachEvents();
 applyAccessState();
 renderWorkshopOptions();

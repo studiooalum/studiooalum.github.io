@@ -1,4 +1,5 @@
 import { errorResponse, json, noContent } from "../../cloudflare/lib/http.js";
+import { isPrivateR2Key } from "../../cloudflare/lib/r2.js";
 
 function buildImageResponse(object) {
   const headers = new Headers();
@@ -27,6 +28,13 @@ export async function onRequestGet(context) {
         ok: false,
         error: "이미지 key가 필요합니다.",
       }, { status: 400 });
+    }
+
+    if (isPrivateR2Key(key)) {
+      return json(context.env, {
+        ok: false,
+        error: "이미지를 찾을 수 없습니다.",
+      }, { status: 404 });
     }
 
     if (!context.env?.OALUM_R2) {

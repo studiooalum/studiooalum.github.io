@@ -101,3 +101,27 @@ export const ARCHIVE_BY_ID_QUERY = `
     }
   }
 `;
+
+export const ARCHIVE_QUERY = `
+  *[_type == "archive"] | order(createdDate desc, _createdAt desc) {
+    _id,
+    title,
+    material,
+    createdDate,
+    size,
+    description,
+    tags,
+    images[]{
+      asset->{
+        _id,
+        url,
+        metadata {
+          dimensions {
+            width,
+            height
+          }
+        }
+      }
+    }
+  }
+`;

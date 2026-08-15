@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260706-01">
-  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260809-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260818-01">
 </head>
 <body class="fulfillment-page newsletter-admin-page">
   <nav class="gnb gnb--account">
@@ -30,6 +30,7 @@
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
             <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
             <a href="./newsletter-admin.html" class="fulfillment-tab is-active" aria-current="page">뉴스레터</a>
+            <a href="./repair-admin.html" class="fulfillment-tab">수선</a>
           </nav>
 
           <h1 class="fulfillment-heading">뉴스레터</h1>
@@ -111,6 +112,23 @@
                 <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" hidden class="js-newsletter-admin-inline-image-input">
                 <button type="button" class="newsletter-admin-tool js-newsletter-admin-inline-image-upload" aria-label="본문 이미지 추가" title="본문 이미지 추가">+</button>
               </div>
+              <div class="newsletter-admin-image-layout js-newsletter-admin-image-layout" aria-label="선택한 이미지 레이아웃" hidden>
+                <div class="newsletter-admin-image-layout__alignment" role="group" aria-label="이미지 정렬">
+                  <button type="button" class="newsletter-admin-tool" data-image-align="left" aria-label="이미지 왼쪽 정렬" title="이미지 왼쪽 정렬">←</button>
+                  <button type="button" class="newsletter-admin-tool" data-image-align="center" aria-label="이미지 가운데 정렬" title="이미지 가운데 정렬">↔</button>
+                  <button type="button" class="newsletter-admin-tool" data-image-align="right" aria-label="이미지 오른쪽 정렬" title="이미지 오른쪽 정렬">→</button>
+                </div>
+                <select class="newsletter-admin-image-layout__select js-newsletter-admin-image-size" aria-label="이미지 크기">
+                  <option value="small">작게</option>
+                  <option value="medium">중간</option>
+                  <option value="large">크게</option>
+                  <option value="full">전체 폭</option>
+                </select>
+                <select class="newsletter-admin-image-layout__select js-newsletter-admin-image-position" aria-label="이미지 위치">
+                  <option value="inline">본문 폭</option>
+                  <option value="breakout">본문 폭 확장</option>
+                </select>
+              </div>
               <div class="newsletter-admin-editor js-newsletter-admin-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="본문을 작성하세요."></div>
             </section>
 
@@ -149,7 +167,7 @@
     <article class="newsletter-admin-preview js-newsletter-admin-preview"></article>
   </dialog>
 
-  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.js?v=20260809-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.js?v=20260818-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
 

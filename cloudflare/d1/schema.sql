@@ -346,6 +346,61 @@ CREATE TABLE IF NOT EXISTS newsletter_posts (
 CREATE INDEX IF NOT EXISTS idx_newsletter_posts_status_published
   ON newsletter_posts(status, published_at DESC, updated_at DESC);
 
+CREATE TABLE IF NOT EXISTS repair_requests (
+  id TEXT PRIMARY KEY,
+  request_number TEXT NOT NULL UNIQUE,
+  customer_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  email_normalized TEXT NOT NULL,
+  phone TEXT NOT NULL DEFAULT '',
+  contact_preference TEXT NOT NULL DEFAULT 'email',
+  preferred_contact TEXT NOT NULL DEFAULT 'email',
+  item_type TEXT NOT NULL DEFAULT '',
+  item_brand TEXT NOT NULL DEFAULT '',
+  item_material TEXT NOT NULL DEFAULT '',
+  item_color TEXT NOT NULL DEFAULT '',
+  repair_details TEXT NOT NULL DEFAULT '',
+  desired_result TEXT NOT NULL DEFAULT '',
+  budget_note TEXT NOT NULL DEFAULT '',
+  desired_completion_date TEXT NOT NULL DEFAULT '',
+  terms_accepted_at TEXT NOT NULL,
+  privacy_consent_at TEXT NOT NULL,
+  archive_consent_at TEXT,
+  marketing_opt_in INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'received',
+  admin_note TEXT NOT NULL DEFAULT '',
+  customer_message TEXT NOT NULL DEFAULT '',
+  quote_amount INTEGER,
+  quoted_at TEXT,
+  accepted_at TEXT,
+  completed_at TEXT,
+  archived_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_repair_requests_status_created
+  ON repair_requests(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_repair_requests_email
+  ON repair_requests(email_normalized, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_repair_requests_archive_candidate
+  ON repair_requests(archive_consent_at, status, completed_at DESC);
+
+CREATE TABLE IF NOT EXISTS repair_request_images (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL,
+  r2_key TEXT NOT NULL UNIQUE,
+  original_filename TEXT NOT NULL DEFAULT '',
+  content_type TEXT NOT NULL DEFAULT '',
+  byte_size INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(request_id) REFERENCES repair_requests(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_repair_request_images_request
+  ON repair_request_images(request_id, sort_order, created_at ASC);
+
 CREATE TABLE IF NOT EXISTS workshop_reservations (
   id TEXT PRIMARY KEY,
   user_id TEXT,
@@ -367,6 +422,20 @@ CREATE TABLE IF NOT EXISTS workshop_reservations (
   note TEXT NOT NULL DEFAULT '',
   workshop_snapshot TEXT NOT NULL DEFAULT '{}',
   slot_snapshot TEXT NOT NULL DEFAULT '{}',
+  group_id TEXT,
+  booking_type TEXT NOT NULL DEFAULT 'event',
+  join_policy TEXT NOT NULL DEFAULT 'private',
+  payment_status TEXT NOT NULL DEFAULT 'pending',
+  requested_amount INTEGER NOT NULL DEFAULT 0,
+  final_amount INTEGER,
+  price_pending INTEGER NOT NULL DEFAULT 0,
+  amount_due INTEGER NOT NULL DEFAULT 0,
+  amount_paid INTEGER NOT NULL DEFAULT 0,
+  payment_order_id TEXT,
+  checkout_token TEXT,
+  price_snapshot TEXT NOT NULL DEFAULT '{}',
+  paid_at TEXT,
+  cancelled_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -376,3 +445,72 @@ CREATE TABLE IF NOT EXISTS workshop_reservations (
 CREATE INDEX IF NOT EXISTS idx_workshop_reservations_user_id ON workshop_reservations(user_id, slot_date DESC, slot_start_time DESC);
 CREATE INDEX IF NOT EXISTS idx_workshop_reservations_email ON workshop_reservations(email_normalized, slot_date DESC, slot_start_time DESC);
 CREATE INDEX IF NOT EXISTS idx_workshop_reservations_slot ON workshop_reservations(slot_key, status);
+CREATE INDEX IF NOT EXISTS idx_workshop_reservations_group ON workshop_reservations(group_id, status, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_workshop_reservations_join_policy ON workshop_reservations(slot_key, join_policy, status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_workshop_reservations_checkout_token ON workshop_reservations(checkout_token) WHERE checkout_token IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS workshop_booking_configs (
+  workshop_slug TEXT PRIMARY KEY,
+  workshop_type TEXT NOT NULL DEFAULT 'event',
+  price_tiers_json TEXT NOT NULL DEFAULT '{}',
+  fixed_price INTEGER NOT NULL DEFAULT 0,
+  min_participants INTEGER NOT NULL DEFAULT 1,
+  max_participants INTEGER NOT NULL DEFAULT 4,
+  payment_deadline_hours INTEGER NOT NULL DEFAULT 48,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(workshop_slug) REFERENCES workshops(slug) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS workshop_groups (
+  id TEXT PRIMARY KEY,
+  workshop_slug TEXT NOT NULL,
+  requested_date TEXT NOT NULL,
+  group_mode TEXT NOT NULL DEFAULT 'open',
+  status TEXT NOT NULL DEFAULT 'open',
+  current_participants INTEGER NOT NULL DEFAULT 0,
+  max_participants INTEGER NOT NULL DEFAULT 4,
+  final_participants INTEGER,
+  price_snapshot TEXT NOT NULL DEFAULT '{}',
+  payment_deadline_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(workshop_slug) REFERENCES workshops(slug) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_workshop_groups_date_status ON workshop_groups(workshop_slug, requested_date, status, created_at ASC);
+
+CREATE TABLE IF NOT EXISTS workshop_payment_orders (
+  id TEXT PRIMARY KEY,
+  reservation_id TEXT NOT NULL,
+  workshop_slug TEXT NOT NULL,
+  order_id TEXT NOT NULL UNIQUE,
+  amount INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'KRW',
+  status TEXT NOT NULL DEFAULT 'pending',
+  payment_key TEXT,
+  provider TEXT NOT NULL DEFAULT 'toss',
+  provider_status TEXT NOT NULL DEFAULT '',
+  checkout_expires_at TEXT NOT NULL,
+  paid_at TEXT,
+  cancelled_at TEXT,
+  raw_response TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(reservation_id) REFERENCES workshop_reservations(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_workshop_payment_orders_reservation ON workshop_payment_orders(reservation_id, status, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS workshop_schedule_blocks (
+  id TEXT PRIMARY KEY,
+  workshop_slug TEXT NOT NULL,
+  workshop_title TEXT NOT NULL DEFAULT '',
+  slot_date TEXT NOT NULL,
+  reason TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(workshop_slug, slot_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_workshop_schedule_blocks_slug_date ON workshop_schedule_blocks(workshop_slug, slot_date);

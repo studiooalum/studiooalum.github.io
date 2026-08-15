@@ -42,87 +42,26 @@ export const PRODUCT_BY_SLUG_QUERY = `
   }
 `;
 
-/** Fetch published workshops for the live workshops page */
-export const ALL_WORKSHOPS_QUERY = `
-  *[_type == "workshop"] | order(_createdAt desc, title asc) {
+export const ARCHIVE_QUERY = `
+  *[_type == "archive"] | order(createdDate desc, _createdAt desc) {
     _id,
     title,
-    "slug": slug.current,
+    material,
+    createdDate,
+    size,
     description,
-    summary,
-    excerpt,
-    duration,
-    durationLabel,
-    category,
-    workshopCategory,
-    levelLabel,
-    audienceLabel,
-    maxCapacity,
-    capacityLabel,
-    materials,
-    thingsToBring,
-    locationName,
-    locationAddress,
-    locationDetail,
-    hostName,
-    price,
-    bookingNotice,
-    bookingUrl,
-    externalUrl,
-    link,
-    poster {
-      asset->{url}
-    },
-    posterImage {
-      asset->{url}
-    },
-    mainImage {
-      asset->{url}
-    },
+    tags,
     images[]{
-      asset->{url}
-    }
-  }
-`;
-
-export const WORKSHOP_BY_SLUG_QUERY = `
-  *[_type == "workshop" && slug.current == $slug][0] {
-    _id,
-    title,
-    "slug": slug.current,
-    description,
-    summary,
-    excerpt,
-    duration,
-    durationLabel,
-    category,
-    workshopCategory,
-    levelLabel,
-    audienceLabel,
-    maxCapacity,
-    capacityLabel,
-    materials,
-    thingsToBring,
-    locationName,
-    locationAddress,
-    locationDetail,
-    hostName,
-    price,
-    bookingNotice,
-    bookingUrl,
-    externalUrl,
-    link,
-    poster {
-      asset->{url}
-    },
-    posterImage {
-      asset->{url}
-    },
-    mainImage {
-      asset->{url}
-    },
-    images[]{
-      asset->{url}
+      asset->{
+        _id,
+        url,
+        metadata {
+          dimensions {
+            width,
+            height
+          }
+        }
+      }
     },
     scheduleSlots[]{
       _key,

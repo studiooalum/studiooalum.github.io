@@ -72,6 +72,11 @@
                     </article>
                 </section>
 
+                <section class="workshop-schedule-overview" id="workshopScheduleOverview" hidden>
+                    <h2 class="workshop-fact__title">schedule</h2>
+                    <div class="workshop-schedule-overview__list" id="workshopScheduleOverviewList"></div>
+                </section>
+
                 <div class="workshop-cta-row">
                     <button class="workshop-apply-btn" id="workshopApplyBtn" type="button">신청하기</button>
                     <p class="workshop-note" id="workshopNotice"></p>
@@ -94,7 +99,7 @@
                         <button class="workshop-rail__close" id="workshopRailClose" type="button" aria-label="예약 패널 닫기"></button>
                     </div>
 
-                    <section class="workshop-calendar-shell">
+                    <section class="workshop-calendar-shell" id="workshopCalendarShell">
                         <div class="workshop-calendar__summary">
                             <div class="workshop-calendar__summary-meta">
                                 <span class="workshop-calendar__month" id="calendarMonth">00</span>
@@ -109,7 +114,7 @@
                         <div class="workshop-calendar" id="workshopCalendar"></div>
                     </section>
 
-                    <section class="workshop-slots">
+                    <section class="workshop-slots" id="workshopSlotsSection">
                         <div class="workshop-slots__header">
                             <h2 class="workshop-slots__title">시간 선택</h2>
                             <p class="workshop-slots__date" id="workshopSelectedDate">날짜를 선택해 주세요.</p>
@@ -118,6 +123,20 @@
                     </section>
 
                     <form class="workshop-booking-form" id="workshopBookingForm">
+                        <div id="bookingJoinPolicyField" hidden>
+                            <label class="workshop-booking-form__check">
+                                <input
+                                    type="checkbox"
+                                    id="bookingAllowAdditionalAttendees"
+                                    name="allowAdditionalAttendees">
+                                <span>다른 참가자의 추가 참여를 허용합니다.</span>
+                            </label>
+                            <p class="workshop-booking-form__notice">
+                                추가 참여를 허용하면 신청한 일행 외 다른 참가자가 같은 날짜에 함께 참여할 수 있습니다.
+                                최종 인원이 확정된 뒤 참가비를 안내합니다.
+                                정원이 차면 모집이 종료됩니다.
+                            </p>
+                        </div>
                         <label class="workshop-booking-form__field">
                             <span>인원</span>
                             <select id="bookingAttendeeCount" name="attendeeCount" required></select>
@@ -180,7 +199,7 @@ studio.oalum@gmail.com</p>
         </footer>
     </main>
 
-    <script type="module" src="./runtime/storefront/scripts/workshop-20260809-02.js"></script>
+    <script type="module" src="./runtime/storefront/scripts/workshop-20260809-03.js"></script>
     <script type="module">
         import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";

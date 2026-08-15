@@ -67,6 +67,7 @@ npm run web:dev
 필수 또는 권장 환경 변수:
 
 - `OALUM_DB`: Cloudflare Pages D1 binding
+- `OALUM_R2`: Workshop/Newsletter 공개 이미지와 Repair 비공개 원본 이미지를 위한 Cloudflare R2 binding
 - `AUTH_SECRET`: 세션 및 비밀번호 기반 인증 해시에 쓰는 시크릿 문자열 권장
 - `AUTH_COOKIE_INSECURE=true`: 로컬 HTTP 개발 환경에서만 필요할 수 있음
 - `RESEND_API_KEY`, `RESEND_FROM_EMAIL`: 비밀번호 찾기 이메일 인증과 기존 이메일 코드 플로우에 필요
@@ -107,6 +108,8 @@ OAuth 제공자에 등록할 callback URL 패턴은 소셜 로그인을 다시 �
 - `archive/legacy/`는 더 이상 루트 사이트가 직접 사용하지 않는 이전 HTML 셸을 보관합니다.
 - 현재 Workshop 운영은 Sanity 편집면 대신 `workshop-admin.html` + `functions/api/workshops/*` + D1 `workshops` 테이블 기준으로 이동했습니다. 포스터/후기 이미지는 우선 URL 또는 R2 key 메타를 저장하고, 실제 업로드 바인딩은 이후 R2 연결 시 붙입니다.
 - 현재 Shop과 Archive는 계속 Sanity를 읽고, Newsletter와 Workshop은 자체 admin + D1(+ 추후 R2) 방향을 우선합니다.
+- Repair Studio는 `repair.html`의 공개 multipart 접수와 `repair-admin.html`의 인증된 운영 화면으로 구성됩니다. 접수 원본은 R2 `repairs/` 접두사에만 저장하고, 공개 `/api/r2` 경로에서는 해당 접두사를 절대 서빙하지 않습니다.
+- Repair를 운영하려면 D1 마이그레이션 `cloudflare/d1/migrations/0013_repair_requests.sql`을 적용해야 합니다. 관리자 원본 조회는 `ORDER_ADMIN_SECRET`로 만든 짧은 관리자 세션이 필요합니다.
 
 ## Planning Docs
 
@@ -119,6 +122,7 @@ OAuth 제공자에 등록할 callback URL 패턴은 소셜 로그인을 다시 �
 - `docs/apps-web-deploy.md`: `apps/web` 기반 확장 경로
 - `docs/commerce-schema.sql`: 주문/결제 스키마 초안
 - `docs/workshop-d1-admin.md`: Workshop D1/admin/R2-ready 운영 메모
+- `docs/repair-studio.md`: Repair Studio D1/R2 보안 경계와 운영 절차
 
 ## Next Step
 

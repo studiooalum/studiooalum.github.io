@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repair Studio | Studio OALUM</title>
+  <meta name="description" content="Studio OALUM Repair Studio에 수선 상담을 접수하세요. 사진과 수선 내용을 검토한 뒤 안내드립니다.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://studiooalum.com/repair">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:site_name" content="Studio OALUM">
+  <meta property="og:title" content="Repair Studio | Studio OALUM">
+  <meta property="og:description" content="사진과 수선 내용을 남겨주시면 Studio OALUM이 검토 후 안내드립니다.">
+  <meta property="og:url" content="https://studiooalum.com/repair">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair.css?v=20260818-01">
+</head>
+<body class="repair-page">
+  <nav class="gnb gnb--repair">
+    <a href="index.html" class="gnb__back">← Home</a>
+    <span class="gnb__title">Repair Studio</span>
+  </nav>
+
+  <main class="repair-main">
+    <section class="repair-stage" aria-labelledby="repair-title">
+      <section class="repair-stage__visual">
+        <figure class="repair-hero-image">
+          <img src="./로고.png" alt="Studio OALUM Repair Studio">
+        </figure>
+        <header class="repair-hero-copy">
+          <p class="repair-kicker">Studio OALUM Repair Studio</p>
+          <h1 id="repair-title">Repair Studio</h1>
+        </header>
+      </section>
+
+      <section class="repair-stage__content">
+        <div class="repair-body-copy">
+          <p>스튜디오 오알룸은 2020년부터 수선을 해왔습니다.</p>
+          <p>망가진 것을 다시 쓰게 만들고, 오래된 물건이 가진 시간을 이어갑니다.</p>
+          <p>모든 수선은 물건의 상태와 소재를 확인한 뒤 가능한 방법과 비용을 안내합니다. 사진을 보내주시면 먼저 수선 가능 여부를 검토하겠습니다.</p>
+        </div>
+        <button type="button" class="repair-apply-btn" id="repairApplyBtn">신청하기</button>
+      </section>
+
+      <aside class="repair-stage__rail" aria-hidden="true"></aside>
+    </section>
+  </main>
+
+  <aside class="repair-request-rail" id="repairRequestRail" aria-hidden="true" inert>
+    <button class="repair-request-rail__backdrop" id="repairRequestBackdrop" type="button" aria-label="신청 패널 닫기"></button>
+    <div class="repair-request-rail__panel" role="dialog" aria-modal="true" aria-labelledby="repairRequestTitle">
+      <header class="repair-request-rail__header">
+        <div>
+          <p class="repair-kicker">Request</p>
+          <h2 id="repairRequestTitle">수선 신청</h2>
+        </div>
+        <button type="button" class="repair-request-rail__close" id="repairRequestClose" aria-label="신청 패널 닫기">×</button>
+      </header>
+
+      <div class="repair-request-rail__body">
+        <p class="repair-request-rail__notice">수선 사례 공개 동의는 선택사항이며, 동의하지 않아도 수선 신청에는 영향을 주지 않습니다.</p>
+
+        <form class="repair-request-form js-repair-form" id="repairRequestForm" enctype="multipart/form-data" novalidate>
+          <div class="repair-honeypot" aria-hidden="true">
+            <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+          </div>
+
+          <section class="repair-request-form__section">
+            <h3>연락처</h3>
+            <div class="repair-request-form__grid repair-request-form__grid--two">
+              <label class="repair-field">
+                <span>이름</span>
+                <input type="text" name="customerName" autocomplete="name" maxlength="120" required>
+              </label>
+              <label class="repair-field">
+                <span>선호 연락 방법</span>
+                <select name="preferredContact">
+                  <option value="email">이메일</option>
+                  <option value="phone">전화 또는 문자</option>
+                </select>
+              </label>
+              <label class="repair-field">
+                <span>이메일</span>
+                <input type="email" name="email" autocomplete="email" maxlength="320" required>
+              </label>
+              <label class="repair-field">
+                <span>연락처</span>
+                <input type="tel" name="phone" autocomplete="tel" maxlength="60" placeholder="010-0000-0000" required>
+              </label>
+            </div>
+          </section>
+
+          <section class="repair-request-form__section">
+            <h3>물건과 요청</h3>
+            <div class="repair-request-form__grid repair-request-form__grid--two">
+              <label class="repair-field">
+                <span>물건 종류</span>
+                <select name="itemType" required>
+                  <option value="">선택해주세요</option>
+                  <option value="의류">의류</option>
+                  <option value="가방">가방</option>
+                  <option value="신발">신발</option>
+                  <option value="액세서리">액세서리</option>
+                  <option value="기타">기타</option>
+                </select>
+              </label>
+              <label class="repair-field">
+                <span>소재</span>
+                <input type="text" name="material" maxlength="120" placeholder="예: 면, 가죽, 니트" required>
+              </label>
+              <label class="repair-field repair-field--full">
+                <span>수선이 필요한 부분</span>
+                <textarea name="issueDescription" rows="5" maxlength="4000" placeholder="손상 부위와 현재 상태를 가능한 자세히 적어주세요." required></textarea>
+              </label>
+              <label class="repair-field repair-field--full">
+                <span>원하는 결과</span>
+                <textarea name="desiredResult" rows="4" maxlength="2000" placeholder="원하는 수선 방식이나 사용하면서 불편한 점을 적어주세요." required></textarea>
+              </label>
+              <label class="repair-field repair-field--full">
+                <span>예산 메모 <em>선택</em></span>
+                <input type="text" name="budgetNote" maxlength="1000" placeholder="예: 가능 범위의 견적을 먼저 안내받고 싶습니다.">
+              </label>
+            </div>
+          </section>
+
+          <section class="repair-request-form__section repair-request-form__section--images">
+            <div class="repair-image-upload__head">
+              <div>
+                <h3>검토 사진</h3>
+                <p>전체 모습과 수선이 필요한 부위가 보이도록 촬영해주세요.</p>
+              </div>
+              <label class="repair-image-picker">
+                <span>사진 선택</span>
+                <input class="js-repair-image-input" type="file" name="images" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+              </label>
+            </div>
+            <div class="repair-image-preview-list js-repair-image-preview-list" aria-live="polite"></div>
+            <p class="repair-image-help js-repair-image-help">사진을 1장 이상 첨부해주세요. 최대 4장, 장당 8MB까지 가능합니다.</p>
+          </section>
+
+          <section class="repair-request-form__section repair-request-form__consent">
+            <label class="repair-checkbox">
+              <input type="checkbox" name="privacyConsent" required>
+              <span>수선 검토를 위해 입력한 연락처와 사진을 수집·이용하는 것에 동의합니다.</span>
+            </label>
+            <label class="repair-checkbox">
+              <input type="checkbox" name="archiveConsent">
+              <span>수선 완료 후 익명화한 사례를 Studio OALUM Archive에 공개하는 데 동의합니다. <em>선택</em></span>
+            </label>
+          </section>
+
+          <div class="repair-request-form__submit">
+            <button type="submit" class="repair-submit js-repair-submit">수선 접수하기</button>
+            <p class="repair-form__status js-repair-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+
+        <section class="repair-request-success js-repair-success" hidden aria-live="polite">
+          <p class="repair-kicker">Submitted</p>
+          <h2>접수가 완료되었습니다.</h2>
+          <p class="js-repair-success-copy"></p>
+          <button type="button" class="repair-success__reset js-repair-reset">새 수선 접수</button>
+        </section>
+      </div>
+    </div>
+  </aside>
+
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
+    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
+    import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair.js?v=20260818-01";
+
+    initSiteChrome();
+    initCartUI();
+    initSiteFooter();
+    initRepairRequest();
+  </script>
+</body>
+</html>

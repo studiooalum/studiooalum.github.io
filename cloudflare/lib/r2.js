@@ -23,6 +23,10 @@ function extensionFromName(fileName = "") {
   return match ? match[0].toLowerCase() : "";
 }
 
+export function isPrivateR2Key(key) {
+  return String(key || "").trim().startsWith("repairs/");
+}
+
 export function buildWorkshopImageKey({ slug = "draft-workshop", target = "image", fileName = "", fileType = "" } = {}) {
   const slugSegment = sanitizeSegment(slug, "draft-workshop");
   const targetSegment = sanitizeSegment(target, "image");
@@ -45,4 +49,12 @@ export function buildNewsletterImageKey({ slug = "draft-newsletter", target = "i
 
 export function buildNewsletterImageUrl(key) {
   return `/api/r2?key=${encodeURIComponent(String(key || "").trim())}`;
+}
+
+export function buildRepairImageKey({ requestId = "request", imageId = "image", fileName = "", fileType = "" } = {}) {
+  const requestSegment = sanitizeSegment(requestId, "request");
+  const imageSegment = sanitizeSegment(imageId, "image");
+  const nameSegment = sanitizeSegment(String(fileName || "").replace(/\.[a-z0-9]+$/i, ""), "upload");
+  const extension = extensionFromName(fileName) || extensionFromType(fileType);
+  return `repairs/${requestSegment}/${imageSegment}-${Date.now()}-${nameSegment}${extension}`;
 }

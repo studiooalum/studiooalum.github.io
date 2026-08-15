@@ -1,8 +1,5 @@
-import client from "./sanity/client.js?v=20260520-03";
 import { imageUrl } from "./sanity/image.js";
-import { WORKSHOP_BY_SLUG_QUERY } from "./sanity/queries.js";
 import {
-  findFallbackWorkshopBySlug,
   getWorkshopPoster,
   getWorkshopShortDescription,
   getWorkshopSlug,
@@ -818,21 +815,7 @@ async function loadWorkshop() {
       return payload.workshop;
     }
   } catch (error) {
-    console.warn("Workshop availability API is not available; falling back to public Sanity query.", error);
-  }
-
-  try {
-    const workshop = await client.fetch(WORKSHOP_BY_SLUG_QUERY, { slug });
-    if (workshop) {
-      return normalizeWorkshop(workshop);
-    }
-  } catch (error) {
-    console.error("Failed to fetch workshop detail", error);
-  }
-
-  const fallback = findFallbackWorkshopBySlug(slug);
-  if (fallback) {
-    return normalizeWorkshop(fallback);
+    throw new Error(error.message || "워크샵 정보를 불러오지 못했습니다.");
   }
 
   throw new Error("워크숍 정보를 찾을 수 없습니다.");

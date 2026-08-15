@@ -181,6 +181,22 @@
   border-top: 1px solid rgba(17, 17, 17, 0.12);
 }
 
+.workshop-schedule-overview,
+.workshop-schedule-overview__list {
+  display: grid;
+  gap: 10px;
+}
+
+.workshop-schedule-overview {
+  padding-top: 18px;
+  border-top: 1px solid rgba(17, 17, 17, 0.12);
+}
+
+.workshop-schedule-overview .workshop-schedule-item.is-blocked {
+  color: rgba(17, 17, 17, 0.48);
+  text-decoration: line-through;
+}
+
 .workshop-gallery {
   display: grid;
   gap: 14px;
@@ -501,6 +517,16 @@ body.workshop-booking-open .workshop-rail__panel {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.workshop-schedule-item {
+  margin: 0;
+  border: 1px solid rgba(17, 17, 17, 0.6);
+  padding: 10px 12px;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: var(--tracking-korean);
+}
+
 .workshop-slot-btn {
   display: inline-flex;
   align-items: center;
@@ -531,6 +557,33 @@ body.workshop-booking-open .workshop-rail__panel {
 .workshop-booking-form__field {
   display: grid;
   gap: 6px;
+}
+
+.workshop-booking-form__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: var(--tracking-korean);
+  cursor: pointer;
+}
+
+.workshop-booking-form__check input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #111;
+}
+
+.workshop-booking-form__notice {
+  margin: 8px 0 0 24px;
+  color: rgba(17, 17, 17, 0.72);
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.55;
+  letter-spacing: var(--tracking-korean);
 }
 
 .workshop-booking-form__field span {

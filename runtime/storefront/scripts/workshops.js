@@ -1,9 +1,6 @@
-import client from "./sanity/client.js?v=20260520-03";
 import { imageUrl } from "./sanity/image.js";
-import { ALL_WORKSHOPS_QUERY } from "./sanity/queries.js";
 import {
   WORKSHOP_CATEGORIES,
-  getFallbackWorkshops,
   getWorkshopLevelLabel,
   getWorkshopPoster as resolveWorkshopPoster,
   normalizeWorkshop,
@@ -126,10 +123,9 @@ function createWorkshopCard(workshop, { isSample = false } = {}) {
 }
 
 function renderWorkshops(workshops) {
-  const items = (Array.isArray(workshops) && workshops.length > 0
+  const items = Array.isArray(workshops)
     ? workshops.map((workshop) => ({ workshop: normalizeWorkshop(workshop), isSample: false }))
-    : getFallbackWorkshops().map((workshop) => ({ workshop: normalizeWorkshop(workshop), isSample: true }))
-  );
+    : [];
   const filtered = activeCategory === "all"
     ? items
     : items.filter(({ workshop }) => getWorkshopCategory(workshop) === activeCategory);
@@ -137,7 +133,7 @@ function renderWorkshops(workshops) {
   gridEl.innerHTML = "";
 
   if (filtered.length === 0) {
-    gridEl.innerHTML = '<p class="workshops-state">등록된 워크숍이 없습니다.</p>';
+    gridEl.innerHTML = '<p class="workshops-state">현재 진행중인 워크샵이 없습니다.</p>';
     return;
   }
 
@@ -148,30 +144,23 @@ function renderWorkshops(workshops) {
 
 async function init() {
   renderTags();
-  gridEl.innerHTML = '<p class="workshops-state">Loading workshops...</p>';
+  gridEl.innerHTML = '<p class="workshops-state">워크샵을 불러오는 중입니다.</p>';
 
   try {
-    try {
-      const response = await fetch("./api/workshops/catalog", {
-        headers: {
-          Accept: "application/json",
-        },
-        credentials: "same-origin",
-      });
-      const payload = await response.json().catch(() => null);
-      if (response.ok && payload?.ok && Array.isArray(payload.workshops)) {
-        renderWorkshops(payload.workshops);
-        return;
-      }
-    } catch (error) {
-      console.warn("Workshop catalog API is unavailable; falling back to public Sanity query.", error);
+    const response = await fetch("./api/workshops/catalog", {
+      headers: {
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok || !Array.isArray(payload.workshops)) {
+      throw new Error(payload?.error || "워크샵 목록을 불러오지 못했습니다.");
     }
-
-    const workshops = await client.fetch(ALL_WORKSHOPS_QUERY);
-    renderWorkshops(workshops);
+    renderWorkshops(payload.workshops);
   } catch (error) {
     console.error("Failed to fetch workshops", error);
-    renderWorkshops(getFallbackWorkshops());
+    renderWorkshops([]);
   }
 }
 

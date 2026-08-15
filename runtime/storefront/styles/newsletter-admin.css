@@ -124,6 +124,41 @@
   border-bottom: 1px solid #111;
 }
 
+.newsletter-admin-image-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+  padding: 8px;
+  background: #f7f8f3;
+}
+
+.newsletter-admin-image-layout__alignment {
+  display: inline-flex;
+}
+
+.newsletter-admin-image-layout__alignment .newsletter-admin-tool {
+  margin: 0 -1px 0 0;
+}
+
+.newsletter-admin-image-layout__alignment .newsletter-admin-tool[aria-pressed="true"] {
+  background: #111;
+  color: #fff;
+}
+
+.newsletter-admin-image-layout__select {
+  min-height: 36px;
+  border: 1px solid #111;
+  border-radius: 0;
+  padding: 0 8px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  letter-spacing: var(--tracking-korean);
+}
+
 .newsletter-admin-tool {
   width: 38px;
   height: 36px;
@@ -195,6 +230,44 @@
 .newsletter-admin-editor figure,
 .newsletter-admin-preview figure {
   margin: 28px 0;
+}
+
+.newsletter-admin-editor figure[data-image-align="center"],
+.newsletter-admin-preview figure[data-image-align="center"] {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.newsletter-admin-editor figure[data-image-align="left"],
+.newsletter-admin-preview figure[data-image-align="left"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.newsletter-admin-editor figure[data-image-align="right"],
+.newsletter-admin-preview figure[data-image-align="right"] {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.newsletter-admin-editor figure[data-image-size="small"],
+.newsletter-admin-preview figure[data-image-size="small"] {
+  width: min(48%, 280px);
+}
+
+.newsletter-admin-editor figure[data-image-size="medium"],
+.newsletter-admin-preview figure[data-image-size="medium"] {
+  width: min(68%, 460px);
+}
+
+.newsletter-admin-editor figure[data-image-size="large"],
+.newsletter-admin-preview figure[data-image-size="large"] {
+  width: min(86%, 620px);
+}
+
+.newsletter-admin-editor figure[data-image-size="full"],
+.newsletter-admin-preview figure[data-image-size="full"] {
+  width: 100%;
 }
 
 .newsletter-admin-editor img,
@@ -292,6 +365,15 @@
 .newsletter-admin-preview__excerpt {
   margin: 0 0 28px;
   color: rgba(17, 17, 17, 0.68);
+}
+
+@media (min-width: 760px) {
+  .newsletter-admin-preview figure[data-image-position="breakout"][data-image-size="large"],
+  .newsletter-admin-preview figure[data-image-position="breakout"][data-image-size="full"] {
+    width: 112%;
+    margin-right: -6%;
+    margin-left: -6%;
+  }
 }
 
 @media (min-width: 960px) {

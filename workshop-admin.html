@@ -30,6 +30,7 @@
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
             <a href="./workshop-admin.html" class="fulfillment-tab is-active" aria-current="page">워크숍 예약</a>
             <a href="./newsletter-admin.html" class="fulfillment-tab">뉴스레터</a>
+            <a href="./repair-admin.html" class="fulfillment-tab">수선</a>
           </nav>
 
           <h1 class="fulfillment-heading">워크숍 운영</h1>
@@ -53,6 +54,7 @@
           <nav class="workshop-admin-mode-tabs" role="tablist" aria-label="워크숍 관리 모드">
             <button type="button" class="workshop-admin-mode-tab is-active js-workshop-admin-mode-btn" data-mode="workshops" role="tab" aria-selected="true">워크숍 구성</button>
             <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="reservations" role="tab" aria-selected="false">예약 관리</button>
+            <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="groups" role="tab" aria-selected="false">그룹 모집</button>
             <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="blocked-dates" role="tab" aria-selected="false">차단 일정</button>
           </nav>
         </section>
@@ -137,14 +139,15 @@
                       </label>
                     </div>
                     <label class="fulfillment-field workshop-admin-booking-mode-field">
-                      <span>예약 방식</span>
-                      <select name="bookingMode" class="js-workshop-admin-booking-mode">
-                        <option value="daily">일일 클래스</option>
-                        <option value="scheduled">다회성 워크숍</option>
+                      <span>워크숍 유형</span>
+                      <select name="workshopType" class="js-workshop-admin-booking-mode">
+                        <option value="daily">일일 워크샵</option>
+                        <option value="event">일일 워크샵 이벤트</option>
+                        <option value="multiSession">다회차 워크샵</option>
                       </select>
                     </label>
                     <div class="workshop-admin-booking-config js-workshop-admin-daily-config">
-                      <div class="workshop-admin-grid workshop-admin-grid--three">
+                      <div class="workshop-admin-grid workshop-admin-grid--four">
                         <label class="fulfillment-field">
                           <span>일일 시작 시간</span>
                           <input type="time" name="dailyStartTime" value="10:00">
@@ -154,8 +157,12 @@
                           <input type="time" name="dailyEndTime" value="13:00">
                         </label>
                         <label class="fulfillment-field">
-                          <span>일일 최대 인원</span>
+                          <span>날짜별 최대 인원</span>
                           <input type="number" name="dailyCapacity" min="1" max="4" step="1" value="4">
+                        </label>
+                        <label class="fulfillment-field">
+                          <span>예약 가능 개월 수</span>
+                          <input type="number" name="maxBookingMonths" min="1" max="6" step="1" value="6">
                         </label>
                       </div>
                       <div class="workshop-admin-grid workshop-admin-grid--four">
@@ -164,17 +171,22 @@
                         <label class="fulfillment-field"><span>3인 가격</span><input type="number" name="priceThree" min="0" step="1000" value="270000"></label>
                         <label class="fulfillment-field"><span>4인 가격</span><input type="number" name="priceFour" min="0" step="1000" value="300000"></label>
                       </div>
-                      <label class="fulfillment-toggle">
-                        <input type="checkbox" name="allowSharedBookings">
-                        <span>다른 신청자와 같은 시간에 참여 가능</span>
-                      </label>
-                      <p class="fulfillment-copy">기본값은 한 팀이 예약하면 해당 날짜를 차단합니다. 공유를 허용하면 정원까지 추가 예약을 받습니다.</p>
+                      <p class="fulfillment-copy">일일 워크샵은 신청자가 private 또는 추가 모집을 직접 선택합니다. 추가 모집의 최종 금액은 정원이 차거나 관리자가 마감한 뒤 확정됩니다.</p>
+                    </div>
+                    <div class="workshop-admin-booking-config js-workshop-admin-scheduled-config">
+                      <div class="workshop-admin-grid workshop-admin-grid--four">
+                        <label class="fulfillment-field"><span>고정 가격</span><input type="number" name="fixedPrice" min="0" step="1000" value="0"></label>
+                        <label class="fulfillment-field"><span>최소 모집 인원</span><input type="number" name="minParticipants" min="1" max="100" step="1" value="1"></label>
+                        <label class="fulfillment-field"><span>최대 모집 인원</span><input type="number" name="maxParticipants" min="1" max="100" step="1" value="4"></label>
+                        <label class="fulfillment-field"><span>결제 기한 (시간)</span><input type="number" name="paymentDeadlineHours" min="1" max="720" step="1" value="48"></label>
+                      </div>
+                      <p class="fulfillment-copy">고정형과 다회차는 고정 가격으로 결제하며, 날짜 신청형은 그룹 총액 티어를 사용합니다.</p>
                     </div>
                   </div>
                 </details>
 
                 <details class="workshop-admin-accordion js-workshop-admin-scheduled-config" open>
-                  <summary>다회성 워크숍 일정</summary>
+                  <summary>확정 일정 / 다회차 일정</summary>
                   <div class="workshop-admin-accordion__body">
                     <div class="workshop-admin-section-head">
                       <div>
@@ -320,7 +332,10 @@
               <select class="js-workshop-admin-status-filter">
                 <option value="all">전체</option>
                 <option value="confirmed">확정</option>
+                <option value="waiting_for_group">모집 대기</option>
+                <option value="waiting_for_payment">결제 대기</option>
                 <option value="cancelled">취소</option>
+                <option value="expired">만료</option>
               </select>
             </label>
             <div class="fulfillment-actions fulfillment-actions--compact">
@@ -342,9 +357,24 @@
             <div class="fulfillment-actions js-workshop-admin-detail-actions" hidden>
               <button type="button" class="fulfillment-btn js-workshop-admin-cancel-btn">예약 취소</button>
               <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-restore-btn">취소 복원</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-refund-btn" hidden>결제 환불</button>
             </div>
             <p class="fulfillment-status js-workshop-admin-detail-status" role="status" aria-live="polite"></p>
           </section>
+        </section>
+
+        <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden data-workshop-admin-mode="groups">
+          <div class="workshop-admin-section-head">
+            <div>
+              <h2 class="fulfillment-subheading">그룹 모집 관리</h2>
+              <p class="fulfillment-copy">날짜 신청형 워크숍의 모집 마감, 결제 요청, 취소를 관리합니다.</p>
+            </div>
+            <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-group-refresh-btn">최신</button>
+          </div>
+          <p class="fulfillment-status js-workshop-admin-group-status" role="status" aria-live="polite"></p>
+          <div class="fulfillment-order-list js-workshop-admin-group-list">
+            <div class="fulfillment-empty">그룹 모집 정보를 불러오는 중입니다.</div>
+          </div>
         </section>
 
         <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden data-workshop-admin-mode="blocked-dates">
@@ -372,7 +402,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/workshop-admin-20260809-02.js"></script>
+  <script type="module" src="./runtime/storefront/scripts/workshop-admin-20260809-03.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome.js";
 
