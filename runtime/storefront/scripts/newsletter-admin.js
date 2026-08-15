@@ -443,12 +443,34 @@ function insertHtmlAtSelection(html) {
   markEditorDirty();
 }
 
+function applyTextAlignment(alignment) {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount || !dom.editor?.contains(selection.anchorNode)) {
+    setStatus(dom.status, "정렬할 본문을 먼저 선택해주세요.", "error");
+    return;
+  }
+
+  const node = selection.anchorNode instanceof Element ? selection.anchorNode : selection.anchorNode?.parentElement;
+  const block = node?.closest("p, h2, h3, blockquote, li");
+  if (!block || !dom.editor.contains(block)) {
+    setStatus(dom.status, "문단, 제목 또는 인용문 안에서 정렬을 선택해주세요.", "error");
+    return;
+  }
+
+  block.setAttribute("data-text-align", alignment);
+  saveEditorRange();
+  markEditorDirty();
+}
+
 function applyEditorCommand(command) {
   if (!dom.editor) return;
   dom.editor.focus();
   restoreEditorRange();
 
-  if (command === "h2" || command === "h3") {
+  if (["align-left", "align-center", "align-right"].includes(command)) {
+    applyTextAlignment(command.replace("align-", ""));
+    return;
+  } else if (command === "h2" || command === "h3") {
     document.execCommand("formatBlock", false, command.toUpperCase());
   } else if (command === "quote") {
     document.execCommand("formatBlock", false, "BLOCKQUOTE");

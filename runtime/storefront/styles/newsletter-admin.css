@@ -212,6 +212,21 @@
   margin: 0 0 18px;
 }
 
+.newsletter-admin-editor [data-text-align="left"],
+.newsletter-admin-preview [data-text-align="left"] {
+  text-align: left;
+}
+
+.newsletter-admin-editor [data-text-align="center"],
+.newsletter-admin-preview [data-text-align="center"] {
+  text-align: center;
+}
+
+.newsletter-admin-editor [data-text-align="right"],
+.newsletter-admin-preview [data-text-align="right"] {
+  text-align: right;
+}
+
 .newsletter-admin-editor blockquote,
 .newsletter-admin-preview blockquote {
   margin: 22px 0;

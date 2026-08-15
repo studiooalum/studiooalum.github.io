@@ -79,6 +79,8 @@ const ALLOWED_RICH_TEXT_TAGS = new Set([
 const IMAGE_ALIGNMENTS = new Set(["left", "center", "right"]);
 const IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
+const TEXT_ALIGNMENTS = new Set(["left", "center", "right"]);
+const TEXT_ALIGNMENT_TAGS = new Set(["p", "h2", "h3", "blockquote", "li"]);
 
 function sanitizeImageLayoutValue(value, allowedValues) {
   const normalized = cleanText(value, 20).toLowerCase();
@@ -119,6 +121,11 @@ export function sanitizeNewsletterHtml(value) {
         position ? ` data-image-position="${position}"` : "",
       ].join("");
       return `<figure${layoutAttributes}>`;
+    }
+
+    if (TEXT_ALIGNMENT_TAGS.has(tagName)) {
+      const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-text-align"), TEXT_ALIGNMENTS);
+      return alignment ? `<${tagName} data-text-align="${alignment}">` : `<${tagName}>`;
     }
 
     return `<${tagName}>`;

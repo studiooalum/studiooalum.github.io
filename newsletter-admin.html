@@ -11,8 +11,8 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260706-01">
-  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260818-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260815-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260815-02">
 </head>
 <body class="fulfillment-page newsletter-admin-page">
   <nav class="gnb gnb--account">
@@ -29,8 +29,8 @@
             <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
             <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
+            <a href="./repair-admin.html" class="fulfillment-tab">수선 신청</a>
             <a href="./newsletter-admin.html" class="fulfillment-tab is-active" aria-current="page">뉴스레터</a>
-            <a href="./repair-admin.html" class="fulfillment-tab">수선</a>
           </nav>
 
           <h1 class="fulfillment-heading">뉴스레터</h1>
@@ -38,12 +38,12 @@
 
           <form class="fulfillment-auth-form js-newsletter-admin-auth-form">
             <label class="fulfillment-field">
-              <span>관리자 키</span>
-              <input type="password" name="adminSecret" autocomplete="off" required>
+              <span>관리자 비밀번호</span>
+              <input type="password" name="adminSecret" autocomplete="current-password" required>
             </label>
             <div class="fulfillment-actions fulfillment-actions--compact">
-              <button type="submit" class="fulfillment-btn">잠금 해제</button>
-              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-auth-clear">초기화</button>
+              <button type="submit" class="fulfillment-btn">관리 시작</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-auth-clear">로그아웃</button>
             </div>
           </form>
           <p class="fulfillment-status js-newsletter-admin-auth-status" role="status" aria-live="polite"></p>
@@ -107,6 +107,9 @@
                 <button type="button" class="newsletter-admin-tool" data-editor-command="quote" aria-label="인용" title="인용">“</button>
                 <button type="button" class="newsletter-admin-tool" data-editor-command="bullet" aria-label="글머리 목록" title="글머리 목록">•</button>
                 <button type="button" class="newsletter-admin-tool" data-editor-command="number" aria-label="번호 목록" title="번호 목록">1.</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="align-left" aria-label="본문 왼쪽 정렬" title="본문 왼쪽 정렬">←</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="align-center" aria-label="본문 가운데 정렬" title="본문 가운데 정렬">↔</button>
+                <button type="button" class="newsletter-admin-tool" data-editor-command="align-right" aria-label="본문 오른쪽 정렬" title="본문 오른쪽 정렬">→</button>
                 <button type="button" class="newsletter-admin-tool" data-editor-command="link" aria-label="링크" title="링크">↗</button>
                 <button type="button" class="newsletter-admin-tool" data-editor-command="clear" aria-label="서식 제거" title="서식 제거">×</button>
                 <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" hidden class="js-newsletter-admin-inline-image-input">
@@ -167,7 +170,7 @@
     <article class="newsletter-admin-preview js-newsletter-admin-preview"></article>
   </dialog>
 
-  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.js?v=20260818-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.js?v=20260815-02"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260820-01.js";
 

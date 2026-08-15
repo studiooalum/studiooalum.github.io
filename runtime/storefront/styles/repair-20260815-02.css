@@ -1,0 +1,89 @@
+@import url("./repair.css?v=20260815-02");
+
+.repair-stage {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.repair-hero-image {
+  border: 0;
+}
+
+.repair-body-copy p:last-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.repair-stage__rail {
+  border-left: 0;
+}
+
+.repair-request-rail__panel {
+  border-left: 0;
+  box-shadow: -18px 0 36px rgba(17, 17, 17, 0.08);
+}
+
+.repair-request-rail__header {
+  border-bottom: 0;
+  padding-bottom: 8px;
+}
+
+.repair-request-rail__close {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex-basis: 22px;
+  border: 0;
+  font-size: 0;
+}
+
+.repair-request-rail__close::before,
+.repair-request-rail__close::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 3px;
+  width: 16px;
+  height: 1px;
+  background: currentColor;
+}
+
+.repair-request-rail__close::before {
+  transform: rotate(45deg);
+}
+
+.repair-request-rail__close::after {
+  transform: rotate(-45deg);
+}
+
+.repair-request-rail__close:hover,
+.repair-request-rail__close:focus-visible {
+  background: transparent;
+  color: #111;
+  outline: 2px solid #111;
+  outline-offset: 3px;
+}
+
+.repair-request-rail__notice {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.repair-request-form {
+  gap: 28px;
+  border: 0;
+}
+
+.repair-request-form__section {
+  border-bottom: 0;
+  padding: 0;
+}
+
+.repair-request-form__submit {
+  padding: 0;
+  background: transparent;
+}
+
+.repair-request-success {
+  border: 0;
+}

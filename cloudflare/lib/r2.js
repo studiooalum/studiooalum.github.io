@@ -4,7 +4,7 @@ function sanitizeSegment(value, fallback = "asset") {
     .toLowerCase()
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/-+/g, "-")
-    .replace(/^[.-_]+|[.-_]+$/g, "") || fallback;
+    .replace(/^[._-]+|[._-]+$/g, "") || fallback;
 }
 
 function extensionFromType(fileType = "") {
@@ -24,7 +24,8 @@ function extensionFromName(fileName = "") {
 }
 
 export function isPrivateR2Key(key) {
-  return String(key || "").trim().startsWith("repairs/");
+  const normalizedKey = String(key || "").trim();
+  return normalizedKey.startsWith("repairs/") || normalizedKey.startsWith("repair-requests/");
 }
 
 export function buildWorkshopImageKey({ slug = "draft-workshop", target = "image", fileName = "", fileType = "" } = {}) {
@@ -56,5 +57,5 @@ export function buildRepairImageKey({ requestId = "request", imageId = "image", 
   const imageSegment = sanitizeSegment(imageId, "image");
   const nameSegment = sanitizeSegment(String(fileName || "").replace(/\.[a-z0-9]+$/i, ""), "upload");
   const extension = extensionFromName(fileName) || extensionFromType(fileType);
-  return `repairs/${requestSegment}/${imageSegment}-${Date.now()}-${nameSegment}${extension}`;
+  return `repair-requests/${requestSegment}/${Date.now()}-${imageSegment}-${nameSegment}${extension}`;
 }

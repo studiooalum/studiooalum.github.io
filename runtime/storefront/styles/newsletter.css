@@ -172,6 +172,18 @@
   margin: 0 0 20px;
 }
 
+.newsletter-entry__content [data-text-align="left"] {
+  text-align: left;
+}
+
+.newsletter-entry__content [data-text-align="center"] {
+  text-align: center;
+}
+
+.newsletter-entry__content [data-text-align="right"] {
+  text-align: right;
+}
+
 .newsletter-entry__content blockquote {
   margin: 28px 0;
   border-left: 2px solid #111;

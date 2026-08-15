@@ -999,7 +999,7 @@ function buildReservationValues({
   };
 }
 
-async function insertOrReopenWorkshopReservation(database, values) {
+async function writeWorkshopReservation(database, values) {
   const existing = await database
     .prepare(`
       SELECT *
@@ -1158,6 +1158,17 @@ async function insertOrReopenWorkshopReservation(database, values) {
     .run();
 
   return database.prepare(`SELECT * FROM workshop_reservations WHERE id = ? LIMIT 1`).bind(values.id).first();
+}
+
+async function insertOrReopenWorkshopReservation(database, values) {
+  try {
+    return await writeWorkshopReservation(database, values);
+  } catch (error) {
+    if (String(error?.message || error).includes("workshop_capacity_exceeded")) {
+      throw Object.assign(new Error("남은 정원보다 많은 인원을 신청할 수 없습니다."), { status: 409 });
+    }
+    throw error;
+  }
 }
 
 async function assertOpenGroupDateAvailable(database, workshop, requestedDate) {
@@ -1345,6 +1356,7 @@ function buildMultiSessionSlot(workshop) {
     label: "전체 회차",
     snapshot: {
       type: "multiSession",
+      capacity: Math.max(1, Number(workshop.bookingConfig?.maxParticipants) || Number(workshop.maxCapacity) || 1),
       slots: slots.map((item) => ({
         date: item.date,
         startTime: item.startTime,

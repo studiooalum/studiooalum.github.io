@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260706-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260815-02">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-admin.css?v=20260818-01">
 </head>
 <body class="fulfillment-page repair-admin-page">
@@ -28,22 +28,22 @@
           <nav class="fulfillment-tabs" aria-label="관리자 기능">
             <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
-            <a href="./workshop-admin.html" class="fulfillment-tab">워크숍</a>
+            <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
+            <a href="./repair-admin.html" class="fulfillment-tab is-active" aria-current="page">수선 신청</a>
             <a href="./newsletter-admin.html" class="fulfillment-tab">뉴스레터</a>
-            <a href="./repair-admin.html" class="fulfillment-tab is-active" aria-current="page">수선</a>
           </nav>
 
-          <h1 class="fulfillment-heading">Repair Studio</h1>
+          <h1 class="fulfillment-heading">수선 신청 관리</h1>
           <p class="fulfillment-copy">접수 상태와 견적, 고객 안내를 관리합니다. 원본 사진은 관리자 세션에서만 확인할 수 있습니다.</p>
 
           <form class="fulfillment-auth-form js-repair-admin-auth-form">
             <label class="fulfillment-field">
-              <span>관리자 키</span>
-              <input type="password" name="adminSecret" autocomplete="off" required>
+              <span>관리자 비밀번호</span>
+              <input type="password" name="adminSecret" autocomplete="current-password" required>
             </label>
             <div class="fulfillment-actions fulfillment-actions--compact">
-              <button type="submit" class="fulfillment-btn">잠금 해제</button>
-              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-repair-admin-auth-clear">초기화</button>
+              <button type="submit" class="fulfillment-btn">관리 시작</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-repair-admin-auth-clear">로그아웃</button>
             </div>
           </form>
           <p class="fulfillment-status js-repair-admin-auth-status" role="status" aria-live="polite"></p>

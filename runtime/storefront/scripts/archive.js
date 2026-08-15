@@ -141,19 +141,28 @@ function renderTags(tagsElement) {
   tagsElement.replaceChildren(fragment);
 }
 
-function renderBoard(board, status) {
+function renderBoard(board) {
   if (!board) return;
   const items = getFilteredItems();
   board.innerHTML = "";
 
   if (!items.length) {
-    const empty = document.createElement("p");
+    const empty = document.createElement("section");
     empty.className = "archive-empty";
-    empty.textContent = state.items.length
-      ? "선택한 태그의 아카이브 기록이 없습니다."
-      : "아카이브 게시물을 준비하고 있습니다.";
+    const label = document.createElement("p");
+    label.className = "archive-empty__label";
+    label.textContent = state.items.length ? "No results" : "Preparing";
+    const title = document.createElement("h2");
+    title.textContent = state.items.length
+      ? "선택한 기록이 없습니다."
+      : "아카이브를 준비하고 있습니다.";
+    const copy = document.createElement("p");
+    copy.className = "archive-empty__copy";
+    copy.textContent = state.items.length
+      ? "다른 태그를 선택해 작업 기록을 살펴보세요."
+      : "Studio OALUM의 작업과 수선 기록을 곧 이곳에서 소개하겠습니다.";
+    empty.append(label, title, copy);
     board.append(empty);
-    if (status) status.textContent = empty.textContent;
     return;
   }
 
@@ -164,13 +173,11 @@ function renderBoard(board, status) {
     }
   }
   board.append(fragment);
-  if (status) status.textContent = `${items.length}개의 아카이브 기록을 표시하고 있습니다.`;
 }
 
 export async function initArchiveBoard() {
   const board = document.querySelector("#archiveBoard");
   const tagsElement = document.querySelector("#archiveTags");
-  const status = document.querySelector(".js-archive-status");
   if (!board) return;
 
   try {
@@ -183,13 +190,13 @@ export async function initArchiveBoard() {
   }
 
   renderTags(tagsElement);
-  renderBoard(board, status);
+  renderBoard(board);
 
   tagsElement?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-archive-tag]");
     if (!button) return;
     state.selectedTag = button.dataset.archiveTag || "all";
     renderTags(tagsElement);
-    renderBoard(board, status);
+    renderBoard(board);
   });
 }

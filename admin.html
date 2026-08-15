@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260702-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260815-02">
 </head>
 <body class="fulfillment-page admin-page">
   <nav class="gnb gnb--account">
@@ -28,8 +28,8 @@
             <a href="./admin.html" class="fulfillment-tab is-active" aria-current="page">배송 / 주문</a>
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
             <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
+            <a href="./repair-admin.html" class="fulfillment-tab">수선 신청</a>
             <a href="./newsletter-admin.html" class="fulfillment-tab">뉴스레터</a>
-            <a href="./repair-admin.html" class="fulfillment-tab">수선</a>
           </nav>
 
           <h1 class="fulfillment-heading">배송 / 주문 관리</h1>
@@ -37,12 +37,12 @@
 
           <form class="fulfillment-auth-form js-fulfillment-auth-form">
             <label class="fulfillment-field">
-              <span>관리자 키</span>
-              <input type="password" name="adminSecret" autocomplete="off" placeholder="ORDER_ADMIN_SECRET" required>
+              <span>관리자 비밀번호</span>
+              <input type="password" name="adminSecret" autocomplete="current-password" required>
             </label>
             <div class="fulfillment-actions fulfillment-actions--compact">
-              <button type="submit" class="fulfillment-btn">잠금 해제</button>
-              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-auth-clear">초기화</button>
+              <button type="submit" class="fulfillment-btn">관리 시작</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-fulfillment-auth-clear">로그아웃</button>
             </div>
           </form>
 
@@ -101,40 +101,42 @@
 
             <div class="fulfillment-suggestions js-fulfillment-carrier-results" hidden></div>
 
-            <div class="fulfillment-grid">
-              <label class="fulfillment-field">
-                <span>Delivery Tracker Carrier ID</span>
-                <input type="text" name="carrierId" placeholder="예: kr.cjlogistics">
-              </label>
-              <label class="fulfillment-field">
-                <span>표시용 택배사명</span>
-                <input type="text" name="carrier" placeholder="예: CJ대한통운">
-              </label>
-            </div>
+            <label class="fulfillment-field">
+              <span>택배사명</span>
+              <input type="text" name="carrier" placeholder="예: CJ대한통운">
+            </label>
 
-            <div class="fulfillment-grid">
-              <label class="fulfillment-field">
-                <span>운송장 번호</span>
-                <input type="text" name="trackingNumber" placeholder="운송장 번호 입력">
-              </label>
-              <label class="fulfillment-field">
-                <span>추적 링크</span>
-                <input type="url" name="trackingUrl" placeholder="자동 생성 또는 수동 입력">
-              </label>
-            </div>
+            <label class="fulfillment-field">
+              <span>운송장 번호</span>
+              <input type="text" name="trackingNumber" placeholder="운송장 번호 입력">
+            </label>
 
-            <div class="fulfillment-grid">
-              <label class="fulfillment-field">
-                <span>배송 시작 시각</span>
-                <input type="datetime-local" name="shippedAt">
-              </label>
-              <label class="fulfillment-field">
-                <span>배송 완료 시각</span>
-                <input type="datetime-local" name="deliveredAt">
-              </label>
-            </div>
-
-            <p class="fulfillment-copy fulfillment-copy--quiet">Carrier ID와 운송장 번호가 함께 저장되면 Delivery Tracker webhook 등록을 시도합니다.</p>
+            <details class="fulfillment-advanced">
+              <summary>배송 추적 고급 설정</summary>
+              <div class="fulfillment-advanced__body">
+                <p class="fulfillment-copy fulfillment-copy--quiet">택배사 찾기로 자동 입력되지 않을 때만 사용하세요.</p>
+                <div class="fulfillment-grid">
+                  <label class="fulfillment-field">
+                    <span>배송 추적 서비스 ID</span>
+                    <input type="text" name="carrierId" placeholder="예: kr.cjlogistics">
+                  </label>
+                  <label class="fulfillment-field">
+                    <span>직접 추적 링크</span>
+                    <input type="url" name="trackingUrl" placeholder="자동 생성되는 경우 비워두세요">
+                  </label>
+                </div>
+                <div class="fulfillment-grid">
+                  <label class="fulfillment-field">
+                    <span>배송 시작 시각</span>
+                    <input type="datetime-local" name="shippedAt">
+                  </label>
+                  <label class="fulfillment-field">
+                    <span>배송 완료 시각</span>
+                    <input type="datetime-local" name="deliveredAt">
+                  </label>
+                </div>
+              </div>
+            </details>
 
             <div class="fulfillment-actions">
               <button type="submit" class="fulfillment-btn">저장</button>

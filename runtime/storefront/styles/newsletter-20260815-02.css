@@ -1,0 +1,23 @@
+@import url("./newsletter-20260820-01.css");
+
+.newsletter-intro,
+.newsletter-feed__label,
+.newsletter-subscribe {
+  border: 0;
+}
+
+.newsletter-post-card {
+  border-bottom: 0;
+}
+
+.newsletter-entry__content [data-text-align="left"] {
+  text-align: left;
+}
+
+.newsletter-entry__content [data-text-align="center"] {
+  text-align: center;
+}
+
+.newsletter-entry__content [data-text-align="right"] {
+  text-align: right;
+}
