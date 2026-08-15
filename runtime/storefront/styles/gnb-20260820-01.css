@@ -1,0 +1,36 @@
+@import url("./gnb.css");
+
+.gnb:not(.is-ready) {
+  justify-content: flex-start;
+}
+
+.gnb:not(.is-ready) > .gnb__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+  font-family: var(--font-book, sans-serif);
+  font-size: var(--gnb-font-size);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.gnb:not(.is-ready) > .gnb__back::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  background: url("../../../oalum_favicon.png") center / contain no-repeat;
+}
+
+.gnb:not(.is-ready) .gnb__title {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-family: var(--font-book, sans-serif);
+  font-size: var(--gnb-font-size);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
