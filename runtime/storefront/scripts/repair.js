@@ -124,7 +124,7 @@ function refreshImageList() {
   if (dom.imageHelp) {
     dom.imageHelp.textContent = state.files.length
       ? `${state.files.length}/${MAX_IMAGE_COUNT}장 선택됨 · 사진은 관리자만 수선 검토 목적으로 확인합니다.`
-      : "사진을 1장 이상 첨부해주세요. 최대 4장, 장당 8MB까지 가능합니다.";
+      : "선택 · 최대 4장, 장당 8MB까지 가능합니다.";
   }
 }
 
@@ -165,14 +165,9 @@ function resetForm() {
 async function submitRepairRequest() {
   if (!dom.form) return;
   if (!dom.form.reportValidity()) return;
-  if (!state.files.length) {
-    setStatus("수선할 물건의 사진을 1장 이상 첨부해주세요.", "error");
-    dom.imageInput?.focus();
-    return;
-  }
 
   setSubmitLoading(true);
-  setStatus("사진과 수선 요청을 안전하게 접수하는 중입니다.");
+  setStatus("수선 요청을 안전하게 접수하는 중입니다.");
 
   try {
     const formData = new FormData(dom.form);
@@ -193,8 +188,8 @@ async function submitRepairRequest() {
     const requestNumber = String(payload.requestNumber || "").trim();
     if (dom.successCopy) {
       dom.successCopy.textContent = requestNumber
-        ? `접수번호는 ${requestNumber}입니다. 검토 후 입력하신 연락처로 안내드리겠습니다.`
-        : "검토 후 입력하신 연락처로 안내드리겠습니다.";
+        ? `접수번호는 ${requestNumber}입니다. 물건이 도착하면 상태를 확인한 뒤 입력하신 연락처로 안내드리겠습니다.`
+        : "물건이 도착하면 상태를 확인한 뒤 입력하신 연락처로 안내드리겠습니다.";
     }
     dom.form.hidden = true;
     if (dom.success) dom.success.hidden = false;

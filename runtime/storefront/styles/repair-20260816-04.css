@@ -1,0 +1,186 @@
+@import url("./repair-20260816-03.css");
+
+.repair-main {
+  display: grid;
+  gap: clamp(72px, 10vw, 140px);
+}
+
+.repair-hero-image {
+  display: block;
+  aspect-ratio: auto;
+  min-height: 0;
+  padding: 0;
+  background: #fff;
+}
+
+.repair-hero-image img {
+  width: 100%;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+  mix-blend-mode: normal;
+}
+
+.repair-body-copy {
+  max-width: none;
+}
+
+.repair-body-copy p,
+.repair-stage__rail,
+.repair-price-grid {
+  font-family: var(--font-kor-body);
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-stage__rail {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.repair-section-label {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.62);
+  font-family: var(--font-book);
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: var(--tracking-latin);
+  text-transform: uppercase;
+}
+
+.repair-stage__rail h2,
+.repair-price-grid h2,
+.repair-price-grid h3 {
+  margin: 0;
+  font-weight: 400;
+}
+
+.repair-stage__rail h2,
+.repair-price-grid h2 {
+  font-family: var(--font-kor-button);
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.repair-process-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repair-process-list li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.repair-process-list span {
+  color: rgba(17, 17, 17, 0.5);
+  font-family: var(--font-book);
+  letter-spacing: 0;
+}
+
+.repair-price-grid {
+  display: grid;
+  gap: var(--grid-gap);
+  width: 100%;
+}
+
+.repair-price-grid__header,
+.repair-price-grid__rates,
+.repair-price-grid__note {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 16px;
+}
+
+.repair-price-grid__rates,
+.repair-price-grid__note {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.repair-price-grid p,
+.repair-price-list {
+  margin: 0;
+}
+
+.repair-price-grid h3 {
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+}
+
+.repair-price-list {
+  display: grid;
+  gap: 8px;
+}
+
+.repair-price-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.repair-price-list dt,
+.repair-price-list dd {
+  margin: 0;
+}
+
+.repair-price-grid__example {
+  color: rgba(17, 17, 17, 0.62);
+  font-size: 11px;
+}
+
+.repair-request-success__delivery {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  background: var(--repair-mist);
+}
+
+.repair-request-success__delivery h3,
+.repair-request-success__delivery address {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-style: normal;
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-request-success__delivery h3 {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.repair-request-success__delivery address {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (min-width: 960px) {
+  .repair-price-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .repair-price-grid__header {
+    grid-column: 1;
+  }
+
+  .repair-price-grid__rates {
+    grid-column: 2;
+  }
+
+  .repair-price-grid__note {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 959px) {
+  .repair-main {
+    gap: 72px;
+  }
+}

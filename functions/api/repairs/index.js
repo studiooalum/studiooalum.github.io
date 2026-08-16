@@ -15,16 +15,13 @@ const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "i
 
 const repairRequestSchema = z.object({
   customerName: z.string().trim().min(1).max(120),
-  email: z.string().trim().email().max(320),
   phone: z.string().trim().min(7).max(60),
-  preferredContact: z.enum(["email", "phone"]).default("email"),
-  itemType: z.string().trim().min(1).max(100),
-  material: z.string().trim().min(1).max(120),
   issueDescription: z.string().trim().min(8).max(4000),
-  desiredResult: z.string().trim().min(1).max(2000),
-  budgetNote: z.string().trim().max(1000).default(""),
+  desiredCompletionDate: z.union([
+    z.literal(""),
+    z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/),
+  ]).default(""),
   privacyConsent: z.literal(true),
-  archiveConsent: z.boolean().default(false),
 });
 
 function asBoolean(value) {
@@ -42,9 +39,6 @@ function getSelectedFiles(formData) {
 }
 
 function validateImages(files) {
-  if (!files.length) {
-    throw Object.assign(new Error("수선할 물건의 사진을 1장 이상 첨부해주세요."), { status: 400 });
-  }
   if (files.length > MAX_IMAGE_COUNT) {
     throw Object.assign(new Error(`사진은 최대 ${MAX_IMAGE_COUNT}장까지 첨부할 수 있습니다.`), { status: 400 });
   }
@@ -62,16 +56,10 @@ function validateImages(files) {
 function buildRequestPayload(formData) {
   return {
     customerName: asText(formData.get("customerName")),
-    email: asText(formData.get("email")),
     phone: asText(formData.get("phone")),
-    preferredContact: asText(formData.get("preferredContact")) || asText(formData.get("contactPreference")) || "email",
-    itemType: asText(formData.get("itemType")),
-    material: asText(formData.get("material")) || asText(formData.get("itemMaterial")),
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
-    desiredResult: asText(formData.get("desiredResult")),
-    budgetNote: asText(formData.get("budgetNote")),
+    desiredCompletionDate: asText(formData.get("desiredCompletionDate")),
     privacyConsent: asBoolean(formData.get("privacyConsent")) || asBoolean(formData.get("termsAccepted")),
-    archiveConsent: asBoolean(formData.get("archiveConsent")),
   };
 }
 
@@ -107,9 +95,12 @@ export async function onRequestPost(context) {
     const files = getSelectedFiles(formData);
     validateImages(files);
 
-    const storage = assertRepairStorage(context.env);
-    bucket = storage.bucket;
     const identifiers = createRepairRequestIdentifiers();
+
+    if (files.length) {
+      const storage = assertRepairStorage(context.env);
+      bucket = storage.bucket;
+    }
 
     for (const [sortOrder, file] of files.entries()) {
       const imageId = createRepairImageId();
@@ -146,12 +137,18 @@ export async function onRequestPost(context) {
       ...parsed.data,
       requestId: identifiers.requestId,
       requestNumber: identifiers.requestNumber,
-      contactPreference: parsed.data.preferredContact,
-      itemMaterial: parsed.data.material,
+      email: "",
+      preferredContact: "phone",
+      contactPreference: "phone",
+      itemType: "수선 의뢰",
+      material: "",
+      itemMaterial: "",
       repairDetails: parsed.data.issueDescription,
+      desiredResult: "",
+      budgetNote: "",
       termsAcceptedAt: submittedAt,
       privacyConsentAt: submittedAt,
-      archiveConsentAt: parsed.data.archiveConsent ? submittedAt : "",
+      archiveConsentAt: "",
     }, uploadedImages);
 
     return json(context.env, {

@@ -35,10 +35,10 @@ const state = {
 const STATUS_LABELS = {
   received: "접수됨",
   reviewing: "검토 중",
-  quoted: "견적 전달",
+  quoted: "예상 가격 안내",
   approved: "진행 승인",
   in_progress: "작업 중",
-  completed: "완료",
+  completed: "작업 완료",
   rejected: "진행 불가",
   cancelled: "취소",
 };
@@ -187,7 +187,7 @@ function renderRequestList() {
         <strong>${escapeHtml(request.customerName || "이름 없음")}</strong>
         <span>${escapeHtml(status)}</span>
       </div>
-      <p>${escapeHtml(request.requestNumber)} · ${escapeHtml(request.itemType || "물건 종류 미입력")}</p>
+      <p>${escapeHtml(request.requestNumber)} · ${escapeHtml(request.itemType || "수선 의뢰")}</p>
       <p>${escapeHtml(formatDate(request.createdAt))} · 사진 ${Number(request.images?.length || 0)}장</p>
     </button>`;
   }).join("");
@@ -195,19 +195,21 @@ function renderRequestList() {
 
 function renderCustomerDetails(request) {
   if (!dom.customer) return;
-  const preferredContact = request.preferredContact || request.contactPreference;
   const privacyConsent = request.privacyConsentAt ? "동의함" : "동의 시각 없음";
-  const archiveConsent = request.archiveConsentAt ? "동의함" : "동의하지 않음";
+  const email = String(request.email || "").trim();
+  const legacyDetails = [
+    request.material || request.itemMaterial ? `<div><dt>소재</dt><dd>${escapeHtml(request.material || request.itemMaterial)}</dd></div>` : "",
+    request.desiredResult ? `<div><dt>원하는 결과</dt><dd>${escapeHtml(request.desiredResult)}</dd></div>` : "",
+    request.budgetNote ? `<div><dt>예산 메모</dt><dd>${escapeHtml(request.budgetNote)}</dd></div>` : "",
+  ].join("");
 
   dom.customer.innerHTML = `
     <dl>
-      <div><dt>연락처</dt><dd>${escapeHtml(request.email)}<br>${escapeHtml(request.phone)} · ${escapeHtml(preferredContact === "phone" ? "전화 또는 문자" : "이메일")}</dd></div>
-      <div><dt>물건</dt><dd>${escapeHtml([request.itemType, request.material || request.itemMaterial].filter(Boolean).join(" · ") || "-")}</dd></div>
-      <div><dt>수선이 필요한 부분</dt><dd>${escapeHtml(request.issueDescription || request.repairDetails || "-")}</dd></div>
-      <div><dt>원하는 결과</dt><dd>${escapeHtml(request.desiredResult || "-")}</dd></div>
-      <div><dt>예산 메모</dt><dd>${escapeHtml(request.budgetNote || "미입력")}</dd></div>
+      <div><dt>연락처</dt><dd>${escapeHtml(request.phone || "-")}${email ? `<br>${escapeHtml(email)}` : ""}</dd></div>
+      <div><dt>수선 의뢰 제품에 대한 설명</dt><dd>${escapeHtml(request.issueDescription || request.repairDetails || "-")}</dd></div>
+      <div><dt>수선 의뢰 기한</dt><dd>${escapeHtml(request.desiredCompletionDate || "미입력")}</dd></div>
+      ${legacyDetails}
       <div><dt>개인정보 수집 동의</dt><dd>${escapeHtml(privacyConsent)}</dd></div>
-      <div><dt>Archive 사례 공개 동의</dt><dd>${escapeHtml(archiveConsent)}</dd></div>
     </dl>
   `;
 }
@@ -294,7 +296,7 @@ function renderSelectedRequest() {
   dom.form.elements.customerMessage.value = request.customerMessage || "";
   dom.form.elements.adminNote.value = request.adminNote || "";
   if (dom.requestNumber) dom.requestNumber.textContent = request.requestNumber || "";
-  if (dom.title) dom.title.textContent = `${request.customerName || "수선"} · ${request.itemType || "접수"}`;
+  if (dom.title) dom.title.textContent = `${request.customerName || "수선"} · 수선 의뢰`;
   if (dom.createdAt) dom.createdAt.textContent = formatDate(request.createdAt);
   if (dom.imageCount) dom.imageCount.textContent = `${Number(request.images?.length || 0)}장`;
   if (dom.archiveCandidate) {

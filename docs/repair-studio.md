@@ -2,7 +2,7 @@
 
 ## 역할 분리
 
-- `repair.html`: 고객 수선 접수 화면. `POST /api/repairs`에 multipart 형식으로 이름, 연락처, 작업 정보와 사진을 보냅니다.
+- `repair.html`: 고객 수선 접수 화면. `POST /api/repairs`에 multipart 형식으로 성함, 연락처, 제품 설명, 선택 기한과 선택 사진을 보냅니다.
 - `repair-admin.html`: 관리자 인증 후 접수 상태, 견적, 고객 안내 문구, 내부 메모를 관리합니다.
 - D1: 요청 메타데이터와 사진의 R2 key만 저장합니다.
 - R2: 새 원본 사진을 `repair-requests/<request-id>/...`로 저장합니다. 기존 `repairs/` 객체도 계속 비공개로 취급하며 공개 CDN 또는 공개 이미지 URL로 사용하지 않습니다.
@@ -21,4 +21,4 @@
 2. Pages/Worker에 `OALUM_DB`, `OALUM_R2`, `ORDER_ADMIN_SECRET`을 설정합니다.
 3. `repair.html`에서 실제 접수, `repair-admin.html`에서 상태 변경과 원본 이미지 조회를 확인합니다.
 
-`OALUM_R2`가 없으면 Repair 접수는 의도적으로 `503`을 반환합니다. 접수 사진이 저장되지 않은 요청을 만들지 않기 위한 동작입니다.
+사진이 포함된 요청에서 `OALUM_R2`가 없으면 Repair 접수는 의도적으로 `503`을 반환합니다. 사진이 없는 요청은 D1에 정상 접수됩니다.

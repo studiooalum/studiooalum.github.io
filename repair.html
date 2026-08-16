@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-03.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-04.css">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -37,20 +37,56 @@
 
       <section class="repair-stage__visual">
         <figure class="repair-hero-image">
-          <img src="./로고.png" alt="Studio OALUM Repair Studio">
+          <img src="./repair_studio.jpg" alt="Studio OALUM의 수선 작업 사례">
         </figure>
       </section>
 
       <section class="repair-stage__content">
         <div class="repair-body-copy">
-          <p>스튜디오 오알룸은 2020년부터 수선을 해왔습니다.</p>
-          <p>망가진 것을 다시 쓰게 만들고, 오래된 물건이 가진 시간을 이어갑니다.</p>
-          <p>모든 수선은 물건의 상태와 소재를 확인한 뒤 가능한 방법과 비용을 안내합니다. 사진을 보내주시면 먼저 수선 가능 여부를 검토하겠습니다.</p>
+          <p>안녕하세요.<br>저는 구멍이 가진 이야기를 사랑하는 작업자입니다. 실을 엮으며, 상한 원단 위에 새로운 이야기를 그립니다.</p>
+          <p>스튜디오 오알룸은 1:1 맞춤 수선 의뢰를 받고 있습니다. 수선하는 행위는 단순히 옷을 고치는 행위가 아니라 빠른 패션 사이클을 늦추고 지구와의 관계를 회복하는 일이라고 생각합니다.</p>
+          <p>바느질은 오래된 역사와 전통이기도 하지요.<br>부디 이 전통이 사라지지 않길 바라며,<br>마음과 마음을 잇는 행동을 함께하고 싶습니다.</p>
         </div>
         <button type="button" class="repair-apply-btn" id="repairApplyBtn">신청하기</button>
       </section>
 
-      <aside class="repair-stage__rail" aria-hidden="true"></aside>
+      <aside class="repair-stage__rail" aria-labelledby="repair-process-title">
+        <p class="repair-section-label">Process</p>
+        <h2 id="repair-process-title">수선 과정</h2>
+        <ol class="repair-process-list">
+          <li><span>01</span>신청폼 작성</li>
+          <li><span>02</span>Studio OALUM으로 택배 배송</li>
+          <li><span>03</span>수선 방향 논의 및 예상 가격 안내</li>
+          <li><span>04</span>작업 진행</li>
+          <li><span>05</span>작업 완료 및 최종 가격 안내</li>
+        </ol>
+      </aside>
+    </section>
+
+    <section class="repair-price-grid" aria-labelledby="repair-price-title">
+      <header class="repair-price-grid__header">
+        <p class="repair-section-label">Price guide</p>
+        <h2 id="repair-price-title">가격 안내</h2>
+      </header>
+      <div class="repair-price-grid__rates">
+        <p><strong>수선 가격</strong>은 Basic(기본) + 재료, 작업시간, 난이도에 따라 최종 결정됩니다.</p>
+        <h3>Basic(기본)</h3>
+        <dl class="repair-price-list">
+          <div><dt>자켓</dt><dd>38,000원</dd></div>
+          <div><dt>상의</dt><dd>25,000원</dd></div>
+          <div><dt>하의</dt><dd>30,000원</dd></div>
+          <div><dt>기타</dt><dd>10,000원부터</dd></div>
+          <div><dt>데님</dt><dd>40,000원</dd></div>
+          <div><dt>니트</dt><dd>40,000원</dd></div>
+          <div><dt>특수소재</dt><dd>45,000원</dd></div>
+        </dl>
+        <p class="repair-price-grid__example">특수소재 예: 가죽, 패딩 등</p>
+      </div>
+      <div class="repair-price-grid__note">
+        <p>Basic(기본) 비용은 최소 작업 공임이며, 실제 수선 범위에 따라 추가 비용이 발생합니다.</p>
+        <p>2026년부터 원부자재 가격 상승으로 Basic(기본) 비용이 소폭 조정되었습니다.</p>
+        <p>더 나은 작업으로 보답드리겠습니다.<br>감사합니다.</p>
+      </div>
     </section>
   </main>
 
@@ -66,7 +102,7 @@
       </header>
 
       <div class="repair-request-rail__body">
-        <p class="repair-request-rail__notice">수선 사례 공개 동의는 선택사항이며, 동의하지 않아도 수선 신청에는 영향을 주지 않습니다.</p>
+        <p class="repair-request-rail__notice">접수 후 물건을 보내주시면 상태를 확인하고 수선 방향과 예상 가격을 안내드립니다.</p>
 
         <form class="repair-request-form js-repair-form" id="repairRequestForm" enctype="multipart/form-data" novalidate>
           <div class="repair-honeypot" aria-hidden="true">
@@ -74,59 +110,23 @@
           </div>
 
           <section class="repair-request-form__section">
-            <h3>연락처</h3>
-            <div class="repair-request-form__grid repair-request-form__grid--two">
+            <h3>신청 정보</h3>
+            <div class="repair-request-form__grid">
               <label class="repair-field">
-                <span>이름</span>
+                <span>성함</span>
                 <input type="text" name="customerName" autocomplete="name" maxlength="120" required>
-              </label>
-              <label class="repair-field">
-                <span>선호 연락 방법</span>
-                <select name="preferredContact">
-                  <option value="email">이메일</option>
-                  <option value="phone">전화 또는 문자</option>
-                </select>
-              </label>
-              <label class="repair-field">
-                <span>이메일</span>
-                <input type="email" name="email" autocomplete="email" maxlength="320" required>
               </label>
               <label class="repair-field">
                 <span>연락처</span>
                 <input type="tel" name="phone" autocomplete="tel" maxlength="60" placeholder="010-0000-0000" required>
               </label>
-            </div>
-          </section>
-
-          <section class="repair-request-form__section">
-            <h3>물건과 요청</h3>
-            <div class="repair-request-form__grid repair-request-form__grid--two">
               <label class="repair-field">
-                <span>물건 종류</span>
-                <select name="itemType" required>
-                  <option value="">선택해주세요</option>
-                  <option value="의류">의류</option>
-                  <option value="가방">가방</option>
-                  <option value="신발">신발</option>
-                  <option value="액세서리">액세서리</option>
-                  <option value="기타">기타</option>
-                </select>
+                <span>수선 의뢰 제품에 대한 설명</span>
+                <textarea name="issueDescription" rows="7" maxlength="4000" placeholder="제품 종류, 소재, 손상 부위와 원하는 수선 방향을 적어주세요." required></textarea>
               </label>
               <label class="repair-field">
-                <span>소재</span>
-                <input type="text" name="material" maxlength="120" placeholder="예: 면, 가죽, 니트" required>
-              </label>
-              <label class="repair-field repair-field--full">
-                <span>수선이 필요한 부분</span>
-                <textarea name="issueDescription" rows="5" maxlength="4000" placeholder="손상 부위와 현재 상태를 가능한 자세히 적어주세요." required></textarea>
-              </label>
-              <label class="repair-field repair-field--full">
-                <span>원하는 결과</span>
-                <textarea name="desiredResult" rows="4" maxlength="2000" placeholder="원하는 수선 방식이나 사용하면서 불편한 점을 적어주세요." required></textarea>
-              </label>
-              <label class="repair-field repair-field--full">
-                <span>예산 메모 <em>선택</em></span>
-                <input type="text" name="budgetNote" maxlength="1000" placeholder="예: 가능 범위의 견적을 먼저 안내받고 싶습니다.">
+                <span>수선 의뢰 기한 <em>선택</em></span>
+                <input type="date" name="desiredCompletionDate">
               </label>
             </div>
           </section>
@@ -135,7 +135,7 @@
             <div class="repair-image-upload__head">
               <div>
                 <h3>검토 사진</h3>
-                <p>전체 모습과 수선이 필요한 부위가 보이도록 촬영해주세요.</p>
+                <p>선택사항입니다. 첨부한다면 전체 모습과 수선 부위가 보이도록 촬영해주세요.</p>
               </div>
               <label class="repair-image-picker">
                 <span>사진 선택</span>
@@ -143,17 +143,13 @@
               </label>
             </div>
             <div class="repair-image-preview-list js-repair-image-preview-list" aria-live="polite"></div>
-            <p class="repair-image-help js-repair-image-help">사진을 1장 이상 첨부해주세요. 최대 4장, 장당 8MB까지 가능합니다.</p>
+            <p class="repair-image-help js-repair-image-help">선택 · 최대 4장, 장당 8MB까지 가능합니다.</p>
           </section>
 
           <section class="repair-request-form__section repair-request-form__consent">
             <label class="repair-checkbox">
               <input type="checkbox" name="privacyConsent" required>
               <span>수선 검토를 위해 입력한 연락처와 사진을 수집·이용하는 것에 동의합니다.</span>
-            </label>
-            <label class="repair-checkbox">
-              <input type="checkbox" name="archiveConsent">
-              <span>수선 완료 후 익명화한 사례를 Studio OALUM Archive에 공개하는 데 동의합니다. <em>선택</em></span>
             </label>
           </section>
 
@@ -165,8 +161,13 @@
 
         <section class="repair-request-success js-repair-success" hidden aria-live="polite">
           <p class="repair-kicker">Submitted</p>
-          <h2>접수가 완료되었습니다.</h2>
+          <h2>수선 의뢰가 완성되었습니다.</h2>
           <p class="js-repair-success-copy"></p>
+          <div class="repair-request-success__delivery">
+            <h3>오알룸 주소지 앞으로 택배를 보내주세요.</h3>
+            <address>서울특별시 동대문구 이문로 145<br>2층 201호<br>010-4746-5999<br>오알룸 앞</address>
+          </div>
+          <p>신청해주셔서 감사합니다.</p>
           <button type="button" class="repair-success__reset js-repair-reset">새 수선 접수</button>
         </section>
       </div>
@@ -177,7 +178,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260820-01.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair.js?v=20260816-01";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair.js?v=20260816-02";
 
     initSiteChrome();
     initCartUI();
