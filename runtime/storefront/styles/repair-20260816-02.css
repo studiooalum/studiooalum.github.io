@@ -1,0 +1,58 @@
+@import url("./repair-20260816-01.css");
+
+.repair-main {
+  padding-top: calc(var(--gnb-height, 40px) + 40px);
+}
+
+.repair-stage {
+  align-items: start;
+}
+
+.repair-hero-copy {
+  min-height: calc(var(--shop-top-space) - 40px - var(--grid-gap));
+  align-content: start;
+}
+
+.repair-stage__visual {
+  display: block;
+}
+
+.repair-stage__content {
+  padding-top: 0;
+}
+
+@media (min-width: 960px) {
+  .repair-stage {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .repair-hero-copy {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .repair-stage__visual {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .repair-stage__content {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .repair-stage__rail {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 959px) {
+  .repair-main {
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+  }
+
+  .repair-hero-copy {
+    min-height: 0;
+  }
+}
