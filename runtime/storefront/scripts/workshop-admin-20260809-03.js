@@ -864,7 +864,7 @@ function renderSlotRows(items = []) {
           <input type="number" name="slotCapacity" min="1" step="1" value="${escapeHtml(item.capacity || 1)}">
         </label>
         <label class="fulfillment-field">
-          <span>Session status</span>
+          <span>세션 상태</span>
           <select name="slotStatus">
             <option value="open" ${!item.isBlocked && item.status !== "blocked" ? "selected" : ""}>정상</option>
             <option value="blocked" ${item.isBlocked || item.status === "blocked" ? "selected" : ""}>차단</option>

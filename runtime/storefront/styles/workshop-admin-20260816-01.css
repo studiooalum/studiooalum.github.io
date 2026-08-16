@@ -1,0 +1,55 @@
+@import url("./workshop-admin-20260809-02.css");
+
+.workshop-admin-page [hidden] {
+  display: none !important;
+}
+
+.workshop-admin-screen {
+  padding: clamp(18px, 2vw, 28px);
+}
+
+.workshop-admin-workshop-editor-panel {
+  gap: 20px;
+  min-width: 0;
+}
+
+.workshop-admin-accordion > summary {
+  padding: 16px 18px;
+}
+
+.workshop-admin-accordion__body {
+  gap: 18px;
+  padding: 18px;
+}
+
+.workshop-admin-thumb-card--slot {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 18px;
+}
+
+.workshop-admin-thumb-card--slot .workshop-admin-repeater-grid--wide {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.workshop-admin-thumb-card--slot .fulfillment-field input,
+.workshop-admin-thumb-card--slot .fulfillment-field select {
+  min-height: 44px;
+  font-size: 13px;
+}
+
+@media (min-width: 1280px) {
+  .workshop-admin-thumb-card--slot .workshop-admin-repeater-grid--wide {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 959px) {
+  .workshop-admin-screen {
+    padding: 18px;
+  }
+
+  .workshop-admin-thumb-card--slot .workshop-admin-repeater-grid--wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

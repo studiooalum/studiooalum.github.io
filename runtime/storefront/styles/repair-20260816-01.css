@@ -1,0 +1,45 @@
+@import url("./repair-20260815-02.css");
+
+.repair-request-success[hidden],
+.repair-request-form[hidden] {
+  display: none !important;
+}
+
+.repair-stage__visual {
+  --repair-title-space: calc(var(--shop-top-space) - 40px - var(--grid-gap));
+  grid-template-rows: var(--repair-title-space) auto;
+  gap: var(--grid-gap);
+}
+
+.repair-hero-copy {
+  align-content: start;
+  min-height: var(--repair-title-space);
+}
+
+.repair-hero-copy h1 {
+  font-size: clamp(36px, 5vw, 68px);
+  line-height: 0.94;
+}
+
+.repair-hero-image {
+  min-height: 0;
+  aspect-ratio: 0.9 / 1;
+}
+
+.repair-stage__content {
+  padding-top: calc(var(--repair-title-space) + var(--grid-gap));
+}
+
+@media (max-width: 959px) {
+  .repair-stage__visual {
+    grid-template-rows: auto auto;
+  }
+
+  .repair-hero-copy {
+    min-height: 0;
+  }
+
+  .repair-stage__content {
+    padding-top: 0;
+  }
+}

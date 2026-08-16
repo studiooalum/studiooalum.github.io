@@ -1,0 +1,15 @@
+@import url("./newsletter-20260815-02.css");
+
+.newsletter-intro,
+.newsletter-feed,
+.newsletter-subscribe {
+  padding-top: 0;
+}
+
+.newsletter-eyebrow,
+.newsletter-feed__label,
+.newsletter-subscribe__label {
+  min-height: 15px;
+  padding: 0;
+  line-height: 15px;
+}

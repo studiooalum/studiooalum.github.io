@@ -1,0 +1,9 @@
+@import url("./archive-20260815-02.css");
+
+.archive-page .gnb {
+  z-index: 1000;
+}
+
+.archive-content__header {
+  min-height: var(--shop-top-space);
+}

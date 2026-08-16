@@ -155,12 +155,12 @@ function renderBoard(board) {
     const title = document.createElement("h2");
     title.textContent = state.items.length
       ? "선택한 기록이 없습니다."
-      : "아카이브를 준비하고 있습니다.";
+      : "작업 기록을 준비하고 있습니다.";
     const copy = document.createElement("p");
     copy.className = "archive-empty__copy";
     copy.textContent = state.items.length
       ? "다른 태그를 선택해 작업 기록을 살펴보세요."
-      : "Studio OALUM의 작업과 수선 기록을 곧 이곳에서 소개하겠습니다.";
+      : "스튜디오 오알룸이 만들어오고 고쳐온 작업들을 정리해 차례로 공개합니다.";
     empty.append(label, title, copy);
     board.append(empty);
     return;
