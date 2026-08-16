@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-04.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-05.css">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -39,54 +39,48 @@
         <figure class="repair-hero-image">
           <img src="./repair_studio.jpg" alt="Studio OALUM의 수선 작업 사례">
         </figure>
-      </section>
-
-      <section class="repair-stage__content">
         <div class="repair-body-copy">
           <p>안녕하세요.<br>저는 구멍이 가진 이야기를 사랑하는 작업자입니다. 실을 엮으며, 상한 원단 위에 새로운 이야기를 그립니다.</p>
           <p>스튜디오 오알룸은 1:1 맞춤 수선 의뢰를 받고 있습니다. 수선하는 행위는 단순히 옷을 고치는 행위가 아니라 빠른 패션 사이클을 늦추고 지구와의 관계를 회복하는 일이라고 생각합니다.</p>
           <p>바느질은 오래된 역사와 전통이기도 하지요.<br>부디 이 전통이 사라지지 않길 바라며,<br>마음과 마음을 잇는 행동을 함께하고 싶습니다.</p>
         </div>
+      </section>
+
+      <section class="repair-stage__content">
+        <section class="repair-content-section" aria-labelledby="repair-price-title">
+          <p class="repair-section-label">Price guide</p>
+          <h2 id="repair-price-title">가격 안내</h2>
+          <p><strong>수선 가격</strong>은 Basic(기본) + 재료, 작업시간, 난이도에 따라 최종 결정됩니다.</p>
+          <h3>Basic(기본)</h3>
+          <dl class="repair-price-list">
+            <div><dt>자켓</dt><dd>38,000원</dd></div>
+            <div><dt>상의</dt><dd>25,000원</dd></div>
+            <div><dt>하의</dt><dd>30,000원</dd></div>
+            <div><dt>기타</dt><dd>10,000원부터</dd></div>
+            <div><dt>데님</dt><dd>40,000원</dd></div>
+            <div><dt>니트</dt><dd>40,000원</dd></div>
+            <div><dt>특수소재</dt><dd>45,000원</dd></div>
+          </dl>
+          <p class="repair-price-grid__example">특수소재 예: 가죽, 패딩 등</p>
+          <p>Basic(기본) 비용은 최소 작업 공임이며, 실제 수선 범위에 따라 추가 비용이 발생합니다.</p>
+        </section>
+
+        <section class="repair-content-section" aria-labelledby="repair-process-title">
+          <p class="repair-section-label">Process</p>
+          <h2 id="repair-process-title">수선 과정</h2>
+          <ol class="repair-process-list">
+            <li><span>01</span>신청폼 작성</li>
+            <li><span>02</span>Studio OALUM으로 택배 배송</li>
+            <li><span>03</span>수선 방향 논의 및 예상 가격 안내</li>
+            <li><span>04</span>작업 진행</li>
+            <li><span>05</span>작업 완료 및 최종 가격 안내</li>
+          </ol>
+        </section>
+
         <button type="button" class="repair-apply-btn" id="repairApplyBtn">신청하기</button>
       </section>
 
-      <aside class="repair-stage__rail" aria-labelledby="repair-process-title">
-        <p class="repair-section-label">Process</p>
-        <h2 id="repair-process-title">수선 과정</h2>
-        <ol class="repair-process-list">
-          <li><span>01</span>신청폼 작성</li>
-          <li><span>02</span>Studio OALUM으로 택배 배송</li>
-          <li><span>03</span>수선 방향 논의 및 예상 가격 안내</li>
-          <li><span>04</span>작업 진행</li>
-          <li><span>05</span>작업 완료 및 최종 가격 안내</li>
-        </ol>
-      </aside>
-    </section>
-
-    <section class="repair-price-grid" aria-labelledby="repair-price-title">
-      <header class="repair-price-grid__header">
-        <p class="repair-section-label">Price guide</p>
-        <h2 id="repair-price-title">가격 안내</h2>
-      </header>
-      <div class="repair-price-grid__rates">
-        <p><strong>수선 가격</strong>은 Basic(기본) + 재료, 작업시간, 난이도에 따라 최종 결정됩니다.</p>
-        <h3>Basic(기본)</h3>
-        <dl class="repair-price-list">
-          <div><dt>자켓</dt><dd>38,000원</dd></div>
-          <div><dt>상의</dt><dd>25,000원</dd></div>
-          <div><dt>하의</dt><dd>30,000원</dd></div>
-          <div><dt>기타</dt><dd>10,000원부터</dd></div>
-          <div><dt>데님</dt><dd>40,000원</dd></div>
-          <div><dt>니트</dt><dd>40,000원</dd></div>
-          <div><dt>특수소재</dt><dd>45,000원</dd></div>
-        </dl>
-        <p class="repair-price-grid__example">특수소재 예: 가죽, 패딩 등</p>
-      </div>
-      <div class="repair-price-grid__note">
-        <p>Basic(기본) 비용은 최소 작업 공임이며, 실제 수선 범위에 따라 추가 비용이 발생합니다.</p>
-        <p>2026년부터 원부자재 가격 상승으로 Basic(기본) 비용이 소폭 조정되었습니다.</p>
-        <p>더 나은 작업으로 보답드리겠습니다.<br>감사합니다.</p>
-      </div>
+      <aside class="repair-stage__rail" aria-hidden="true"></aside>
     </section>
   </main>
 
@@ -119,6 +113,10 @@
               <label class="repair-field">
                 <span>연락처</span>
                 <input type="tel" name="phone" autocomplete="tel" maxlength="60" placeholder="010-0000-0000" required>
+              </label>
+              <label class="repair-field js-repair-email-field">
+                <span>이메일</span>
+                <input class="js-repair-email-input" type="email" name="email" autocomplete="email" maxlength="320" required>
               </label>
               <label class="repair-field">
                 <span>수선 의뢰 제품에 대한 설명</span>
@@ -178,7 +176,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260820-01.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair.js?v=20260816-02";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair.js?v=20260816-03";
 
     initSiteChrome();
     initCartUI();

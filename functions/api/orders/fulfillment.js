@@ -13,7 +13,7 @@ import { errorResponse, json, noContent, readJson, validationError } from "../..
 
 const shipmentUpdateSchema = z.object({
   orderId: z.string().trim().min(1).max(80),
-  status: z.enum(["confirmed", "ready", "packing", "shipped", "delivered", "returned", "cancelled"]),
+  status: z.enum(["confirmed", "ready", "shipped", "delivered", "returned", "cancelled"]),
   carrierId: z.string().trim().max(120).optional().default(""),
   carrier: z.string().trim().max(120).optional().default(""),
   trackingNumber: z.string().trim().max(120).optional().default(""),
@@ -66,7 +66,7 @@ function getFulfillmentConfig(env) {
 }
 
 function buildWebhookExpirationTime() {
-  return new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 }
 
 export function onRequestOptions(context) {

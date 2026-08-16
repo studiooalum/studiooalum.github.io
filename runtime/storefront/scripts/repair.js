@@ -11,6 +11,8 @@ const dom = {
   backdrop: document.querySelector("#repairRequestBackdrop"),
   close: document.querySelector("#repairRequestClose"),
   form: document.querySelector(".js-repair-form"),
+  emailField: document.querySelector(".js-repair-email-field"),
+  emailInput: document.querySelector(".js-repair-email-input"),
   imageInput: document.querySelector(".js-repair-image-input"),
   imageList: document.querySelector(".js-repair-image-preview-list"),
   imageHelp: document.querySelector(".js-repair-image-help"),
@@ -26,7 +28,28 @@ const state = {
   objectUrls: [],
   isDrawerOpen: false,
   trigger: null,
+  accountEmail: "",
 };
+
+async function syncApplicantEmail() {
+  if (!dom.emailField || !dom.emailInput) return;
+
+  try {
+    const response = await fetch("./api/auth/session", {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+    });
+    const payload = await response.json().catch(() => null);
+    state.accountEmail = payload?.authenticated ? String(payload.user?.email || "").trim() : "";
+  } catch {
+    state.accountEmail = "";
+  }
+
+  const usesAccountEmail = Boolean(state.accountEmail);
+  dom.emailField.hidden = usesAccountEmail;
+  dom.emailInput.required = !usesAccountEmail;
+  dom.emailInput.value = usesAccountEmail ? state.accountEmail : "";
+}
 
 function formatFileSize(value) {
   const size = Number(value || 0);
@@ -205,6 +228,8 @@ async function submitRepairRequest() {
 
 export function initRepairRequest() {
   if (!dom.form) return;
+
+  void syncApplicantEmail();
 
   dom.apply?.addEventListener("click", openDrawer);
   dom.close?.addEventListener("click", closeDrawer);

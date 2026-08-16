@@ -162,7 +162,7 @@ export async function createRepairRequest(env, input, images = []) {
   const material = cleanText(input.material || input.itemMaterial, 120);
   const issueDescription = cleanText(input.issueDescription || input.repairDetails, 4000);
 
-  if (!requestId || !requestNumber || !customerName || !cleanText(input.phone, 60) || !issueDescription) {
+  if (!requestId || !requestNumber || !customerName || !emailNormalized || !cleanText(input.phone, 60) || !issueDescription) {
     throw Object.assign(new Error("수선 접수 정보를 다시 확인해주세요."), { status: 400 });
   }
 

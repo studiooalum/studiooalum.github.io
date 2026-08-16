@@ -1,0 +1,59 @@
+@import url("./repair-20260816-04.css");
+
+.repair-main {
+  display: block;
+}
+
+.repair-stage__visual {
+  display: grid;
+  gap: 24px;
+}
+
+.repair-body-copy {
+  gap: 16px;
+}
+
+.repair-body-copy p {
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.repair-stage__content {
+  gap: 36px;
+}
+
+.repair-content-section {
+  display: grid;
+  gap: 14px;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-content-section h2,
+.repair-content-section h3,
+.repair-content-section p {
+  margin: 0;
+}
+
+.repair-content-section h2 {
+  font-family: var(--font-kor-button);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.repair-content-section h3 {
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.repair-stage__rail {
+  display: block;
+}
+
+.js-repair-email-field[hidden] {
+  display: none !important;
+}

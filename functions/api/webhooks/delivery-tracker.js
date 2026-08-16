@@ -48,6 +48,13 @@ export async function onRequestPost(context) {
 
     const track = await fetchDeliveryTrackerTrack(context.env, parsed.data);
     const shipmentPatch = mapDeliveryTrackerTrackToShipment(track);
+    if (shipmentPatch.status !== "delivered") {
+      return json(context.env, {
+        ok: true,
+        ignored: true,
+        reason: "Delivery is not complete.",
+      }, { status: 202 });
+    }
     const result = await updateShipmentByTrackingReference(context.env, {
       ...parsed.data,
       ...shipmentPatch,
