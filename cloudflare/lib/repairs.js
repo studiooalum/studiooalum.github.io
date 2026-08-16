@@ -78,6 +78,34 @@ function hasOwn(object, key) {
   return Object.prototype.hasOwnProperty.call(object || {}, key);
 }
 
+const REPAIR_METHODS = new Set(["patch", "woven", "sashiko", "boro"]);
+
+function decodeJson(value, fallback = []) {
+  try {
+    return JSON.parse(value || "") || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeRepairMethods(value) {
+  const values = Array.isArray(value) ? value : [];
+  return [...new Set(values.map((item) => cleanText(item, 30).toLowerCase()).filter((item) => REPAIR_METHODS.has(item)))];
+}
+
+function formatRepairGalleryImage(row) {
+  return {
+    id: row.id,
+    filename: row.original_filename || "",
+    contentType: row.content_type || "",
+    methods: normalizeRepairMethods(decodeJson(row.methods_json, [])),
+    sortOrder: Number(row.sort_order || 0),
+    status: row.status || "published",
+    url: row.r2_key ? `/api/r2?key=${encodeURIComponent(row.r2_key)}` : "",
+    createdAt: row.created_at || "",
+  };
+}
+
 function formatRepairImage(row) {
   return {
     id: row.image_id,
@@ -285,7 +313,48 @@ export async function readRepairAdminSnapshot(env) {
     }
   }
 
-  return { requests: Array.from(byId.values()) };
+  const gallery = await readRepairGallery(env, { includeDrafts: true });
+  return { requests: Array.from(byId.values()), gallery };
+}
+
+export async function readRepairGallery(env, { includeDrafts = false } = {}) {
+  const database = requireDb(env);
+  const result = await database.prepare(`
+    SELECT * FROM repair_gallery_images
+    ${includeDrafts ? "" : "WHERE status = 'published'"}
+    ORDER BY sort_order ASC, created_at DESC
+  `).all();
+  return (result?.results || []).map(formatRepairGalleryImage);
+}
+
+export async function createRepairGalleryImage(env, input) {
+  const database = requireDb(env);
+  const now = nowIso();
+  const id = cleanText(input.id, 80) || createId("RPG");
+  await database.prepare(`
+    INSERT INTO repair_gallery_images (
+      id, r2_key, original_filename, content_type, methods_json,
+      sort_order, status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, 'published', ?, ?)
+  `).bind(
+    id,
+    cleanText(input.r2Key, 500),
+    cleanText(input.filename, 240),
+    cleanText(input.contentType, 100),
+    JSON.stringify(normalizeRepairMethods(input.methods)),
+    Math.max(0, Number(input.sortOrder) || 0),
+    now,
+    now,
+  ).run();
+  return readRepairGallery(env, { includeDrafts: true });
+}
+
+export async function deleteRepairGalleryImage(env, id) {
+  const database = requireDb(env);
+  const row = await database.prepare(`SELECT * FROM repair_gallery_images WHERE id = ? LIMIT 1`).bind(cleanText(id, 80)).first();
+  if (!row) throw Object.assign(new Error("수선 작업 이미지를 찾을 수 없습니다."), { status: 404 });
+  await database.prepare(`DELETE FROM repair_gallery_images WHERE id = ?`).bind(row.id).run();
+  return { r2Key: row.r2_key, gallery: await readRepairGallery(env, { includeDrafts: true }) };
 }
 
 export async function updateRepairRequest(env, input) {

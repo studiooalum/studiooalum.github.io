@@ -86,6 +86,7 @@ const ALLOWED_RICH_TEXT_TAGS = new Set([
   "figure",
   "figcaption",
   "img",
+  "span",
   "hr",
 ]);
 
@@ -93,13 +94,17 @@ const IMAGE_ALIGNMENTS = new Set(["left", "center", "right"]);
 const IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
 const IMAGE_LAYOUTS = new Set(["single", "pair-left", "pair-right"]);
-const FONT_SIZES = new Set(["10", "12", "14", "16", "18", "20", "24", "28", "32"]);
 const TEXT_ALIGNMENTS = new Set(["left", "center", "right"]);
 const TEXT_ALIGNMENT_TAGS = new Set(["p", "h2", "h3", "blockquote", "li"]);
 
 function sanitizeImageLayoutValue(value, allowedValues) {
   const normalized = cleanText(value, 20).toLowerCase();
   return allowedValues.has(normalized) ? normalized : "";
+}
+
+function sanitizeFontSize(value) {
+  const size = Math.round(Number(cleanText(value, 4)));
+  return size >= 8 && size <= 40 ? String(size) : "";
 }
 
 export function sanitizeNewsletterHtml(value) {
@@ -140,12 +145,13 @@ export function sanitizeNewsletterHtml(value) {
       return `<figure${layoutAttributes}>`;
     }
 
-    if (TEXT_ALIGNMENT_TAGS.has(tagName)) {
+    if (TEXT_ALIGNMENT_TAGS.has(tagName) || tagName === "span") {
       const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-text-align"), TEXT_ALIGNMENTS);
-      const fontSize = sanitizeImageLayoutValue(readAttribute(attributes, "data-font-size"), FONT_SIZES);
+      const fontSize = sanitizeFontSize(readAttribute(attributes, "data-font-size"));
       const textAttributes = [
         alignment ? ` data-text-align="${alignment}"` : "",
         fontSize ? ` data-font-size="${fontSize}"` : "",
+        fontSize ? ` style="font-size: ${fontSize}px"` : "",
       ].join("");
       return `<${tagName}${textAttributes}>`;
     }

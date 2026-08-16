@@ -59,3 +59,14 @@ export function buildRepairImageKey({ requestId = "request", imageId = "image", 
   const extension = extensionFromName(fileName) || extensionFromType(fileType);
   return `repair-requests/${requestSegment}/${Date.now()}-${imageSegment}-${nameSegment}${extension}`;
 }
+
+export function buildRepairGalleryKey({ imageId = "image", fileName = "", fileType = "" } = {}) {
+  const imageSegment = sanitizeSegment(imageId, "image");
+  const nameSegment = sanitizeSegment(String(fileName || "").replace(/\.[a-z0-9]+$/i, ""), "upload");
+  const extension = extensionFromName(fileName) || extensionFromType(fileType);
+  return `repair-gallery/${Date.now()}-${imageSegment}-${nameSegment}${extension}`;
+}
+
+export function buildRepairGalleryUrl(key) {
+  return `/api/r2?key=${encodeURIComponent(String(key || "").trim())}`;
+}

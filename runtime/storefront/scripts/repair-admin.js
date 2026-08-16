@@ -21,6 +21,10 @@ const dom = {
   imageList: document.querySelector(".js-repair-admin-image-list"),
   save: document.querySelector(".js-repair-admin-save"),
   formStatus: document.querySelector(".js-repair-admin-form-status"),
+  galleryForm: document.querySelector(".js-repair-gallery-upload-form"),
+  galleryUpload: document.querySelector(".js-repair-gallery-upload"),
+  galleryStatus: document.querySelector(".js-repair-gallery-status"),
+  galleryList: document.querySelector(".js-repair-gallery-list"),
 };
 
 const state = {
@@ -30,6 +34,7 @@ const state = {
   requests: [],
   selectedId: "",
   imageUrls: [],
+  gallery: [],
 };
 
 const STATUS_LABELS = {
@@ -115,8 +120,8 @@ function getAuthHeaders(includeJson = false) {
 async function requestAdmin(url, { method = "GET", body } = {}) {
   const response = await fetch(url, {
     method,
-    headers: getAuthHeaders(body !== undefined),
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: getAuthHeaders(body !== undefined && !(body instanceof FormData)),
+    body: body instanceof FormData ? body : (body === undefined ? undefined : JSON.stringify(body)),
     credentials: "same-origin",
   });
   const payload = await response.json().catch(() => null);
@@ -126,6 +131,21 @@ async function requestAdmin(url, { method = "GET", body } = {}) {
     throw error;
   }
   return payload;
+}
+
+function renderGallery() {
+  if (!dom.galleryList) return;
+  if (!state.gallery.length) {
+    dom.galleryList.innerHTML = '<div class="fulfillment-empty">등록된 수선 작업 사진이 없습니다.</div>';
+    return;
+  }
+  dom.galleryList.innerHTML = state.gallery.map((image) => `
+    <article class="repair-admin-gallery-card">
+      <img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.filename || "수선 작업")}">
+      <p>${(image.methods || []).map((method) => escapeHtml(method.toUpperCase())).join(" / ")}</p>
+      <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-repair-gallery-delete="${escapeHtml(image.id)}">삭제</button>
+    </article>
+  `).join("");
 }
 
 async function createAdminSession(secret) {
@@ -312,7 +332,9 @@ function renderSelectedRequest() {
 
 function applySnapshot(payload) {
   state.requests = Array.isArray(payload?.requests) ? payload.requests : [];
+  state.gallery = Array.isArray(payload?.gallery) ? payload.gallery : [];
   if (state.selectedId && !getSelectedRequest()) state.selectedId = "";
+  renderGallery();
 }
 
 async function loadRequests() {
@@ -433,6 +455,42 @@ function bindEvents() {
     void saveRequest();
   });
 
+  dom.galleryForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(dom.galleryForm);
+    formData.set("action", "uploadRepairGalleryImage");
+    if (!formData.getAll("methods").length) {
+      setStatus(dom.galleryStatus, "수선 방식을 하나 이상 선택해주세요.", "error");
+      return;
+    }
+    setButtonLoading(dom.galleryUpload, true, "등록 중...");
+    try {
+      const payload = await requestAdmin("/api/repairs/admin", { method: "POST", body: formData });
+      applySnapshot(payload);
+      dom.galleryForm.reset();
+      setStatus(dom.galleryStatus, "수선 작업 사진을 등록했습니다.", "success");
+    } catch (error) {
+      setStatus(dom.galleryStatus, error.message || "사진을 등록하지 못했습니다.", "error");
+    } finally {
+      setButtonLoading(dom.galleryUpload, false, "등록 중...");
+    }
+  });
+
+  dom.galleryList?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-repair-gallery-delete]");
+    if (!button || !window.confirm("이 수선 작업 사진을 삭제할까요?")) return;
+    try {
+      const payload = await requestAdmin("/api/repairs/admin", {
+        method: "POST",
+        body: { action: "deleteRepairGalleryImage", id: button.dataset.repairGalleryDelete },
+      });
+      applySnapshot(payload);
+      setStatus(dom.galleryStatus, "사진을 삭제했습니다.", "success");
+    } catch (error) {
+      setStatus(dom.galleryStatus, error.message || "사진을 삭제하지 못했습니다.", "error");
+    }
+  });
+
   window.addEventListener("pagehide", clearImageUrls);
 }
 
@@ -442,6 +500,7 @@ export function initRepairAdmin() {
   applyAccessState();
   renderRequestList();
   renderSelectedRequest();
+  renderGallery();
 
   if (!state.accessToken) return;
   requestAdmin("/api/orders/admin-session")

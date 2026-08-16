@@ -46,13 +46,15 @@
 
 .newsletter-post-card__media {
   position: relative;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
 }
 
 .newsletter-post-card__image {
   width: 100%;
-  height: auto;
-  aspect-ratio: auto;
+  height: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
   transition: transform 240ms ease;
 }
 

@@ -26,12 +26,8 @@ const dom = {
   inlineImageInput: document.querySelector(".js-newsletter-admin-inline-image-input"),
   inlineImageButton: document.querySelector(".js-newsletter-admin-inline-image-upload"),
   saveDraftButton: document.querySelector(".js-newsletter-admin-save-draft"),
-  previewButton: document.querySelector(".js-newsletter-admin-preview"),
   publishButton: document.querySelector(".js-newsletter-admin-publish"),
   archiveButton: document.querySelector(".js-newsletter-admin-archive"),
-  previewDialog: document.querySelector(".js-newsletter-admin-preview-dialog"),
-  previewDialogClose: document.querySelector(".js-newsletter-admin-preview-close"),
-  preview: document.querySelector(".js-newsletter-admin-preview"),
 };
 
 const state = {
@@ -454,8 +450,8 @@ function insertHtmlAtSelection(html) {
 
 function applyTextAlignment(alignment) {
   const selection = window.getSelection();
-  if (!selection?.rangeCount || !dom.editor?.contains(selection.anchorNode)) {
-    setStatus(dom.status, "정렬할 본문을 먼저 선택해주세요.", "error");
+  if (!selection?.rangeCount || selection.isCollapsed || !dom.editor?.contains(selection.anchorNode)) {
+    setStatus(dom.status, "정렬할 텍스트를 드래그해 선택해주세요.", "error");
     return;
   }
 
@@ -472,23 +468,40 @@ function applyTextAlignment(alignment) {
 }
 
 function applyTextFontSize(value) {
-  const allowed = new Set(["10", "12", "14", "16", "18", "20", "24", "28", "32"]);
+  restoreEditorRange();
   const selection = window.getSelection();
-  const node = selection?.rangeCount ? (selection.anchorNode instanceof Element ? selection.anchorNode : selection.anchorNode?.parentElement) : null;
-  const block = node?.closest("p, h2, h3, blockquote, li");
-  if (!block || !dom.editor?.contains(block) || !allowed.has(String(value))) {
-    setStatus(dom.status, "크기를 바꿀 문단을 먼저 선택해주세요.", "error");
+  const size = Math.round(Number(value));
+  if (!selection?.rangeCount || selection.isCollapsed || !dom.editor?.contains(selection.anchorNode) || size < 8 || size > 40) {
+    setStatus(dom.status, "크기를 바꿀 텍스트를 드래그해 선택해주세요.", "error");
     return;
   }
-  block.setAttribute("data-font-size", String(value));
-  saveEditorRange();
-  markEditorDirty();
+  const range = selection.getRangeAt(0);
+  const span = document.createElement("span");
+  span.setAttribute("data-font-size", String(size));
+  span.style.fontSize = `${size}px`;
+  try {
+    range.surroundContents(span);
+    selection.removeAllRanges();
+    const nextRange = document.createRange();
+    nextRange.selectNodeContents(span);
+    selection.addRange(nextRange);
+    saveEditorRange();
+    markEditorDirty();
+  } catch {
+    setStatus(dom.status, "하나의 문단 안에서 텍스트를 선택해주세요.", "error");
+  }
 }
 
 function applyEditorCommand(command) {
   if (!dom.editor) return;
   dom.editor.focus();
   restoreEditorRange();
+
+  const selection = window.getSelection();
+  if (!selection?.rangeCount || selection.isCollapsed || !dom.editor.contains(selection.anchorNode)) {
+    setStatus(dom.status, "편집할 텍스트를 드래그해 선택해주세요.", "error");
+    return;
+  }
 
   if (["align-left", "align-center", "align-right"].includes(command)) {
     applyTextAlignment(command.replace("align-", ""));
@@ -556,8 +569,7 @@ async function uploadInlineImage(file) {
     const payload = await uploadImage(file, "body");
     const url = String(payload.image?.url || "").trim();
     if (!url) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
-    const alt = window.prompt("이미지 설명", "") || "";
-    insertHtmlAtSelection(`<figure data-image-align="center" data-image-size="full" data-image-position="inline" data-image-layout="single"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}"><figcaption>${escapeHtml(alt)}</figcaption></figure>`);
+    insertHtmlAtSelection(`<figure data-image-align="center" data-image-size="full" data-image-position="inline" data-image-layout="single"><img src="${escapeHtml(url)}" alt=""></figure>`);
     const insertedFigures = Array.from(dom.editor?.querySelectorAll("figure") || []);
     const inserted = insertedFigures.reverse().find((figure) => figure.querySelector("img")?.getAttribute("src") === url);
     syncImageLayoutControls(inserted || null);
@@ -568,16 +580,6 @@ async function uploadInlineImage(file) {
     setButtonLoading(dom.inlineImageButton, false, "업로드 중...");
     if (dom.inlineImageInput) dom.inlineImageInput.value = "";
   }
-}
-
-function showPreview(post) {
-  if (!post || !dom.preview || !dom.previewDialog) return;
-  const cover = post.coverImageUrl
-    ? `<img class="newsletter-admin-preview__cover" src="${escapeHtml(post.coverImageUrl)}" alt="${escapeHtml(post.coverImageAlt)}">`
-    : "";
-  const excerpt = post.excerpt ? `<p class="newsletter-admin-preview__excerpt">${escapeHtml(post.excerpt)}</p>` : "";
-  dom.preview.innerHTML = `${cover}<h1 class="newsletter-admin-preview__title">${escapeHtml(post.title)}</h1>${excerpt}${post.contentHtml || ""}`;
-  dom.previewDialog.showModal();
 }
 
 function attachEvents() {
@@ -692,13 +694,8 @@ function attachEvents() {
   dom.inlineImageInput?.addEventListener("change", (event) => uploadInlineImage(event.target.files?.[0]));
 
   dom.saveDraftButton?.addEventListener("click", () => savePost("draft", dom.saveDraftButton));
-  dom.previewButton?.addEventListener("click", () => {
-    const post = collectPost("draft");
-    if (validatePost(post, "draft")) showPreview(post);
-  });
   dom.publishButton?.addEventListener("click", () => savePost("published", dom.publishButton));
   dom.archiveButton?.addEventListener("click", archivePost);
-  dom.previewDialogClose?.addEventListener("click", () => dom.previewDialog?.close());
 
   window.addEventListener("beforeunload", (event) => {
     if (!state.isDirty) return;

@@ -19,9 +19,98 @@
 
 .repair-image-gallery {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
 }
+
+.repair-gallery-card {
+  position: relative;
+  display: block;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+  cursor: zoom-in;
+}
+
+.repair-gallery-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  background: rgba(var(--repair-gallery-rgb, 17, 17, 17), 0.82);
+  color: #fff;
+  font-family: var(--font-book);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre-line;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.repair-gallery-card:hover .repair-gallery-card__overlay,
+.repair-gallery-card:focus-visible .repair-gallery-card__overlay {
+  opacity: 1;
+}
+
+.repair-lightbox {
+  width: min(1200px, calc(100vw - 48px));
+  max-width: none;
+  height: calc(100dvh - 48px);
+  border: 0;
+  padding: 24px 64px;
+  overflow: visible;
+  background: #fff;
+  color: #111;
+}
+
+.repair-lightbox::backdrop {
+  background: rgba(17, 17, 17, 0.34);
+}
+
+.repair-lightbox__figure {
+  display: grid;
+  height: 100%;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.repair-lightbox__figure img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.repair-lightbox__figure figcaption {
+  display: grid;
+  justify-self: end;
+  gap: 3px;
+  font-family: var(--font-book);
+  font-size: 11px;
+  text-align: right;
+}
+
+.repair-lightbox__close,
+.repair-lightbox__nav {
+  position: absolute;
+  z-index: 2;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+}
+
+.repair-lightbox__close { top: 14px; right: 18px; font-size: 28px; }
+.repair-lightbox__nav { top: 50%; font-size: 24px; transform: translateY(-50%); }
+.repair-lightbox__nav--prev { left: 20px; }
+.repair-lightbox__nav--next { right: 20px; }
 
 .repair-image-gallery:empty {
   display: none;
@@ -35,6 +124,33 @@
 .repair-method-table-list {
   display: grid;
   gap: 24px;
+}
+
+.repair-price-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: #111;
+}
+
+.repair-price-tabs button {
+  min-height: 38px;
+  border: 0;
+  padding: 0 10px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-book);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.repair-price-tabs button.is-active {
+  background: #111;
+  color: #fff;
+}
+
+[data-repair-price-panel][hidden] {
+  display: none !important;
 }
 
 .repair-method-table-list table {
@@ -143,9 +259,8 @@
   .repair-stage__rail {
     position: sticky;
     top: calc(var(--gnb-height, 40px) + 24px);
-    max-height: calc(100vh - var(--gnb-height, 40px) - 48px);
-    overflow-y: auto;
-    scrollbar-width: thin;
+    max-height: none;
+    overflow: visible;
   }
 }
 

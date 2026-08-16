@@ -226,6 +226,51 @@
   white-space: nowrap;
 }
 
+.repair-admin-gallery-upload,
+.repair-admin-gallery-list {
+  display: grid;
+  gap: 12px;
+}
+
+.repair-admin-methods {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.repair-admin-methods legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+}
+
+.repair-admin-methods label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.repair-admin-gallery-card {
+  display: grid;
+  gap: 8px;
+}
+
+.repair-admin-gallery-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.repair-admin-gallery-card p {
+  margin: 0;
+  font-family: var(--font-book);
+  font-size: 11px;
+}
+
 .repair-admin-image-loading {
   grid-column: 1 / -1;
   padding: 16px 0;

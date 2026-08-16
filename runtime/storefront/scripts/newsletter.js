@@ -138,14 +138,6 @@ function renderPostEntry(container, post) {
   back.textContent = "← 모든 글";
   container.appendChild(back);
 
-  if (post.coverImageUrl) {
-    const cover = document.createElement("img");
-    cover.className = "newsletter-entry__cover";
-    cover.src = post.coverImageUrl;
-    cover.alt = post.coverImageAlt || "";
-    container.appendChild(cover);
-  }
-
   const meta = document.createElement("p");
   meta.className = "newsletter-entry__meta";
   meta.textContent = formatPublishedDate(post.publishedAt);

@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-06.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-07.css">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -50,8 +50,11 @@
       </section>
 
       <section class="repair-stage__content">
-        <section class="repair-content-section" aria-labelledby="repair-price-title">
-          <p class="repair-section-label">Price guide</p>
+        <div class="repair-price-tabs" role="tablist" aria-label="가격표 선택">
+          <button type="button" class="is-active" role="tab" aria-selected="true" data-repair-price-tab="basic">Basic</button>
+          <button type="button" role="tab" aria-selected="false" data-repair-price-tab="methods">Repair Methods</button>
+        </div>
+        <section class="repair-content-section" aria-labelledby="repair-price-title" data-repair-price-panel="basic">
           <h2 id="repair-price-title">Basic</h2>
           <p><strong>수선 가격</strong>은 Basic(기본) + 재료, 작업시간, 난이도에 따라 최종 결정됩니다.</p>
           <h3>Basic(기본)</h3>
@@ -68,8 +71,7 @@
           <p>Basic(기본) 비용은 최소 작업 공임이며, 실제 수선 범위에 따라 추가 비용이 발생합니다.</p>
         </section>
 
-        <section class="repair-content-section repair-methods" aria-labelledby="repair-methods-title">
-          <p class="repair-section-label">Repair Methods</p>
+        <section class="repair-content-section repair-methods" aria-labelledby="repair-methods-title" data-repair-price-panel="methods" hidden>
           <h2 id="repair-methods-title">수선 기법별 가격</h2>
           <div class="repair-method-table-list">
             <table><caption>PATCH</caption><thead><tr><th>범위</th><th>KRW</th><th>USD</th></tr></thead><tbody><tr><td>SMALL</td><td>₩30,000~</td><td>$25~</td></tr><tr><td>MEDIUM</td><td>₩55,000~</td><td>$40~</td></tr><tr><td>LARGE</td><td>₩80,000~</td><td>$55~</td></tr><tr><td>MULTIPLE</td><td>₩120,000~</td><td>$85~</td></tr><tr><td>FULL</td><td>₩180,000~</td><td>$125~</td></tr></tbody></table>
@@ -188,11 +190,21 @@
     </div>
   </aside>
 
+  <dialog class="repair-lightbox js-repair-lightbox" aria-label="수선 작업 이미지 확대 보기">
+    <button type="button" class="repair-lightbox__close js-repair-lightbox-close" aria-label="닫기">×</button>
+    <button type="button" class="repair-lightbox__nav repair-lightbox__nav--prev js-repair-lightbox-prev" aria-label="이전 이미지">←</button>
+    <figure class="repair-lightbox__figure">
+      <img class="js-repair-lightbox-image" alt="">
+      <figcaption class="js-repair-lightbox-methods"></figcaption>
+    </figure>
+    <button type="button" class="repair-lightbox__nav repair-lightbox__nav--next js-repair-lightbox-next" aria-label="다음 이미지">→</button>
+  </dialog>
+
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260816-02.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair.js?v=20260816-04";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair.js?v=20260816-05";
 
     initSiteChrome();
     initCartUI();

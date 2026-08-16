@@ -5,8 +5,17 @@ const TAG_PRIORITY = ["all", "work", "repair", "collaboration", "exhibition", "r
 
 const state = {
   items: [],
-  selectedTag: "all",
+  selectedTag: String(new URLSearchParams(window.location.search).get("tag") || "all").trim().toLowerCase(),
 };
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function normalizeTag(value) {
   return String(value || "").trim().toLowerCase();
@@ -42,6 +51,9 @@ function normalizeArchiveItem(item, index) {
     id: item?._id || `archive-${index}`,
     title,
     createdDate: String(item?.createdDate || "").trim(),
+    material: String(item?.material || "").trim(),
+    size: String(item?.size || "").trim(),
+    description: String(item?.description || "").trim(),
     tags: Array.isArray(item?.tags)
       ? item.tags.map(normalizeTag).filter(Boolean)
       : [],
@@ -96,9 +108,9 @@ function applyAverageColor(card, image) {
 }
 
 function createArchiveCard(item, imageData) {
-  const card = document.createElement("article");
+  const card = document.createElement("a");
   card.className = "archive-card";
-  card.tabIndex = 0;
+  card.href = `./archive.html?id=${encodeURIComponent(item.id)}`;
 
   const media = document.createElement("figure");
   media.className = "archive-card__media";
@@ -124,6 +136,71 @@ function createArchiveCard(item, imageData) {
   media.append(image, overlay);
   card.append(media);
   return card;
+}
+
+function createDetailImage(imageData, title, className = "") {
+  const figure = document.createElement("figure");
+  figure.className = `archive-detail-image ${className}`.trim();
+  const image = document.createElement("img");
+  image.src = imageData.src;
+  image.alt = imageData.alt || title;
+  image.loading = className.includes("main") ? "eager" : "lazy";
+  if (imageData.width) image.width = imageData.width;
+  if (imageData.height) image.height = imageData.height;
+  figure.append(image);
+  return figure;
+}
+
+function renderDetail(shell, item) {
+  document.body.classList.add("archive-detail-mode");
+  const meta = document.createElement("aside");
+  meta.className = "archive-detail-meta";
+  const tags = item.tags.length ? item.tags : ["archive"];
+  meta.innerHTML = `
+    <a class="archive-detail-back" href="./archive.html">← Archive</a>
+    <h1>${escapeHtml(item.title)}</h1>
+    <p class="archive-detail-year">${getYear(item.createdDate) || "-"}</p>
+    <div class="archive-detail-meta__more">
+      ${item.material ? `<p><span>Material</span>${escapeHtml(item.material)}</p>` : ""}
+      ${item.size ? `<p><span>Size</span>${escapeHtml(item.size)}</p>` : ""}
+      <p><span>Tags</span>${tags.map(escapeHtml).join(" · ")}</p>
+      ${item.description ? `<p class="archive-detail-description">${escapeHtml(item.description)}</p>` : ""}
+    </div>
+  `;
+
+  const gallery = document.createElement("section");
+  gallery.className = "archive-detail-gallery";
+  item.images.forEach((image, index) => gallery.append(createDetailImage(image, item.title, index === 0 ? "archive-detail-image--main" : "")));
+
+  const related = state.items
+    .filter((candidate) => candidate.id !== item.id)
+    .sort((left, right) => {
+      const leftScore = left.tags.filter((tag) => item.tags.includes(tag)).length;
+      const rightScore = right.tags.filter((tag) => item.tags.includes(tag)).length;
+      return rightScore - leftScore;
+    })
+    .slice(0, 4);
+  if (related.length) {
+    const section = document.createElement("section");
+    section.className = "archive-related";
+    const heading = document.createElement("h2");
+    heading.textContent = "You may also like";
+    const grid = document.createElement("div");
+    grid.className = "archive-related__grid";
+    related.forEach((candidate) => {
+      if (candidate.images[0]) grid.append(createArchiveCard(candidate, candidate.images[0]));
+    });
+    section.append(heading, grid);
+    gallery.append(section);
+  }
+  shell.replaceChildren(meta, gallery);
+
+  const syncMeta = () => {
+    const threshold = Math.max(80, window.innerHeight * 0.16);
+    meta.classList.toggle("is-expanded", window.scrollY > threshold);
+  };
+  window.addEventListener("scroll", syncMeta, { passive: true });
+  syncMeta();
 }
 
 function renderTags(tagsElement) {
@@ -170,9 +247,7 @@ function renderBoard(board) {
 
   const fragment = document.createDocumentFragment();
   for (const item of items) {
-    for (const imageData of item.images) {
-      fragment.append(createArchiveCard(item, imageData));
-    }
+    if (item.images[0]) fragment.append(createArchiveCard(item, item.images[0]));
   }
   board.append(fragment);
 }
@@ -192,12 +267,23 @@ export async function initArchiveBoard() {
   }
 
   renderTags(tagsElement);
-  renderBoard(board);
+  const detailId = String(new URLSearchParams(window.location.search).get("id") || "").trim();
+  const detailItem = detailId ? state.items.find((item) => item.id === detailId) : null;
+  if (detailItem) {
+    renderDetail(document.querySelector(".archive-shell"), detailItem);
+  } else {
+    renderBoard(board);
+  }
 
   tagsElement?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-archive-tag]");
     if (!button) return;
-    state.selectedTag = button.dataset.archiveTag || "all";
+    const nextTag = button.dataset.archiveTag || "all";
+    if (detailItem) {
+      window.location.href = nextTag === "all" ? "./archive.html" : `./archive.html?tag=${encodeURIComponent(nextTag)}`;
+      return;
+    }
+    state.selectedTag = nextTag;
     renderTags(tagsElement);
     renderBoard(board);
   });

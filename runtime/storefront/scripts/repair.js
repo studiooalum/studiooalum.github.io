@@ -21,6 +21,15 @@ const dom = {
   success: document.querySelector(".js-repair-success"),
   successCopy: document.querySelector(".js-repair-success-copy"),
   reset: document.querySelector(".js-repair-reset"),
+  publicGallery: document.querySelector(".repair-image-gallery"),
+  lightbox: document.querySelector(".js-repair-lightbox"),
+  lightboxImage: document.querySelector(".js-repair-lightbox-image"),
+  lightboxMethods: document.querySelector(".js-repair-lightbox-methods"),
+  lightboxClose: document.querySelector(".js-repair-lightbox-close"),
+  lightboxPrev: document.querySelector(".js-repair-lightbox-prev"),
+  lightboxNext: document.querySelector(".js-repair-lightbox-next"),
+  priceTabs: Array.from(document.querySelectorAll("[data-repair-price-tab]")),
+  pricePanels: Array.from(document.querySelectorAll("[data-repair-price-panel]")),
 };
 
 const state = {
@@ -29,7 +38,92 @@ const state = {
   isDrawerOpen: false,
   trigger: null,
   accountEmail: "",
+  gallery: [],
+  galleryIndex: 0,
 };
+
+const METHOD_LABELS = {
+  patch: "PATCH",
+  woven: "WOVEN",
+  sashiko: "SASHIKO / VISIBLE MENDING",
+  boro: "BORO",
+};
+
+function setAverageColor(card, image) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 16;
+    canvas.height = 16;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    context.drawImage(image, 0, 0, 16, 16);
+    const pixels = context.getImageData(0, 0, 16, 16).data;
+    let red = 0; let green = 0; let blue = 0; let count = 0;
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index + 3] < 32) continue;
+      red += pixels[index]; green += pixels[index + 1]; blue += pixels[index + 2]; count += 1;
+    }
+    if (count) card.style.setProperty("--repair-gallery-rgb", `${Math.round(red / count)}, ${Math.round(green / count)}, ${Math.round(blue / count)}`);
+  } catch {}
+}
+
+function formatMethods(methods = []) {
+  return methods.map((method) => METHOD_LABELS[method] || String(method).toUpperCase());
+}
+
+function setPricePanel(name) {
+  dom.priceTabs.forEach((button) => {
+    const active = button.dataset.repairPriceTab === name;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  dom.pricePanels.forEach((panel) => {
+    panel.hidden = panel.dataset.repairPricePanel !== name;
+  });
+}
+
+function showGalleryImage(index) {
+  if (!state.gallery.length || !dom.lightbox || !dom.lightboxImage || !dom.lightboxMethods) return;
+  state.galleryIndex = (index + state.gallery.length) % state.gallery.length;
+  const item = state.gallery[state.galleryIndex];
+  dom.lightboxImage.src = item.url;
+  dom.lightboxImage.alt = item.filename || "수선 작업 이미지";
+  dom.lightboxMethods.replaceChildren(...formatMethods(item.methods).map((label) => {
+    const line = document.createElement("span");
+    line.textContent = label;
+    return line;
+  }));
+  if (!dom.lightbox.open) dom.lightbox.showModal();
+}
+
+async function initPublicGallery() {
+  if (!dom.publicGallery) return;
+  try {
+    const response = await fetch("./api/repairs/gallery", { headers: { Accept: "application/json" } });
+    const payload = await response.json().catch(() => null);
+    state.gallery = response.ok && Array.isArray(payload?.gallery) ? payload.gallery : [];
+  } catch {
+    state.gallery = [];
+  }
+  const fragment = document.createDocumentFragment();
+  state.gallery.forEach((item, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "repair-gallery-card";
+    button.setAttribute("aria-label", `${formatMethods(item.methods).join(", ")} 이미지 확대`);
+    const image = document.createElement("img");
+    image.src = item.url;
+    image.alt = item.filename || "수선 작업 이미지";
+    image.loading = "lazy";
+    image.addEventListener("load", () => setAverageColor(button, image), { once: true });
+    const overlay = document.createElement("span");
+    overlay.className = "repair-gallery-card__overlay";
+    overlay.textContent = formatMethods(item.methods).join("\n");
+    button.append(image, overlay);
+    button.addEventListener("click", () => showGalleryImage(index));
+    fragment.append(button);
+  });
+  dom.publicGallery.replaceChildren(fragment);
+}
 
 async function syncApplicantEmail() {
   if (!dom.emailField || !dom.emailInput) return;
@@ -235,6 +329,7 @@ export function initRepairRequest() {
   if (!dom.form) return;
 
   void syncApplicantEmail();
+  void initPublicGallery();
 
   dom.apply?.addEventListener("click", openDrawer);
   dom.close?.addEventListener("click", closeDrawer);
@@ -257,6 +352,13 @@ export function initRepairRequest() {
   });
 
   dom.reset?.addEventListener("click", resetForm);
+  dom.lightboxClose?.addEventListener("click", () => dom.lightbox?.close());
+  dom.lightboxPrev?.addEventListener("click", () => showGalleryImage(state.galleryIndex - 1));
+  dom.lightboxNext?.addEventListener("click", () => showGalleryImage(state.galleryIndex + 1));
+  dom.priceTabs.forEach((button) => button.addEventListener("click", () => setPricePanel(button.dataset.repairPriceTab || "basic")));
+  dom.lightbox?.addEventListener("click", (event) => {
+    if (event.target === dom.lightbox) dom.lightbox.close();
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && state.isDrawerOpen) closeDrawer();
   });

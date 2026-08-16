@@ -159,7 +159,17 @@
   letter-spacing: var(--tracking-korean);
 }
 
+.newsletter-admin-font-size-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+  font-family: var(--font-book);
+  font-size: 10px;
+}
+
 .newsletter-admin-font-size {
+  width: 54px;
   min-height: 36px;
   border: 0;
   border-left: 1px solid #111;
@@ -168,6 +178,14 @@
   background: #fff;
   font-family: var(--font-kor-button);
   font-size: 11px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
 .newsletter-admin-tool {
