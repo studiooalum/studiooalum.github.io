@@ -1,0 +1,5 @@
+@import url("./workshops-page-20260816-01.css");
+
+.workshops-preparing h2 {
+  font-size: clamp(18px, 2.27vw, 31px);
+}
