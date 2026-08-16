@@ -120,6 +120,7 @@ function formatRepairRequest(row) {
     adminNote: row.admin_note,
     customerMessage: row.customer_message,
     quoteAmount: row.quote_amount === null || row.quote_amount === undefined ? null : Number(row.quote_amount),
+    finalAmount: row.final_amount === null || row.final_amount === undefined ? null : Number(row.final_amount),
     quotedAt: row.quoted_at || "",
     acceptedAt: row.accepted_at || "",
     completedAt: row.completed_at || "",
@@ -302,6 +303,7 @@ export async function updateRepairRequest(env, input) {
   const now = nowIso();
   const status = hasOwn(input, "status") ? normalizeStatus(input.status, normalizeStatus(existing.status)) : normalizeStatus(existing.status);
   const quoteAmount = hasOwn(input, "quoteAmount") ? normalizeAmount(input.quoteAmount) : existing.quote_amount;
+  const finalAmount = hasOwn(input, "finalAmount") ? normalizeAmount(input.finalAmount) : existing.final_amount;
   const quotedAt = status === "quoted" && quoteAmount !== null
     ? existing.quoted_at || now
     : existing.quoted_at;
@@ -312,7 +314,7 @@ export async function updateRepairRequest(env, input) {
   await database
     .prepare(`
       UPDATE repair_requests
-      SET status = ?, admin_note = ?, customer_message = ?, quote_amount = ?, quoted_at = ?, accepted_at = ?, completed_at = ?, archived_at = ?, updated_at = ?
+      SET status = ?, admin_note = ?, customer_message = ?, quote_amount = ?, final_amount = ?, quoted_at = ?, accepted_at = ?, completed_at = ?, archived_at = ?, updated_at = ?
       WHERE id = ?
     `)
     .bind(
@@ -320,6 +322,7 @@ export async function updateRepairRequest(env, input) {
       hasOwn(input, "adminNote") ? cleanText(input.adminNote, 4000) : existing.admin_note,
       hasOwn(input, "customerMessage") ? cleanText(input.customerMessage, 2000) : existing.customer_message,
       quoteAmount,
+      finalAmount,
       quotedAt,
       acceptedAt,
       completedAt,

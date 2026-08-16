@@ -21,6 +21,8 @@ const dom = {
   imageLayout: document.querySelector(".js-newsletter-admin-image-layout"),
   imageSize: document.querySelector(".js-newsletter-admin-image-size"),
   imagePosition: document.querySelector(".js-newsletter-admin-image-position"),
+  imageColumns: document.querySelector(".js-newsletter-admin-image-columns"),
+  fontSize: document.querySelector(".js-newsletter-admin-font-size"),
   inlineImageInput: document.querySelector(".js-newsletter-admin-inline-image-input"),
   inlineImageButton: document.querySelector(".js-newsletter-admin-inline-image-upload"),
   saveDraftButton: document.querySelector(".js-newsletter-admin-save-draft"),
@@ -47,12 +49,14 @@ const IMAGE_LAYOUT_DEFAULTS = {
   align: "center",
   size: "full",
   position: "inline",
+  layout: "single",
 };
 
 const IMAGE_LAYOUT_VALUES = {
   align: new Set(["left", "center", "right"]),
   size: new Set(["small", "medium", "large", "full"]),
   position: new Set(["inline", "breakout"]),
+  layout: new Set(["single", "pair-left", "pair-right"]),
 };
 
 function escapeHtml(value) {
@@ -227,6 +231,7 @@ function resetForm(post = null) {
   dom.form.elements.slug.value = item.slug || "";
   dom.form.elements.title.value = item.title || "";
   dom.form.elements.excerpt.value = item.excerpt || "";
+  dom.form.elements.categories.value = Array.isArray(item.categories) ? item.categories.join(", ") : "";
   dom.form.elements.coverImageUrl.value = item.coverImageUrl || "";
   dom.form.elements.coverImageR2Key.value = item.coverImageR2Key || "";
   dom.form.elements.coverImageAlt.value = item.coverImageAlt || "";
@@ -257,6 +262,7 @@ function collectPost(status) {
     slug,
     title,
     excerpt: String(dom.form?.elements.excerpt.value || "").trim(),
+    categories: [...new Set(String(dom.form?.elements.categories.value || "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))].slice(0, 8),
     contentHtml: String(dom.editor?.innerHTML || "").trim(),
     coverImageUrl: String(dom.form?.elements.coverImageUrl.value || "").trim(),
     coverImageR2Key: String(dom.form?.elements.coverImageR2Key.value || "").trim(),
@@ -405,8 +411,10 @@ function syncImageLayoutControls(figure = getSelectedImageFigure()) {
   const align = normalizeImageLayoutValue("align", selected.getAttribute("data-image-align"));
   const size = normalizeImageLayoutValue("size", selected.getAttribute("data-image-size"));
   const position = normalizeImageLayoutValue("position", selected.getAttribute("data-image-position"));
+  const layout = normalizeImageLayoutValue("layout", selected.getAttribute("data-image-layout"));
   if (dom.imageSize) dom.imageSize.value = size;
   if (dom.imagePosition) dom.imagePosition.value = position;
+  if (dom.imageColumns) dom.imageColumns.value = layout;
   dom.imageLayout.querySelectorAll("[data-image-align]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.imageAlign === align));
   });
@@ -424,6 +432,7 @@ function applyImageLayout(type, value) {
     align: "data-image-align",
     size: "data-image-size",
     position: "data-image-position",
+    layout: "data-image-layout",
   }[type];
   figure.setAttribute(attribute, normalized);
   syncImageLayoutControls(figure);
@@ -458,6 +467,20 @@ function applyTextAlignment(alignment) {
   }
 
   block.setAttribute("data-text-align", alignment);
+  saveEditorRange();
+  markEditorDirty();
+}
+
+function applyTextFontSize(value) {
+  const allowed = new Set(["10", "12", "14", "16", "18", "20", "24", "28", "32"]);
+  const selection = window.getSelection();
+  const node = selection?.rangeCount ? (selection.anchorNode instanceof Element ? selection.anchorNode : selection.anchorNode?.parentElement) : null;
+  const block = node?.closest("p, h2, h3, blockquote, li");
+  if (!block || !dom.editor?.contains(block) || !allowed.has(String(value))) {
+    setStatus(dom.status, "크기를 바꿀 문단을 먼저 선택해주세요.", "error");
+    return;
+  }
+  block.setAttribute("data-font-size", String(value));
   saveEditorRange();
   markEditorDirty();
 }
@@ -534,7 +557,7 @@ async function uploadInlineImage(file) {
     const url = String(payload.image?.url || "").trim();
     if (!url) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
     const alt = window.prompt("이미지 설명", "") || "";
-    insertHtmlAtSelection(`<figure data-image-align="center" data-image-size="full" data-image-position="inline"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}"><figcaption>${escapeHtml(alt)}</figcaption></figure>`);
+    insertHtmlAtSelection(`<figure data-image-align="center" data-image-size="full" data-image-position="inline" data-image-layout="single"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}"><figcaption>${escapeHtml(alt)}</figcaption></figure>`);
     const insertedFigures = Array.from(dom.editor?.querySelectorAll("figure") || []);
     const inserted = insertedFigures.reverse().find((figure) => figure.querySelector("img")?.getAttribute("src") === url);
     syncImageLayoutControls(inserted || null);
@@ -663,11 +686,16 @@ function attachEvents() {
   });
   dom.imageSize?.addEventListener("change", () => applyImageLayout("size", dom.imageSize.value));
   dom.imagePosition?.addEventListener("change", () => applyImageLayout("position", dom.imagePosition.value));
+  dom.imageColumns?.addEventListener("change", () => applyImageLayout("layout", dom.imageColumns.value));
+  dom.fontSize?.addEventListener("change", () => applyTextFontSize(dom.fontSize.value));
   dom.inlineImageButton?.addEventListener("click", () => dom.inlineImageInput?.click());
   dom.inlineImageInput?.addEventListener("change", (event) => uploadInlineImage(event.target.files?.[0]));
 
   dom.saveDraftButton?.addEventListener("click", () => savePost("draft", dom.saveDraftButton));
-  dom.previewButton?.addEventListener("click", () => savePost("draft", dom.previewButton, { openPreview: true }));
+  dom.previewButton?.addEventListener("click", () => {
+    const post = collectPost("draft");
+    if (validatePost(post, "draft")) showPreview(post);
+  });
   dom.publishButton?.addEventListener("click", () => savePost("published", dom.publishButton));
   dom.archiveButton?.addEventListener("click", archivePost);
   dom.previewDialogClose?.addEventListener("click", () => dom.previewDialog?.close());

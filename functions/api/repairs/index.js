@@ -18,11 +18,10 @@ const repairRequestSchema = z.object({
   customerName: z.string().trim().min(1).max(120),
   email: z.string().trim().max(320).default(""),
   phone: z.string().trim().min(7).max(60),
+  itemType: z.enum(["자켓", "상의", "하의", "데님", "니트", "기타"]),
   issueDescription: z.string().trim().min(8).max(4000),
-  desiredCompletionDate: z.union([
-    z.literal(""),
-    z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/),
-  ]).default(""),
+  desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"]),
+  budgetNote: z.string().trim().max(1000).default(""),
   privacyConsent: z.literal(true),
 });
 
@@ -41,6 +40,9 @@ function getSelectedFiles(formData) {
 }
 
 function validateImages(files) {
+  if (!files.length) {
+    throw Object.assign(new Error("제품 사진을 1장 이상 첨부해주세요."), { status: 400 });
+  }
   if (files.length > MAX_IMAGE_COUNT) {
     throw Object.assign(new Error(`사진은 최대 ${MAX_IMAGE_COUNT}장까지 첨부할 수 있습니다.`), { status: 400 });
   }
@@ -60,8 +62,10 @@ function buildRequestPayload(formData) {
     customerName: asText(formData.get("customerName")),
     email: asText(formData.get("email")),
     phone: asText(formData.get("phone")),
+    itemType: asText(formData.get("itemType")),
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
-    desiredCompletionDate: asText(formData.get("desiredCompletionDate")),
+    desiredResult: asText(formData.get("desiredResult")),
+    budgetNote: asText(formData.get("budgetNote")),
     privacyConsent: asBoolean(formData.get("privacyConsent")) || asBoolean(formData.get("termsAccepted")),
   };
 }
@@ -96,21 +100,23 @@ async function sendRepairEmail(env, { to, subject, html, text }) {
   return response.ok;
 }
 
-async function sendRepairNotifications(env, { requestNumber, applicant, issueDescription, desiredCompletionDate }) {
+async function sendRepairNotifications(env, { requestNumber, applicant, itemType, issueDescription, desiredResult, budgetNote }) {
   const address = "서울특별시 동대문구 이문로 145 2층 201호 / 010-4746-5999 / 오알룸 앞";
   const adminEmail = "studio.oalum@gmail.com";
   const safeName = escapeHtml(applicant.customerName);
   const safePhone = escapeHtml(applicant.phone);
   const safeEmail = escapeHtml(applicant.email);
   const safeDescription = escapeHtml(issueDescription).replace(/\n/g, "<br>");
-  const safeDeadline = escapeHtml(desiredCompletionDate || "미입력");
+  const safeItemType = escapeHtml(itemType);
+  const safeDesiredResult = escapeHtml(desiredResult);
+  const safeBudgetNote = escapeHtml(budgetNote || "미입력").replace(/\n/g, "<br>");
 
   const results = await Promise.allSettled([
     sendRepairEmail(env, {
       to: adminEmail,
       subject: `[Repair] ${requestNumber} ${applicant.customerName}`,
-      html: `<h2>새 수선 의뢰</h2><p><strong>접수번호</strong> ${escapeHtml(requestNumber)}</p><p><strong>성함</strong> ${safeName}</p><p><strong>연락처</strong> ${safePhone}</p><p><strong>이메일</strong> ${safeEmail}</p><p><strong>희망 기한</strong> ${safeDeadline}</p><p><strong>제품 설명</strong><br>${safeDescription}</p>`,
-      text: `새 수선 의뢰\n접수번호: ${requestNumber}\n성함: ${applicant.customerName}\n연락처: ${applicant.phone}\n이메일: ${applicant.email}\n희망 기한: ${desiredCompletionDate || "미입력"}\n제품 설명: ${issueDescription}`,
+      html: `<h2>새 수선 의뢰</h2><p><strong>접수번호</strong> ${escapeHtml(requestNumber)}</p><p><strong>성함</strong> ${safeName}</p><p><strong>연락처</strong> ${safePhone}</p><p><strong>이메일</strong> ${safeEmail}</p><p><strong>제품</strong> ${safeItemType}</p><p><strong>손상 부위</strong><br>${safeDescription}</p><p><strong>희망 방향</strong> ${safeDesiredResult}</p><p><strong>기타 요청</strong><br>${safeBudgetNote}</p>`,
+      text: `새 수선 의뢰\n접수번호: ${requestNumber}\n성함: ${applicant.customerName}\n연락처: ${applicant.phone}\n이메일: ${applicant.email}\n제품: ${itemType}\n손상 부위: ${issueDescription}\n희망 방향: ${desiredResult}\n기타 요청: ${budgetNote || "미입력"}`,
     }),
     sendRepairEmail(env, {
       to: applicant.email,
@@ -203,12 +209,12 @@ export async function onRequestPost(context) {
       email: applicantEmail,
       preferredContact: "phone",
       contactPreference: "phone",
-      itemType: "수선 의뢰",
+      itemType: parsed.data.itemType,
       material: "",
       itemMaterial: "",
       repairDetails: parsed.data.issueDescription,
-      desiredResult: "",
-      budgetNote: "",
+      desiredResult: parsed.data.desiredResult,
+      budgetNote: parsed.data.budgetNote,
       termsAcceptedAt: submittedAt,
       privacyConsentAt: submittedAt,
       archiveConsentAt: "",
@@ -221,8 +227,10 @@ export async function onRequestPost(context) {
         phone: parsed.data.phone,
         email: applicantEmail,
       },
+      itemType: parsed.data.itemType,
       issueDescription: parsed.data.issueDescription,
-      desiredCompletionDate: parsed.data.desiredCompletionDate,
+      desiredResult: parsed.data.desiredResult,
+      budgetNote: parsed.data.budgetNote,
     });
 
     return json(context.env, {

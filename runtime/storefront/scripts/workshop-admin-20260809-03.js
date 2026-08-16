@@ -99,7 +99,7 @@ function slugifyText(value) {
 
 function setStatus(target, message = "", type = "info") {
   if (!target) return;
-  target.textContent = message;
+  target.textContent = message || "";
   target.classList.remove("is-success", "is-error");
   if (type === "success") target.classList.add("is-success");
   if (type === "error") target.classList.add("is-error");
@@ -1774,7 +1774,7 @@ if (state.accessToken) {
       persistAdminAccess(state.accessToken, payload.expiresAt || state.accessExpiresAt);
       applyAccessState();
       await loadSnapshot({ query: "", status: "all", fatalOnAuthError: true });
-      setStatus(dom.authStatus, `관리자 세션이 복원되었습니다. 약 ${formatSessionRemaining(state.accessExpiresAt)} 후 다시 인증됩니다.`, "success");
+      setStatus(dom.authStatus, "관리자 세션을 복원했습니다. 브라우저 세션 동안 유지됩니다.", "success");
     })
     .catch((error) => {
       lockSurface(error.status === 401 ? "저장된 관리자 세션이 만료되었거나 유효하지 않습니다. 다시 잠금 해제해주세요." : (error.message || "관리자 세션을 확인하지 못했습니다."), "error");

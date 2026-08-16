@@ -21,11 +21,13 @@ const repairUpdateSchema = z.object({
   adminNote: z.string().trim().max(4000).optional(),
   customerMessage: z.string().trim().max(2000).optional(),
   quoteAmount: z.number().int().min(0).max(100000000).nullable().optional(),
+  finalAmount: z.number().int().min(0).max(100000000).nullable().optional(),
 }).refine((request) => (
   request.status !== undefined
   || request.adminNote !== undefined
   || request.customerMessage !== undefined
   || request.quoteAmount !== undefined
+  || request.finalAmount !== undefined
 ), {
   message: "변경할 수선 접수 정보를 입력해주세요.",
 });

@@ -127,7 +127,7 @@ function createPrimaryNavMarkup(activeKey) {
 }
 
 function createMobileNavMarkup(activeKey, { showActions = true } = {}) {
-  const repairAction = createActionLink({ href: resolvePath("repair.html"), label: "Repair Store" });
+  const repairAction = createActionLink({ href: resolvePath("repair.html"), label: "Repair Studio" });
   const logoutAction = authState.authenticated
     ? createActionButton({ label: "Logout", attrs: 'data-auth-toggle="logout"' })
     : "";
@@ -160,7 +160,7 @@ function createMobileUtilitiesMarkup(loggedIn) {
 
 function createActionsMarkup(loggedIn) {
   const accountHref = resolvePath("account.html");
-  const repairAction = createActionLink({ href: resolvePath("repair.html"), label: "Repair Store" });
+  const repairAction = createActionLink({ href: resolvePath("repair.html"), label: "Repair Studio" });
 
   return loggedIn
     ? [

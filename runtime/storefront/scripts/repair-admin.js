@@ -291,8 +291,9 @@ function renderSelectedRequest() {
   if (dom.empty) dom.empty.hidden = true;
   dom.form.hidden = false;
   dom.form.elements.id.value = request.id;
-  dom.form.elements.status.value = request.status || "received";
+  dom.form.elements.status.value = request.status === "rejected" ? "cancelled" : (request.status || "received");
   dom.form.elements.quoteAmount.value = request.quoteAmount === null || request.quoteAmount === undefined ? "" : String(request.quoteAmount);
+  dom.form.elements.finalAmount.value = request.finalAmount === null || request.finalAmount === undefined ? "" : String(request.finalAmount);
   dom.form.elements.customerMessage.value = request.customerMessage || "";
   dom.form.elements.adminNote.value = request.adminNote || "";
   if (dom.requestNumber) dom.requestNumber.textContent = request.requestNumber || "";
@@ -339,9 +340,16 @@ async function saveRequest() {
 
   const rawAmount = String(dom.form.elements.quoteAmount.value || "").trim();
   const quoteAmount = rawAmount ? Number(rawAmount) : null;
+  const rawFinalAmount = String(dom.form.elements.finalAmount.value || "").trim();
+  const finalAmount = rawFinalAmount ? Number(rawFinalAmount) : null;
   if (rawAmount && (!Number.isInteger(quoteAmount) || quoteAmount < 0)) {
     setStatus(dom.formStatus, "견적 금액을 다시 확인해주세요.", "error");
     dom.form.elements.quoteAmount.focus();
+    return;
+  }
+  if (rawFinalAmount && (!Number.isInteger(finalAmount) || finalAmount < 0)) {
+    setStatus(dom.formStatus, "최종 가격을 다시 확인해주세요.", "error");
+    dom.form.elements.finalAmount.focus();
     return;
   }
 
@@ -358,6 +366,7 @@ async function saveRequest() {
           id: request.id,
           status: dom.form.elements.status.value,
           quoteAmount,
+          finalAmount,
           customerMessage: String(dom.form.elements.customerMessage.value || "").trim(),
           adminNote: String(dom.form.elements.adminNote.value || "").trim(),
         },

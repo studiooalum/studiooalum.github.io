@@ -4,7 +4,20 @@ export function initNewsletterForm() {
 
   if (!form || !status) return;
 
-  form.addEventListener("submit", (event) => {
+  const emailField = form.elements.email?.closest("label");
+
+  fetch("./api/auth/session", { headers: { Accept: "application/json" }, credentials: "same-origin" })
+    .then((response) => response.json())
+    .then((payload) => {
+      const accountEmail = payload?.authenticated ? String(payload.user?.email || "") : "";
+      if (!accountEmail) return;
+      form.elements.email.value = accountEmail;
+      form.elements.email.required = false;
+      if (emailField) emailField.hidden = true;
+    })
+    .catch(() => {});
+
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const formData = new FormData(form);
@@ -26,9 +39,22 @@ export function initNewsletterForm() {
       return;
     }
 
-    status.textContent = `${name || "구독자"}님, 구독 기능을 준비하고 있습니다.`;
-    status.classList.add("is-success");
-    form.reset();
+    try {
+      const response = await fetch("./api/newsletters", {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ name, email }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "구독 신청을 저장하지 못했습니다.");
+      status.textContent = `${name || "구독자"}님, 구독 신청이 완료되었습니다.`;
+      status.classList.add("is-success");
+      form.querySelectorAll("input, button").forEach((element) => { element.disabled = true; });
+    } catch (error) {
+      status.textContent = error.message || "구독 신청을 저장하지 못했습니다.";
+      status.classList.add("is-error");
+    }
   });
 }
 
@@ -57,11 +83,17 @@ function createPostCard(post) {
   link.href = `./newsletter.html?slug=${encodeURIComponent(post.slug)}`;
 
   if (post.coverImageUrl) {
+    const media = document.createElement("div");
+    media.className = "newsletter-post-card__media";
     const image = document.createElement("img");
     image.className = "newsletter-post-card__image";
     image.src = post.coverImageUrl;
     image.alt = post.coverImageAlt || "";
-    link.appendChild(image);
+    const category = document.createElement("span");
+    category.className = "newsletter-post-card__category";
+    category.textContent = post.categories?.[0] || "notes";
+    media.append(image, category);
+    link.appendChild(media);
   }
 
   const body = document.createElement("div");
@@ -78,6 +110,22 @@ function createPostCard(post) {
   body.append(date, title, excerpt);
   link.appendChild(body);
   return link;
+}
+
+function renderCategoryTags(posts, selectedCategory) {
+  const container = document.getElementById("newsletterTags");
+  if (!container) return;
+  const categories = ["all", ...new Set(posts.flatMap((post) => Array.isArray(post.categories) ? post.categories : []))];
+  const fragment = document.createDocumentFragment();
+  categories.forEach((category) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `newsletter-tags__button${category === selectedCategory ? " is-active" : ""}`;
+    button.dataset.newsletterCategory = category;
+    button.textContent = category;
+    fragment.append(button);
+  });
+  container.replaceChildren(fragment);
 }
 
 function renderPostEntry(container, post) {
@@ -120,9 +168,11 @@ export async function initNewsletterPage() {
   if (!status || !list || !entry) return;
 
   const slug = String(new URLSearchParams(window.location.search).get("slug") || "").trim();
+  const selectedCategory = String(new URLSearchParams(window.location.search).get("category") || "all").trim().toLowerCase();
 
   try {
     if (slug) {
+      document.body.classList.add("newsletter-entry-mode");
       const payload = await requestNewsletter(`./api/newsletters?slug=${encodeURIComponent(slug)}`);
       if (!payload.post) {
         status.textContent = "요청한 글을 찾을 수 없습니다.";
@@ -137,13 +187,22 @@ export async function initNewsletterPage() {
 
     const payload = await requestNewsletter("./api/newsletters");
     const posts = Array.isArray(payload.posts) ? payload.posts : [];
+    renderCategoryTags(posts, selectedCategory);
     list.innerHTML = "";
-    if (!posts.length) {
+    const visiblePosts = selectedCategory === "all" ? posts : posts.filter((post) => post.categories?.includes(selectedCategory));
+    if (!visiblePosts.length) {
       status.textContent = "아직 발행된 뉴스레터가 없습니다.";
       return;
     }
-    posts.forEach((post) => list.appendChild(createPostCard(post)));
+    visiblePosts.forEach((post) => list.appendChild(createPostCard(post)));
     status.hidden = true;
+
+    document.getElementById("newsletterTags")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-newsletter-category]");
+      if (!button) return;
+      const category = button.dataset.newsletterCategory || "all";
+      location.href = category === "all" ? "./newsletter.html" : `./newsletter.html?category=${encodeURIComponent(category)}`;
+    });
   } catch (error) {
     status.textContent = error.message || "뉴스레터를 불러오지 못했습니다.";
   }

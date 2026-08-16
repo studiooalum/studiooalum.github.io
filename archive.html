@@ -52,7 +52,7 @@
     <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
-    <link rel="stylesheet" href="./runtime/storefront/styles/archive-20260816-03.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/archive-20260816-04.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
     <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
 </head>
@@ -64,20 +64,22 @@
     <main class="archive-main">
         <section class="archive-shell">
             <section class="archive-content" aria-labelledby="archive-title">
+                <div class="archive-board" id="archiveBoard" aria-label="Archive board" aria-live="polite"></div>
+            </section>
+
+            <aside class="archive-rail">
                 <header class="archive-content__header">
                     <p class="archive-content__kicker">Studio OALUM</p>
                     <h1 id="archive-title">Archive</h1>
                 </header>
-                <div class="archive-board" id="archiveBoard" aria-label="Archive board" aria-live="polite">
+                <div id="archiveEmpty" aria-live="polite">
                     <section class="archive-empty">
                         <p class="archive-empty__label">Preparing</p>
                         <h2>작업 기록을 준비하고 있습니다.</h2>
                         <p class="archive-empty__copy">스튜디오 오알룸이 만들어오고 고쳐온 작업들을 정리해 차례로 공개합니다.</p>
                     </section>
                 </div>
-            </section>
-
-            <aside class="archive-rail" aria-hidden="true"></aside>
+            </aside>
         </section>
 
         <footer class="site-footer site-footer--grid">
@@ -114,14 +116,14 @@ studio.oalum@gmail.com</p>
     </main>
 
     <script type="module">
-        import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260820-01.js";
+        import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260816-02.js";
 
         initSiteChrome();
     </script>
     <script type="module">
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
         import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
-        import { initArchiveBoard } from "./runtime/storefront/scripts/archive.js?v=20260816-01";
+        import { initArchiveBoard } from "./runtime/storefront/scripts/archive.js?v=20260816-02";
 
         initCartUI();
         initSiteFooter();

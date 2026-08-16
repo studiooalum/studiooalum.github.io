@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <script>document.documentElement.classList.add("admin-session-pending");</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Studio OALUM - Repair Admin</title>
@@ -11,8 +12,9 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/variables.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-03">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-admin.css?v=20260818-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-admin.css?v=20260816-03">
+  <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
 </head>
 <body class="fulfillment-page repair-admin-page">
   <nav class="gnb gnb--account">
@@ -31,12 +33,13 @@
             <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
             <a href="./repair-admin.html" class="fulfillment-tab is-active" aria-current="page">수선 신청</a>
             <a href="./newsletter-admin.html" class="fulfillment-tab">뉴스레터</a>
+            <button type="button" class="fulfillment-tab js-admin-session-logout">로그아웃</button>
           </nav>
 
           <h1 class="fulfillment-heading">수선 신청 관리</h1>
           <p class="fulfillment-copy">접수 상태와 견적, 고객 안내를 관리합니다. 원본 사진은 관리자 세션에서만 확인할 수 있습니다.</p>
 
-          <form class="fulfillment-auth-form js-repair-admin-auth-form">
+          <form class="fulfillment-auth-form js-repair-admin-auth-form" data-admin-login-only>
             <label class="fulfillment-field">
               <span>관리자 비밀번호</span>
               <input type="password" name="adminSecret" autocomplete="current-password" required>
@@ -46,7 +49,7 @@
               <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-repair-admin-auth-clear">로그아웃</button>
             </div>
           </form>
-          <p class="fulfillment-status js-repair-admin-auth-status" role="status" aria-live="polite"></p>
+          <p class="fulfillment-status js-repair-admin-auth-status" data-admin-login-only role="status" aria-live="polite"></p>
         </section>
 
         <section class="fulfillment-panel repair-admin-list-panel" data-repair-admin-auth-guard hidden>
@@ -64,7 +67,6 @@
               <option value="approved">진행 승인</option>
               <option value="in_progress">작업 중</option>
               <option value="completed">완료</option>
-              <option value="rejected">진행 불가</option>
               <option value="cancelled">취소</option>
             </select>
           </label>
@@ -90,7 +92,10 @@
               <p class="repair-admin-created-at js-repair-admin-created-at"></p>
             </header>
 
-            <section class="repair-admin-customer js-repair-admin-customer"></section>
+            <section class="repair-admin-customer">
+              <h3 class="fulfillment-subheading">신청 내용</h3>
+              <div class="js-repair-admin-customer"></div>
+            </section>
             <p class="repair-admin-archive-candidate js-repair-admin-archive-candidate" hidden></p>
 
             <div class="repair-admin-form-grid">
@@ -103,13 +108,16 @@
                   <option value="approved">진행 승인</option>
                   <option value="in_progress">작업 중</option>
                   <option value="completed">작업 완료 / 최종 가격 안내</option>
-                  <option value="rejected">진행 불가</option>
                   <option value="cancelled">취소</option>
                 </select>
               </label>
               <label class="fulfillment-field">
-                <span>안내 금액 (예상 / 최종) <em>선택</em></span>
+                <span>예상 가격 <em>선택</em></span>
                 <input type="number" name="quoteAmount" min="0" max="100000000" step="100" inputmode="numeric" placeholder="KRW">
+              </label>
+              <label class="fulfillment-field">
+                <span>최종 가격 <em>선택</em></span>
+                <input type="number" name="finalAmount" min="0" max="100000000" step="100" inputmode="numeric" placeholder="KRW">
               </label>
             </div>
 
@@ -143,9 +151,9 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260816-02"></script>
+  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260816-03"></script>
   <script type="module">
-    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260820-01.js";
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260816-02.js";
 
     initSiteChrome({ showActions: false });
   </script>

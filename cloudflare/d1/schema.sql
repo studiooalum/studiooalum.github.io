@@ -289,6 +289,15 @@ CREATE TABLE IF NOT EXISTS auth_sessions (
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id, expires_at DESC);
 CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expires_at);
 
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  id TEXT PRIMARY KEY,
+  token_hash TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL,
+  revoked_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_sessions_token ON admin_sessions(token_hash, revoked_at);
+
 CREATE TABLE IF NOT EXISTS workshops (
   id TEXT PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
@@ -336,6 +345,7 @@ CREATE TABLE IF NOT EXISTS newsletter_posts (
   cover_image_url TEXT NOT NULL DEFAULT '',
   cover_image_r2_key TEXT NOT NULL DEFAULT '',
   cover_image_alt TEXT NOT NULL DEFAULT '',
+  categories_json TEXT NOT NULL DEFAULT '[]',
   status TEXT NOT NULL DEFAULT 'draft',
   published_at TEXT,
   archived_at TEXT,
@@ -345,6 +355,14 @@ CREATE TABLE IF NOT EXISTS newsletter_posts (
 
 CREATE INDEX IF NOT EXISTS idx_newsletter_posts_status_published
   ON newsletter_posts(status, published_at DESC, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  email TEXT PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  user_id TEXT,
+  subscribed_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS repair_requests (
   id TEXT PRIMARY KEY,
@@ -371,6 +389,7 @@ CREATE TABLE IF NOT EXISTS repair_requests (
   admin_note TEXT NOT NULL DEFAULT '',
   customer_message TEXT NOT NULL DEFAULT '',
   quote_amount INTEGER,
+  final_amount INTEGER,
   quoted_at TEXT,
   accepted_at TEXT,
   completed_at TEXT,

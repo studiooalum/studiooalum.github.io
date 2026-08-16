@@ -144,7 +144,9 @@ function renderTags(tagsElement) {
 function renderBoard(board) {
   if (!board) return;
   const items = getFilteredItems();
+  const emptyTarget = document.querySelector("#archiveEmpty");
   board.innerHTML = "";
+  if (emptyTarget) emptyTarget.innerHTML = "";
 
   if (!items.length) {
     const empty = document.createElement("section");
@@ -162,7 +164,7 @@ function renderBoard(board) {
       ? "다른 태그를 선택해 작업 기록을 살펴보세요."
       : "스튜디오 오알룸이 만들어오고 고쳐온 작업들을 정리해 차례로 공개합니다.";
     empty.append(label, title, copy);
-    board.append(empty);
+    (emptyTarget || board).append(empty);
     return;
   }
 

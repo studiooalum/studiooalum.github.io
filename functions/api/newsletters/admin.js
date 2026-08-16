@@ -21,6 +21,7 @@ const newsletterPostSchema = z.object({
   coverImageUrl: z.string().trim().max(2000).optional().default(""),
   coverImageR2Key: z.string().trim().max(500).optional().default(""),
   coverImageAlt: z.string().trim().max(200).optional().default(""),
+  categories: z.array(z.string().trim().min(1).max(40)).max(8).optional().default([]),
   status: z.enum(["draft", "published", "archived"]).optional().default("draft"),
   publishedAt: z.string().trim().max(40).optional().default(""),
 });

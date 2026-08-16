@@ -1,0 +1,71 @@
+.admin-login-page {
+  min-height: 100vh;
+  background: #fff;
+  color: #111;
+}
+
+.admin-login-main {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--grid-gap);
+  padding: var(--page-top-space) var(--page-gutter) 80px;
+}
+
+.admin-login-panel {
+  display: grid;
+  grid-column: 1;
+  align-content: start;
+  gap: 18px;
+}
+
+.admin-login-kicker,
+.admin-login-status {
+  margin: 0;
+  font-family: var(--font-book);
+  font-size: 12px;
+}
+
+.admin-login-panel h1 {
+  margin: 0 0 22px;
+  font-family: var(--font-book);
+  font-size: clamp(36px, 5vw, 68px);
+  font-weight: 400;
+  line-height: 0.94;
+}
+
+.admin-login-form,
+.admin-login-form label {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-login-form span {
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+}
+
+.admin-login-form input,
+.admin-login-form button {
+  min-height: 42px;
+  border: 1px solid #111;
+  border-radius: 0;
+  padding: 0 12px;
+  font-family: var(--font-kor-body);
+}
+
+.admin-login-form button {
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+}
+
+.admin-login-status.is-error {
+  color: #a63232;
+}
+
+@media (max-width: 959px) {
+  .admin-login-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

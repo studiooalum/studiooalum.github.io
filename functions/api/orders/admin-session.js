@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createAdminSession, getAdminSessionTtlMs, requireAdminAccess } from "../../../cloudflare/lib/admin.js";
+import { createAdminSession, getAdminSessionTtlMs, requireAdminAccess, revokeAdminSession } from "../../../cloudflare/lib/admin.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
 const adminSessionSchema = z.object({
@@ -47,5 +47,15 @@ export async function onRequestPost(context) {
     });
   } catch (error) {
     return errorResponse(context.env, error, "Failed to create admin session.");
+  }
+}
+
+export async function onRequestDelete(context) {
+  try {
+    await requireAdminAccess(context);
+    await revokeAdminSession(context);
+    return json(context.env, { ok: true, authenticated: false });
+  } catch (error) {
+    return errorResponse(context.env, error, "Failed to close admin session.");
   }
 }

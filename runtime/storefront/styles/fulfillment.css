@@ -6,6 +6,18 @@
   letter-spacing: var(--tracking-korean);
 }
 
+.admin-session-pending body {
+  visibility: hidden;
+}
+
+.admin-session-ready [data-admin-login-only] {
+  display: none !important;
+}
+
+.fulfillment-tab.js-admin-session-logout {
+  width: 100%;
+}
+
 .fulfillment-main {
   padding: calc(var(--gnb-height, 40px) + var(--page-gutter)) var(--page-gutter) 72px;
 }

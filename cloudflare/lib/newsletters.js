@@ -23,6 +23,19 @@ function normalizeStatus(value) {
   return ["draft", "published", "archived"].includes(status) ? status : "draft";
 }
 
+function decodeJson(value, fallback = []) {
+  try {
+    return JSON.parse(value || "") || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeCategories(value) {
+  const source = Array.isArray(value) ? value : String(value || "").split(",");
+  return [...new Set(source.map((item) => cleanText(item, 40).toLowerCase()).filter(Boolean))].slice(0, 8);
+}
+
 function createId(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`.toUpperCase();
 }
@@ -79,6 +92,8 @@ const ALLOWED_RICH_TEXT_TAGS = new Set([
 const IMAGE_ALIGNMENTS = new Set(["left", "center", "right"]);
 const IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
+const IMAGE_LAYOUTS = new Set(["single", "pair-left", "pair-right"]);
+const FONT_SIZES = new Set(["10", "12", "14", "16", "18", "20", "24", "28", "32"]);
 const TEXT_ALIGNMENTS = new Set(["left", "center", "right"]);
 const TEXT_ALIGNMENT_TAGS = new Set(["p", "h2", "h3", "blockquote", "li"]);
 
@@ -115,17 +130,24 @@ export function sanitizeNewsletterHtml(value) {
       const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-align"), IMAGE_ALIGNMENTS);
       const size = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-size"), IMAGE_SIZES);
       const position = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-position"), IMAGE_POSITIONS);
+      const layout = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-layout"), IMAGE_LAYOUTS);
       const layoutAttributes = [
         alignment ? ` data-image-align="${alignment}"` : "",
         size ? ` data-image-size="${size}"` : "",
         position ? ` data-image-position="${position}"` : "",
+        layout ? ` data-image-layout="${layout}"` : "",
       ].join("");
       return `<figure${layoutAttributes}>`;
     }
 
     if (TEXT_ALIGNMENT_TAGS.has(tagName)) {
       const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-text-align"), TEXT_ALIGNMENTS);
-      return alignment ? `<${tagName} data-text-align="${alignment}">` : `<${tagName}>`;
+      const fontSize = sanitizeImageLayoutValue(readAttribute(attributes, "data-font-size"), FONT_SIZES);
+      const textAttributes = [
+        alignment ? ` data-text-align="${alignment}"` : "",
+        fontSize ? ` data-font-size="${fontSize}"` : "",
+      ].join("");
+      return `<${tagName}${textAttributes}>`;
     }
 
     return `<${tagName}>`;
@@ -162,6 +184,7 @@ function formatNewsletterPost(row) {
     coverImageUrl: row.cover_image_url || "",
     coverImageR2Key: row.cover_image_r2_key || "",
     coverImageAlt: row.cover_image_alt || "",
+    categories: normalizeCategories(decodeJson(row.categories_json, [])),
     status: normalizeStatus(row.status),
     publishedAt: row.published_at || "",
     archivedAt: row.archived_at || "",
@@ -231,12 +254,13 @@ export async function upsertNewsletterPost(env, input) {
         cover_image_url,
         cover_image_r2_key,
         cover_image_alt,
+        categories_json,
         status,
         published_at,
         archived_at,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(slug) DO UPDATE SET
         title = excluded.title,
         excerpt = excluded.excerpt,
@@ -244,6 +268,7 @@ export async function upsertNewsletterPost(env, input) {
         cover_image_url = excluded.cover_image_url,
         cover_image_r2_key = excluded.cover_image_r2_key,
         cover_image_alt = excluded.cover_image_alt,
+        categories_json = excluded.categories_json,
         status = excluded.status,
         published_at = excluded.published_at,
         archived_at = excluded.archived_at,
@@ -258,6 +283,7 @@ export async function upsertNewsletterPost(env, input) {
       sanitizeUrl(input.coverImageUrl),
       cleanText(input.coverImageR2Key, 500),
       cleanText(input.coverImageAlt, 200),
+      JSON.stringify(normalizeCategories(input.categories)),
       status,
       publishedAt,
       archivedAt,

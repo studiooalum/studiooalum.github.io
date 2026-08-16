@@ -1,0 +1,1 @@
+ALTER TABLE repair_requests ADD COLUMN final_amount INTEGER;

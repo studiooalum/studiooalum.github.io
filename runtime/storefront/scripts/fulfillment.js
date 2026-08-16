@@ -357,7 +357,7 @@ function resolveShipmentLabel(order) {
   const labels = {
     confirmed: "주문 확인 완료",
     ready: "배송 준비 중",
-    packing: "포장 중",
+    packing: "배송 준비 중",
     shipped: "배송 중",
     delivered: "배송 완료",
     returned: "반송 완료",
@@ -559,7 +559,7 @@ function renderSelection() {
 
   formEl.hidden = false;
   formEl.elements.orderId.value = order.orderId;
-  formEl.elements.status.value = shipment?.status || "confirmed";
+  formEl.elements.status.value = shipment?.status === "packing" ? "ready" : (shipment?.status || "confirmed");
   formEl.elements.carrierId.value = shipment?.carrierId || "";
   formEl.elements.carrier.value = shipment?.carrier || "";
   formEl.elements.trackingNumber.value = shipment?.trackingNumber || "";

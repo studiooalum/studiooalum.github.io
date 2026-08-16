@@ -1,4 +1,4 @@
-const ADMIN_SESSION_TTL_MS = 30 * 60 * 1000;
+const ADMIN_SESSION_TTL_MS = null;
 const ADMIN_SESSION_SCOPE = "order-admin";
 const ADMIN_SESSION_TOKEN_PREFIX = "oaadm_";
 
@@ -69,51 +69,24 @@ async function hmacBase64Url(secret, value) {
   return bytesToBase64Url(new Uint8Array(buffer));
 }
 
+async function hashAdminToken(value) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value || "")));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 async function readAdminTokenPayload(env, token) {
   const raw = normalizeSecret(token);
   if (!raw.startsWith(ADMIN_SESSION_TOKEN_PREFIX)) {
     return null;
   }
-
-  const serialized = raw.slice(ADMIN_SESSION_TOKEN_PREFIX.length);
-  const separatorIndex = serialized.indexOf(".");
-  if (separatorIndex <= 0) {
-    return null;
-  }
-
-  const encodedPayload = serialized.slice(0, separatorIndex);
-  const signature = serialized.slice(separatorIndex + 1);
-  if (!encodedPayload || !signature) {
-    return null;
-  }
-
-  const signingSecret = getAdminSigningSecret(env);
-  if (!signingSecret) {
-    return null;
-  }
-
-  const expectedSignature = await hmacBase64Url(signingSecret, encodedPayload);
-  if (expectedSignature !== signature) {
-    return null;
-  }
-
-  let payload = null;
-  try {
-    payload = JSON.parse(base64UrlToString(encodedPayload));
-  } catch {
-    return null;
-  }
-
-  if (payload?.scope !== ADMIN_SESSION_SCOPE || !payload?.expiresAt) {
-    return null;
-  }
-
-  const expiresAt = new Date(payload.expiresAt);
-  if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
-    return null;
-  }
-
-  return payload;
+  if (!env?.OALUM_DB) return null;
+  const row = await env.OALUM_DB.prepare(`
+    SELECT id, created_at
+    FROM admin_sessions
+    WHERE token_hash = ? AND revoked_at IS NULL
+    LIMIT 1
+  `).bind(await hashAdminToken(raw)).first();
+  return row ? { scope: ADMIN_SESSION_SCOPE, issuedAt: row.created_at } : null;
 }
 
 function getRequestCredential(request) {
@@ -144,23 +117,31 @@ export async function createAdminSession(env, submittedSecret) {
     throw createAdminError("관리자 키를 다시 확인해주세요.", 401);
   }
 
+  if (!env?.OALUM_DB) {
+    throw createAdminError("관리자 세션 저장소가 준비되지 않았습니다.", 503);
+  }
   const issuedAt = new Date().toISOString();
-  const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_MS).toISOString();
-  const payload = {
-    scope: ADMIN_SESSION_SCOPE,
-    issuedAt,
-    expiresAt,
-    nonce: randomHex(10),
-  };
-  const encodedPayload = stringToBase64Url(JSON.stringify(payload));
-  const signature = await hmacBase64Url(getAdminSigningSecret(env), encodedPayload);
+  const token = `${ADMIN_SESSION_TOKEN_PREFIX}${randomHex(32)}`;
+  await env.OALUM_DB.prepare(`
+    INSERT INTO admin_sessions (id, token_hash, created_at, revoked_at)
+    VALUES (?, ?, ?, NULL)
+  `).bind(`ADM_${randomHex(16)}`, await hashAdminToken(token), issuedAt).run();
 
   return {
-    token: `${ADMIN_SESSION_TOKEN_PREFIX}${encodedPayload}.${signature}`,
+    token,
     issuedAt,
-    expiresAt,
+    expiresAt: null,
     ttlMs: ADMIN_SESSION_TTL_MS,
   };
+}
+
+export async function revokeAdminSession(context) {
+  const token = getRequestCredential(context.request);
+  if (!token || !context.env?.OALUM_DB) return false;
+  const result = await context.env.OALUM_DB.prepare(`
+    UPDATE admin_sessions SET revoked_at = ? WHERE token_hash = ? AND revoked_at IS NULL
+  `).bind(new Date().toISOString(), await hashAdminToken(token)).run();
+  return Number(result?.meta?.changes ?? result?.changes ?? 0) > 0;
 }
 
 export async function requireAdminAccess(context, { allowSecret = false } = {}) {
@@ -179,7 +160,7 @@ export async function requireAdminAccess(context, { allowSecret = false } = {}) 
       authenticated: true,
       method: "session",
       issuedAt: session.issuedAt || null,
-      expiresAt: session.expiresAt,
+      expiresAt: null,
       ttlMs: ADMIN_SESSION_TTL_MS,
     };
   }

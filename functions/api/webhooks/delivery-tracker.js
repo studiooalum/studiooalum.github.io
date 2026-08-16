@@ -17,7 +17,7 @@ const deliveryTrackerWebhookSchema = z.object({
 function isAuthorizedWebhook(context) {
   const config = getDeliveryTrackerConfig(context.env);
   if (!config.webhookSecret) {
-    return true;
+    return false;
   }
 
   const url = new URL(context.request.url);

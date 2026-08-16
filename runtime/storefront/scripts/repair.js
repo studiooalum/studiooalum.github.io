@@ -147,7 +147,7 @@ function refreshImageList() {
   if (dom.imageHelp) {
     dom.imageHelp.textContent = state.files.length
       ? `${state.files.length}/${MAX_IMAGE_COUNT}장 선택됨 · 사진은 관리자만 수선 검토 목적으로 확인합니다.`
-      : "선택 · 최대 4장, 장당 8MB까지 가능합니다.";
+      : "필수 · 최대 4장, 장당 8MB까지 가능합니다.";
   }
 }
 
@@ -188,6 +188,11 @@ function resetForm() {
 async function submitRepairRequest() {
   if (!dom.form) return;
   if (!dom.form.reportValidity()) return;
+  if (!state.files.length) {
+    setStatus("제품 사진을 1장 이상 첨부해주세요.", "error");
+    dom.imageInput?.focus();
+    return;
+  }
 
   setSubmitLoading(true);
   setStatus("수선 요청을 안전하게 접수하는 중입니다.");
