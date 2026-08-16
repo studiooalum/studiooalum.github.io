@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-07.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-08.css">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -43,9 +43,6 @@
           <p>수선을 맡기실 때는 단순히 “이 구멍을 어떻게 막을까”만 보지 않습니다. 옷 전체의 형태와 소재, 손상된 이유, 힘이 많이 들어가는 부위, 앞으로도 계속 입을 수 있을지를 함께 살펴본 뒤 방법을 제안해 드립니다. “티 안 나게 해달라”는 요청도 원단과 손상 정도에 따라 완전히 감추는 편이 좋을지, 수선 흔적을 살리는 편이 더 좋을지 상담을 통해 함께 결정합니다.</p>
           <p>바느질은 오래된 역사이자 전통입니다. 이 전통이 사라지지 않도록, 마음과 마음을 잇는 행동을 함께하고 싶습니다.</p>
         </div>
-        <figure class="repair-hero-image">
-          <img src="./repair_studio.jpg" alt="Studio OALUM의 수선 작업 사례">
-        </figure>
         <div class="repair-image-gallery" aria-label="Repair Studio 작업 이미지"></div>
       </section>
 
@@ -55,30 +52,32 @@
           <button type="button" role="tab" aria-selected="false" data-repair-price-tab="methods">Repair Methods</button>
         </div>
         <section class="repair-content-section" aria-labelledby="repair-price-title" data-repair-price-panel="basic">
-          <h2 id="repair-price-title">Basic</h2>
-          <p><strong>수선 가격</strong>은 Basic(기본) + 재료, 작업시간, 난이도에 따라 최종 결정됩니다.</p>
-          <h3>Basic(기본)</h3>
-          <dl class="repair-price-list">
-            <div><dt>자켓</dt><dd>₩25,000~</dd></div>
-            <div><dt>상의</dt><dd>₩15,000~</dd></div>
-            <div><dt>하의</dt><dd>₩20,000~</dd></div>
-            <div><dt>기타</dt><dd>₩10,000~</dd></div>
-            <div><dt>데님</dt><dd>₩25,000~</dd></div>
-            <div><dt>니트</dt><dd>₩25,000~</dd></div>
-            <div><dt>특수소재</dt><dd>₩30,000~</dd></div>
-          </dl>
-          <p class="repair-price-grid__example">특수소재 예: 가죽, 패딩 등</p>
-          <p>Basic(기본) 비용은 최소 작업 공임이며, 실제 수선 범위에 따라 추가 비용이 발생합니다.</p>
+          <h2 id="repair-price-title">기본 수선 가격</h2>
+          <table class="repair-basic-table">
+            <thead><tr><th>제품</th><th>시작 가격</th></tr></thead>
+            <tbody>
+              <tr><td>자켓</td><td>₩25,000~</td></tr>
+              <tr><td>상의</td><td>₩15,000~</td></tr>
+              <tr><td>하의</td><td>₩20,000~</td></tr>
+              <tr><td>기타</td><td>₩10,000~</td></tr>
+              <tr><td>데님</td><td>₩25,000~</td></tr>
+              <tr><td>니트</td><td>₩25,000~</td></tr>
+              <tr><td>특수소재</td><td>₩30,000~</td></tr>
+            </tbody>
+          </table>
         </section>
 
         <section class="repair-content-section repair-methods" aria-labelledby="repair-methods-title" data-repair-price-panel="methods" hidden>
           <h2 id="repair-methods-title">수선 기법별 가격</h2>
-          <div class="repair-method-table-list">
-            <table><caption>PATCH</caption><thead><tr><th>범위</th><th>KRW</th><th>USD</th></tr></thead><tbody><tr><td>SMALL</td><td>₩30,000~</td><td>$25~</td></tr><tr><td>MEDIUM</td><td>₩55,000~</td><td>$40~</td></tr><tr><td>LARGE</td><td>₩80,000~</td><td>$55~</td></tr><tr><td>MULTIPLE</td><td>₩120,000~</td><td>$85~</td></tr><tr><td>FULL</td><td>₩180,000~</td><td>$125~</td></tr></tbody></table>
-            <table><caption>WOVEN</caption><thead><tr><th>범위</th><th>KRW</th><th>USD</th></tr></thead><tbody><tr><td>SMALL</td><td>₩60,000~</td><td>$40~</td></tr><tr><td>MEDIUM</td><td>₩90,000~</td><td>$65~</td></tr><tr><td>LARGE</td><td>₩140,000~</td><td>$100~</td></tr><tr><td>MULTIPLE</td><td>₩180,000~</td><td>$125~</td></tr><tr><td>FULL</td><td>₩250,000~</td><td>$175~</td></tr></tbody></table>
-            <table><caption>SASHIKO / VISIBLE MENDING</caption><thead><tr><th>범위</th><th>KRW</th><th>USD</th></tr></thead><tbody><tr><td>SMALL</td><td>₩50,000~</td><td>$35~</td></tr><tr><td>MEDIUM</td><td>₩80,000~</td><td>$55~</td></tr><tr><td>LARGE</td><td>₩120,000~</td><td>$85~</td></tr><tr><td>MULTIPLE</td><td>₩180,000~</td><td>$125~</td></tr><tr><td>FULL</td><td>₩250,000~</td><td>$175~</td></tr></tbody></table>
-            <table><caption>BORO</caption><thead><tr><th>범위</th><th>KRW</th><th>USD</th></tr></thead><tbody><tr><td>SMALL</td><td>₩70,000~</td><td>$50~</td></tr><tr><td>MEDIUM</td><td>₩100,000~</td><td>$70~</td></tr><tr><td>LARGE</td><td>₩150,000~</td><td>$105~</td></tr><tr><td>MULTIPLE</td><td>₩200,000~</td><td>$140~</td></tr><tr><td>FULL</td><td>₩300,000~</td><td>$210~</td></tr></tbody></table>
-          </div>
+          <table class="repair-method-matrix">
+            <thead><tr><th>수선 기법</th><th>SMALL</th><th>MEDIUM</th><th>LARGE</th><th>MULTIPLE</th><th>FULL</th></tr></thead>
+            <tbody>
+              <tr><th>PATCH</th><td>₩30,000~</td><td>₩55,000~</td><td>₩80,000~</td><td>₩120,000~</td><td>₩180,000~</td></tr>
+              <tr><th>WOVEN</th><td>₩60,000~</td><td>₩90,000~</td><td>₩140,000~</td><td>₩180,000~</td><td>₩250,000~</td></tr>
+              <tr><th>SASHIKO /<br>VISIBLE MENDING</th><td>₩50,000~</td><td>₩80,000~</td><td>₩120,000~</td><td>₩180,000~</td><td>₩250,000~</td></tr>
+              <tr><th>BORO</th><td>₩70,000~</td><td>₩100,000~</td><td>₩150,000~</td><td>₩200,000~</td><td>₩300,000~</td></tr>
+            </tbody>
+          </table>
         </section>
 
         <section class="repair-content-section" aria-labelledby="repair-process-title">
