@@ -28,6 +28,7 @@ if (!token) {
     if (!response.ok) throw new Error("Unauthorized");
     document.documentElement.classList.remove("admin-session-pending");
     document.documentElement.classList.add("admin-session-ready");
+    window.dispatchEvent(new CustomEvent("studiooalum:admin-session-ready", { detail: { token } }));
   }).catch(() => logout());
 }
 

@@ -1,0 +1,18 @@
+@import url("./archive-20260816-05.css");
+
+.archive-content,
+.archive-board,
+.archive-card,
+.archive-card__media,
+.archive-card__image,
+.archive-detail-gallery,
+.archive-detail-image,
+.archive-detail-image img {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.archive-card__image {
+  width: 100%;
+  height: auto;
+}

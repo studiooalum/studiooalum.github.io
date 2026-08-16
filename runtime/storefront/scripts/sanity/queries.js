@@ -59,6 +59,11 @@ export const ARCHIVE_QUERY = `
           dimensions {
             width,
             height
+          },
+          palette {
+            dominant {
+              background
+            }
           }
         }
       }

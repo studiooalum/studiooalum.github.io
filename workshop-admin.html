@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
   <link rel="stylesheet" href="./runtime/storefront/styles/workshop-admin-20260816-01.css">
-  <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-02"></script>
 </head>
 <body class="fulfillment-page workshop-admin-page">
   <nav class="gnb gnb--account">
@@ -27,7 +27,7 @@
     <section class="fulfillment-shell">
       <aside class="fulfillment-sidebar">
         <section class="fulfillment-panel">
-          <nav class="fulfillment-tabs" aria-label="관리자 기능" data-workshop-admin-auth-guard hidden>
+          <nav class="fulfillment-tabs" aria-label="관리자 기능" data-workshop-admin-auth-guard>
             <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
             <a href="./workshop-admin.html" class="fulfillment-tab is-active" aria-current="page">워크숍 예약</a>
@@ -53,7 +53,7 @@
           <p class="fulfillment-status js-workshop-admin-auth-status" data-admin-login-only role="status" aria-live="polite"></p>
         </section>
 
-        <section class="fulfillment-panel workshop-admin-mode-panel" data-workshop-admin-auth-guard hidden>
+        <section class="fulfillment-panel workshop-admin-mode-panel" data-workshop-admin-auth-guard>
           <nav class="workshop-admin-mode-tabs" role="tablist" aria-label="워크숍 관리 모드">
             <button type="button" class="workshop-admin-mode-tab is-active js-workshop-admin-mode-btn" data-mode="workshops" role="tab" aria-selected="true">워크숍 구성</button>
             <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="reservations" role="tab" aria-selected="false">예약 관리</button>
@@ -63,7 +63,7 @@
         </section>
       </aside>
 
-      <section class="fulfillment-content workshop-admin-content" data-workshop-admin-auth-guard hidden>
+      <section class="fulfillment-content workshop-admin-content" data-workshop-admin-auth-guard>
         <section class="fulfillment-panel workshop-admin-screen" data-workshop-admin-mode="workshops">
           <div class="workshop-admin-workshops-shell">
             <section class="workshop-admin-workshop-list-panel">
@@ -405,7 +405,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/workshop-admin-20260816-02.js"></script>
+  <script type="module" src="./runtime/storefront/scripts/workshop-admin-20260816-03.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260816-02.js";
 

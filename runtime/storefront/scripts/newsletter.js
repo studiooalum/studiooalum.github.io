@@ -107,7 +107,7 @@ function createPostCard(post) {
   const excerpt = document.createElement("p");
   excerpt.className = "newsletter-entry__excerpt";
   excerpt.textContent = post.excerpt || "";
-  body.append(date, title, excerpt);
+  body.append(date, title);
   link.appendChild(body);
   return link;
 }

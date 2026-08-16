@@ -1,0 +1,46 @@
+@import url("./repair-20260816-08.css");
+
+.repair-stage,
+.repair-stage__visual,
+.repair-stage__content,
+.repair-stage__rail,
+.repair-body-copy,
+.repair-image-gallery,
+.repair-gallery-card,
+.repair-gallery-card img {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.repair-stage__visual,
+.repair-stage__content,
+.repair-stage__rail {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.repair-gallery-card {
+  width: 100%;
+}
+
+.repair-gallery-card img {
+  width: 100%;
+  height: auto;
+}
+
+.repair-body-copy {
+  overflow-wrap: anywhere;
+}
+
+.repair-method-matrix {
+  font-size: 10px;
+}
+
+.repair-method-matrix thead th {
+  font-size: 9px;
+}
+
+.repair-stage__rail details,
+.repair-stage__rail details:last-child {
+  border: 0;
+}

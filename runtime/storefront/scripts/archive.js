@@ -26,6 +26,12 @@ function getYear(value) {
   return match ? match[0] : "";
 }
 
+function colorToRgb(value) {
+  const match = String(value || "").trim().match(/^#([0-9a-f]{6})$/i);
+  if (!match) return "";
+  return [0, 2, 4].map((offset) => Number.parseInt(match[1].slice(offset, offset + 2), 16)).join(", ");
+}
+
 function normalizeArchiveImage(image, index, title) {
   const asset = image?.asset;
   const source = String(asset?.url || "").trim();
@@ -38,6 +44,7 @@ function normalizeArchiveImage(image, index, title) {
     alt: `${title} 이미지 ${index + 1}`,
     width: Number(dimensions.width || 0),
     height: Number(dimensions.height || 0),
+    rgb: colorToRgb(asset?.metadata?.palette?.dominant?.background),
   };
 }
 
@@ -111,18 +118,18 @@ function createArchiveCard(item, imageData) {
   const card = document.createElement("a");
   card.className = "archive-card";
   card.href = `./archive.html?id=${encodeURIComponent(item.id)}`;
+  if (imageData.rgb) card.style.setProperty("--archive-hover-rgb", imageData.rgb);
 
   const media = document.createElement("figure");
   media.className = "archive-card__media";
   const image = document.createElement("img");
   image.className = "archive-card__image";
-  image.crossOrigin = "anonymous";
   image.src = imageData.src;
   image.alt = imageData.alt;
   image.loading = "lazy";
   if (imageData.width) image.width = imageData.width;
   if (imageData.height) image.height = imageData.height;
-  image.addEventListener("load", () => applyAverageColor(card, image), { once: true });
+  if (!imageData.rgb) image.addEventListener("load", () => applyAverageColor(card, image), { once: true });
 
   const overlay = document.createElement("div");
   overlay.className = "archive-card__overlay";
