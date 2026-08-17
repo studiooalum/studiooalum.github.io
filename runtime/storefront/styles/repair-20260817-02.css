@@ -18,6 +18,14 @@
   outline: none;
 }
 
+.repair-request-rail__backdrop {
+  background: transparent;
+}
+
+.repair-request-rail__panel {
+  box-shadow: none;
+}
+
 .repair-stage__rail {
   gap: 0;
 }
@@ -51,52 +59,63 @@
   display: inline;
 }
 
-.repair-checkbox--archive > span {
-  display: grid;
-  gap: 4px;
+.repair-request-form__section--notes {
+  gap: 8px;
 }
 
-.repair-checkbox--archive strong {
-  font-family: var(--font-kor-button);
-  font-size: 13px;
-  font-weight: 400;
-}
-
-.repair-checkbox--archive small {
+.repair-request-form__hint {
+  margin: 0;
   color: rgba(17, 17, 17, 0.66);
   font-family: var(--font-kor-body);
   font-size: 12px;
+  letter-spacing: var(--tracking-korean);
   line-height: 1.55;
 }
 
 .repair-price-panel {
-  min-height: 316px;
+  --repair-price-row-height: 36px;
+  min-height: calc(var(--repair-price-row-height) * 9);
 }
 
 .repair-basic-table,
 .repair-method-matrix {
   height: auto;
+  color: rgba(17, 17, 17, 0.82);
+  font-family: var(--font-book);
+  font-size: 11px;
+  line-height: 1.25;
 }
 
-.repair-method-matrix {
-  font-size: 9px;
-  line-height: 1.3;
+.repair-basic-table th,
+.repair-basic-table td,
+.repair-method-matrix th,
+.repair-method-matrix td {
+  height: var(--repair-price-row-height);
+  padding-top: 0;
+  padding-bottom: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  vertical-align: middle;
 }
 
 .repair-method-matrix th,
 .repair-method-matrix td {
-  padding: 7px 3px;
-  font-size: 9px;
+  padding-right: 2px;
+  padding-left: 2px;
 }
 
 .repair-method-matrix th:first-child,
 .repair-method-matrix td:first-child {
-  width: 27%;
+  width: 30%;
   padding-left: 0;
 }
 
+.repair-basic-table thead th,
 .repair-method-matrix thead th {
-  font-size: 8px;
+  color: rgba(17, 17, 17, 0.58);
+  font-size: 10px;
 }
 
 .repair-method-matrix tbody tr {
@@ -105,9 +124,9 @@
 
 @media (max-width: 768px) {
   .repair-page .gnb.gnb--repair {
-    background: var(--gnb-surface, rgba(207, 228, 220, 0.92));
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: #fff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
@@ -178,16 +197,32 @@
 }
 
 @media (max-width: 560px) {
+  .repair-price-panel {
+    --repair-price-row-height: 32px;
+  }
+
+  .repair-basic-table,
   .repair-method-matrix,
+  .repair-basic-table thead th,
   .repair-method-matrix thead th,
+  .repair-basic-table th,
+  .repair-basic-table td,
   .repair-method-matrix th,
   .repair-method-matrix td {
     font-size: 8px;
   }
 
+  .repair-basic-table th,
+  .repair-basic-table td,
   .repair-method-matrix th,
   .repair-method-matrix td {
     padding-right: 1px;
     padding-left: 1px;
+  }
+}
+
+@media (max-width: 959px) {
+  .repair-body-copy__lead {
+    display: none;
   }
 }

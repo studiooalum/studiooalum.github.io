@@ -142,7 +142,20 @@
                 <span>이메일</span>
                 <input class="js-repair-email-input" type="email" name="email" autocomplete="email" maxlength="320" required>
               </label>
-              <fieldset class="repair-choice-group"><legend>1. 어떤 제품인가요?</legend><div><label><input type="radio" name="itemType" value="자켓" required> 자켓</label><label><input type="radio" name="itemType" value="상의"> 상의</label><label><input type="radio" name="itemType" value="하의"> 하의</label><label><input type="radio" name="itemType" value="데님"> 데님</label><label><input type="radio" name="itemType" value="니트"> 니트</label><label><input type="radio" name="itemType" value="기타"> 기타</label></div></fieldset>
+              <label class="repair-field">
+                <span>1. 어떤 제품인가요?</span>
+                <select name="itemType" required>
+                  <option value="" selected disabled>제품 종류를 선택해주세요.</option>
+                  <option value="자켓">자켓</option>
+                  <option value="상의">상의</option>
+                  <option value="하의">하의</option>
+                  <option value="기타">기타</option>
+                  <option value="데님">데님</option>
+                  <option value="니트">니트</option>
+                  <option value="특수소재">특수소재</option>
+                  <option value="가죽">가죽</option>
+                </select>
+              </label>
               <label class="repair-field"><span>2. 어떤 부분이 손상되었나요?</span><textarea name="issueDescription" rows="5" maxlength="4000" required></textarea></label>
               <fieldset class="repair-choice-group"><legend>3. 원하시는 방향이 있나요?</legend><div><label><input type="radio" name="desiredResult" value="기존 모습과 비슷하게 수선" required> 기존 모습과 비슷하게 수선</label><label><input type="radio" name="desiredResult" value="수선 흔적을 살리고 싶어요"> 수선 흔적을 살리고 싶어요</label><label><input type="radio" name="desiredResult" value="디자인은 오알룸에게 맡기고 싶어요"> 디자인은 오알룸에게 맡기고 싶어요</label><label><input type="radio" name="desiredResult" value="잘 모르겠어요"> 잘 모르겠어요</label></div></fieldset>
             </div>
@@ -163,13 +176,12 @@
             <p class="repair-image-help js-repair-image-help">필수 · 최대 4장, 장당 8MB까지 가능합니다.</p>
           </section>
 
-          <section class="repair-request-form__section"><label class="repair-field"><span>5. 기타 요청사항 <em>선택</em></span><textarea name="budgetNote" rows="4" maxlength="1000"></textarea></label></section>
+          <section class="repair-request-form__section repair-request-form__section--notes">
+            <label class="repair-field"><span>5. 기타 요청사항 <em>선택</em></span><textarea name="budgetNote" rows="4" maxlength="1000"></textarea></label>
+            <p class="repair-request-form__hint">의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다. 원치 않으시면 기타 요청사항에 미리 말씀해 주세요.</p>
+          </section>
 
           <section class="repair-request-form__section repair-request-form__consent">
-            <label class="repair-checkbox repair-checkbox--archive">
-              <input type="checkbox" name="archiveConsent">
-              <span><strong>작업 이미지 기록 활용 <em>선택</em></strong><small>수선 전후 이미지를 Studio OALUM 작업 아카이브 및 SNS에 소개하는 데 동의합니다. 동의하지 않아도 수선 접수와 작업 진행에는 영향을 주지 않습니다.</small></span>
-            </label>
             <label class="repair-checkbox">
               <input type="checkbox" name="privacyConsent" required>
               <span>수선 검토를 위해 입력한 연락처와 사진을 수집·이용하는 것에 동의합니다.</span>
