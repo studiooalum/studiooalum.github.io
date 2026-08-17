@@ -1,0 +1,20 @@
+@import url("./repair-20260817-02.css");
+
+/* Keep the application backdrop without changing the document's layout width. */
+body.repair-page.is-scroll-locked {
+  position: static;
+  inset: auto;
+  top: auto;
+  width: auto;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  padding-right: 0;
+}
+
+.repair-request-rail__backdrop {
+  background: rgba(17, 17, 17, 0.2);
+}
+
+.repair-request-rail__panel {
+  box-shadow: -18px 0 36px rgba(17, 17, 17, 0.08);
+}

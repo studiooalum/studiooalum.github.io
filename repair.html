@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-09.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260817-02.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260817-03.css">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -177,7 +177,7 @@
           </section>
 
           <section class="repair-request-form__section repair-request-form__section--notes">
-            <label class="repair-field"><span>5. 기타 요청사항 <em>선택</em></span><textarea name="budgetNote" rows="4" maxlength="1000"></textarea></label>
+            <label class="repair-field"><span>5. 기타 요청사항 <em>선택</em></span><textarea class="js-repair-budget-note" name="budgetNote" rows="4" maxlength="1000"></textarea></label>
             <p class="repair-request-form__hint">의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다. 원치 않으시면 기타 요청사항에 미리 말씀해 주세요.</p>
           </section>
 
@@ -213,7 +213,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260816-02.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260817-02.js";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260817-03.js";
 
     initSiteChrome();
     initCartUI();
