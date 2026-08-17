@@ -1,0 +1,116 @@
+@import url("./repair-20260817-05.css");
+
+.repair-page {
+  --repair-mist: #fff;
+  --repair-rust: #111;
+}
+
+.repair-page .gnb.gnb--repair {
+  --gnb-surface: #fff;
+  --gnb-surface-opaque: #fff;
+  --site-scrollbar-accent: #111;
+  --site-scrollbar-track: #fff;
+  background: #fff;
+  color: #111;
+}
+
+.repair-page .gnb.gnb--repair .gnb__mobile-panel {
+  background: #fff;
+  color: #111;
+}
+
+.repair-price-panel {
+  min-height: var(--repair-price-panel-height, calc(var(--repair-price-row-height) * 9));
+}
+
+.repair-basic-table,
+.repair-method-matrix,
+.repair-basic-table th,
+.repair-basic-table td,
+.repair-method-matrix th,
+.repair-method-matrix td {
+  font-size: 12px;
+}
+
+.repair-basic-table thead th,
+.repair-method-matrix thead th {
+  font-size: 11px;
+}
+
+.repair-image-upload__head,
+.repair-image-upload__title-row {
+  display: block;
+}
+
+.repair-image-upload__title-row h3 {
+  margin: 0;
+}
+
+.repair-request-form .repair-field em,
+.repair-image-upload__title-row .repair-image-help {
+  color: rgba(17, 17, 17, 0.52);
+  font-family: var(--font-kor-button);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: 1.4;
+}
+
+.repair-image-upload__head .repair-image-help {
+  max-width: none;
+}
+
+.repair-image-upload__head .repair-image-upload__description {
+  margin: 8px 0 0;
+}
+
+.repair-image-picker {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 45px;
+  box-sizing: border-box;
+  align-items: center;
+  border: 1px solid rgba(17, 17, 17, 0.24);
+  border-radius: 0;
+  padding: 11px 12px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 14px;
+  letter-spacing: var(--tracking-korean);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.repair-image-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.repair-image-picker:hover,
+.repair-image-picker:focus-within,
+.repair-image-picker.is-dragging {
+  border-color: #111;
+  outline: 1px solid #111;
+  outline-offset: -1px;
+}
+
+@media (max-width: 560px) {
+  .repair-basic-table,
+  .repair-method-matrix,
+  .repair-basic-table th,
+  .repair-basic-table td,
+  .repair-method-matrix th,
+  .repair-method-matrix td,
+  .repair-basic-table thead th,
+  .repair-method-matrix thead th {
+    font-size: 9px;
+  }
+}

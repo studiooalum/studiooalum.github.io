@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-09.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260817-05.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260817-06.css">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -51,7 +51,7 @@
       </section>
 
       <aside class="repair-stage__rail" aria-label="Repair Studio 안내 사항">
-        <details open>
+        <details>
           <summary>가격 및 견적</summary>
           <div>
             <div class="repair-price-tabs" role="tablist" aria-label="가격표 선택">
@@ -165,16 +165,15 @@
             <div class="repair-image-upload__head">
               <div class="repair-image-upload__copy">
                 <div class="repair-image-upload__title-row">
-                  <h3>4. 제품 사진을 올려주세요.</h3>
-                  <p class="repair-image-help js-repair-image-help">(필수) · 최대 4장, 장당 8MB까지 가능합니다.</p>
+                  <h3>4. 제품 사진을 올려주세요. <em class="repair-image-help js-repair-image-help">(필수) · 최대 4장, 장당 8MB까지 가능합니다.</em></h3>
                 </div>
                 <p class="repair-image-upload__description">전체 사진, 손상 부위 가까이 찍은 사진, 가능하면 안쪽 사진을 함께 올려주세요.</p>
               </div>
-              <label class="repair-image-picker">
+            </div>
+            <label class="repair-image-picker repair-image-dropzone js-repair-image-dropzone">
                 <span>사진 선택</span>
                 <input class="js-repair-image-input" type="file" name="images" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
-              </label>
-            </div>
+            </label>
             <div class="repair-image-preview-list js-repair-image-preview-list" aria-live="polite"></div>
           </section>
 
@@ -214,7 +213,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260816-02.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260817-04.js";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260817-05.js";
 
     initSiteChrome();
     initCartUI();
