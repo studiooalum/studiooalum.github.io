@@ -20,23 +20,26 @@ body.repair-page.is-scroll-locked {
 }
 
 .repair-image-upload__title-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
   align-items: baseline;
-  gap: 4px 10px;
+  column-gap: 8px;
 }
 
-.repair-image-upload__title-row .repair-image-help {
-  flex: 0 1 auto;
+.repair-image-upload__head .repair-image-help {
+  max-width: none;
+  color: rgba(17, 17, 17, 0.56);
+  font-size: 10px;
+  line-height: 1.4;
 }
 
-.repair-image-upload__description {
+.repair-image-upload__head .repair-image-upload__description {
   margin: 0;
-  color: rgba(17, 17, 17, 0.65);
+  color: rgba(17, 17, 17, 0.56);
   font-family: var(--font-kor-body);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: var(--tracking-korean);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .repair-request-form .repair-field textarea::placeholder {
