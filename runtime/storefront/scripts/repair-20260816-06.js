@@ -4,6 +4,7 @@ const MAX_IMAGE_COUNT = 4;
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const DRAWER_SCROLL_LOCK_KEY = "repair-request-drawer";
+const mobileGalleryMediaQuery = window.matchMedia("(max-width: 959px)");
 
 const dom = {
   apply: document.querySelector("#repairApplyBtn"),
@@ -22,12 +23,6 @@ const dom = {
   successCopy: document.querySelector(".js-repair-success-copy"),
   reset: document.querySelector(".js-repair-reset"),
   publicGallery: document.querySelector(".repair-image-gallery"),
-  lightbox: document.querySelector(".js-repair-lightbox"),
-  lightboxImage: document.querySelector(".js-repair-lightbox-image"),
-  lightboxMethods: document.querySelector(".js-repair-lightbox-methods"),
-  lightboxClose: document.querySelector(".js-repair-lightbox-close"),
-  lightboxPrev: document.querySelector(".js-repair-lightbox-prev"),
-  lightboxNext: document.querySelector(".js-repair-lightbox-next"),
   priceTabs: Array.from(document.querySelectorAll("[data-repair-price-tab]")),
   pricePanels: Array.from(document.querySelectorAll("[data-repair-price-panel]")),
 };
@@ -39,7 +34,6 @@ const state = {
   trigger: null,
   accountEmail: "",
   gallery: [],
-  galleryIndex: 0,
 };
 
 const METHOD_LABELS = {
@@ -81,18 +75,48 @@ function setPricePanel(name) {
   });
 }
 
-function showGalleryImage(index) {
-  if (!state.gallery.length || !dom.lightbox || !dom.lightboxImage || !dom.lightboxMethods) return;
-  state.galleryIndex = (index + state.gallery.length) % state.gallery.length;
-  const item = state.gallery[state.galleryIndex];
-  dom.lightboxImage.src = item.url;
-  dom.lightboxImage.alt = item.filename || "수선 작업 이미지";
-  dom.lightboxMethods.replaceChildren(...formatMethods(item.methods).map((label) => {
-    const line = document.createElement("span");
-    line.textContent = label;
-    return line;
-  }));
-  if (!dom.lightbox.open) dom.lightbox.showModal();
+function updateGalleryDots(dots, activeIndex) {
+  dots.forEach((dot, index) => {
+    const isActive = index === activeIndex;
+    dot.classList.toggle("is-active", isActive);
+    dot.setAttribute("aria-current", String(isActive));
+  });
+}
+
+function bindGalleryDots(track, dots) {
+  if (!track || !dots.length) return;
+
+  let frameId = null;
+  const sync = () => {
+    frameId = null;
+    const slideWidth = track.clientWidth || 1;
+    const activeIndex = Math.max(0, Math.min(dots.length - 1, Math.round(track.scrollLeft / slideWidth)));
+    updateGalleryDots(dots, activeIndex);
+  };
+
+  track.addEventListener("scroll", () => {
+    if (frameId != null) return;
+    frameId = requestAnimationFrame(sync);
+  }, { passive: true });
+
+  dots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      track.scrollTo({ left: track.clientWidth * index, behavior: "smooth" });
+    });
+  });
+
+  window.addEventListener("resize", sync);
+  requestAnimationFrame(sync);
+}
+
+function toggleGalleryOverlay(card) {
+  const shouldShow = !card.classList.contains("is-overlay-visible");
+  dom.publicGallery?.querySelectorAll(".repair-gallery-card.is-overlay-visible").forEach((item) => {
+    item.classList.remove("is-overlay-visible");
+    item.setAttribute("aria-pressed", "false");
+  });
+  card.classList.toggle("is-overlay-visible", shouldShow);
+  card.setAttribute("aria-pressed", String(shouldShow));
 }
 
 async function initPublicGallery() {
@@ -104,25 +128,54 @@ async function initPublicGallery() {
   } catch {
     state.gallery = [];
   }
-  const fragment = document.createDocumentFragment();
+
+  if (!state.gallery.length) {
+    dom.publicGallery.replaceChildren();
+    return;
+  }
+
+  const slider = document.createElement("div");
+  slider.className = "repair-gallery-slider";
+  const track = document.createElement("div");
+  track.className = "repair-gallery-track";
+  const dotsElement = document.createElement("div");
+  dotsElement.className = "repair-gallery-dots";
+  dotsElement.setAttribute("aria-label", "수선 작업 이미지 선택");
+  const dots = [];
+
   state.gallery.forEach((item, index) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "repair-gallery-card";
-    button.setAttribute("aria-label", `${formatMethods(item.methods).join(", ")} 이미지 확대`);
+    button.setAttribute("aria-label", `${formatMethods(item.methods).join(", ")} 이미지 보기`);
+    button.setAttribute("aria-pressed", "false");
     const image = document.createElement("img");
     image.src = item.url;
     image.alt = item.filename || "수선 작업 이미지";
     image.loading = "lazy";
+    image.draggable = false;
     image.addEventListener("load", () => setAverageColor(button, image), { once: true });
     const overlay = document.createElement("span");
     overlay.className = "repair-gallery-card__overlay";
     overlay.textContent = formatMethods(item.methods).join("\n");
     button.append(image, overlay);
-    button.addEventListener("click", () => showGalleryImage(index));
-    fragment.append(button);
+    button.addEventListener("click", () => {
+      if (mobileGalleryMediaQuery.matches) toggleGalleryOverlay(button);
+    });
+    track.append(button);
+
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = `repair-gallery-dot${index === 0 ? " is-active" : ""}`;
+    dot.setAttribute("aria-label", `이미지 ${index + 1}`);
+    dot.setAttribute("aria-current", String(index === 0));
+    dotsElement.append(dot);
+    dots.push(dot);
   });
-  dom.publicGallery.replaceChildren(fragment);
+
+  slider.append(track);
+  dom.publicGallery.replaceChildren(slider, dotsElement);
+  bindGalleryDots(track, dots);
 }
 
 async function syncApplicantEmail() {
@@ -352,13 +405,7 @@ export function initRepairRequest() {
   });
 
   dom.reset?.addEventListener("click", resetForm);
-  dom.lightboxClose?.addEventListener("click", () => dom.lightbox?.close());
-  dom.lightboxPrev?.addEventListener("click", () => showGalleryImage(state.galleryIndex - 1));
-  dom.lightboxNext?.addEventListener("click", () => showGalleryImage(state.galleryIndex + 1));
   dom.priceTabs.forEach((button) => button.addEventListener("click", () => setPricePanel(button.dataset.repairPriceTab || "basic")));
-  dom.lightbox?.addEventListener("click", (event) => {
-    if (event.target === dom.lightbox) dom.lightbox.close();
-  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && state.isDrawerOpen) closeDrawer();
   });

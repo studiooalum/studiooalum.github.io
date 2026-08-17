@@ -216,6 +216,7 @@ function renderRequestList() {
 function renderCustomerDetails(request) {
   if (!dom.customer) return;
   const privacyConsent = request.privacyConsentAt ? "동의함" : "동의 시각 없음";
+  const archiveConsent = request.archiveConsentAt ? "동의함" : "미동의";
   const email = String(request.email || "").trim();
   const legacyDetails = [
     request.material || request.itemMaterial ? `<div><dt>소재</dt><dd>${escapeHtml(request.material || request.itemMaterial)}</dd></div>` : "",
@@ -229,6 +230,7 @@ function renderCustomerDetails(request) {
       <div><dt>수선 의뢰 제품에 대한 설명</dt><dd>${escapeHtml(request.issueDescription || request.repairDetails || "-")}</dd></div>
       <div><dt>수선 의뢰 기한</dt><dd>${escapeHtml(request.desiredCompletionDate || "미입력")}</dd></div>
       ${legacyDetails}
+      <div><dt>작업 이미지 기록 활용</dt><dd>${escapeHtml(archiveConsent)}</dd></div>
       <div><dt>개인정보 수집 동의</dt><dd>${escapeHtml(privacyConsent)}</dd></div>
     </dl>
   `;

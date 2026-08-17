@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260820-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart.css?v=20260706-08">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-09.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260817-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260817-02.css">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -51,7 +51,6 @@
       </section>
 
       <aside class="repair-stage__rail" aria-label="Repair Studio 안내 사항">
-        <h2 class="repair-section-label">Information</h2>
         <details open>
           <summary>가격 및 견적</summary>
           <div>
@@ -59,8 +58,7 @@
               <button type="button" class="is-active" role="tab" aria-selected="true" data-repair-price-tab="basic">Basic</button>
               <button type="button" role="tab" aria-selected="false" data-repair-price-tab="methods">Repair Methods</button>
             </div>
-            <section class="repair-content-section repair-price-panel" aria-labelledby="repair-price-title" data-repair-price-panel="basic">
-              <h2 id="repair-price-title">기본 수선 가격</h2>
+            <section class="repair-content-section repair-price-panel" aria-label="기본 수선 가격" data-repair-price-panel="basic">
               <table class="repair-basic-table">
                 <thead><tr><th>제품</th><th>시작 가격</th></tr></thead>
                 <tbody>
@@ -71,11 +69,11 @@
                   <tr><td>데님</td><td>₩25,000~</td></tr>
                   <tr><td>니트</td><td>₩25,000~</td></tr>
                   <tr><td>특수소재</td><td>₩30,000~</td></tr>
+                  <tr><td>가죽</td><td>₩50,000~</td></tr>
                 </tbody>
               </table>
             </section>
-            <section class="repair-content-section repair-methods repair-price-panel" aria-labelledby="repair-methods-title" data-repair-price-panel="methods" hidden>
-              <h2 id="repair-methods-title">수선 기법별 가격</h2>
+            <section class="repair-content-section repair-methods repair-price-panel" aria-label="수선 기법별 가격" data-repair-price-panel="methods" hidden>
               <table class="repair-method-matrix">
                 <thead><tr><th>수선 기법</th><th>SMALL</th><th>MEDIUM</th><th>LARGE</th><th>FULL</th></tr></thead>
                 <tbody>
@@ -95,7 +93,6 @@
         <details>
           <summary>접수 및 진행</summary>
           <div>
-            <h2 class="repair-info-heading">진행 안내</h2>
             <ol class="repair-process-list">
               <li><span>01</span>신청폼 작성</li>
               <li><span>02</span>Studio OALUM으로 택배 배송</li>
@@ -107,7 +104,6 @@
           </div>
         </details>
         <details><summary>배송 및 결제</summary><div><p>왕복 배송비는 고객 부담입니다. 해외 발송 시 통관 관련 비용도 별도로 발생할 수 있습니다.</p><p>작업 완료 후 안내드리는 금액을 입금해 주세요.</p></div></details>
-        <details><summary>기타</summary><div><p>의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다. 원치 않으시면 접수 시 미리 말씀해 주세요.</p></div></details>
       </aside>
     </section>
   </main>
@@ -170,6 +166,10 @@
           <section class="repair-request-form__section"><label class="repair-field"><span>5. 기타 요청사항 <em>선택</em></span><textarea name="budgetNote" rows="4" maxlength="1000"></textarea></label></section>
 
           <section class="repair-request-form__section repair-request-form__consent">
+            <label class="repair-checkbox repair-checkbox--archive">
+              <input type="checkbox" name="archiveConsent">
+              <span><strong>작업 이미지 기록 활용 <em>선택</em></strong><small>수선 전후 이미지를 Studio OALUM 작업 아카이브 및 SNS에 소개하는 데 동의합니다. 동의하지 않아도 수선 접수와 작업 진행에는 영향을 주지 않습니다.</small></span>
+            </label>
             <label class="repair-checkbox">
               <input type="checkbox" name="privacyConsent" required>
               <span>수선 검토를 위해 입력한 연락처와 사진을 수집·이용하는 것에 동의합니다.</span>
@@ -201,7 +201,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260816-02.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260706-06.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260817-01.js";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260817-02.js";
 
     initSiteChrome();
     initCartUI();

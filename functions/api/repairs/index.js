@@ -22,6 +22,7 @@ const repairRequestSchema = z.object({
   issueDescription: z.string().trim().min(1, "손상된 부분을 입력해주세요.").max(4000),
   desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." }),
   budgetNote: z.string().trim().max(1000).default(""),
+  archiveConsent: z.boolean().optional().default(false),
   privacyConsent: z.literal(true, { message: "개인정보 수집·이용에 동의해주세요." }),
 });
 
@@ -66,6 +67,7 @@ function buildRequestPayload(formData) {
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
     desiredResult: asText(formData.get("desiredResult")),
     budgetNote: asText(formData.get("budgetNote")),
+    archiveConsent: asBoolean(formData.get("archiveConsent")),
     privacyConsent: asBoolean(formData.get("privacyConsent")) || asBoolean(formData.get("termsAccepted")),
   };
 }
@@ -222,7 +224,7 @@ export async function onRequestPost(context) {
       budgetNote: parsed.data.budgetNote,
       termsAcceptedAt: submittedAt,
       privacyConsentAt: submittedAt,
-      archiveConsentAt: "",
+      archiveConsentAt: parsed.data.archiveConsent ? submittedAt : "",
     }, uploadedImages);
 
     const notifications = await sendRepairNotifications(context.env, {
