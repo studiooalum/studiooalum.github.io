@@ -6,7 +6,8 @@ function initBudgetNoteHint() {
   if (!input || !hint) return;
 
   const sync = () => {
-    hint.hidden = input.value.length > 0;
+    const hasContent = input.value.trim().length > 0;
+    hint.hidden = hasContent;
   };
 
   input.addEventListener("input", sync);
