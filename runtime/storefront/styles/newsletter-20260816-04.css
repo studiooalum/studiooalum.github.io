@@ -26,6 +26,11 @@
   order: 1;
 }
 
+.newsletter-tags__button {
+  font-size: calc(var(--gnb-font-size) - 1px);
+  line-height: 1.2;
+}
+
 @media (min-width: 960px) {
   .newsletter-feed {
     grid-column: 1 / -1;
@@ -34,6 +39,10 @@
 }
 
 @media (max-width: 959px) {
+  .newsletter-tags__button {
+    font-size: calc(var(--gnb-font-size) + 1px);
+  }
+
   .newsletter-post-list {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -1,0 +1,132 @@
+@import url("./repair-20260816-10.css");
+
+.repair-gallery-lightbox-open {
+  overflow: hidden;
+}
+
+.repair-gallery-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+}
+
+.repair-gallery-lightbox.is-open {
+  display: block;
+}
+
+.repair-gallery-lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+}
+
+.repair-gallery-lightbox__dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+  overscroll-behavior: contain;
+}
+
+.repair-gallery-lightbox__nav {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  width: clamp(52px, 8vw, 88px);
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+}
+
+.repair-gallery-lightbox__nav span {
+  display: block;
+  font-family: var(--font-light);
+  font-size: clamp(22px, 2.7vw, 30px);
+  font-weight: 300;
+  line-height: 1;
+}
+
+.repair-gallery-lightbox__nav--prev {
+  left: 0;
+}
+
+.repair-gallery-lightbox__nav--next {
+  right: 0;
+}
+
+.repair-gallery-lightbox__nav[hidden] {
+  display: none;
+}
+
+.repair-gallery-lightbox__close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+}
+
+.repair-gallery-lightbox__close::before,
+.repair-gallery-lightbox__close::after {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: 8px;
+  width: 20px;
+  height: 1px;
+  background: currentColor;
+}
+
+.repair-gallery-lightbox__close::before {
+  transform: rotate(45deg);
+}
+
+.repair-gallery-lightbox__close::after {
+  transform: rotate(-45deg);
+}
+
+.repair-gallery-lightbox__viewport {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 clamp(64px, 10vw, 120px);
+}
+
+.repair-gallery-lightbox__figure {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.repair-gallery-lightbox__image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  background: transparent;
+  object-fit: contain;
+}

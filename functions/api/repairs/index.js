@@ -15,14 +15,14 @@ const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 
 const repairRequestSchema = z.object({
-  customerName: z.string().trim().min(1).max(120),
+  customerName: z.string().trim().min(1, "성함을 입력해주세요.").max(120),
   email: z.string().trim().max(320).default(""),
-  phone: z.string().trim().min(7).max(60),
-  itemType: z.enum(["자켓", "상의", "하의", "데님", "니트", "기타"]),
-  issueDescription: z.string().trim().min(8).max(4000),
-  desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"]),
+  phone: z.string().trim().min(7, "연락처를 확인해주세요.").max(60),
+  itemType: z.enum(["자켓", "상의", "하의", "데님", "니트", "기타"], { message: "제품 종류를 선택해주세요." }),
+  issueDescription: z.string().trim().min(1, "손상된 부분을 입력해주세요.").max(4000),
+  desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." }),
   budgetNote: z.string().trim().max(1000).default(""),
-  privacyConsent: z.literal(true),
+  privacyConsent: z.literal(true, { message: "개인정보 수집·이용에 동의해주세요." }),
 });
 
 function asBoolean(value) {
@@ -153,7 +153,12 @@ export async function onRequestPost(context) {
 
     const parsed = repairRequestSchema.safeParse(buildRequestPayload(formData));
     if (!parsed.success) {
-      return validationError(context.env, parsed.error);
+      const response = validationError(context.env, parsed.error);
+      const payload = await response.json();
+      return json(context.env, {
+        ...payload,
+        error: parsed.error.issues[0]?.message || payload.error,
+      }, { status: 400 });
     }
 
     const files = getSelectedFiles(formData);

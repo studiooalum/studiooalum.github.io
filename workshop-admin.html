@@ -189,12 +189,12 @@
                 </details>
 
                 <details class="workshop-admin-accordion js-workshop-admin-scheduled-config" open>
-                  <summary>확정 일정 / 다회차 일정</summary>
+                  <summary class="js-workshop-admin-slot-summary">확정 일정</summary>
                   <div class="workshop-admin-accordion__body">
                     <div class="workshop-admin-section-head">
                       <div>
-                        <h3 class="fulfillment-subheading">회차 목록</h3>
-                        <p class="fulfillment-copy">다회성 워크숍의 날짜, 시간, 정원을 직접 추가하세요. 공개된 일정은 일일 클래스 달력에서 자동으로 차단됩니다.</p>
+                        <h3 class="fulfillment-subheading js-workshop-admin-slot-title">단일 회차</h3>
+                        <p class="fulfillment-copy js-workshop-admin-slot-copy">일일 워크샵 이벤트의 날짜, 시간, 정원을 설정하세요.</p>
                       </div>
                       <div class="workshop-admin-section-actions">
                         <label class="fulfillment-field">
@@ -205,7 +205,7 @@
                           <span>게시 가격</span>
                           <input type="number" name="price" min="0" step="1000" value="0">
                         </label>
-                        <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-slot-add-btn">세션 추가</button>
+                        <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-slot-add-btn" hidden>세션 추가</button>
                       </div>
                     </div>
                     <div class="workshop-admin-repeater js-workshop-admin-slot-list"></div>

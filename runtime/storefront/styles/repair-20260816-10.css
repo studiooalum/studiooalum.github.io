@@ -1,0 +1,244 @@
+.repair-stage {
+  align-items: start;
+}
+
+.repair-stage__visual {
+  grid-column: 1;
+  grid-template-rows: none;
+  grid-auto-rows: auto;
+  gap: var(--grid-gap);
+}
+
+.repair-image-gallery {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--grid-gap);
+}
+
+.repair-stage__content {
+  gap: var(--grid-gap);
+  padding-top: 0;
+}
+
+.repair-hero-copy {
+  gap: 0;
+}
+
+.repair-hero-copy h1 {
+  font-family: var(--font-book);
+  font-size: clamp(28px, 2.6vw, 34px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: var(--tracking-latin);
+}
+
+.repair-body-copy {
+  gap: 20px;
+  max-width: none;
+}
+
+.repair-body-copy p,
+.repair-body-copy p:last-child {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  color: rgba(17, 17, 17, 0.8);
+  font-family: var(--font-kor-body);
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-body-copy .repair-body-copy__lead {
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.repair-apply-btn {
+  min-height: 30px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.repair-stage__rail {
+  min-height: 0;
+  border-left: 0;
+  overflow-x: hidden;
+}
+
+.repair-stage__rail details,
+.repair-stage__rail details:last-child {
+  border: 0;
+}
+
+.repair-stage__rail details + details {
+  margin-top: 14px;
+}
+
+.repair-stage__rail summary {
+  padding: 14px 0;
+  font-size: 14px;
+}
+
+.repair-stage__rail details > div {
+  gap: 16px;
+  padding-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.repair-info-heading,
+.repair-price-panel h2 {
+  margin: 8px 0 0;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-stage__rail .repair-section-label {
+  margin: 0 0 14px;
+  color: rgba(17, 17, 17, 0.62);
+  font-family: var(--font-book);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: var(--tracking-latin);
+  text-transform: uppercase;
+}
+
+.repair-stage__rail .repair-info-heading {
+  font-size: 14px;
+}
+
+.repair-price-tabs {
+  margin-top: 8px;
+}
+
+.repair-price-notes {
+  display: grid;
+  gap: 16px;
+}
+
+.repair-price-tabs button {
+  min-height: 40px;
+  font-size: 12px;
+}
+
+.repair-price-panel {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.repair-basic-table,
+.repair-method-matrix,
+.repair-method-matrix thead th {
+  font-family: var(--font-book);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.repair-basic-table th,
+.repair-basic-table td,
+.repair-method-matrix th,
+.repair-method-matrix td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-size: 12px;
+}
+
+.repair-method-matrix th,
+.repair-method-matrix td {
+  padding-right: 2px;
+  padding-left: 2px;
+}
+
+.repair-method-matrix th:first-child,
+.repair-method-matrix td:first-child {
+  width: 30%;
+}
+
+.repair-basic-table,
+.repair-method-matrix {
+  height: 280px;
+}
+
+.repair-basic-table thead th,
+.repair-method-matrix thead th {
+  color: rgba(17, 17, 17, 0.58);
+  font-family: var(--font-book);
+  font-weight: 400;
+}
+
+.repair-method-matrix tbody tr {
+  height: 25%;
+}
+
+.repair-basic-table tbody tr,
+.repair-method-matrix tbody tr {
+  transition: background-color 140ms ease;
+}
+
+.repair-basic-table tbody tr:hover,
+.repair-method-matrix tbody tr:hover {
+  background: rgba(17, 17, 17, 0.05);
+}
+
+.repair-process-list {
+  gap: 12px;
+}
+
+.repair-process-list li {
+  grid-template-columns: 30px minmax(0, 1fr);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (min-width: 960px) {
+  .repair-stage__visual {
+    padding-top: var(--repair-title-space);
+  }
+
+  .repair-stage__content {
+    grid-column: 2;
+  }
+
+  .repair-stage__rail {
+    grid-column: 3;
+  }
+
+  .repair-stage__content,
+  .repair-stage__rail {
+    position: sticky;
+    top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+    align-self: start;
+  }
+}
+
+@media (max-width: 959px) {
+  .repair-stage__visual,
+  .repair-stage__content,
+  .repair-stage__rail {
+    grid-column: auto;
+  }
+
+  .repair-stage__content {
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .repair-basic-table,
+  .repair-method-matrix {
+    height: auto;
+  }
+
+  .repair-method-matrix,
+  .repair-method-matrix thead th,
+  .repair-method-matrix th,
+  .repair-method-matrix td {
+    font-size: 11px;
+  }
+}

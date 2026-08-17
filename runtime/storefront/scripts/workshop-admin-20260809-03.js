@@ -49,6 +49,9 @@ const dom = {
   bookingModeSelect: document.querySelector(".js-workshop-admin-booking-mode"),
   dailyConfig: Array.from(document.querySelectorAll(".js-workshop-admin-daily-config")),
   scheduledConfig: Array.from(document.querySelectorAll(".js-workshop-admin-scheduled-config")),
+  slotSummary: document.querySelector(".js-workshop-admin-slot-summary"),
+  slotTitle: document.querySelector(".js-workshop-admin-slot-title"),
+  slotCopy: document.querySelector(".js-workshop-admin-slot-copy"),
   posterUploadInput: document.querySelector(".js-workshop-admin-poster-upload-input"),
   posterUploadButton: document.querySelector(".js-workshop-admin-poster-upload-btn"),
   posterDropzone: document.querySelector(".js-workshop-admin-poster-dropzone"),
@@ -304,9 +307,19 @@ function getBookingConfig(workshop = {}) {
 }
 
 function applyBookingModeUi(type = "event") {
-  const isDaily = normalizeWorkshopType(type) === "daily";
+  const workshopType = normalizeWorkshopType(type);
+  const isDaily = workshopType === "daily";
+  const isEvent = workshopType === "event";
   for (const element of dom.dailyConfig) element.hidden = !isDaily;
   for (const element of dom.scheduledConfig) element.hidden = isDaily;
+  if (dom.slotSummary) dom.slotSummary.textContent = isEvent ? "확정 일정" : "다회차 일정";
+  if (dom.slotTitle) dom.slotTitle.textContent = isEvent ? "단일 회차" : "회차 목록";
+  if (dom.slotCopy) {
+    dom.slotCopy.textContent = isEvent
+      ? "일일 워크샵 이벤트의 날짜, 시간, 정원을 설정하세요."
+      : "세션 추가를 눌러 날짜, 시간, 정원을 직접 등록하세요. 공개된 일정은 일일 클래스 달력에서 자동으로 차단됩니다.";
+  }
+  if (dom.slotAddButton) dom.slotAddButton.hidden = workshopType !== "multiSession";
 }
 
 function setDirtyState(isDirty) {
@@ -833,18 +846,27 @@ function renderGalleryRows(items = []) {
 
 function renderSlotRows(items = []) {
   if (!dom.slotList) return;
-  const rows = items.length ? items : [{}];
+  const workshopType = normalizeWorkshopType(dom.bookingModeSelect?.value);
+  const rows = workshopType === "event"
+    ? (items.length ? [items[0]] : [{}])
+    : workshopType === "multiSession"
+      ? items
+      : [];
+
+  if (!rows.length) {
+    dom.slotList.innerHTML = '<div class="fulfillment-empty">등록된 세션이 없습니다. 세션 추가를 눌러 일정을 등록하세요.</div>';
+    return;
+  }
 
   dom.slotList.innerHTML = rows.map((item, index) => `
     <div class="workshop-admin-thumb-card workshop-admin-thumb-card--slot js-workshop-admin-slot-item" data-slot-index="${index}">
       <input type="hidden" name="slotKey" value="${escapeHtml(item._key || item.key || "")}">
       <div class="workshop-admin-thumb-card__body workshop-admin-thumb-card__body--stacked">
         <div class="workshop-admin-repeater-head">
-          <strong>세션 ${index + 1}</strong>
-          <div class="workshop-admin-repeater-head__actions">
-            <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-slot-duplicate="${index}">복제</button>
+          <strong>${workshopType === "event" ? "단일 회차" : `세션 ${index + 1}`}</strong>
+          ${workshopType === "multiSession" ? `<div class="workshop-admin-repeater-head__actions">
             <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-slot-remove="${index}">삭제</button>
-          </div>
+          </div>` : ""}
         </div>
         <div class="workshop-admin-repeater-grid workshop-admin-repeater-grid--wide">
         <label class="fulfillment-field">
@@ -1574,7 +1596,9 @@ function attachEvents() {
   dom.categorySelect?.addEventListener("change", syncCategoryField);
 
   dom.bookingModeSelect?.addEventListener("change", () => {
+    const currentSlots = collectSlotItems();
     applyBookingModeUi(dom.bookingModeSelect.value);
+    renderSlotRows(currentSlots);
     setDirtyState(true);
     syncDirtyIndicator();
   });
@@ -1700,6 +1724,7 @@ function attachEvents() {
   setupDropzone(dom.galleryDropzone, dom.galleryUploadInput, "gallery");
 
   dom.slotAddButton?.addEventListener("click", () => {
+    if (normalizeWorkshopType(dom.bookingModeSelect?.value) !== "multiSession") return;
     const current = collectSlotItems();
     const base = current[current.length - 1] || current[0] || {};
     renderSlotRows([...current, {
@@ -1715,19 +1740,8 @@ function attachEvents() {
 
   dom.slotList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-slot-remove]");
-    const duplicateButton = event.target.closest("[data-slot-duplicate]");
-    if (duplicateButton) {
-      const index = Number(duplicateButton.dataset.slotDuplicate);
-      const items = collectSlotItems();
-      const source = items[index];
-      if (source) {
-        items.splice(index + 1, 0, { ...source, _key: "" });
-        renderSlotRows(items);
-        setDirtyState(true);
-      }
-      return;
-    }
     if (!button) return;
+    if (normalizeWorkshopType(dom.bookingModeSelect?.value) !== "multiSession") return;
     const index = Number(button.dataset.slotRemove);
     const items = collectSlotItems();
     items.splice(index, 1);
