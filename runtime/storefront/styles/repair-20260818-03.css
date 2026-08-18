@@ -1,0 +1,176 @@
+@import url("./repair-20260818-02.css");
+
+.repair-page {
+  --repair-copy-gap: 24px;
+  --repair-accordion-gap: 14px;
+}
+
+.repair-hero-copy h1 {
+  font-size: 34px;
+  line-height: 1.08;
+  letter-spacing: var(--tracking-latin);
+}
+
+.repair-stage__content {
+  gap: var(--repair-copy-gap);
+}
+
+.repair-body-copy {
+  gap: var(--repair-copy-gap);
+}
+
+.repair-body-copy p,
+.repair-body-copy p:last-child {
+  color: rgba(17, 17, 17, 0.8);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 26px;
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-body-copy .repair-body-copy__lead {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.repair-apply-btn,
+.repair-request-form .repair-submit {
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-stage__rail {
+  display: grid;
+  align-content: start;
+  gap: var(--repair-accordion-gap);
+}
+
+.repair-stage__rail details,
+.repair-stage__rail details + details,
+.repair-stage__rail details:last-child {
+  margin: 0;
+  border: 0;
+}
+
+.repair-stage__rail summary {
+  padding: 0;
+  font-family: var(--font-kor-body);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: var(--tracking-korean);
+}
+
+.repair-stage__rail details[open] > summary {
+  font-family: var(--font-kor-button);
+  font-weight: 500;
+}
+
+.repair-stage__rail details > div {
+  gap: var(--repair-accordion-gap);
+  padding: 0 0 24px;
+  font-size: 13px;
+  line-height: 22.4px;
+}
+
+.repair-price-tabs {
+  margin-top: 0;
+}
+
+.repair-price-tabs button {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.repair-price-panel {
+  --repair-price-row-height: 40px;
+  min-width: 0;
+  align-content: start;
+  overflow-x: visible;
+}
+
+.repair-basic-table,
+.repair-method-matrix {
+  width: 100%;
+  table-layout: fixed;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  line-height: 15px;
+}
+
+.repair-basic-table th,
+.repair-basic-table td,
+.repair-method-matrix th,
+.repair-method-matrix td {
+  height: var(--repair-price-row-height);
+  padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.repair-basic-table thead th,
+.repair-method-matrix thead th {
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.repair-method-matrix th:first-child,
+.repair-method-matrix td:first-child {
+  width: 30%;
+}
+
+.repair-method-matrix tbody td:not(:first-child) {
+  font-size: 12px;
+  letter-spacing: -0.06em;
+  white-space: nowrap;
+}
+
+.repair-price-notes,
+.repair-process-list {
+  gap: var(--repair-accordion-gap);
+}
+
+.repair-process-list li {
+  font-size: 13px;
+  line-height: 22.4px;
+}
+
+@media (max-width: 959px) {
+  .repair-price-panel {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .repair-hero-copy h1 {
+    font-size: 28px;
+  }
+
+  .repair-basic-table,
+  .repair-method-matrix {
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  .repair-basic-table thead th,
+  .repair-method-matrix thead th {
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  .repair-price-panel {
+    --repair-price-row-height: 36px;
+  }
+
+  .repair-method-matrix tbody td:not(:first-child) {
+    font-size: inherit;
+    letter-spacing: -0.06em;
+    white-space: nowrap;
+  }
+}
