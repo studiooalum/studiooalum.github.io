@@ -1,0 +1,13 @@
+@import url("./archive-20260818-01.css");
+
+.archive-detail-tag {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.archive-detail-tag:hover,
+.archive-detail-tag:focus-visible {
+  color: #111;
+  outline: none;
+}

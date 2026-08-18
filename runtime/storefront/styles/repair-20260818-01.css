@@ -1,0 +1,8 @@
+@import url("./repair-20260817-06.css");
+
+@media (min-width: 960px) {
+  .repair-request-rail__panel {
+    width: calc(100vw - var(--page-third-start));
+    max-width: none;
+  }
+}

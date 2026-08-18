@@ -1,0 +1,17 @@
+@import url("./gnb-20260818-02.css");
+
+@media (min-width: 769px) {
+  .gnb .gnb__actions > .gnb__action--repair {
+    position: static;
+    top: auto;
+    left: auto;
+    z-index: auto;
+    transform: none;
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --gnb-font-size: 15px;
+  }
+}
