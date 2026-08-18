@@ -1,0 +1,12 @@
+@import url("./gnb-20260818-01.css");
+@import url("./page-actions-20260818-01.css");
+
+@media (min-width: 769px) {
+  .gnb .gnb__actions > .gnb__action--repair {
+    position: absolute;
+    top: 50%;
+    left: var(--page-third-start);
+    z-index: 1;
+    transform: translateY(-50%);
+  }
+}

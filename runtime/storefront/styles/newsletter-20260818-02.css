@@ -1,0 +1,24 @@
+@import url("./newsletter-20260818-01.css");
+
+.newsletter-post-card__category {
+  top: auto;
+  right: 10px;
+  bottom: 10px;
+  left: auto;
+  font-family: var(--font-book);
+  font-size: 11px;
+  letter-spacing: var(--tracking-latin);
+  line-height: 1.35;
+}
+
+.newsletter-entry__back {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0 0 26px;
+  color: inherit;
+  font-family: var(--font-book);
+  font-size: 20px;
+  letter-spacing: inherit;
+  line-height: 1;
+  text-decoration: none;
+}

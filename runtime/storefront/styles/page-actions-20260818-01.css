@@ -1,0 +1,28 @@
+@media (min-width: 960px) {
+  body .account-btn,
+  body .edition-btn,
+  body .checkout-submit-btn,
+  body .payment-submit-btn,
+  body .payment-btn--outline,
+  body .payment-btn--secondary,
+  body .newsletter-form__button,
+  body .placeholder-form__button,
+  body .repair-apply-btn,
+    body .workshop-apply-btn,
+  body .fulfillment-actions > .fulfillment-btn,
+  body .admin-login-form button {
+    box-sizing: border-box;
+    inline-size: min(calc(var(--page-column-width) / 2), 100%);
+    max-inline-size: 100%;
+    justify-self: start;
+  }
+
+  body .account-address-tools .account-btn,
+  body .account-panel-actions--auth > .account-btn {
+    flex: 0 1 auto;
+  }
+
+  body .fulfillment-actions > .fulfillment-btn {
+    flex: 0 1 auto;
+  }
+}
