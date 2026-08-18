@@ -1,0 +1,7 @@
+@import url("./gnb-20260818-03.css");
+@import url("./progressive-images-20260818-02.css");
+
+.gnb__action--cart .gnb__count {
+  font: inherit;
+  letter-spacing: inherit;
+}

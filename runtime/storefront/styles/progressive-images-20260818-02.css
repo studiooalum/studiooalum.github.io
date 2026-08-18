@@ -1,0 +1,38 @@
+.progressive-image {
+  --progressive-image-rgb: 232, 232, 226;
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  background: rgb(var(--progressive-image-rgb));
+}
+
+.progressive-image > img,
+.progressive-image > picture > img {
+  display: block;
+  max-width: 100%;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.progressive-image.is-loaded > img,
+.progressive-image.is-loaded > picture > img {
+  opacity: 1;
+}
+
+.workshops-card__poster > .progressive-image,
+.workshop-poster > .progressive-image,
+.repair-gallery-card > .progressive-image,
+.shop-card__thumb > .progressive-image,
+.edition-card__thumb > .progressive-image,
+.edition-media__slide > .progressive-image {
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressive-image > img,
+  .progressive-image > picture > img {
+    transition: none;
+  }
+}
