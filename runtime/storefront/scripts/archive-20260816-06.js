@@ -165,6 +165,7 @@ function createArchiveCard(item, imageData) {
   media.className = "archive-card__media";
   const image = document.createElement("img");
   image.className = "archive-card__image";
+  if (imageData.rgb) image.dataset.imageColor = imageData.rgb;
   image.src = imageData.src;
   image.alt = imageData.alt;
   image.loading = "lazy";
@@ -190,6 +191,7 @@ function createDetailImage(imageData, title, className = "") {
   const figure = document.createElement("figure");
   figure.className = `archive-detail-image ${className}`.trim();
   const image = document.createElement("img");
+  if (imageData.rgb) image.dataset.imageColor = imageData.rgb;
   image.src = imageData.src;
   image.alt = imageData.alt || title;
   image.loading = className.includes("main") ? "eager" : "lazy";
@@ -276,20 +278,20 @@ function renderBoard(board, loadError = null) {
     empty.className = "archive-empty";
     const label = document.createElement("p");
     label.className = "archive-empty__label";
-    label.textContent = loadError ? "Unavailable" : state.items.length ? "No results" : "Preparing";
+    label.textContent = loadError ? "Unavailable" : state.items.length ? "No results" : "No records yet";
     const title = document.createElement("h2");
     title.textContent = loadError
       ? "작업 기록을 불러오지 못했습니다."
       : state.items.length
         ? "선택한 기록이 없습니다."
-        : "작업 기록을 준비하고 있습니다.";
+        : "아직 공개된 작업 기록이 없습니다.";
     const copy = document.createElement("p");
     copy.className = "archive-empty__copy";
     copy.textContent = loadError
       ? "잠시 후 다시 시도해주세요."
       : state.items.length
         ? "다른 태그를 선택해 작업 기록을 살펴보세요."
-        : "스튜디오 오알룸이 만들어오고 고쳐온 작업들을 정리해 차례로 공개합니다.";
+        : "스튜디오 오알룸이 만들어오고 고쳐온 작업을 차례로 공개합니다.";
     empty.append(label, title, copy);
     board.append(empty);
     return;

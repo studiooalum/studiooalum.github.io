@@ -1,3 +1,11 @@
+import {
+  deletePublicContentSnapshot,
+  newsletterCatalogSnapshotKey,
+  newsletterPostSnapshotKey,
+  readPublicContentSnapshot,
+  writePublicContentSnapshot,
+} from "./public-content-snapshots.js";
+
 function getDb(env) {
   return env?.OALUM_DB || null;
 }
@@ -210,10 +218,10 @@ export async function readNewsletterAdminSnapshot(env) {
   };
 }
 
-export async function readPublicNewsletterPosts(env, slug = "") {
+async function readPublicNewsletterPostsFromDatabase(env, slug = "") {
   const database = getDb(env);
   if (!database) {
-    return slug ? null : [];
+    return undefined;
   }
 
   const normalizedSlug = cleanText(slug, 120);
@@ -229,6 +237,46 @@ export async function readPublicNewsletterPosts(env, slug = "") {
     .prepare(`SELECT * FROM newsletter_posts WHERE status = 'published' ORDER BY published_at DESC, updated_at DESC`)
     .all();
   return (result?.results || []).map(formatNewsletterPost).filter(Boolean);
+}
+
+async function syncPublicNewsletterSnapshots(env, post) {
+  const posts = await readPublicNewsletterPostsFromDatabase(env);
+  if (!Array.isArray(posts)) return false;
+
+  await writePublicContentSnapshot(env, newsletterCatalogSnapshotKey(), posts);
+  if (post?.status === "published") {
+    await writePublicContentSnapshot(env, newsletterPostSnapshotKey(post.slug), post);
+  } else if (post?.slug) {
+    await deletePublicContentSnapshot(env, newsletterPostSnapshotKey(post.slug));
+  }
+  return true;
+}
+
+export async function readPublicNewsletterPosts(env, slug = "") {
+  const normalizedSlug = cleanText(slug, 120);
+  const snapshotKey = normalizedSlug ? newsletterPostSnapshotKey(normalizedSlug) : newsletterCatalogSnapshotKey();
+  const snapshot = await readPublicContentSnapshot(env, snapshotKey);
+
+  if (normalizedSlug ? snapshot && typeof snapshot === "object" : Array.isArray(snapshot)) {
+    return snapshot;
+  }
+
+  if (normalizedSlug) {
+    const catalog = await readPublicContentSnapshot(env, newsletterCatalogSnapshotKey());
+    const post = Array.isArray(catalog) ? catalog.find((item) => item?.slug === normalizedSlug) || null : null;
+    if (post) {
+      await writePublicContentSnapshot(env, snapshotKey, post).catch(() => false);
+      return post;
+    }
+  }
+
+  const result = await readPublicNewsletterPostsFromDatabase(env, normalizedSlug);
+  if (result === undefined) return normalizedSlug ? null : [];
+
+  if (normalizedSlug ? result : Array.isArray(result)) {
+    await writePublicContentSnapshot(env, snapshotKey, result).catch(() => false);
+  }
+  return result;
 }
 
 export async function upsertNewsletterPost(env, input) {
@@ -299,7 +347,9 @@ export async function upsertNewsletterPost(env, input) {
     .run();
 
   const row = await database.prepare(`SELECT * FROM newsletter_posts WHERE slug = ? LIMIT 1`).bind(slug).first();
-  return formatNewsletterPost(row);
+  const post = formatNewsletterPost(row);
+  await syncPublicNewsletterSnapshots(env, post);
+  return post;
 }
 
 export async function archiveNewsletterPost(env, { slug }) {
@@ -321,5 +371,7 @@ export async function archiveNewsletterPost(env, { slug }) {
     .run();
 
   const row = await database.prepare(`SELECT * FROM newsletter_posts WHERE slug = ? LIMIT 1`).bind(normalizedSlug).first();
-  return formatNewsletterPost(row);
+  const post = formatNewsletterPost(row);
+  await syncPublicNewsletterSnapshots(env, post);
+  return post;
 }

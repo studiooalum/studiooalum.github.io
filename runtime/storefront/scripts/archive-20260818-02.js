@@ -1,4 +1,4 @@
-import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818-01.js";
+import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818-01.js?v=20260818-01";
 
 function linkifyDetailTags() {
   document.querySelectorAll(".archive-detail-meta__more p").forEach((row) => {

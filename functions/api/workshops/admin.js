@@ -13,6 +13,7 @@ import {
   upsertWorkshopContent,
   updateWorkshopReservationStatus,
 } from "../../../cloudflare/lib/workshops.js";
+import { normalizeImageRgb } from "../../../cloudflare/lib/image-colors.js";
 import { buildWorkshopImageKey, buildWorkshopImageUrl } from "../../../cloudflare/lib/r2.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
@@ -247,6 +248,7 @@ async function uploadWorkshopImage(env, formData) {
 
   const slug = cleanUploadValue(formData.get("slug"), "draft-workshop");
   const target = cleanUploadValue(formData.get("target"), "image");
+  const averageRgb = normalizeImageRgb(formData.get("imageColor"));
   const key = buildWorkshopImageKey({
     slug,
     target,
@@ -263,15 +265,17 @@ async function uploadWorkshopImage(env, formData) {
       filename: file.name,
       slug,
       target,
+      ...(averageRgb ? { averageRgb } : {}),
     },
   });
 
   return {
     key,
-    url: buildWorkshopImageUrl(key),
+    url: buildWorkshopImageUrl(key, { averageRgb }),
     filename: file.name,
     contentType: file.type || "application/octet-stream",
     size: file.size,
+    averageRgb,
   };
 }
 

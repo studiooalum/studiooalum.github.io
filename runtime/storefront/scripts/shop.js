@@ -1,6 +1,6 @@
 import client from "./sanity/client.js?v=20260520-03";
-import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
-import { imageUrl } from "./sanity/image.js";
+import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js?v=20260818-01";
+import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
 import {
   formatPrice,
   getProductTags,
@@ -60,6 +60,8 @@ function createProductCard(baseName, representative, editionCount) {
 
   if (firstImage) {
     const img = document.createElement("img");
+    const color = imageRgb(representative.images[0]);
+    if (color) img.dataset.imageColor = color;
     img.src = firstImage;
     img.alt = baseName;
     img.loading = "lazy";
@@ -160,7 +162,6 @@ function renderProducts(products) {
 async function init() {
   try {
     renderTags();
-    gridEl.innerHTML = `<p class="shop-state">Loading products...</p>`;
     const products = await client.fetch(ALL_PRODUCTS_QUERY);
     renderProducts(products);
   } catch (err) {

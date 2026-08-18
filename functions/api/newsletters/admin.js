@@ -6,6 +6,7 @@ import {
   readNewsletterAdminSnapshot,
   upsertNewsletterPost,
 } from "../../../cloudflare/lib/newsletters.js";
+import { normalizeImageRgb } from "../../../cloudflare/lib/image-colors.js";
 import { buildNewsletterImageKey, buildNewsletterImageUrl } from "../../../cloudflare/lib/r2.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
@@ -58,6 +59,7 @@ async function uploadNewsletterImage(env, formData) {
 
   const slug = cleanUploadValue(formData.get("slug"), "draft-newsletter");
   const target = cleanUploadValue(formData.get("target"), "image");
+  const averageRgb = normalizeImageRgb(formData.get("imageColor"));
   const key = buildNewsletterImageKey({
     slug,
     target,
@@ -74,15 +76,17 @@ async function uploadNewsletterImage(env, formData) {
       filename: file.name,
       slug,
       target,
+      ...(averageRgb ? { averageRgb } : {}),
     },
   });
 
   return {
     key,
-    url: buildNewsletterImageUrl(key),
+    url: buildNewsletterImageUrl(key, { averageRgb }),
     filename: file.name,
     contentType: file.type,
     size: file.size,
+    averageRgb,
   };
 }
 

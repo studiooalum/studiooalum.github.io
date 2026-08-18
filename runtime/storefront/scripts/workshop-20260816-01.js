@@ -61,6 +61,7 @@ const isAdminPreview = query.get("preview") === "1";
 
 const state = {
   workshop: null,
+  availabilityStale: false,
   bookingOpen: false,
   selectedDate: "",
   selectedSlotKey: "",
@@ -628,7 +629,14 @@ function renderWorkshopDetails(workshop) {
   }
 
   if (dom.notice) {
-    dom.notice.textContent = workshop.bookingNotice || "노란색 날짜는 예약이 막힌 일정입니다. 가능한 날짜를 선택해 신청해 주세요.";
+    dom.notice.textContent = workshop.availabilityStale
+      ? "예약 상태를 확인하는 동안 신청을 잠시 멈췄습니다. 잠시 후 다시 시도해주세요."
+      : workshop.bookingNotice || "노란색 날짜는 예약이 막힌 일정입니다. 가능한 날짜를 선택해 신청해 주세요.";
+  }
+
+  if (dom.apply) {
+    dom.apply.disabled = Boolean(workshop.availabilityStale);
+    dom.apply.setAttribute("aria-disabled", String(Boolean(workshop.availabilityStale)));
   }
 
   renderPoster(workshop);
@@ -867,6 +875,10 @@ function updateBookingPrice() {
 
 function updateSubmitState() {
   if (!dom.submit) return;
+  if (state.availabilityStale) {
+    dom.submit.disabled = true;
+    return;
+  }
   const bookingType = getBookingConfig().type;
   dom.submit.disabled = bookingType === "event"
     ? !(state.workshop?.scheduleSlots || []).some((slot) => slot.status !== "blocked")
@@ -949,6 +961,7 @@ async function loadWorkshop() {
       applyViewer(payload.viewer);
     }
     if (payload?.workshop) {
+      state.availabilityStale = Boolean(payload.workshop.availabilityStale);
       return payload.workshop;
     }
   } catch (error) {

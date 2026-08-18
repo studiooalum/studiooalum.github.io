@@ -9,3 +9,7 @@ export function imageUrl(image, { width, height } = {}) {
   url.searchParams.set('auto', 'format');
   return url.toString();
 }
+
+export function imageRgb(image) {
+  return String(image?.asset?.metadata?.palette?.dominant?.background || "").trim();
+}

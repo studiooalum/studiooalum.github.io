@@ -1,6 +1,6 @@
 import client from "./sanity/client.js?v=20260520-03";
-import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
-import { imageUrl } from "./sanity/image.js";
+import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js?v=20260818-01";
+import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
 import { addToCart, addToCartSilent } from "./cart-20260706-06.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { formatPrice, getFirstParagraph, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
@@ -69,6 +69,8 @@ function updateLightbox() {
   if (!lightboxImageEl || lightboxImages.length === 0) return;
 
   const currentImage = lightboxImages[lightboxActiveIndex];
+  if (currentImage.rgb) lightboxImageEl.dataset.imageColor = currentImage.rgb;
+  else delete lightboxImageEl.dataset.imageColor;
   lightboxImageEl.src = currentImage.url;
   lightboxImageEl.alt = currentImage.alt || "상품 이미지";
 
@@ -357,16 +359,18 @@ function renderMedia(product) {
       : imageUrl(image, { width: 1000 }),
     lightboxUrl: imageUrl(image, { width: 1800 }),
     alt: index === 0 ? product.title : `${product.title} detail ${index}`,
+    rgb: imageRgb(image),
   }));
 
   if (galleryItems.length === 1) {
     const mainImg = document.createElement("img");
+    if (galleryItems[0].rgb) mainImg.dataset.imageColor = galleryItems[0].rgb;
     mainImg.src = galleryItems[0].pageUrl;
     mainImg.alt = galleryItems[0].alt;
     mainImg.draggable = false;
     mainImg.addEventListener("click", () => {
       openLightbox(
-        galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt })),
+        galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt, rgb: item.rgb })),
         0,
       );
     });
@@ -385,7 +389,7 @@ function renderMedia(product) {
   dotsEl.className = "edition-media__dots";
   dotsEl.setAttribute("aria-label", "상품 이미지 선택");
 
-  const lightboxItems = galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt }));
+  const lightboxItems = galleryItems.map((item) => ({ url: item.lightboxUrl, alt: item.alt, rgb: item.rgb }));
   const dots = [];
 
   galleryItems.forEach((item, index) => {
@@ -393,6 +397,7 @@ function renderMedia(product) {
     slideEl.className = "edition-media__slide";
 
     const img = document.createElement("img");
+    if (item.rgb) img.dataset.imageColor = item.rgb;
     img.src = item.pageUrl;
     img.alt = item.alt;
     img.loading = index === 0 ? "eager" : "lazy";
@@ -455,6 +460,8 @@ function renderRecommendations(allProducts, currentBaseName) {
 
     if (firstImage) {
       const image = document.createElement("img");
+      const color = imageRgb(item.images[0]);
+      if (color) image.dataset.imageColor = color;
       image.src = firstImage;
       image.alt = baseName;
       image.loading = "lazy";

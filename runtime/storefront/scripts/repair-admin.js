@@ -1,3 +1,5 @@
+import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
+
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
 
@@ -461,6 +463,8 @@ function bindEvents() {
     event.preventDefault();
     const formData = new FormData(dom.galleryForm);
     formData.set("action", "uploadRepairGalleryImage");
+    const averageRgb = await readAverageRgbFromFile(formData.get("file"));
+    if (averageRgb) formData.set("imageColor", averageRgb);
     if (!formData.getAll("methods").length) {
       setStatus(dom.galleryStatus, "수선 방식을 하나 이상 선택해주세요.", "error");
       return;

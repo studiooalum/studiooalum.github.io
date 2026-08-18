@@ -4,18 +4,22 @@ import {
   WORKSHOP_TYPES,
 } from "../../runtime/storefront/scripts/utils/workshops.js";
 import {
-  archiveWorkshopContent,
+  archiveWorkshopContent as archiveWorkshopContentRecord,
   readPublicWorkshopBySlug,
   readPublicWorkshopCatalog,
+  readPublicWorkshopSnapshotBySlug,
   readStoredWorkshopCatalog,
   readStoredWorkshopContentBySlug,
   readWorkshopAdminCatalog,
+  syncPublicWorkshopSnapshots,
   upsertWorkshopContent as upsertWorkshopContentRecord,
+  writePublicWorkshopSnapshot,
 } from "./workshop-content.js";
 import { cancelTossPayment, confirmTossPayment, getTossConfig } from "./toss.js";
 
 const WORKSHOP_TIME_ZONE = "Asia/Seoul";
 const GLOBAL_WORKSHOP_BLOCK_SLUG = "*";
+const AVAILABILITY_UNAVAILABLE_NOTICE = "예약 상태를 확인하는 동안 신청을 잠시 멈췄습니다. 잠시 후 다시 시도해주세요.";
 const WORKSHOP_TYPE_VALUES = new Set(Object.values(WORKSHOP_TYPES));
 const D1_IN_QUERY_BATCH_SIZE = 80;
 const RESERVATION_STATUSES = new Set([
@@ -499,6 +503,40 @@ async function enrichWorkshopAvailability(env, workshop) {
 export async function readWorkshopAvailability(env, slug) {
   const workshop = await readWorkshopCatalog(env, slug);
   return enrichWorkshopAvailability(env, workshop);
+}
+
+export function blockWorkshopAvailability(workshop) {
+  const normalized = normalizeWorkshop(workshop);
+  return {
+    ...normalized,
+    availabilityStale: true,
+    bookingNotice: AVAILABILITY_UNAVAILABLE_NOTICE,
+    scheduleSlots: normalized.scheduleSlots.map((slot) => ({
+      ...slot,
+      isBlocked: true,
+      status: "blocked",
+      blockedReason: AVAILABILITY_UNAVAILABLE_NOTICE,
+    })),
+  };
+}
+
+export async function readPublicWorkshopAvailability(env, slug) {
+  const snapshot = await readPublicWorkshopSnapshotBySlug(env, slug);
+  if (!snapshot) {
+    const workshop = await readWorkshopAvailability(env, slug);
+    await writePublicWorkshopSnapshot(env, workshop);
+    return workshop;
+  }
+
+  if (!getDb(env)) {
+    return blockWorkshopAvailability(snapshot);
+  }
+
+  try {
+    return await enrichWorkshopAvailability(env, normalizeWorkshop(snapshot));
+  } catch {
+    return blockWorkshopAvailability(snapshot);
+  }
 }
 
 export async function readWorkshopAdminAvailability(env, slug) {
@@ -2341,7 +2379,15 @@ async function saveWorkshopBookingConfig(env, workshop) {
 export async function upsertWorkshopContent(env, input) {
   const workshop = await upsertWorkshopContentRecord(env, input);
   await saveWorkshopBookingConfig(env, workshop);
-  return readWorkshopBookingConfig(requireDb(env), workshop);
+  const configuredWorkshop = await readWorkshopBookingConfig(requireDb(env), workshop);
+  await syncPublicWorkshopSnapshots(env, configuredWorkshop);
+  return configuredWorkshop;
 }
 
-export { WORKSHOP_TYPES, archiveWorkshopContent, readPublicWorkshopCatalog, readStoredWorkshopCatalog };
+export async function archiveWorkshopContent(env, input) {
+  const workshop = await archiveWorkshopContentRecord(env, input);
+  await syncPublicWorkshopSnapshots(env, workshop);
+  return workshop;
+}
+
+export { WORKSHOP_TYPES, readPublicWorkshopCatalog, readStoredWorkshopCatalog };

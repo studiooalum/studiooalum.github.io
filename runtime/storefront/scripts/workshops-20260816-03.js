@@ -146,7 +146,6 @@ function renderWorkshops(workshops, { loadError = false } = {}) {
 
 async function init() {
   renderTags();
-  gridEl.innerHTML = '<p class="workshops-state">워크샵을 불러오는 중입니다.</p>';
 
   try {
     const response = await fetch("./api/workshops/catalog", {

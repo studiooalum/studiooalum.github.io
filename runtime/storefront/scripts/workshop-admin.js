@@ -1,3 +1,5 @@
+import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
+
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
 const DEFAULT_BOOKING_NOTICE = "예약일 3일 전까지 100% 환불 가능합니다. 이후 환불은 불가하며, 양도는 가능합니다.";
@@ -1133,6 +1135,8 @@ async function uploadWorkshopImage(file, target = "media") {
 
   formData.append("slug", slugSource);
   formData.append("target", target);
+  const averageRgb = await readAverageRgbFromFile(file);
+  if (averageRgb) formData.append("imageColor", averageRgb);
   formData.append("file", file);
 
   return requestAdmin("/api/workshops/admin", {

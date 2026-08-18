@@ -17,7 +17,20 @@ export const ALL_PRODUCTS_QUERY = `
     category,
     shopTags,
     images[]{
-      asset->{url}
+      asset->{
+        url,
+        metadata {
+          dimensions {
+            width,
+            height
+          },
+          palette {
+            dominant {
+              background
+            }
+          }
+        }
+      }
     }
   }
 `;
@@ -37,7 +50,20 @@ export const PRODUCT_BY_SLUG_QUERY = `
     category,
     shopTags,
     images[]{
-      asset->{url}
+      asset->{
+        url,
+        metadata {
+          dimensions {
+            width,
+            height
+          },
+          palette {
+            dominant {
+              background
+            }
+          }
+        }
+      }
     }
   }
 `;

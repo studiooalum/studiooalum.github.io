@@ -7,6 +7,7 @@ import {
   readRepairAdminSnapshot,
   updateRepairRequest,
 } from "../../../cloudflare/lib/repairs.js";
+import { normalizeImageRgb } from "../../../cloudflare/lib/image-colors.js";
 import { buildRepairGalleryKey } from "../../../cloudflare/lib/r2.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
@@ -63,9 +64,14 @@ async function uploadRepairGalleryImage(context, formData) {
   }
   const id = `RPG_${crypto.randomUUID().replace(/-/g, "").toUpperCase()}`;
   const key = buildRepairGalleryKey({ imageId: id, fileName: file.name, fileType: file.type });
+  const averageRgb = normalizeImageRgb(formData.get("imageColor"));
   await context.env.OALUM_R2.put(key, file.stream(), {
     httpMetadata: { contentType: file.type, cacheControl: "public, max-age=31536000, immutable" },
-    customMetadata: { galleryId: id, methods: methods.join(",") },
+    customMetadata: {
+      galleryId: id,
+      methods: methods.join(","),
+      ...(averageRgb ? { averageRgb } : {}),
+    },
   });
   try {
     return await createRepairGalleryImage(context.env, {

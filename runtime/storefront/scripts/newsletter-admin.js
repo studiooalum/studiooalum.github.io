@@ -1,3 +1,5 @@
+import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
+
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
 
@@ -540,6 +542,8 @@ async function uploadImage(file, target) {
   formData.append("action", "uploadNewsletterImage");
   formData.append("slug", String(dom.form?.elements.slug.value || "").trim() || slugifyText(dom.form?.elements.title.value || "") || "draft-newsletter");
   formData.append("target", target);
+  const averageRgb = await readAverageRgbFromFile(file);
+  if (averageRgb) formData.append("imageColor", averageRgb);
   formData.append("file", file);
   return requestAdmin("/api/newsletters/admin", { method: "POST", body: formData });
 }

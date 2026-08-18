@@ -3,6 +3,11 @@ import { z } from "zod";
 import { readSession } from "../../../cloudflare/lib/auth.js";
 import { readPublicNewsletterPosts } from "../../../cloudflare/lib/newsletters.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
+import {
+  PUBLIC_CONTENT_CACHE_HEADERS,
+  readPublicContentEdgeCache,
+  writePublicContentEdgeCache,
+} from "../../../cloudflare/lib/public-content-snapshots.js";
 
 const subscribeSchema = z.object({
   email: z.string().trim().email().max(320).optional().default(""),
@@ -39,11 +44,20 @@ export async function onRequestPost(context) {
 
 export async function onRequestGet(context) {
   try {
+    const cached = await readPublicContentEdgeCache(context.request);
+    if (cached) return cached;
+
     const url = new URL(context.request.url);
     const slug = String(url.searchParams.get("slug") || "").trim();
     const result = await readPublicNewsletterPosts(context.env, slug);
 
-    return json(context.env, slug ? { ok: true, post: result } : { ok: true, posts: result });
+    const response = json(context.env, slug ? { ok: true, post: result } : { ok: true, posts: result }, {
+      headers: PUBLIC_CONTENT_CACHE_HEADERS,
+    });
+    const write = writePublicContentEdgeCache(context.request, response);
+    if (typeof context.waitUntil === "function") context.waitUntil(write);
+    else await write;
+    return response;
   } catch (error) {
     return errorResponse(context.env, error, "뉴스레터를 불러오지 못했습니다.");
   }

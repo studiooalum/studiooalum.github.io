@@ -48,6 +48,15 @@ Repair Studio는 같은 Cloudflare 경계 안에서 D1 + private R2를 사용합
 - 공개 `/api/r2`는 `repairs/` 접두사 객체를 404로 차단
 - 저장 구조: `repair_requests`, `repair_request_images` (`0013_repair_requests.sql`)
 
+### Public content snapshots and image placeholders
+
+- Newsletter와 Workshop 카탈로그의 공개 읽기는 `OALUM_R2`의 `public-content-snapshots/v1/*` JSON을 우선 사용한다. D1은 관리자 저장, 게시, 예약 원본으로 유지한다.
+- 공개 목록·상세 snapshot이 없을 때만 D1에서 한 번 seed한다. 목록 snapshot에는 상세에 필요한 콘텐츠도 포함되므로 개별 상세 snapshot이 없어도 D1 장애 중 콘텐츠를 계속 보여줄 수 있다.
+- Newsletter와 Workshop 게시·보관은 D1 저장 후 snapshot을 동기 갱신한다. `public-content-snapshots/` key는 `/api/r2`에서 공개하지 않는다.
+- Workshop 상세의 예약 가능 여부와 예약 생성은 계속 D1 live read/write를 사용한다. live availability를 읽지 못하면 snapshot 콘텐츠는 보이되 모든 슬롯을 blocked로 반환해 예약을 막는다.
+- 공개 Newsletter와 Workshop 카탈로그 응답은 짧은 Workers edge cache를 사용한다. 예약 상태 또는 로그인 사용자 정보가 포함된 Workshop availability 응답은 캐시하지 않는다.
+- 새 Newsletter, Workshop, Repair 공개 이미지는 업로드 전에 평균 RGB를 계산해 R2 custom metadata와 공개 URL의 `rgb` query로 보관한다. 기존 이미지와 외부 자산은 R2 HEAD metadata, Sanity palette, 또는 첫 로드 후 localStorage 학습값을 사용한다.
+
 ### 5. Optional local-only workspaces
 
 - `apps/studio/` 같은 co-located Sanity Studio 경로

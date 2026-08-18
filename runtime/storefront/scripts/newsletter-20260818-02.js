@@ -127,6 +127,9 @@ export async function initNewsletterPage() {
   const entry = document.getElementById("newsletterPostEntry");
   if (!status || !list || !entry) return;
 
+  status.hidden = true;
+  status.textContent = "";
+
   const slug = String(new URLSearchParams(window.location.search).get("slug") || "").trim();
   const selectedCategory = String(new URLSearchParams(window.location.search).get("category") || "all").trim().toLowerCase();
 
@@ -135,6 +138,7 @@ export async function initNewsletterPage() {
       document.body.classList.add("newsletter-entry-mode");
       const payload = await requestNewsletter(`./api/newsletters?slug=${encodeURIComponent(slug)}`);
       if (!payload.post) {
+        status.hidden = false;
         status.textContent = "요청한 글을 찾을 수 없습니다.";
         return;
       }
@@ -151,12 +155,14 @@ export async function initNewsletterPage() {
     list.innerHTML = "";
     const visiblePosts = selectedCategory === "all" ? posts : posts.filter((post) => post.categories?.includes(selectedCategory));
     if (!visiblePosts.length) {
+      status.hidden = false;
       status.textContent = "아직 발행된 뉴스레터가 없습니다.";
       return;
     }
     visiblePosts.forEach((post) => list.appendChild(createPostCard(post)));
     status.hidden = true;
   } catch (error) {
+    status.hidden = false;
     status.textContent = error.message || "뉴스레터를 불러오지 못했습니다.";
   }
 }

@@ -2,6 +2,13 @@ import {
   normalizeWorkshop,
   slugifyWorkshopTitle,
 } from "../../runtime/storefront/scripts/utils/workshops.js";
+import {
+  deletePublicContentSnapshot,
+  readPublicContentSnapshot,
+  workshopCatalogSnapshotKey,
+  workshopSnapshotKey,
+  writePublicContentSnapshot,
+} from "./public-content-snapshots.js";
 
 function getDb(env) {
   return env?.OALUM_DB || null;
@@ -198,6 +205,67 @@ export async function readPublicWorkshopBySlug(env, slug) {
 
 export async function readPublicWorkshopCatalog(env) {
   return readStoredWorkshopCatalog(env);
+}
+
+export async function readPublicWorkshopSnapshotBySlug(env, slug) {
+  const normalizedSlug = cleanText(slug, 120);
+  if (!normalizedSlug) return null;
+
+  const snapshot = await readPublicContentSnapshot(env, workshopSnapshotKey(normalizedSlug));
+  if (snapshot && typeof snapshot === "object" && snapshot.slug === normalizedSlug) {
+    return snapshot;
+  }
+
+  const catalog = await readPublicContentSnapshot(env, workshopCatalogSnapshotKey());
+  const catalogWorkshop = Array.isArray(catalog)
+    ? catalog.find((item) => item?.slug === normalizedSlug) || null
+    : null;
+  if (catalogWorkshop) {
+    await writePublicContentSnapshot(env, workshopSnapshotKey(normalizedSlug), catalogWorkshop).catch(() => false);
+    return catalogWorkshop;
+  }
+
+  const workshop = await readPublicWorkshopBySlug(env, normalizedSlug);
+  if (workshop) {
+    await writePublicContentSnapshot(env, workshopSnapshotKey(normalizedSlug), workshop).catch(() => false);
+  }
+  return workshop;
+}
+
+export async function readPublicWorkshopSnapshotCatalog(env) {
+  const snapshot = await readPublicContentSnapshot(env, workshopCatalogSnapshotKey());
+  if (Array.isArray(snapshot)) return snapshot;
+
+  if (!getDb(env)) return [];
+
+  const workshops = await readPublicWorkshopCatalog(env);
+  if (Array.isArray(workshops)) {
+    await writePublicContentSnapshot(env, workshopCatalogSnapshotKey(), workshops).catch(() => false);
+  }
+  return workshops;
+}
+
+export async function writePublicWorkshopSnapshot(env, workshop) {
+  if (!workshop?.slug) return false;
+  await writePublicContentSnapshot(env, workshopSnapshotKey(workshop.slug), workshop);
+  return true;
+}
+
+export async function syncPublicWorkshopSnapshots(env, workshop) {
+  const catalog = await readPublicWorkshopCatalog(env);
+  if (!Array.isArray(catalog)) return false;
+
+  const catalogSnapshot = workshop?.slug
+    ? catalog.map((item) => item.slug === workshop.slug ? workshop : item)
+    : catalog;
+  await writePublicContentSnapshot(env, workshopCatalogSnapshotKey(), catalogSnapshot);
+
+  if (workshop?.status === "published") {
+    await writePublicWorkshopSnapshot(env, workshop);
+  } else if (workshop?.slug) {
+    await deletePublicContentSnapshot(env, workshopSnapshotKey(workshop.slug));
+  }
+  return true;
 }
 
 export async function readWorkshopAdminCatalog(env) {

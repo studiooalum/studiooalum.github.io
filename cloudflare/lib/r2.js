@@ -1,3 +1,5 @@
+import { normalizeImageRgb } from "./image-colors.js";
+
 function sanitizeSegment(value, fallback = "asset") {
   return String(value || "")
     .trim()
@@ -25,7 +27,16 @@ function extensionFromName(fileName = "") {
 
 export function isPrivateR2Key(key) {
   const normalizedKey = String(key || "").trim();
-  return normalizedKey.startsWith("repairs/") || normalizedKey.startsWith("repair-requests/");
+  return normalizedKey.startsWith("repairs/")
+    || normalizedKey.startsWith("repair-requests/")
+    || normalizedKey.startsWith("public-content-snapshots/");
+}
+
+function buildPublicImageUrl(key, { averageRgb = "" } = {}) {
+  const params = new URLSearchParams({ key: String(key || "").trim() });
+  const color = normalizeImageRgb(averageRgb);
+  if (color) params.set("rgb", color);
+  return `/api/r2?${params.toString()}`;
 }
 
 export function buildWorkshopImageKey({ slug = "draft-workshop", target = "image", fileName = "", fileType = "" } = {}) {
@@ -36,8 +47,8 @@ export function buildWorkshopImageKey({ slug = "draft-workshop", target = "image
   return `workshops/${slugSegment}/${targetSegment}/${Date.now()}-${nameSegment}${extension}`;
 }
 
-export function buildWorkshopImageUrl(key) {
-  return `/api/r2?key=${encodeURIComponent(String(key || "").trim())}`;
+export function buildWorkshopImageUrl(key, options) {
+  return buildPublicImageUrl(key, options);
 }
 
 export function buildNewsletterImageKey({ slug = "draft-newsletter", target = "image", fileName = "", fileType = "" } = {}) {
@@ -48,8 +59,8 @@ export function buildNewsletterImageKey({ slug = "draft-newsletter", target = "i
   return `newsletters/${slugSegment}/${targetSegment}/${Date.now()}-${nameSegment}${extension}`;
 }
 
-export function buildNewsletterImageUrl(key) {
-  return `/api/r2?key=${encodeURIComponent(String(key || "").trim())}`;
+export function buildNewsletterImageUrl(key, options) {
+  return buildPublicImageUrl(key, options);
 }
 
 export function buildRepairImageKey({ requestId = "request", imageId = "image", fileName = "", fileType = "" } = {}) {
@@ -67,6 +78,6 @@ export function buildRepairGalleryKey({ imageId = "image", fileName = "", fileTy
   return `repair-gallery/${Date.now()}-${imageSegment}-${nameSegment}${extension}`;
 }
 
-export function buildRepairGalleryUrl(key) {
-  return `/api/r2?key=${encodeURIComponent(String(key || "").trim())}`;
+export function buildRepairGalleryUrl(key, options) {
+  return buildPublicImageUrl(key, options);
 }

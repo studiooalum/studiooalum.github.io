@@ -1,7 +1,7 @@
 import { readSession } from "../../../cloudflare/lib/auth.js";
 import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
 import { errorResponse, json, noContent } from "../../../cloudflare/lib/http.js";
-import { readWorkshopAdminAvailability, readWorkshopAvailability } from "../../../cloudflare/lib/workshops.js";
+import { readPublicWorkshopAvailability, readWorkshopAdminAvailability } from "../../../cloudflare/lib/workshops.js";
 
 export function onRequestOptions(context) {
   return noContent(context.env);
@@ -23,10 +23,10 @@ export async function onRequestGet(context) {
       await requireAdminAccess(context);
     }
 
-    const [workshop, session] = await Promise.all([
-      preview ? readWorkshopAdminAvailability(context.env, slug) : readWorkshopAvailability(context.env, slug),
-      readSession(context.env, context.request, { touch: false }),
-    ]);
+    const workshop = await (preview
+      ? readWorkshopAdminAvailability(context.env, slug)
+      : readPublicWorkshopAvailability(context.env, slug));
+    const session = await readSession(context.env, context.request, { touch: false }).catch(() => null);
 
     return json(context.env, {
       ok: true,

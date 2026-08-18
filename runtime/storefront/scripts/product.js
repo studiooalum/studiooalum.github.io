@@ -1,6 +1,6 @@
 import client from "./sanity/client.js?v=20260520-03";
-import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js";
-import { imageUrl } from "./sanity/image.js";
+import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js?v=20260818-01";
+import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
 import { getFirstParagraph, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
@@ -116,6 +116,8 @@ function renderEditionGrid(editions) {
 
       if (firstImage) {
         const img = document.createElement("img");
+        const color = imageRgb(edition.images[0]);
+        if (color) img.dataset.imageColor = color;
         img.src = firstImage;
         img.alt = editionLabel || edition.title;
         img.loading = "lazy";
@@ -141,7 +143,6 @@ function renderEditionGrid(editions) {
 
 async function init() {
   try {
-    gridEl.innerHTML = `<p class="product-state">Loading editions...</p>`;
     const allProducts = await client.fetch(ALL_PRODUCTS_QUERY);
     const editions = (allProducts || []).filter((p) => {
       const { baseName } = parseProductTitle(p.title);
