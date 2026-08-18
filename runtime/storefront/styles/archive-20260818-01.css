@@ -1,0 +1,12 @@
+@import url("./archive-20260816-07.css");
+
+.archive-card__overlay {
+  background: rgb(var(--archive-hover-rgb));
+}
+
+.archive-detail-back {
+  width: fit-content;
+  margin-bottom: 26px;
+  font-size: 20px;
+  line-height: 1;
+}

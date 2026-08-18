@@ -1,0 +1,6 @@
+@import url("./gnb-20260820-01.css");
+
+/* Leave only the section color visible until the navigation module has rendered. */
+.gnb:not(.is-ready) > * {
+  display: none !important;
+}
