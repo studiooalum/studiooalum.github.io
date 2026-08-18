@@ -1,0 +1,26 @@
+@import url("./cart.css");
+
+.cart-item {
+  border-top: 0;
+}
+
+.cart-item__img,
+.cart-item__fallback {
+  border: 0;
+}
+
+.cart-item__qty-btn {
+  border: 0;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.cart-item__qty-btn:hover {
+  background: transparent;
+}
+
+.cart-item__qty-btn:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}

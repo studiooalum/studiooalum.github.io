@@ -19,7 +19,7 @@ const repairRequestSchema = z.object({
   customerName: z.string().trim().min(1, "성함을 입력해주세요.").max(120),
   email: z.string().trim().max(320).refine((value) => !value || z.string().email().safeParse(value).success, "이메일 형식을 확인해주세요.").default(""),
   phone: z.string().trim().min(1, "연락처를 입력해주세요.").max(60).regex(KOREAN_PHONE_PATTERN, "연락처 형식을 확인해주세요."),
-  itemType: z.enum(["자켓", "상의", "하의", "데님", "니트", "기타"], { message: "제품 종류를 선택해주세요." }),
+  itemType: z.enum(["자켓", "상의", "하의", "기타", "데님", "니트", "특수소재", "가죽"], { message: "제품 종류를 선택해주세요." }),
   issueDescription: z.string().trim().min(1, "손상된 부분을 입력해주세요.").max(4000),
   desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." }),
   budgetNote: z.string().trim().max(1000).default(""),

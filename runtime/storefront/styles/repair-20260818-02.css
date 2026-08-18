@@ -1,0 +1,18 @@
+@import url("./repair-20260818-01.css");
+
+.repair-request-success h2 {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .repair-request-success h2 {
+    font-size: 17px;
+    line-height: 1.1;
+  }
+}
+
+@media (max-width: 340px) {
+  .repair-request-success h2 {
+    font-size: 14px;
+  }
+}
