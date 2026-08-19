@@ -1,0 +1,105 @@
+@import url("./repair-20260818-03.css");
+
+:root {
+  --repair-accordion-item-gap: 16px;
+  --repair-accordion-header-content-gap: 18px;
+  --repair-accordion-content-gap: 16px;
+}
+
+.repair-hero-copy h1,
+.repair-request-rail__header h2 {
+  font-family: var(--font-kor-heading);
+  font-weight: 600;
+}
+
+.repair-kicker {
+  font-family: var(--font-english-ui);
+}
+
+.repair-body-copy p,
+.repair-body-copy .repair-body-copy__lead {
+  font-family: var(--font-kor-body);
+}
+
+.repair-apply-btn,
+.repair-request-form .repair-submit {
+  font-family: var(--font-kor-button);
+  font-weight: 600;
+}
+
+.repair-request-rail__notice,
+.repair-request-form .repair-field input,
+.repair-request-form .repair-field select,
+.repair-request-form .repair-field textarea,
+.repair-request-form .repair-image-upload__description,
+.repair-request-form .repair-checkbox,
+.repair-request-form .repair-form__status {
+  font-family: var(--font-kor-body);
+}
+
+.repair-request-rail__notice {
+  overflow-wrap: anywhere;
+}
+
+.repair-request-form__section h3,
+.repair-request-form .repair-field > span,
+.repair-request-form .repair-choice-group legend {
+  font-family: var(--font-kor-form);
+  font-weight: 500;
+}
+
+.repair-request-form .repair-field em,
+.repair-request-form .repair-image-help {
+  font-family: var(--font-kor-meta);
+  font-weight: 400;
+}
+
+.repair-stage__rail {
+  gap: var(--repair-accordion-item-gap);
+}
+
+.repair-stage__rail summary,
+.repair-stage__rail details[open] > summary {
+  font-family: var(--font-kor-body);
+}
+
+.repair-stage__rail summary {
+  font-weight: 400;
+}
+
+.repair-stage__rail details[open] > summary {
+  font-weight: 500;
+}
+
+.repair-stage__rail details > div {
+  display: grid;
+  gap: var(--repair-accordion-content-gap);
+  padding: var(--repair-accordion-header-content-gap) 0 24px;
+}
+
+.repair-price-tabs button {
+  font-family: var(--font-english-ui);
+}
+
+.repair-basic-table,
+.repair-method-matrix,
+.repair-price-notes,
+.repair-process-list,
+.repair-process-note,
+.repair-stage__rail details p {
+  font-family: var(--font-kor-body);
+}
+
+.repair-basic-table tbody td:last-child,
+.repair-method-matrix tbody td:not(:first-child) {
+  font-weight: 500;
+}
+
+.repair-price-notes,
+.repair-process-list {
+  gap: var(--repair-accordion-content-gap);
+}
+
+.repair-price-panel {
+  min-height: var(--repair-price-panel-min-height, calc(var(--repair-price-row-height) * 9));
+}

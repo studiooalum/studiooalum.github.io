@@ -1,0 +1,43 @@
+@import url("./cart-20260818-01.css");
+
+.cart-panel__title {
+  font-family: var(--font-english-ui);
+}
+
+.cart-panel__empty,
+.cart-item__title,
+.cart-item__qty,
+.cart-item__price,
+.cart-panel__total {
+  font-family: var(--font-kor-body);
+}
+
+.cart-item__title {
+  padding-right: 26px;
+  overflow-wrap: anywhere;
+}
+
+.cart-item__title--english {
+  font-family: var(--font-english-ui);
+}
+
+.cart-item__price,
+.cart-panel__total {
+  font-weight: 500;
+}
+
+.cart-item__qty-btn {
+  font-family: var(--font-kor-body);
+}
+
+.cart-panel__checkout-btn {
+  font-family: var(--font-kor-button);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .cart-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+}

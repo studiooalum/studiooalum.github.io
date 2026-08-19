@@ -1,7 +1,7 @@
 import client from "./sanity/client.js?v=20260520-03";
 import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js?v=20260818-01";
 import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
-import { addToCart, addToCartSilent } from "./cart-20260706-06.js";
+import { addToCart, addToCartSilent } from "./cart-20260818-02.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { formatPrice, getFirstParagraph, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
