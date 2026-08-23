@@ -1,0 +1,117 @@
+@media (max-width: 768px) {
+  html:has(body.repair-page) {
+    scrollbar-gutter: auto;
+  }
+
+  .repair-page {
+    --page-gutter: 23px;
+    --gnb-height: 50px;
+  }
+
+  .repair-page .gnb.gnb--repair {
+    padding-right: 19px;
+    padding-left: 19px;
+  }
+
+  .repair-main {
+    padding: calc(var(--gnb-height) + 28px) var(--page-gutter) 53px;
+  }
+
+  .repair-stage {
+    gap: 30px;
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .repair-stage__visual {
+    gap: 0;
+  }
+
+  .repair-image-gallery {
+    aspect-ratio: 326 / 438;
+  }
+
+  .repair-gallery-slider,
+  .repair-gallery-track,
+  .repair-gallery-card {
+    height: 100%;
+  }
+
+  .repair-gallery-card img {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .repair-gallery-dots {
+    display: none;
+  }
+
+  .repair-stage__content {
+    gap: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .repair-hero-copy h1 {
+    font-size: 23px;
+    line-height: 30px;
+    letter-spacing: 0;
+  }
+
+  .repair-body-copy {
+    gap: 15px;
+    margin-top: 19px;
+  }
+
+  .repair-body-copy p,
+  .repair-body-copy p:last-child {
+    color: #333;
+    font-size: 13.5px;
+    font-weight: 400;
+    line-height: 21.5px;
+    letter-spacing: 0;
+  }
+
+  .repair-body-copy .repair-body-copy__lead {
+    display: block;
+    color: #111;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 21.5px;
+  }
+
+  .repair-apply-btn {
+    display: inline-flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 50px;
+    margin-top: 30px;
+    padding: 0 16px;
+    font-size: 14.5px;
+    line-height: 21.5px;
+    letter-spacing: 0;
+  }
+
+  .repair-stage__rail {
+    display: block;
+    min-height: 0;
+    gap: 0;
+    margin-top: 8px;
+    border-top: 1px solid #ebebeb;
+  }
+
+  .repair-stage__rail details,
+  .repair-stage__rail details + details,
+  .repair-stage__rail details:last-child {
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid #ebebeb;
+  }
+
+  .repair-stage__rail summary {
+    padding: 15px 0;
+    font-size: 13.5px;
+    line-height: 20px;
+    letter-spacing: 0;
+  }
+}
