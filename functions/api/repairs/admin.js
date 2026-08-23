@@ -5,42 +5,74 @@ import {
   createRepairGalleryImage,
   deleteRepairGalleryImage,
   readRepairAdminSnapshot,
+  readRepairRequestForAdmin,
   updateRepairRequest,
 } from "../../../cloudflare/lib/repairs.js";
+import {
+  assertRepairStatusRequirements,
+  createManualRepairNotificationResend,
+  getRepairStatusEventType,
+  previewRepairNotification,
+  processRepairNotificationOutbox,
+} from "../../../cloudflare/lib/repair-notifications.js";
 import { normalizeImageRgb } from "../../../cloudflare/lib/image-colors.js";
 import { buildRepairGalleryKey } from "../../../cloudflare/lib/r2.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
 const repairStatusSchema = z.enum([
   "received",
-  "reviewing",
-  "quoted",
-  "approved",
+  "item_received",
   "in_progress",
-  "completed",
+  "payment_pending",
+  "shipping",
+  "closed",
   "rejected",
   "cancelled",
 ]);
 
 const repairUpdateSchema = z.object({
   id: z.string().trim().min(1).max(80),
+  expectedVersion: z.number().int().min(1),
   status: repairStatusSchema.optional(),
   adminNote: z.string().trim().max(4000).optional(),
   customerMessage: z.string().trim().max(2000).optional(),
   quoteAmount: z.number().int().min(0).max(100000000).nullable().optional(),
   finalAmount: z.number().int().min(0).max(100000000).nullable().optional(),
+  bankAccount: z.string().trim().max(500).optional(),
+  paymentInstructions: z.string().trim().max(2000).optional(),
+  paymentConfirmedAt: z.string().trim().max(40).optional(),
+  carrier: z.string().trim().max(120).optional(),
+  trackingNumber: z.string().trim().max(160).optional(),
+  trackingUrl: z.string().trim().max(1000).refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "배송 조회 URL을 다시 확인해주세요.").optional(),
 }).refine((request) => (
   request.status !== undefined
   || request.adminNote !== undefined
   || request.customerMessage !== undefined
   || request.quoteAmount !== undefined
   || request.finalAmount !== undefined
+  || request.bankAccount !== undefined
+  || request.paymentInstructions !== undefined
+  || request.paymentConfirmedAt !== undefined
+  || request.carrier !== undefined
+  || request.trackingNumber !== undefined
+  || request.trackingUrl !== undefined
 ), {
   message: "변경할 수선 접수 정보를 입력해주세요.",
 });
 
 const repairAdminActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("updateRepairRequest"), request: repairUpdateSchema }),
+  z.object({ action: z.literal("previewRepairNotification"), request: repairUpdateSchema }),
+  z.object({ action: z.literal("processRepairNotifications"), limit: z.number().int().min(1).max(25).optional() }),
+  z.object({ action: z.literal("retryRepairNotification"), notificationId: z.string().trim().min(1).max(80) }),
   z.object({ action: z.literal("deleteRepairGalleryImage"), id: z.string().trim().min(1).max(80) }),
 ]);
 
@@ -95,6 +127,11 @@ export function onRequestOptions(context) {
 export async function onRequestGet(context) {
   try {
     await requireAdminAccess(context);
+    if (typeof context.waitUntil === "function") {
+      context.waitUntil(processRepairNotificationOutbox(context.env, { limit: 10 }).catch((error) => {
+        console.error("Failed to process Repair notification outbox.", error);
+      }));
+    }
     const snapshot = await readRepairAdminSnapshot(context.env);
     return json(context.env, { ok: true, ...snapshot });
   } catch (error) {
@@ -104,7 +141,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   try {
-    await requireAdminAccess(context);
+    const adminAccess = await requireAdminAccess(context);
     const contentType = String(context.request.headers.get("content-type") || "").toLowerCase();
     if (contentType.includes("multipart/form-data")) {
       const formData = await context.request.formData();
@@ -125,8 +162,55 @@ export async function onRequestPost(context) {
       const removed = await deleteRepairGalleryImage(context.env, parsed.data.id);
       if (context.env?.OALUM_R2 && removed.r2Key) await context.env.OALUM_R2.delete(removed.r2Key);
       snapshot = await readRepairAdminSnapshot(context.env);
+    } else if (parsed.data.action === "previewRepairNotification") {
+      const current = await readRepairRequestForAdmin(context.env, parsed.data.request.id);
+      if (current.isReadOnly) {
+        throw Object.assign(new Error("배송 완료된 수선 내역은 읽기 전용입니다."), { status: 409 });
+      }
+      const candidate = { ...current, ...parsed.data.request };
+      const status = assertRepairStatusRequirements(candidate.status, candidate);
+      const statusChanged = status !== current.status;
+      const eventType = statusChanged ? getRepairStatusEventType(status) : "";
+      return json(context.env, {
+        ok: true,
+        preview: eventType ? await previewRepairNotification(context.env, candidate, eventType) : null,
+        eventType: eventType || "",
+        automaticNotification: Boolean(eventType),
+        statusChanged,
+      });
+    } else if (parsed.data.action === "processRepairNotifications") {
+      const processing = await processRepairNotificationOutbox(context.env, { limit: parsed.data.limit || 10 });
+      snapshot = await readRepairAdminSnapshot(context.env);
+      return json(context.env, { ok: true, message: "안내 발송 대기열을 확인했습니다.", processing, ...snapshot });
+    } else if (parsed.data.action === "retryRepairNotification") {
+      const resend = await createManualRepairNotificationResend(
+        context.env,
+        parsed.data.notificationId,
+        { type: "admin", id: adminAccess.issuedAt || adminAccess.method },
+      );
+      if (typeof context.waitUntil === "function") {
+        context.waitUntil(processRepairNotificationOutbox(context.env, { ids: [resend.notificationId] }).catch((error) => {
+          console.error("Failed to process manual Repair notification resend.", error);
+        }));
+      }
+      snapshot = await readRepairAdminSnapshot(context.env);
+      return json(context.env, {
+        ok: true,
+        message: "재발송 요청을 새 안내 기록으로 저장했습니다.",
+        operation: { notificationStatus: "pending", notificationIds: [resend.notificationId] },
+        ...snapshot,
+      });
     } else {
-      snapshot = await updateRepairRequest(context.env, parsed.data.request);
+      snapshot = await updateRepairRequest(context.env, {
+        ...parsed.data.request,
+        actorType: "admin",
+        actorId: adminAccess.issuedAt || adminAccess.method,
+      });
+      if (snapshot.operation?.notificationIds?.length && typeof context.waitUntil === "function") {
+        context.waitUntil(processRepairNotificationOutbox(context.env, { ids: snapshot.operation.notificationIds }).catch((error) => {
+          console.error("Failed to process Repair status notification.", error);
+        }));
+      }
     }
     return json(context.env, {
       ok: true,

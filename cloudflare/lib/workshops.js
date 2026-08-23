@@ -155,6 +155,7 @@ function formatReservation(row) {
 
   return {
     reservationId: row.id,
+    reservationNumber: `WKS-${row.id}`,
     userId: row.user_id || null,
     email: row.email,
     fullName: row.full_name || "",
@@ -919,6 +920,24 @@ export async function readWorkshopReservationsForIdentity(database, { userId, em
     .all();
 
   return (result?.results || []).map(formatReservation);
+}
+
+export async function lookupGuestWorkshopReservation(env, { reference, email }) {
+  const database = requireDb(env);
+  const normalizedReference = cleanText(reference, 120);
+  const reservationId = normalizedReference.toUpperCase().startsWith("WKS-")
+    ? normalizedReference.slice(4)
+    : normalizedReference;
+  const emailNormalized = normalizeEmail(email);
+  const row = await database.prepare(`
+    SELECT * FROM workshop_reservations
+    WHERE id = ? AND email_normalized = ?
+    LIMIT 1
+  `).bind(reservationId, emailNormalized).first();
+  if (!row) {
+    throw Object.assign(new Error("입력한 정보와 일치하는 신청 내역을 찾을 수 없습니다."), { status: 404 });
+  }
+  return formatReservation(row);
 }
 
 function getApplicant(input, { userId = null, accountEmail = "", accountFullName = "", accountPhone = "" } = {}) {

@@ -141,6 +141,17 @@
   line-height: 1.6;
 }
 
+.repair-admin-readonly {
+  margin: 0;
+  border: 1px solid rgba(17, 17, 17, 0.22);
+  padding: 11px 12px;
+  background: #f3f3f1;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .repair-admin-customer dl {
   display: grid;
   gap: 12px;
@@ -179,6 +190,137 @@
   letter-spacing: var(--tracking-korean);
   line-height: 1.6;
   resize: vertical;
+}
+
+.repair-admin-page [data-repair-payment-field][hidden],
+.repair-admin-page [data-repair-shipping-field][hidden] {
+  display: none !important;
+}
+
+.repair-admin-notification-preview,
+.repair-admin-inquiries,
+.repair-admin-notifications {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid rgba(17, 17, 17, 0.14);
+  padding-top: 16px;
+}
+
+.repair-admin-section-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.repair-admin-section-head > div {
+  display: grid;
+  gap: 5px;
+}
+
+.repair-admin-section-head p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.63);
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.repair-admin-preview,
+.repair-admin-history {
+  display: grid;
+  gap: 10px;
+}
+
+.repair-admin-preview__subject,
+.repair-admin-history-card {
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  padding: 12px;
+}
+
+.repair-admin-preview__subject {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.repair-admin-preview__subject strong,
+.repair-admin-history-card strong {
+  font-family: var(--font-kor-button);
+  font-weight: 500;
+}
+
+.repair-admin-preview pre {
+  overflow: auto;
+  margin: 0;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  padding: 12px;
+  background: #fafafa;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.repair-admin-history-card {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.repair-admin-history-card__head,
+.repair-admin-history-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.repair-admin-history-card p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.68);
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.repair-admin-notification-state {
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+}
+
+.repair-admin-notification-state[data-status="sent"] {
+  color: #0a6a3e;
+}
+
+.repair-admin-notification-state[data-status="failed"],
+.repair-admin-notification-state[data-status="dead_letter"],
+.repair-admin-notification-state[data-status="unknown"] {
+  color: #ad2b2b;
+}
+
+.repair-admin-notification-state[data-status="pending"],
+.repair-admin-notification-state[data-status="processing"] {
+  color: #755600;
+}
+
+.repair-admin-page .fulfillment-btn--small {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.repair-admin-form.is-readonly .repair-admin-action-bar,
+.repair-admin-form.is-readonly .repair-admin-notification-preview .fulfillment-btn {
+  display: none;
 }
 
 .repair-admin-images {
@@ -309,5 +451,12 @@
 @media (max-width: 520px) {
   .repair-admin-image-list {
     grid-template-columns: 1fr;
+  }
+
+  .repair-admin-section-head,
+  .repair-admin-history-card__head,
+  .repair-admin-history-card__actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

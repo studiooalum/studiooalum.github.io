@@ -74,8 +74,8 @@ function getFriendlyApiMessage(error, fallbackMessage) {
     return "비밀번호를 다시 확인해주세요.";
   }
 
-  if (fieldErrors?.orderId?.length) {
-    return "주문번호를 다시 확인해주세요.";
+  if (fieldErrors?.reference?.length || fieldErrors?.orderId?.length) {
+    return "조회 번호를 다시 확인해주세요.";
   }
 
   const message = String(error?.message || "").trim();
@@ -236,6 +236,20 @@ function formatWorkshopStatus(reservation) {
   return "예약 접수";
 }
 
+function formatRepairStatus(request) {
+  const labels = {
+    received: "신청 완료",
+    item_received: "수선제품 수신 완료",
+    in_progress: "수선 진행 중",
+    payment_pending: "수선 완료 · 가격 및 입금 안내",
+    shipping: "입금 완료 · 배송 중",
+    closed: "배송 완료 · Archive",
+    cancelled: "취소",
+    rejected: "진행 불가",
+  };
+  return request?.statusLabel || labels[String(request?.status || "")] || "신청 완료";
+}
+
 function formatWorkshopTime(reservation) {
   const range = [reservation?.slotStartTime, reservation?.slotEndTime].filter(Boolean).join(" - ");
   return range || "시간 추후 안내";
@@ -262,11 +276,12 @@ function setButtonLoading(button, loading, loadingText) {
   button.textContent = loading ? loadingText : button.dataset.defaultLabel;
 }
 
-async function requestJson(url, { method = "GET", body } = {}) {
+async function requestJson(url, { method = "GET", body, headers = {} } = {}) {
   const init = {
     method,
     headers: {
       Accept: "application/json",
+      ...headers,
     },
     credentials: "same-origin",
   };
@@ -304,6 +319,7 @@ export function initAccountPage() {
   const addressSearchButton = document.querySelector(".js-account-address-search");
   const ordersEl = document.querySelector(".js-account-orders");
   const workshopsEl = document.querySelector(".js-account-workshops");
+  const repairsEl = document.querySelector(".js-account-repairs");
   const pointsEl = document.querySelector(".js-account-points");
 
   if (
@@ -314,20 +330,28 @@ export function initAccountPage() {
     || !profileForm
     || !ordersEl
     || !workshopsEl
+    || !repairsEl
     || !pointsEl
   ) {
     return;
   }
 
   const urlMessage = readStatusFromUrl();
+  const initialReference = String(new URLSearchParams(window.location.search).get("reference") || "").trim();
   const emptyOrdersMarkup = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
   const emptyWorkshopsMarkup = '<div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>';
+  const emptyRepairsMarkup = '<div class="account-empty">등록된 수선 신청 내역이 없습니다.</div>';
   const state = {
     orders: [],
     workshops: [],
     orderPage: 1,
     workshopPage: 1,
+    repairs: [],
+    repairPage: 1,
     guestOrder: null,
+    guestResourceType: "",
+    guestResource: null,
+    guestAccessToken: "",
     orderImagesBySlug: {},
   };
 
@@ -446,16 +470,26 @@ export function initAccountPage() {
     memberLayout.hidden = true;
     loginForm.reset();
     guestForm.reset();
+    if (initialReference) {
+      guestForm.elements.reference.value = initialReference;
+      setActiveAuthPanel("guest");
+    }
     guestResultEl.hidden = true;
     guestResultEl.innerHTML = "";
     setStatus(memberStatusEl, "");
     pointsEl.textContent = "0 포인트";
     state.orders = [];
     state.workshops = [];
+    state.repairs = [];
     state.orderPage = 1;
     state.workshopPage = 1;
+    state.repairPage = 1;
+    state.guestResourceType = "";
+    state.guestResource = null;
+    state.guestAccessToken = "";
     ordersEl.innerHTML = emptyOrdersMarkup;
     workshopsEl.innerHTML = emptyWorkshopsMarkup;
+    repairsEl.innerHTML = emptyRepairsMarkup;
   }
 
   authTabButtons.forEach((button) => {
@@ -484,6 +518,27 @@ export function initAccountPage() {
 
     state.workshopPage = Number(button.dataset.accountPage) || 1;
     renderWorkshopReservations(state.workshops);
+  });
+
+  repairsEl.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-account-page-type='repairs']");
+    if (!button) return;
+    state.repairPage = Number(button.dataset.accountPage) || 1;
+    renderRepairRequests(state.repairs);
+  });
+
+  repairsEl.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-repair-inquiry-form]");
+    if (!form) return;
+    event.preventDefault();
+    void handleRepairInquiry(form, { guest: false });
+  });
+
+  guestResultEl.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-repair-inquiry-form]");
+    if (!form) return;
+    event.preventDefault();
+    void handleRepairInquiry(form, { guest: true });
   });
 
   function createPaginationMarkup(pageType, currentPage, totalPages) {
@@ -566,7 +621,7 @@ export function initAccountPage() {
             <strong class="account-order-total">${escapeHtml(formatPrice(order?.totalAmount || 0))}</strong>
           </div>
           <div class="account-record__meta">
-            <span class="account-order-id">주문번호 ${escapeHtml(order?.orderId || "-")}</span>
+            <span class="account-order-id">주문번호 ${escapeHtml(order?.orderNumber || order?.orderId || "-")}</span>
             <span class="account-order-date">${escapeHtml(formatDate(order?.createdAt))}</span>
             <span class="account-order-state">${escapeHtml(statusLabel)}</span>
           </div>
@@ -597,10 +652,74 @@ export function initAccountPage() {
             <strong class="account-order-total">${escapeHtml(formatWorkshopTime(reservation))}</strong>
           </div>
           <div class="account-record__meta">
+            <span class="account-order-id">${escapeHtml(reservation?.reservationNumber || reservation?.reservationId || "-")}</span>
             <span class="account-order-id">${escapeHtml(formatDate(reservation?.slotDate))}</span>
             <span class="account-order-date">${escapeHtml(reservation?.workshopLocation || "Studio OALUM")}</span>
             <span class="account-order-state">${escapeHtml(formatWorkshopStatus(reservation))}</span>
           </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderRepairInquiryHistory(request) {
+    const inquiries = Array.isArray(request?.inquiries) ? request.inquiries : [];
+    if (!inquiries.length) return "";
+    return `
+      <div class="account-repair-inquiries">
+        ${inquiries.map((inquiry) => `
+          <p><strong>${escapeHtml(formatDate(inquiry.createdAt))}</strong><span>${escapeHtml(inquiry.message || "")}</span></p>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderRepairInquiryForm(request) {
+    if (request?.isReadOnly) {
+      return '<p class="account-record__notice">완료된 수선 내역은 읽기 전용 Archive로 보관됩니다.</p>';
+    }
+    return `
+      <form class="account-repair-inquiry-form" data-repair-inquiry-form="${escapeHtml(request.id)}">
+        <label class="account-field">
+          <span>수선 문의</span>
+          <textarea name="message" rows="3" maxlength="2000" placeholder="문의 내용을 남겨주세요." required></textarea>
+        </label>
+        <div class="account-repair-inquiry-actions">
+          <button type="submit" class="account-btn account-btn--secondary">문의 보내기</button>
+          <p class="account-status" data-repair-inquiry-status role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    `;
+  }
+
+  function renderRepairCard(request) {
+    const trackingUrl = getSafeTrackingUrl(request?.trackingUrl);
+    const paymentMarkup = request?.finalAmount !== null && request?.finalAmount !== undefined
+      ? `<p class="account-record__status-detail">최종 금액 ${escapeHtml(formatPrice(request.finalAmount))}${request.bankAccount ? ` · ${escapeHtml(request.bankAccount)}` : ""}</p>`
+      : "";
+    const trackingText = [request?.carrier, request?.trackingNumber].filter(Boolean).join(" / ");
+    const trackingMarkup = trackingText
+      ? `<p class="account-record__status-detail">${trackingUrl ? `<a class="account-inline-link" href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 ${escapeHtml(trackingText)}</a>` : `운송장 ${escapeHtml(trackingText)}`}</p>`
+      : "";
+    return `
+      <article class="account-record account-record--repair">
+        <div class="account-record__media">
+          <span class="account-record__fallback">Repair</span>
+        </div>
+        <div class="account-record__body">
+          <div class="account-record__top">
+            <p class="account-record__title">${escapeHtml(request?.itemType || "수선 의뢰")}</p>
+            <strong class="account-order-total">${escapeHtml(formatRepairStatus(request))}</strong>
+          </div>
+          <div class="account-record__meta">
+            <span class="account-order-id">${escapeHtml(request?.requestNumber || "-")}</span>
+            <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
+          </div>
+          ${request?.customerMessage ? `<p class="account-record__notice">${escapeHtml(request.customerMessage)}</p>` : ""}
+          ${paymentMarkup}
+          ${trackingMarkup}
+          ${renderRepairInquiryHistory(request)}
+          ${renderRepairInquiryForm(request)}
         </div>
       </article>
     `;
@@ -638,6 +757,19 @@ export function initAccountPage() {
     workshopsEl.innerHTML = `${pageItems.map(renderWorkshopCard).join("")}${createPaginationMarkup("workshops", state.workshopPage, totalPages)}`;
   }
 
+  function renderRepairRequests(requests) {
+    state.repairs = Array.isArray(requests) ? requests : [];
+    if (!state.repairs.length) {
+      repairsEl.innerHTML = emptyRepairsMarkup;
+      return;
+    }
+    const totalPages = Math.ceil(state.repairs.length / PAGE_SIZE);
+    state.repairPage = Math.max(1, Math.min(state.repairPage, totalPages));
+    const startIndex = (state.repairPage - 1) * PAGE_SIZE;
+    const pageItems = state.repairs.slice(startIndex, startIndex + PAGE_SIZE);
+    repairsEl.innerHTML = `${pageItems.map(renderRepairCard).join("")}${createPaginationMarkup("repairs", state.repairPage, totalPages)}`;
+  }
+
   function renderGuestOrder(order) {
     if (!order) {
       state.guestOrder = null;
@@ -673,7 +805,7 @@ export function initAccountPage() {
         <strong class="account-order-total">${escapeHtml(formatPrice(order.totalAmount))}</strong>
       </div>
       <div class="account-guest-meta">
-        <span>${escapeHtml(order.orderId || "-")}</span>
+        <span>${escapeHtml(order.orderNumber || order.orderId || "-")}</span>
         <span>${escapeHtml(formatDate(order.createdAt))}</span>
         <span>${escapeHtml(statusLabel)}</span>
       </div>
@@ -689,6 +821,27 @@ export function initAccountPage() {
         renderGuestOrder(state.guestOrder);
       }
     });
+  }
+
+  function renderGuestResource(resourceType, resource, accessToken = "") {
+    state.guestResourceType = resourceType || "";
+    state.guestResource = resource || null;
+    state.guestAccessToken = accessToken || "";
+    if (!resource) {
+      renderGuestOrder(null);
+      guestResultEl.hidden = true;
+      guestResultEl.innerHTML = "";
+      return;
+    }
+    if (resourceType === "order") {
+      renderGuestOrder(resource);
+      return;
+    }
+    state.guestOrder = null;
+    guestResultEl.innerHTML = resourceType === "workshop"
+      ? renderWorkshopCard(resource)
+      : renderRepairCard(resource);
+    guestResultEl.hidden = false;
   }
 
   function renderAuthenticated(account) {
@@ -707,6 +860,7 @@ export function initAccountPage() {
     pointsEl.textContent = `${Number(user.pointsBalance || 0).toLocaleString("ko-KR")} 포인트`;
     renderOrders(account?.orders || []);
     renderWorkshopReservations(account?.workshopReservations || []);
+    renderRepairRequests(account?.repairRequests || []);
   }
 
   function openAddressSearch() {
@@ -792,6 +946,47 @@ export function initAccountPage() {
     }
   }
 
+  async function handleRepairInquiry(form, { guest }) {
+    const requestId = String(form?.dataset?.repairInquiryForm || "").trim();
+    const message = String(form?.elements?.message?.value || "").trim();
+    const button = form?.querySelector("button[type='submit']");
+    const localStatus = form?.querySelector("[data-repair-inquiry-status]");
+    if (!requestId || !message) {
+      setStatus(localStatus, "문의 내용을 입력해주세요.", "error");
+      form?.elements?.message?.focus();
+      return;
+    }
+    setButtonLoading(button, true, "등록 중…");
+    setStatus(localStatus, "문의를 등록하는 중입니다.");
+    if (!form.dataset.inquiryId) form.dataset.inquiryId = `inquiry:${crypto.randomUUID()}`;
+    try {
+      const payload = await requestJson("./api/repairs/customer", {
+        method: "POST",
+        headers: guest && state.guestAccessToken
+          ? { "X-Guest-Access-Token": state.guestAccessToken }
+          : {},
+        body: {
+          requestId,
+          inquiryId: form.dataset.inquiryId,
+          message,
+        },
+      });
+      if (guest) {
+        renderGuestResource("repair", payload.repair, state.guestAccessToken);
+        setStatus(guestStatusEl, "문의 저장 완료 · 관리자 안내 발송 대기", "success");
+      } else {
+        state.repairs = state.repairs.map((request) => request.id === payload.repair?.id ? payload.repair : request);
+        renderRepairRequests(state.repairs);
+        setStatus(memberStatusEl, "문의 저장 완료 · 관리자 안내 발송 대기", "success");
+      }
+      delete form.dataset.inquiryId;
+    } catch (error) {
+      setStatus(localStatus, getFriendlyApiMessage(error, "문의를 등록하지 못했습니다."), "error");
+    } finally {
+      setButtonLoading(button, false, "등록 중…");
+    }
+  }
+
   loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const submitButton = loginForm.querySelector("button[type='submit']");
@@ -869,12 +1064,12 @@ export function initAccountPage() {
   guestForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const submitButton = guestForm.querySelector("button[type='submit']");
-    const orderId = String(guestForm.elements.orderId.value || "").trim();
+    const reference = String(guestForm.elements.reference.value || "").trim();
     const email = String(guestForm.elements.email.value || "").trim();
 
-    if (!orderId) {
-      setStatus(guestStatusEl, "주문번호를 입력해주세요.", "error");
-      guestForm.elements.orderId.focus();
+    if (!reference) {
+      setStatus(guestStatusEl, "조회 번호를 입력해주세요.", "error");
+      guestForm.elements.reference.focus();
       return;
     }
 
@@ -888,19 +1083,19 @@ export function initAccountPage() {
     setButtonLoading(submitButton, true, "조회 중…");
 
     try {
-      const payload = await requestJson("./api/auth/guest-order", {
+      const payload = await requestJson("./api/auth/guest-lookup", {
         method: "POST",
         body: {
-          orderId,
+          reference,
           email,
         },
       });
 
-      renderGuestOrder(payload.order || null);
-      setStatus(guestStatusEl, "주문 정보를 불러왔습니다.", "success");
+      renderGuestResource(payload.resourceType, payload.resource || null, payload.accessToken || "");
+      setStatus(guestStatusEl, "신청 내역을 불러왔습니다. 조회 권한은 15분 동안 유효합니다.", "success");
     } catch (error) {
-      renderGuestOrder(null);
-      setStatus(guestStatusEl, getFriendlyApiMessage(error, "주문 정보를 불러오지 못했습니다. 주문번호와 이메일을 다시 확인해주세요."), "error");
+      renderGuestResource("", null, "");
+      setStatus(guestStatusEl, getFriendlyApiMessage(error, "신청 내역을 불러오지 못했습니다. 조회 번호와 이메일을 다시 확인해주세요."), "error");
     } finally {
       setButtonLoading(submitButton, false, "조회 중…");
     }
@@ -928,8 +1123,9 @@ export function initAccountPage() {
     loadAccount({ silent: true });
   });
 
-  setActiveAuthPanel(authShell.dataset.activePanel || "login");
   showLoggedOut();
+  setActiveAuthPanel(initialReference ? "guest" : (authShell.dataset.activePanel || "login"));
+  if (initialReference) guestForm.elements.reference.value = initialReference;
   loadAccount({ silent: true }).finally(() => {
     if (urlMessage) {
       if (document.body.classList.contains("is-authenticated")) {

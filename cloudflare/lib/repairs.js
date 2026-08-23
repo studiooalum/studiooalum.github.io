@@ -1,21 +1,14 @@
-const REPAIR_STATUSES = new Set([
-  "received",
-  "reviewing",
-  "quoted",
-  "approved",
-  "in_progress",
-  "completed",
-  "rejected",
-  "cancelled",
-]);
-
-const LEGACY_REPAIR_STATUS_ALIASES = {
-  submitted: "received",
-  accepted: "approved",
-  ready: "completed",
-  declined: "rejected",
-  archived: "completed",
-};
+import {
+  assertRepairStatusRequirements,
+  createRepairEventId,
+  createRepairEventStatement,
+  createRepairOutboxStatement,
+  getRepairStatusEventType,
+  normalizeRepairStatus,
+  prepareRepairNotifications,
+  previewRepairNotification,
+  REPAIR_STATUS_LABELS,
+} from "./repair-notifications.js";
 
 function getDb(env) {
   return env?.OALUM_DB || null;
@@ -56,9 +49,7 @@ function createRequestNumber(date = new Date()) {
 }
 
 function normalizeStatus(value, fallback = "received") {
-  const status = cleanText(value, 40).toLowerCase();
-  const normalized = LEGACY_REPAIR_STATUS_ALIASES[status] || status;
-  return REPAIR_STATUSES.has(normalized) ? normalized : fallback;
+  return normalizeRepairStatus(value, fallback);
 }
 
 function normalizePreferredContact(value) {
@@ -143,19 +134,73 @@ function formatRepairRequest(row) {
     marketingOptIn: Boolean(row.marketing_opt_in),
     privacyConsentAt: row.privacy_consent_at || row.terms_accepted_at || "",
     archiveConsentAt,
-    isArchiveCandidate: status === "completed" && Boolean(archiveConsentAt),
+    isArchiveCandidate: status === "closed" && Boolean(archiveConsentAt),
     status,
+    statusLabel: REPAIR_STATUS_LABELS[status] || status,
+    version: Number(row.version || 1),
+    isReadOnly: status === "closed",
     adminNote: row.admin_note,
     customerMessage: row.customer_message,
     quoteAmount: row.quote_amount === null || row.quote_amount === undefined ? null : Number(row.quote_amount),
     finalAmount: row.final_amount === null || row.final_amount === undefined ? null : Number(row.final_amount),
+    bankAccount: row.bank_account || "",
+    paymentInstructions: row.payment_instructions || "",
+    paymentConfirmedAt: row.payment_confirmed_at || "",
+    carrier: row.carrier || "",
+    trackingNumber: row.tracking_number || "",
+    trackingUrl: row.tracking_url || "",
     quotedAt: row.quoted_at || "",
     acceptedAt: row.accepted_at || "",
     completedAt: row.completed_at || "",
     archivedAt: row.archived_at || "",
+    closedAt: row.closed_at || "",
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || "",
     images: [],
+    events: [],
+    inquiries: [],
+    notifications: [],
+  };
+}
+
+function formatRepairEvent(row) {
+  return {
+    id: row.id,
+    eventType: row.event_type,
+    previousStatus: row.previous_status || "",
+    nextStatus: row.next_status || "",
+    actorType: row.actor_type || "system",
+    actorId: row.actor_id || "",
+    createdAt: row.created_at || "",
+  };
+}
+
+function formatRepairNotification(row) {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    eventKey: row.event_key,
+    eventType: row.event_type,
+    recipient: row.recipient,
+    subject: row.subject,
+    bodyText: row.body_text,
+    bodyHtml: row.body_html,
+    status: row.status,
+    attemptCount: Number(row.attempt_count || 0),
+    availableAt: row.available_at || "",
+    providerMessageId: row.provider_message_id || "",
+    lastError: row.last_error || "",
+    createdAt: row.created_at || "",
+    updatedAt: row.updated_at || "",
+    sentAt: row.sent_at || "",
+  };
+}
+
+function formatRepairInquiry(row) {
+  return {
+    id: row.id,
+    message: row.message,
+    createdAt: row.created_at || "",
   };
 }
 
@@ -182,6 +227,8 @@ export async function createRepairRequest(env, input, images = []) {
   const database = requireDb(env);
   const requestId = cleanText(input.requestId, 80);
   const requestNumber = cleanText(input.requestNumber, 80);
+  const submissionId = cleanText(input.submissionId, 120) || null;
+  const submissionFingerprint = cleanText(input.submissionFingerprint, 128);
   const customerName = cleanText(input.customerName, 120);
   const email = cleanText(input.email, 320);
   const emailNormalized = normalizeEmail(email);
@@ -196,12 +243,31 @@ export async function createRepairRequest(env, input, images = []) {
   }
 
   const now = nowIso();
+  const eventId = createRepairEventId();
+  const requestForNotification = {
+    ...input,
+    id: requestId,
+    requestNumber,
+    customerName,
+    email: emailNormalized,
+    itemType: cleanText(input.itemType, 100),
+    status: "received",
+    version: 1,
+  };
+  const notifications = await prepareRepairNotifications(
+    env,
+    requestForNotification,
+    eventId,
+    "repair.received",
+  );
   const statements = [
     database
       .prepare(`
         INSERT INTO repair_requests (
           id,
           request_number,
+          submission_id,
+          submission_fingerprint,
           customer_name,
           email,
           email_normalized,
@@ -224,13 +290,16 @@ export async function createRepairRequest(env, input, images = []) {
           admin_note,
           customer_message,
           quote_amount,
+          version,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
       `)
       .bind(
         requestId,
         requestNumber,
+        submissionId,
+        submissionFingerprint,
         customerName,
         email,
         emailNormalized,
@@ -275,13 +344,313 @@ export async function createRepairRequest(env, input, images = []) {
         Number.isInteger(image.sortOrder) ? image.sortOrder : index,
         now,
       )),
+    createRepairEventStatement(database, {
+      id: eventId,
+      repairRequestId: requestId,
+      requestVersion: 1,
+      eventType: "repair.received",
+      previousStatus: null,
+      nextStatus: "received",
+      actorType: input.actorType || "customer",
+      actorId: input.actorId || emailNormalized,
+      payload: { requestNumber },
+      createdAt: now,
+    }),
+    ...notifications.map((notification) => createRepairOutboxStatement(database, notification)),
   ];
 
   await database.batch(statements);
 
   return {
+    requestId,
     requestNumber,
     submittedAt: now,
+    eventId,
+    notificationIds: notifications.map((notification) => notification.id),
+  };
+}
+
+export async function readRepairRequestBySubmissionId(env, submissionId) {
+  const normalizedSubmissionId = cleanText(submissionId, 120);
+  if (!normalizedSubmissionId) return null;
+  const database = requireDb(env);
+  const row = await database.prepare(`
+    SELECT id, request_number, submission_id, submission_fingerprint, created_at
+    FROM repair_requests
+    WHERE submission_id = ?
+    LIMIT 1
+  `).bind(normalizedSubmissionId).first();
+  if (!row) return null;
+  const notificationResult = await database.prepare(`
+    SELECT id, status FROM repair_notification_outbox
+    WHERE repair_request_id = ? AND event_type = 'repair.received'
+    ORDER BY created_at ASC
+  `).bind(row.id).all();
+  return {
+    requestId: row.id,
+    requestNumber: row.request_number,
+    submissionId: row.submission_id,
+    submissionFingerprint: row.submission_fingerprint || "",
+    submittedAt: row.created_at,
+    notificationIds: (notificationResult?.results || []).map((notification) => notification.id),
+    notificationStatuses: (notificationResult?.results || []).map((notification) => notification.status),
+  };
+}
+
+export async function readRepairRequestForAdmin(env, requestId) {
+  const normalizedRequestId = cleanText(requestId, 80);
+  if (!normalizedRequestId) {
+    throw Object.assign(new Error("수선 접수 정보를 다시 확인해주세요."), { status: 400 });
+  }
+  const database = requireDb(env);
+  const row = await database.prepare(`
+    SELECT * FROM repair_requests WHERE id = ? LIMIT 1
+  `).bind(normalizedRequestId).first();
+  if (!row) {
+    throw Object.assign(new Error("수선 접수를 찾을 수 없습니다."), { status: 404 });
+  }
+  return formatRepairRequest(row);
+}
+
+function formatRepairRequestForCustomer(request) {
+  return {
+    id: request.id,
+    requestNumber: request.requestNumber,
+    customerName: request.customerName,
+    itemType: request.itemType,
+    issueDescription: request.issueDescription,
+    desiredResult: request.desiredResult,
+    budgetNote: request.budgetNote,
+    status: request.status,
+    statusLabel: request.statusLabel,
+    isReadOnly: request.isReadOnly,
+    customerMessage: request.customerMessage,
+    finalAmount: request.finalAmount,
+    bankAccount: ["payment_pending", "shipping", "closed"].includes(request.status) ? request.bankAccount : "",
+    paymentInstructions: ["payment_pending", "shipping", "closed"].includes(request.status) ? request.paymentInstructions : "",
+    paymentConfirmedAt: request.paymentConfirmedAt,
+    carrier: request.carrier,
+    trackingNumber: request.trackingNumber,
+    trackingUrl: request.trackingUrl,
+    closedAt: request.closedAt,
+    createdAt: request.createdAt,
+    updatedAt: request.updatedAt,
+    inquiries: request.inquiries.map((inquiry) => ({ ...inquiry })),
+    images: request.images.map((image) => ({
+      id: image.id,
+      filename: image.filename,
+      contentType: image.contentType,
+      byteSize: image.byteSize,
+      createdAt: image.createdAt,
+      streamPath: `/api/repairs/customer-images/${encodeURIComponent(image.id)}`,
+    })),
+  };
+}
+
+async function readCustomerRepairRows(database, whereClause, bindings, limit = 20) {
+  const result = await database.prepare(`
+    SELECT
+      r.*,
+      i.id AS image_id,
+      i.original_filename AS image_original_filename,
+      i.content_type AS image_content_type,
+      i.byte_size AS image_byte_size,
+      i.sort_order AS image_sort_order,
+      i.created_at AS image_created_at
+    FROM repair_requests r
+    LEFT JOIN repair_request_images i ON i.request_id = r.id
+    WHERE ${whereClause}
+    ORDER BY r.created_at DESC, i.sort_order ASC, i.created_at ASC
+    LIMIT ?
+  `).bind(...bindings, limit * 4).all();
+  const byId = new Map();
+  for (const row of result?.results || []) {
+    if (!byId.has(row.id) && byId.size < limit) byId.set(row.id, formatRepairRequest(row));
+    if (row.image_id && byId.has(row.id)) byId.get(row.id).images.push(formatRepairImage(row));
+  }
+  for (const request of byId.values()) {
+    const inquiries = await database.prepare(`
+      SELECT * FROM repair_customer_inquiries
+      WHERE repair_request_id = ?
+      ORDER BY created_at DESC
+    `).bind(request.id).all();
+    request.inquiries = (inquiries?.results || []).map(formatRepairInquiry);
+  }
+  return Array.from(byId.values()).map(formatRepairRequestForCustomer);
+}
+
+export async function readRepairRequestsForEmail(env, email, limit = 20) {
+  const database = requireDb(env);
+  const emailNormalized = normalizeEmail(email);
+  if (!emailNormalized) return [];
+  return readCustomerRepairRows(database, "r.email_normalized = ?", [emailNormalized], limit);
+}
+
+export async function readRepairRequestForEmail(env, requestId, email) {
+  const database = requireDb(env);
+  const requests = await readCustomerRepairRows(
+    database,
+    "r.id = ? AND r.email_normalized = ?",
+    [cleanText(requestId, 80), normalizeEmail(email)],
+    1,
+  );
+  if (!requests.length) {
+    throw Object.assign(new Error("수선 접수를 찾을 수 없습니다."), { status: 404 });
+  }
+  return requests[0];
+}
+
+export async function lookupGuestRepairRequest(env, { reference, email }) {
+  const database = requireDb(env);
+  const requestNumber = cleanText(reference, 80).toUpperCase();
+  const emailNormalized = normalizeEmail(email);
+  const requests = await readCustomerRepairRows(
+    database,
+    "upper(r.request_number) = ? AND r.email_normalized = ?",
+    [requestNumber, emailNormalized],
+    1,
+  );
+  if (!requests.length) {
+    throw Object.assign(new Error("입력한 정보와 일치하는 신청 내역을 찾을 수 없습니다."), { status: 404 });
+  }
+  return requests[0];
+}
+
+export async function readRepairRequestForCustomer(env, requestId) {
+  const database = requireDb(env);
+  const requests = await readCustomerRepairRows(database, "r.id = ?", [cleanText(requestId, 80)], 1);
+  if (!requests.length) {
+    throw Object.assign(new Error("수선 접수를 찾을 수 없습니다."), { status: 404 });
+  }
+  return requests[0];
+}
+
+export async function readRepairImageForCustomer(env, imageId) {
+  const database = requireDb(env);
+  const row = await database.prepare(`
+    SELECT
+      i.id, i.request_id, i.r2_key, i.original_filename, i.content_type,
+      r.request_number, r.email_normalized
+    FROM repair_request_images i
+    INNER JOIN repair_requests r ON r.id = i.request_id
+    WHERE i.id = ?
+    LIMIT 1
+  `).bind(cleanText(imageId, 80)).first();
+  if (!row) {
+    throw Object.assign(new Error("이미지를 찾을 수 없습니다."), { status: 404 });
+  }
+  return {
+    id: row.id,
+    requestId: row.request_id,
+    requestNumber: row.request_number,
+    emailNormalized: row.email_normalized,
+    r2Key: row.r2_key,
+    filename: row.original_filename,
+    contentType: row.content_type,
+  };
+}
+
+export async function createRepairCustomerInquiry(env, input, actor = {}) {
+  const database = requireDb(env);
+  const requestId = cleanText(input.requestId, 80);
+  const inquiryId = cleanText(input.inquiryId, 80);
+  const message = cleanText(input.message, 2000);
+  if (!requestId || !inquiryId || !message) {
+    throw Object.assign(new Error("문의 내용을 다시 확인해주세요."), { status: 400 });
+  }
+  const existingInquiry = await database.prepare(`
+    SELECT id, created_at FROM repair_customer_inquiries WHERE id = ? LIMIT 1
+  `).bind(inquiryId).first();
+  if (existingInquiry) {
+    return {
+      duplicate: true,
+      inquiryId: existingInquiry.id,
+      createdAt: existingInquiry.created_at,
+      notificationIds: [],
+    };
+  }
+
+  const row = await database.prepare(`SELECT * FROM repair_requests WHERE id = ? LIMIT 1`).bind(requestId).first();
+  if (!row) {
+    throw Object.assign(new Error("수선 접수를 찾을 수 없습니다."), { status: 404 });
+  }
+  if (normalizeStatus(row.status) === "closed") {
+    throw Object.assign(new Error("배송 완료된 수선 내역에는 새 문의를 남길 수 없습니다."), { status: 409 });
+  }
+  const rateBucket = String(Math.floor(Date.now() / (5 * 60 * 1000)));
+  const recent = await database.prepare(`
+    SELECT id
+    FROM repair_customer_inquiries
+    WHERE repair_request_id = ? AND rate_bucket = ?
+    LIMIT 1
+  `).bind(requestId, rateBucket).first();
+  if (recent) {
+    throw Object.assign(new Error("문의는 5분에 한 번 등록할 수 있습니다."), { status: 429 });
+  }
+
+  const eventId = createRepairEventId();
+  const createdAt = nowIso();
+  const request = formatRepairRequest(row);
+  const notifications = await prepareRepairNotifications(
+    env,
+    request,
+    eventId,
+    "repair.customer_inquiry",
+    {
+      inquiryId,
+      inquiryMessage: message,
+      inquiryCreatedAt: createdAt,
+    },
+  );
+  const inquiryStatement = database.prepare(`
+    INSERT INTO repair_customer_inquiries (id, repair_request_id, rate_bucket, message, created_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).bind(inquiryId, requestId, rateBucket, message, createdAt);
+  const eventStatement = createRepairEventStatement(database, {
+    id: eventId,
+    repairRequestId: requestId,
+    requestVersion: null,
+    eventType: "repair.customer_inquiry",
+    actorType: actor.type || "customer",
+    actorId: actor.id || "",
+    payload: { inquiryId },
+    createdAt,
+  });
+
+  try {
+    await database.batch([
+      inquiryStatement,
+      eventStatement,
+      ...notifications.map((notification) => createRepairOutboxStatement(database, notification)),
+    ]);
+  } catch (error) {
+    const duplicate = await database.prepare(`
+      SELECT id, created_at FROM repair_customer_inquiries WHERE id = ? LIMIT 1
+    `).bind(inquiryId).first();
+    if (duplicate) {
+      return {
+        duplicate: true,
+        inquiryId: duplicate.id,
+        createdAt: duplicate.created_at,
+        notificationIds: [],
+      };
+    }
+    const rateLimited = await database.prepare(`
+      SELECT id FROM repair_customer_inquiries
+      WHERE repair_request_id = ? AND rate_bucket = ?
+      LIMIT 1
+    `).bind(requestId, rateBucket).first();
+    if (rateLimited) {
+      throw Object.assign(new Error("문의는 5분에 한 번 등록할 수 있습니다."), { status: 429 });
+    }
+    throw error;
+  }
+
+  return {
+    duplicate: false,
+    inquiryId,
+    createdAt,
+    notificationIds: notifications.map((notification) => notification.id),
   };
 }
 
@@ -311,6 +680,27 @@ export async function readRepairAdminSnapshot(env) {
     if (row.image_id) {
       byId.get(row.id).images.push(formatRepairImage(row));
     }
+  }
+
+  const [eventResult, notificationResult, inquiryResult] = await Promise.all([
+    database.prepare(`
+      SELECT * FROM repair_events ORDER BY created_at DESC
+    `).all(),
+    database.prepare(`
+      SELECT * FROM repair_notification_outbox ORDER BY created_at DESC
+    `).all(),
+    database.prepare(`
+      SELECT * FROM repair_customer_inquiries ORDER BY created_at DESC
+    `).all(),
+  ]);
+  for (const row of eventResult?.results || []) {
+    byId.get(row.repair_request_id)?.events.push(formatRepairEvent(row));
+  }
+  for (const row of notificationResult?.results || []) {
+    byId.get(row.repair_request_id)?.notifications.push(formatRepairNotification(row));
+  }
+  for (const row of inquiryResult?.results || []) {
+    byId.get(row.repair_request_id)?.inquiries.push(formatRepairInquiry(row));
   }
 
   const gallery = await readRepairGallery(env, { includeDrafts: true });
@@ -369,39 +759,179 @@ export async function updateRepairRequest(env, input) {
     throw Object.assign(new Error("수선 접수를 찾을 수 없습니다."), { status: 404 });
   }
 
+  const currentStatus = normalizeStatus(existing.status);
+  if (currentStatus === "closed") {
+    throw Object.assign(new Error("배송 완료된 수선 내역은 읽기 전용입니다."), { status: 409 });
+  }
+
+  const expectedVersion = Number(input.expectedVersion);
+  const currentVersion = Number(existing.version || 1);
+  if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
+    throw Object.assign(new Error("수선 내역 버전을 다시 확인해주세요."), { status: 400 });
+  }
+  if (expectedVersion !== currentVersion) {
+    throw Object.assign(new Error("다른 관리자 화면에서 먼저 수정했습니다. 최신 내용을 다시 불러와주세요."), { status: 409 });
+  }
+
   const now = nowIso();
-  const status = hasOwn(input, "status") ? normalizeStatus(input.status, normalizeStatus(existing.status)) : normalizeStatus(existing.status);
+  const status = hasOwn(input, "status") ? normalizeStatus(input.status, currentStatus) : currentStatus;
+  const adminNote = hasOwn(input, "adminNote") ? cleanText(input.adminNote, 4000) : existing.admin_note;
+  const customerMessage = hasOwn(input, "customerMessage") ? cleanText(input.customerMessage, 2000) : existing.customer_message;
   const quoteAmount = hasOwn(input, "quoteAmount") ? normalizeAmount(input.quoteAmount) : existing.quote_amount;
   const finalAmount = hasOwn(input, "finalAmount") ? normalizeAmount(input.finalAmount) : existing.final_amount;
-  const quotedAt = status === "quoted" && quoteAmount !== null
-    ? existing.quoted_at || now
-    : existing.quoted_at;
-  const acceptedAt = status === "approved" ? existing.accepted_at || now : existing.accepted_at;
-  const completedAt = status === "completed" ? existing.completed_at || now : existing.completed_at;
-  const archivedAt = existing.archived_at;
+  const bankAccount = hasOwn(input, "bankAccount") ? cleanText(input.bankAccount, 500) : existing.bank_account;
+  const paymentInstructions = hasOwn(input, "paymentInstructions") ? cleanText(input.paymentInstructions, 2000) : existing.payment_instructions;
+  const paymentConfirmedAt = hasOwn(input, "paymentConfirmedAt")
+    ? cleanText(input.paymentConfirmedAt, 40) || null
+    : existing.payment_confirmed_at;
+  const carrier = hasOwn(input, "carrier") ? cleanText(input.carrier, 120) : existing.carrier;
+  const trackingNumber = hasOwn(input, "trackingNumber") ? cleanText(input.trackingNumber, 160) : existing.tracking_number;
+  const trackingUrl = hasOwn(input, "trackingUrl") ? cleanText(input.trackingUrl, 1000) : existing.tracking_url;
+  if (trackingUrl) {
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(trackingUrl);
+    } catch {
+      throw Object.assign(new Error("배송 조회 URL을 다시 확인해주세요."), { status: 400 });
+    }
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw Object.assign(new Error("배송 조회 URL을 다시 확인해주세요."), { status: 400 });
+    }
+  }
 
-  await database
-    .prepare(`
-      UPDATE repair_requests
-      SET status = ?, admin_note = ?, customer_message = ?, quote_amount = ?, final_amount = ?, quoted_at = ?, accepted_at = ?, completed_at = ?, archived_at = ?, updated_at = ?
-      WHERE id = ?
-    `)
-    .bind(
-      status,
-      hasOwn(input, "adminNote") ? cleanText(input.adminNote, 4000) : existing.admin_note,
-      hasOwn(input, "customerMessage") ? cleanText(input.customerMessage, 2000) : existing.customer_message,
-      quoteAmount,
-      finalAmount,
-      quotedAt,
-      acceptedAt,
-      completedAt,
-      archivedAt,
-      now,
-      requestId,
-    )
-    .run();
+  assertRepairStatusRequirements(status, {
+    finalAmount,
+    bankAccount,
+    paymentInstructions,
+    paymentConfirmedAt,
+    carrier,
+    trackingNumber,
+  });
 
-  return readRepairAdminSnapshot(env);
+  const statusChanged = status !== currentStatus;
+  const changed = statusChanged
+    || adminNote !== existing.admin_note
+    || customerMessage !== existing.customer_message
+    || quoteAmount !== existing.quote_amount
+    || finalAmount !== existing.final_amount
+    || bankAccount !== existing.bank_account
+    || paymentInstructions !== existing.payment_instructions
+    || paymentConfirmedAt !== existing.payment_confirmed_at
+    || carrier !== existing.carrier
+    || trackingNumber !== existing.tracking_number
+    || trackingUrl !== existing.tracking_url;
+  if (!changed) {
+    return {
+      ...(await readRepairAdminSnapshot(env)),
+      operation: {
+        changed: false,
+        statusChanged: false,
+        notificationStatus: "not_created",
+        notificationIds: [],
+      },
+    };
+  }
+
+  const nextVersion = currentVersion + 1;
+  const eventId = createRepairEventId();
+  const eventType = statusChanged
+    ? getRepairStatusEventType(status) || `repair.${status}`
+    : "repair.updated";
+  const closedAt = status === "closed" ? now : existing.closed_at;
+  const acceptedAt = status === "in_progress" ? existing.accepted_at || now : existing.accepted_at;
+  const completedAt = status === "payment_pending" ? existing.completed_at || now : existing.completed_at;
+  const archivedAt = status === "closed" ? existing.archived_at || now : existing.archived_at;
+  const updatedRequest = {
+    ...formatRepairRequest(existing),
+    status,
+    version: nextVersion,
+    adminNote,
+    customerMessage,
+    quoteAmount,
+    finalAmount,
+    bankAccount,
+    paymentInstructions,
+    paymentConfirmedAt: paymentConfirmedAt || "",
+    carrier,
+    trackingNumber,
+    trackingUrl,
+    closedAt: closedAt || "",
+  };
+  const notificationEventType = statusChanged ? getRepairStatusEventType(status) : "";
+  if (status === "payment_pending") {
+    await previewRepairNotification(env, updatedRequest, "repair.payment_pending");
+  }
+  const notifications = notificationEventType
+    ? await prepareRepairNotifications(env, updatedRequest, eventId, notificationEventType)
+    : [];
+
+  const updateStatement = database.prepare(`
+    UPDATE repair_requests
+    SET status = ?, admin_note = ?, customer_message = ?, quote_amount = ?, final_amount = ?,
+        bank_account = ?, payment_instructions = ?, payment_confirmed_at = ?, carrier = ?,
+        tracking_number = ?, tracking_url = ?, accepted_at = ?, completed_at = ?,
+        archived_at = ?, closed_at = ?, version = ?, updated_at = ?
+    WHERE id = ? AND version = ?
+  `).bind(
+    status,
+    adminNote,
+    customerMessage,
+    quoteAmount,
+    finalAmount,
+    bankAccount,
+    paymentInstructions,
+    paymentConfirmedAt,
+    carrier,
+    trackingNumber,
+    trackingUrl,
+    acceptedAt,
+    completedAt,
+    archivedAt,
+    closedAt,
+    nextVersion,
+    now,
+    requestId,
+    currentVersion,
+  );
+  const eventStatement = createRepairEventStatement(database, {
+    id: eventId,
+    repairRequestId: requestId,
+    requestVersion: nextVersion,
+    eventType,
+    previousStatus: currentStatus,
+    nextStatus: status,
+    actorType: input.actorType || "admin",
+    actorId: input.actorId || "",
+    payload: { changedFields: Object.keys(input).filter((key) => !["id", "expectedVersion", "actorType", "actorId"].includes(key)) },
+    createdAt: now,
+  });
+
+  try {
+    await database.batch([
+      updateStatement,
+      eventStatement,
+      ...notifications.map((notification) => createRepairOutboxStatement(database, notification)),
+    ]);
+  } catch (error) {
+    const latest = await database.prepare(`SELECT version FROM repair_requests WHERE id = ? LIMIT 1`).bind(requestId).first();
+    if (Number(latest?.version || 0) !== currentVersion) {
+      throw Object.assign(new Error("다른 관리자 화면에서 먼저 수정했습니다. 최신 내용을 다시 불러와주세요."), { status: 409 });
+    }
+    throw error;
+  }
+
+  return {
+    ...(await readRepairAdminSnapshot(env)),
+    operation: {
+      changed: true,
+      statusChanged,
+      eventId,
+      notificationStatus: notifications.length
+        ? (notifications.some((notification) => notification.status === "failed") ? "failed" : "pending")
+        : "not_created",
+      notificationIds: notifications.map((notification) => notification.id),
+    },
+  };
 }
 
 export async function readRepairImageForAdmin(env, imageId) {

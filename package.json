@@ -5,6 +5,8 @@
     "cf:build": "node ./scripts/build-pages.mjs",
     "cf:pages:dev": "npm run cf:build && npx wrangler pages dev dist",
     "cf:pages:deploy": "npm run cf:build && npx wrangler pages deploy dist --project-name studiooalum",
+    "cf:repair-notifications:deploy": "npx wrangler deploy --config wrangler.repair-notifications.jsonc",
+    "test:repair": "node --test tests/repair-notifications.test.mjs",
     "web:dev": "next dev ./apps/web",
     "web:build": "next build ./apps/web",
     "web:start": "next start ./apps/web"

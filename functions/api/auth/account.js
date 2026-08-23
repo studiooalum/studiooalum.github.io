@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { readAccount, requireSession, updateAccount } from "../../../cloudflare/lib/auth.js";
+import { readRepairRequestsForEmail } from "../../../cloudflare/lib/repairs.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
 const updateSchema = z.object({
@@ -11,6 +12,13 @@ const updateSchema = z.object({
   address2: z.string().trim().max(200).optional().default(""),
 });
 
+async function includeRepairRequests(env, account) {
+  return {
+    ...account,
+    repairRequests: await readRepairRequestsForEmail(env, account?.user?.email || ""),
+  };
+}
+
 export function onRequestOptions(context) {
   return noContent(context.env);
 }
@@ -18,7 +26,7 @@ export function onRequestOptions(context) {
 export async function onRequestGet(context) {
   try {
     const session = await requireSession(context.env, context.request);
-    const account = await readAccount(context.env, session.user.id);
+    const account = await includeRepairRequests(context.env, await readAccount(context.env, session.user.id));
 
     return json(context.env, {
       ok: true,
@@ -40,7 +48,7 @@ export async function onRequestPost(context) {
       return validationError(context.env, parsed.error);
     }
 
-    const account = await updateAccount(context.env, session.user.id, parsed.data);
+    const account = await includeRepairRequests(context.env, await updateAccount(context.env, session.user.id, parsed.data));
 
     return json(context.env, {
       ok: true,

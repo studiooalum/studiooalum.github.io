@@ -9,6 +9,7 @@ const dom = {
   authStatus: document.querySelector(".js-repair-admin-auth-status"),
   authGuards: Array.from(document.querySelectorAll("[data-repair-admin-auth-guard]")),
   refresh: document.querySelector(".js-repair-admin-refresh"),
+  processNotifications: document.querySelector(".js-repair-notification-process"),
   statusFilter: document.querySelector(".js-repair-admin-status-filter"),
   listStatus: document.querySelector(".js-repair-admin-list-status"),
   requestList: document.querySelector(".js-repair-admin-request-list"),
@@ -19,6 +20,11 @@ const dom = {
   createdAt: document.querySelector(".js-repair-admin-created-at"),
   customer: document.querySelector(".js-repair-admin-customer"),
   archiveCandidate: document.querySelector(".js-repair-admin-archive-candidate"),
+  readOnly: document.querySelector(".js-repair-admin-readonly"),
+  previewButton: document.querySelector(".js-repair-notification-preview"),
+  preview: document.querySelector(".js-repair-admin-preview"),
+  inquiries: document.querySelector(".js-repair-admin-inquiries"),
+  notifications: document.querySelector(".js-repair-admin-notifications"),
   imageCount: document.querySelector(".js-repair-admin-image-count"),
   imageList: document.querySelector(".js-repair-admin-image-list"),
   save: document.querySelector(".js-repair-admin-save"),
@@ -40,14 +46,23 @@ const state = {
 };
 
 const STATUS_LABELS = {
-  received: "접수됨",
-  reviewing: "검토 중",
-  quoted: "예상 가격 안내",
-  approved: "진행 승인",
-  in_progress: "작업 중",
-  completed: "작업 완료",
+  received: "신청 완료",
+  item_received: "수선제품 수신 완료",
+  in_progress: "수선 진행 중",
+  payment_pending: "수선 완료 · 가격 및 입금 안내",
+  shipping: "입금 완료 · 배송 중",
+  closed: "배송 완료 · Archive",
   rejected: "진행 불가",
   cancelled: "취소",
+};
+
+const NOTIFICATION_STATUS_LABELS = {
+  pending: "발송 대기",
+  processing: "발송 처리 중",
+  sent: "발송 완료",
+  failed: "발송 실패",
+  unknown: "전달 여부 확인 필요",
+  dead_letter: "재시도 종료",
 };
 
 function escapeHtml(value) {
@@ -77,6 +92,21 @@ function formatPrice(value) {
   return `${Number(value || 0).toLocaleString("ko-KR")}원`;
 }
 
+function formatDateTimeLocal(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offset = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function toIsoDateTime(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? raw : date.toISOString();
+}
+
 function setStatus(target, message = "", type = "info") {
   if (!target) return;
   target.textContent = message;
@@ -90,6 +120,37 @@ function setButtonLoading(button, loading, label) {
   if (!button.dataset.defaultLabel) button.dataset.defaultLabel = button.textContent || "";
   button.disabled = loading;
   button.textContent = loading ? label : button.dataset.defaultLabel;
+}
+
+function getFormRequestPayload(request) {
+  const rawQuoteAmount = String(dom.form?.elements.quoteAmount.value || "").trim();
+  const rawFinalAmount = String(dom.form?.elements.finalAmount.value || "").trim();
+  return {
+    id: request.id,
+    expectedVersion: Number(request.version || dom.form?.elements.expectedVersion.value || 1),
+    status: dom.form.elements.status.value,
+    quoteAmount: rawQuoteAmount ? Number(rawQuoteAmount) : null,
+    finalAmount: rawFinalAmount ? Number(rawFinalAmount) : null,
+    bankAccount: String(dom.form.elements.bankAccount.value || "").trim(),
+    paymentInstructions: String(dom.form.elements.paymentInstructions.value || "").trim(),
+    paymentConfirmedAt: toIsoDateTime(dom.form.elements.paymentConfirmedAt.value),
+    carrier: String(dom.form.elements.carrier.value || "").trim(),
+    trackingNumber: String(dom.form.elements.trackingNumber.value || "").trim(),
+    trackingUrl: String(dom.form.elements.trackingUrl.value || "").trim(),
+    customerMessage: String(dom.form.elements.customerMessage.value || "").trim(),
+    adminNote: String(dom.form.elements.adminNote.value || "").trim(),
+  };
+}
+
+function updateStatusFields() {
+  if (!dom.form) return;
+  const status = String(dom.form.elements.status.value || "received");
+  document.querySelectorAll("[data-repair-payment-field]").forEach((field) => {
+    field.hidden = !["payment_pending", "shipping", "closed"].includes(status);
+  });
+  document.querySelectorAll("[data-repair-shipping-field]").forEach((field) => {
+    field.hidden = !["shipping", "closed"].includes(status);
+  });
 }
 
 function persistAdminAccess(token, expiresAt = "") {
@@ -238,6 +299,73 @@ function renderCustomerDetails(request) {
   `;
 }
 
+function renderNotificationPreview(preview, automaticNotification) {
+  if (!dom.preview) return;
+  if (!automaticNotification || !preview) {
+    dom.preview.innerHTML = '<p class="fulfillment-empty">현재 상태와 같거나 자동 안내 대상이 아닌 상태입니다. 저장해도 이메일이 생성되지 않습니다.</p>';
+    return;
+  }
+  dom.preview.innerHTML = `
+    <p class="repair-admin-preview__subject"><strong>제목</strong><span>${escapeHtml(preview.subject || "")}</span></p>
+    <pre>${escapeHtml(preview.bodyText || "")}</pre>
+  `;
+}
+
+function renderInquiries(request) {
+  if (!dom.inquiries) return;
+  const inquiries = Array.isArray(request?.inquiries) ? request.inquiries : [];
+  if (!inquiries.length) {
+    dom.inquiries.innerHTML = '<div class="fulfillment-empty">등록된 고객 문의가 없습니다.</div>';
+    return;
+  }
+  dom.inquiries.innerHTML = inquiries.map((inquiry) => `
+    <article class="repair-admin-history-card">
+      <div class="repair-admin-history-card__head">
+        <strong>고객 문의</strong>
+        <span>${escapeHtml(formatDate(inquiry.createdAt))}</span>
+      </div>
+      <p>${escapeHtml(inquiry.message || "")}</p>
+    </article>
+  `).join("");
+}
+
+function renderNotifications(request) {
+  if (!dom.notifications) return;
+  const notifications = Array.isArray(request?.notifications) ? request.notifications : [];
+  if (!notifications.length) {
+    dom.notifications.innerHTML = '<div class="fulfillment-empty">저장된 안내 발송 기록이 없습니다.</div>';
+    return;
+  }
+  dom.notifications.innerHTML = notifications.map((notification) => {
+    const status = String(notification.status || "pending");
+    const canResend = !request.isReadOnly && !["pending", "processing"].includes(status);
+    const actionLabel = status === "sent" ? "다시 보내기" : "재발송";
+    return `
+      <article class="repair-admin-history-card">
+        <div class="repair-admin-history-card__head">
+          <strong>${escapeHtml(notification.subject || notification.eventType || "안내 이메일")}</strong>
+          <span class="repair-admin-notification-state" data-status="${escapeHtml(status)}">${escapeHtml(NOTIFICATION_STATUS_LABELS[status] || status)}</span>
+        </div>
+        <p>${escapeHtml(notification.recipient || "")}</p>
+        <p>생성 ${escapeHtml(formatDate(notification.createdAt))}${notification.sentAt ? ` · 발송 ${escapeHtml(formatDate(notification.sentAt))}` : ""} · 시도 ${Number(notification.attemptCount || 0)}회</p>
+        ${notification.lastError ? `<p>실패 사유: ${escapeHtml(notification.lastError)}</p>` : ""}
+        ${canResend ? `<div class="repair-admin-history-card__actions"><span></span><button type="button" class="fulfillment-btn fulfillment-btn--secondary fulfillment-btn--small" data-repair-notification-retry="${escapeHtml(notification.id)}">${actionLabel}</button></div>` : ""}
+      </article>
+    `;
+  }).join("");
+}
+
+function setReadOnlyState(request) {
+  if (!dom.form) return;
+  const readOnly = Boolean(request?.isReadOnly);
+  dom.form.classList.toggle("is-readonly", readOnly);
+  if (dom.readOnly) dom.readOnly.hidden = !readOnly;
+  Array.from(dom.form.elements).forEach((element) => {
+    if (element.name === "id" || element.name === "expectedVersion") return;
+    element.disabled = readOnly;
+  });
+}
+
 function createPrivateImageCard(image, objectUrl) {
   const card = document.createElement("article");
   card.className = "repair-admin-image";
@@ -315,9 +443,16 @@ function renderSelectedRequest() {
   if (dom.empty) dom.empty.hidden = true;
   dom.form.hidden = false;
   dom.form.elements.id.value = request.id;
-  dom.form.elements.status.value = request.status === "rejected" ? "cancelled" : (request.status || "received");
+  dom.form.elements.expectedVersion.value = String(request.version || 1);
+  dom.form.elements.status.value = request.status || "received";
   dom.form.elements.quoteAmount.value = request.quoteAmount === null || request.quoteAmount === undefined ? "" : String(request.quoteAmount);
   dom.form.elements.finalAmount.value = request.finalAmount === null || request.finalAmount === undefined ? "" : String(request.finalAmount);
+  dom.form.elements.bankAccount.value = request.bankAccount || "";
+  dom.form.elements.paymentInstructions.value = request.paymentInstructions || "";
+  dom.form.elements.paymentConfirmedAt.value = formatDateTimeLocal(request.paymentConfirmedAt);
+  dom.form.elements.carrier.value = request.carrier || "";
+  dom.form.elements.trackingNumber.value = request.trackingNumber || "";
+  dom.form.elements.trackingUrl.value = request.trackingUrl || "";
   dom.form.elements.customerMessage.value = request.customerMessage || "";
   dom.form.elements.adminNote.value = request.adminNote || "";
   if (dom.requestNumber) dom.requestNumber.textContent = request.requestNumber || "";
@@ -327,9 +462,14 @@ function renderSelectedRequest() {
   if (dom.archiveCandidate) {
     dom.archiveCandidate.hidden = !request.isArchiveCandidate;
     dom.archiveCandidate.textContent = request.isArchiveCandidate
-      ? "Archive 기록 후보: 공개 동의가 확인된 완료 요청입니다. Archive에는 자동으로 게시되지 않습니다."
+      ? "Archive 기록 후보: 공개 동의가 확인된 배송 완료 요청입니다. 공개 Archive에는 자동 게시되지 않습니다."
       : "";
   }
+  updateStatusFields();
+  setReadOnlyState(request);
+  renderNotificationPreview(null, false);
+  renderInquiries(request);
+  renderNotifications(request);
   renderCustomerDetails(request);
   void renderPrivateImages(request);
 }
@@ -362,18 +502,15 @@ async function loadRequests() {
 
 async function saveRequest() {
   const request = getSelectedRequest();
-  if (!request || !dom.form) return;
+  if (!request || !dom.form || request.isReadOnly) return;
 
-  const rawAmount = String(dom.form.elements.quoteAmount.value || "").trim();
-  const quoteAmount = rawAmount ? Number(rawAmount) : null;
-  const rawFinalAmount = String(dom.form.elements.finalAmount.value || "").trim();
-  const finalAmount = rawFinalAmount ? Number(rawFinalAmount) : null;
-  if (rawAmount && (!Number.isInteger(quoteAmount) || quoteAmount < 0)) {
+  const requestPayload = getFormRequestPayload(request);
+  if (requestPayload.quoteAmount !== null && (!Number.isInteger(requestPayload.quoteAmount) || requestPayload.quoteAmount < 0)) {
     setStatus(dom.formStatus, "견적 금액을 다시 확인해주세요.", "error");
     dom.form.elements.quoteAmount.focus();
     return;
   }
-  if (rawFinalAmount && (!Number.isInteger(finalAmount) || finalAmount < 0)) {
+  if (requestPayload.finalAmount !== null && (!Number.isInteger(requestPayload.finalAmount) || requestPayload.finalAmount < 0)) {
     setStatus(dom.formStatus, "최종 가격을 다시 확인해주세요.", "error");
     dom.form.elements.finalAmount.focus();
     return;
@@ -388,20 +525,21 @@ async function saveRequest() {
       method: "POST",
       body: {
         action: "updateRepairRequest",
-        request: {
-          id: request.id,
-          status: dom.form.elements.status.value,
-          quoteAmount,
-          finalAmount,
-          customerMessage: String(dom.form.elements.customerMessage.value || "").trim(),
-          adminNote: String(dom.form.elements.adminNote.value || "").trim(),
-        },
+        request: requestPayload,
       },
     });
     applySnapshot(payload);
     renderRequestList();
     renderSelectedRequest();
-    setStatus(dom.formStatus, "수선 접수 상태를 저장했습니다.", "success");
+    const notificationStatus = payload.operation?.notificationStatus;
+    const message = payload.operation?.changed === false
+      ? "변경 사항 없음 · 안내 발송 없음"
+      : notificationStatus === "failed"
+        ? "상태 저장 완료 · 안내 발송 실패"
+        : notificationStatus === "pending"
+          ? "상태 저장 완료 · 안내 발송 대기"
+          : "상태 저장 완료 · 자동 안내 없음";
+    setStatus(dom.formStatus, message, notificationStatus === "failed" ? "error" : "success");
   } catch (error) {
     if (error.status === 401) {
       lockSurface("관리자 세션이 만료됐습니다. 다시 잠금 해제해주세요.");
@@ -410,6 +548,67 @@ async function saveRequest() {
     }
   } finally {
     setButtonLoading(button, false, "저장 중...");
+  }
+}
+
+async function previewNotification() {
+  const request = getSelectedRequest();
+  if (!request || !dom.form || request.isReadOnly) return;
+  setButtonLoading(dom.previewButton, true, "확인 중...");
+  try {
+    const payload = await requestAdmin("/api/repairs/admin", {
+      method: "POST",
+      body: {
+        action: "previewRepairNotification",
+        request: getFormRequestPayload(request),
+      },
+    });
+    renderNotificationPreview(payload.preview, payload.automaticNotification);
+    setStatus(dom.formStatus, payload.automaticNotification
+      ? "저장 시 이 내용이 안내 발송 대기열에 저장됩니다."
+      : "같은 상태를 다시 저장해도 자동 안내는 발송되지 않습니다.");
+  } catch (error) {
+    renderNotificationPreview(null, false);
+    setStatus(dom.formStatus, error.message || "안내 미리보기를 만들지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(dom.previewButton, false, "확인 중...");
+  }
+}
+
+async function processNotifications() {
+  setButtonLoading(dom.processNotifications, true, "확인 중...");
+  setStatus(dom.listStatus, "발송 대기열을 확인하는 중입니다.");
+  try {
+    const payload = await requestAdmin("/api/repairs/admin", {
+      method: "POST",
+      body: { action: "processRepairNotifications", limit: 25 },
+    });
+    applySnapshot(payload);
+    renderRequestList();
+    renderSelectedRequest();
+    const processing = payload.processing || {};
+    setStatus(dom.listStatus, `대기열 확인 완료 · 발송 ${Number(processing.sent || 0)}건 · 실패 ${Number(processing.failed || 0) + Number(processing.deadLetter || 0)}건`, "success");
+  } catch (error) {
+    setStatus(dom.listStatus, error.message || "발송 대기열을 확인하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(dom.processNotifications, false, "확인 중...");
+  }
+}
+
+async function retryNotification(notificationId) {
+  if (!notificationId || !window.confirm("이 안내를 새 발송 기록으로 다시 보낼까요?")) return;
+  setStatus(dom.formStatus, "재발송 요청을 저장하는 중입니다.");
+  try {
+    const payload = await requestAdmin("/api/repairs/admin", {
+      method: "POST",
+      body: { action: "retryRepairNotification", notificationId },
+    });
+    applySnapshot(payload);
+    renderRequestList();
+    renderSelectedRequest();
+    setStatus(dom.formStatus, "재발송 요청 저장 완료 · 안내 발송 대기", "success");
+  } catch (error) {
+    setStatus(dom.formStatus, error.message || "안내 재발송을 요청하지 못했습니다.", "error");
   }
 }
 
@@ -441,6 +640,10 @@ function bindEvents() {
     void loadRequests();
   });
 
+  dom.processNotifications?.addEventListener("click", () => {
+    void processNotifications();
+  });
+
   dom.statusFilter?.addEventListener("change", () => {
     renderRequestList();
   });
@@ -457,6 +660,22 @@ function bindEvents() {
   dom.form?.addEventListener("submit", (event) => {
     event.preventDefault();
     void saveRequest();
+  });
+
+  dom.form?.elements.status?.addEventListener("change", () => {
+    updateStatusFields();
+    renderNotificationPreview(null, false);
+    setStatus(dom.formStatus, "상태별 필수 항목을 입력한 뒤 안내 미리보기를 확인해주세요.");
+  });
+
+  dom.previewButton?.addEventListener("click", () => {
+    void previewNotification();
+  });
+
+  dom.notifications?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-repair-notification-retry]");
+    if (!button) return;
+    void retryNotification(button.dataset.repairNotificationRetry || "");
   });
 
   dom.galleryForm?.addEventListener("submit", async (event) => {

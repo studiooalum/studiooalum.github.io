@@ -641,6 +641,7 @@ async function sendLoginCode(env, { email, code, mode = "login" }) {
 function formatOrder(row, { cancellationRequest = null } = {}) {
   const order = {
     orderId: row.id,
+    orderNumber: `ORD-${row.id}`,
     userId: row.user_id || null,
     orderName: row.order_name,
     status: row.status,
@@ -1574,6 +1575,7 @@ export async function lookupGuestOrder(env, { orderId, email }) {
   return {
     order: {
       orderId: order.id,
+      orderNumber: `ORD-${order.id}`,
       orderName: order.order_name,
       status: order.status,
       paymentStatus: order.payment_status,

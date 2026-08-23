@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260702-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260823-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
 </head>
@@ -42,7 +42,7 @@
           aria-selected="false"
           aria-controls="accountAuthPanelGuest"
           tabindex="-1"
-        >비회원 주문</button>
+        >비회원 조회</button>
       </div>
 
       <section class="account-panel account-panel--login" id="accountAuthPanelLogin" data-auth-panel="login" role="tabpanel" aria-labelledby="accountAuthTabLogin">
@@ -69,19 +69,19 @@
       </section>
 
       <section class="account-panel account-panel--guest" id="accountAuthPanelGuest" data-auth-panel="guest" role="tabpanel" aria-labelledby="accountAuthTabGuest">
-        <h2 class="account-heading">비회원 주문</h2>
+        <h2 class="account-heading">비회원 신청 내역 조회</h2>
         <p class="account-status js-account-guest-status" role="status" aria-live="polite"></p>
 
         <form class="account-form js-account-guest-form" novalidate>
           <label class="account-field">
-            <span>주문번호</span>
-            <input type="text" name="orderId" autocomplete="off" required />
+            <span>주문번호, 워크숍 예약번호 또는 수선 접수번호</span>
+            <input type="text" name="reference" autocomplete="off" placeholder="ORD- · WKS- · REP-" required />
           </label>
           <label class="account-field">
             <span>이메일 주소</span>
             <input type="email" name="email" autocomplete="email" inputmode="email" required />
           </label>
-          <button type="submit" class="account-btn">주문 확인</button>
+          <button type="submit" class="account-btn">조회하기</button>
         </form>
 
         <div class="account-guest-result js-account-guest-result" hidden></div>
@@ -145,6 +145,13 @@
             <div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>
           </div>
         </section>
+
+        <section class="account-panel account-panel--repairs">
+          <h2 class="account-heading">수선 신청 내역</h2>
+          <div class="account-orders js-account-repairs">
+            <div class="account-empty">등록된 수선 신청 내역이 없습니다.</div>
+          </div>
+        </section>
       </div>
 
       <section class="account-panel account-panel--points">
@@ -159,7 +166,7 @@
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260702-02";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260823-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
 
     initSiteChrome();

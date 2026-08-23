@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "studiooalum-repair-notifications",
+  "main": "./cloudflare/workers/repair-notification-cron.js",
+  "compatibility_date": "2026-08-23",
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "vars": {
+    "REPAIR_PROCESS_URL": "https://studiooalum.com/api/repairs/notifications/process"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

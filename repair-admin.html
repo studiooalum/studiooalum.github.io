@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-admin.css?v=20260816-04">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-admin.css?v=20260823-01">
   <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
 </head>
 <body class="fulfillment-page repair-admin-page">
@@ -61,15 +61,17 @@
             <span>상태</span>
             <select class="js-repair-admin-status-filter">
               <option value="all">전체</option>
-              <option value="received">접수됨</option>
-              <option value="reviewing">검토 중</option>
-              <option value="quoted">견적 전달</option>
-              <option value="approved">진행 승인</option>
-              <option value="in_progress">작업 중</option>
-              <option value="completed">완료</option>
+              <option value="received">신청 완료</option>
+              <option value="item_received">수선제품 수신 완료</option>
+              <option value="in_progress">수선 진행 중</option>
+              <option value="payment_pending">수선 완료 · 가격 및 입금 안내</option>
+              <option value="shipping">입금 완료 · 배송 중</option>
+              <option value="closed">배송 완료 · Archive</option>
+              <option value="rejected">진행 불가</option>
               <option value="cancelled">취소</option>
             </select>
           </label>
+          <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-repair-notification-process">발송 대기열 확인</button>
           <p class="fulfillment-status js-repair-admin-list-status" role="status" aria-live="polite"></p>
           <div class="repair-admin-request-list js-repair-admin-request-list">
             <div class="fulfillment-empty">관리자 인증 후 수선 접수가 표시됩니다.</div>
@@ -108,6 +110,7 @@
 
           <form class="repair-admin-form js-repair-admin-form" hidden>
             <input type="hidden" name="id">
+            <input type="hidden" name="expectedVersion">
 
             <header class="repair-admin-editor-head">
               <div>
@@ -122,17 +125,19 @@
               <div class="js-repair-admin-customer"></div>
             </section>
             <p class="repair-admin-archive-candidate js-repair-admin-archive-candidate" hidden></p>
+            <p class="repair-admin-readonly js-repair-admin-readonly" hidden>배송 완료된 수선 내역입니다. Archive는 읽기 전용으로만 조회할 수 있습니다.</p>
 
             <div class="repair-admin-form-grid">
               <label class="fulfillment-field">
                 <span>처리 상태</span>
                 <select name="status">
-                  <option value="received">접수됨</option>
-                  <option value="reviewing">검토 중</option>
-                  <option value="quoted">예상 가격 안내</option>
-                  <option value="approved">진행 승인</option>
-                  <option value="in_progress">작업 중</option>
-                  <option value="completed">작업 완료 / 최종 가격 안내</option>
+                  <option value="received">신청 완료</option>
+                  <option value="item_received">수선제품 수신 완료</option>
+                  <option value="in_progress">수선 진행 중</option>
+                  <option value="payment_pending">수선 완료 · 가격 및 입금 안내</option>
+                  <option value="shipping">입금 완료 · 배송 중</option>
+                  <option value="closed">배송 완료 · Archive</option>
+                  <option value="rejected">진행 불가</option>
                   <option value="cancelled">취소</option>
                 </select>
               </label>
@@ -144,16 +149,67 @@
                 <span>최종 가격 <em>선택</em></span>
                 <input type="number" name="finalAmount" min="0" max="100000000" step="100" inputmode="numeric" placeholder="KRW">
               </label>
+              <label class="fulfillment-field" data-repair-payment-field>
+                <span>입금 계좌</span>
+                <input type="text" name="bankAccount" maxlength="500" autocomplete="off" placeholder="은행명 · 계좌번호 · 예금주">
+              </label>
+              <label class="fulfillment-field" data-repair-payment-field>
+                <span>결제 안내</span>
+                <textarea name="paymentInstructions" rows="3" maxlength="2000" placeholder="입금 기한이나 별도 결제 방법을 안내합니다."></textarea>
+              </label>
+              <label class="fulfillment-field" data-repair-shipping-field>
+                <span>입금 확인일</span>
+                <input type="datetime-local" name="paymentConfirmedAt">
+              </label>
+              <label class="fulfillment-field" data-repair-shipping-field>
+                <span>택배사</span>
+                <input type="text" name="carrier" maxlength="120" autocomplete="off">
+              </label>
+              <label class="fulfillment-field" data-repair-shipping-field>
+                <span>운송장 번호</span>
+                <input type="text" name="trackingNumber" maxlength="160" autocomplete="off">
+              </label>
+              <label class="fulfillment-field" data-repair-shipping-field>
+                <span>배송 조회 URL <em>선택</em></span>
+                <input type="url" name="trackingUrl" maxlength="1000" inputmode="url" placeholder="https://">
+              </label>
             </div>
 
             <label class="fulfillment-field">
-              <span>고객 안내 문구</span>
-              <textarea name="customerMessage" rows="4" maxlength="2000" placeholder="견적, 작업 가능 여부, 다음 절차를 고객에게 안내할 문구입니다."></textarea>
+              <span>고객 공개 안내 문구</span>
+              <textarea name="customerMessage" rows="4" maxlength="2000" placeholder="Account에 표시할 안내입니다. 자동 이메일은 아래 템플릿 미리보기를 사용합니다."></textarea>
             </label>
             <label class="fulfillment-field">
               <span>내부 메모</span>
               <textarea name="adminNote" rows="6" maxlength="4000" placeholder="내부 검토 메모는 고객에게 노출되지 않습니다."></textarea>
             </label>
+
+            <section class="repair-admin-notification-preview">
+              <div class="repair-admin-section-head">
+                <div>
+                  <h3 class="fulfillment-subheading">안내 이메일 미리보기</h3>
+                  <p>실제 상태 변경일 때만 자동 안내가 생성됩니다.</p>
+                </div>
+                <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-repair-notification-preview">미리보기</button>
+              </div>
+              <div class="repair-admin-preview js-repair-admin-preview">
+                <p class="fulfillment-empty">상태와 필수 항목을 입력한 뒤 미리보기를 확인해주세요.</p>
+              </div>
+            </section>
+
+            <section class="repair-admin-inquiries">
+              <div class="repair-admin-section-head">
+                <h3 class="fulfillment-subheading">고객 문의</h3>
+              </div>
+              <div class="repair-admin-history js-repair-admin-inquiries"></div>
+            </section>
+
+            <section class="repair-admin-notifications">
+              <div class="repair-admin-section-head">
+                <h3 class="fulfillment-subheading">안내 발송 기록</h3>
+              </div>
+              <div class="repair-admin-history js-repair-admin-notifications"></div>
+            </section>
 
             <section class="repair-admin-images">
               <div class="repair-admin-images__head">
@@ -167,7 +223,7 @@
             </section>
 
             <div class="repair-admin-action-bar">
-              <button type="submit" class="fulfillment-btn js-repair-admin-save">저장</button>
+              <button type="submit" class="fulfillment-btn js-repair-admin-save">상태 저장 및 안내 발송</button>
             </div>
             <p class="fulfillment-status js-repair-admin-form-status" role="status" aria-live="polite"></p>
           </form>
@@ -176,7 +232,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260818-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260823-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
 

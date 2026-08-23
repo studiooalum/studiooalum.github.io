@@ -7,13 +7,16 @@ import {
   createRepairImageId,
   createRepairRequest,
   createRepairRequestIdentifiers,
+  readRepairRequestBySubmissionId,
 } from "../../../cloudflare/lib/repairs.js";
+import { processRepairNotificationOutbox } from "../../../cloudflare/lib/repair-notifications.js";
 import { errorResponse, json, noContent, validationError } from "../../../cloudflare/lib/http.js";
 
 const MAX_IMAGE_COUNT = 4;
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const KOREAN_PHONE_PATTERN = /^0\d{1,2}-?\d{3,4}-?\d{4}$/;
+const SUBMISSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,119}$/;
 
 const repairRequestSchema = z.object({
   customerName: z.string().trim().min(1, "성함을 입력해주세요.").max(120),
@@ -78,61 +81,52 @@ async function removeUploadedImages(bucket, images) {
   await Promise.allSettled(images.map((image) => bucket.delete(image.r2Key)));
 }
 
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function getSubmissionId(request, formData) {
+  const value = String(request.headers.get("Idempotency-Key") || formData.get("submission_id") || "").trim();
+  if (!value) {
+    throw Object.assign(new Error("수선 접수 요청 키가 필요합니다. 페이지를 새로고침한 뒤 다시 시도해주세요."), { status: 400 });
+  }
+  if (!SUBMISSION_ID_PATTERN.test(value)) {
+    throw Object.assign(new Error("수선 접수 요청 키를 다시 확인해주세요."), { status: 400 });
+  }
+  return value;
 }
 
-async function sendRepairEmail(env, { to, subject, html, text }) {
-  const apiKey = String(env?.RESEND_API_KEY || "").trim();
-  const from = String(env?.RESEND_FROM_EMAIL || "").trim();
-  if (!apiKey || !from || !to) return false;
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from, to: [to], subject, html, text }),
+async function createSubmissionFingerprint(data, files) {
+  const fileFingerprints = [];
+  for (const file of files) {
+    const fileDigest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+    fileFingerprints.push({
+      name: String(file.name || ""),
+      type: String(file.type || ""),
+      size: Number(file.size || 0),
+      digest: Array.from(new Uint8Array(fileDigest), (byte) => byte.toString(16).padStart(2, "0")).join(""),
+    });
+  }
+  const payload = JSON.stringify({
+    customerName: data.customerName,
+    email: data.email,
+    phone: data.phone,
+    itemType: data.itemType,
+    issueDescription: data.issueDescription,
+    desiredResult: data.desiredResult,
+    budgetNote: data.budgetNote,
+    archiveConsent: data.archiveConsent,
+    files: fileFingerprints,
   });
-  return response.ok;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function sendRepairNotifications(env, { requestNumber, applicant, itemType, issueDescription, desiredResult, budgetNote }) {
-  const address = "서울특별시 동대문구 이문로 145 2층 201호 / 010-4746-5999 / 오알룸 앞";
-  const adminEmail = "studio.oalum@gmail.com";
-  const safeName = escapeHtml(applicant.customerName);
-  const safePhone = escapeHtml(applicant.phone);
-  const safeEmail = escapeHtml(applicant.email);
-  const safeDescription = escapeHtml(issueDescription).replace(/\n/g, "<br>");
-  const safeItemType = escapeHtml(itemType);
-  const safeDesiredResult = escapeHtml(desiredResult);
-  const safeBudgetNote = escapeHtml(budgetNote || "미입력").replace(/\n/g, "<br>");
-
-  const results = await Promise.allSettled([
-    sendRepairEmail(env, {
-      to: adminEmail,
-      subject: `[Repair] ${requestNumber} ${applicant.customerName}`,
-      html: `<h2>새 수선 의뢰</h2><p><strong>접수번호</strong> ${escapeHtml(requestNumber)}</p><p><strong>성함</strong> ${safeName}</p><p><strong>연락처</strong> ${safePhone}</p><p><strong>이메일</strong> ${safeEmail}</p><p><strong>제품</strong> ${safeItemType}</p><p><strong>손상 부위</strong><br>${safeDescription}</p><p><strong>희망 방향</strong> ${safeDesiredResult}</p><p><strong>기타 요청</strong><br>${safeBudgetNote}</p>`,
-      text: `새 수선 의뢰\n접수번호: ${requestNumber}\n성함: ${applicant.customerName}\n연락처: ${applicant.phone}\n이메일: ${applicant.email}\n제품: ${itemType}\n손상 부위: ${issueDescription}\n희망 방향: ${desiredResult}\n기타 요청: ${budgetNote || "미입력"}`,
-    }),
-    sendRepairEmail(env, {
-      to: applicant.email,
-      subject: `Studio OALUM 수선 접수 ${requestNumber}`,
-      html: `<h2>수선 의뢰가 접수되었습니다.</h2><p>${safeName}님, 신청해주셔서 감사합니다.</p><p><strong>접수번호</strong> ${escapeHtml(requestNumber)}</p><p>아래 주소로 수선 의뢰 제품을 보내주세요.</p><p>${escapeHtml(address)}</p><p>물건이 도착하면 상태를 확인한 뒤 수선 방향과 예상 가격을 안내드리겠습니다.</p>`,
-      text: `${applicant.customerName}님, 수선 의뢰가 접수되었습니다.\n접수번호: ${requestNumber}\n택배 주소: ${address}\n물건이 도착하면 상태를 확인한 뒤 수선 방향과 예상 가격을 안내드리겠습니다.`,
-    }),
-  ]);
-
-  return {
-    admin: results[0].status === "fulfilled" && results[0].value === true,
-    applicant: results[1].status === "fulfilled" && results[1].value === true,
-  };
+function buildDuplicateResponse(env, receipt) {
+  return json(env, {
+    ok: true,
+    duplicate: true,
+    requestNumber: receipt.requestNumber,
+    submittedAt: receipt.submittedAt,
+    message: "이미 완료된 수선 접수입니다. 기존 접수번호를 안내드립니다.",
+    notificationStatus: receipt.notificationStatuses?.includes("failed") ? "failed" : "queued",
+  });
 }
 
 export function onRequestOptions(context) {
@@ -142,6 +136,8 @@ export function onRequestOptions(context) {
 export async function onRequestPost(context) {
   const uploadedImages = [];
   let bucket = null;
+  let submissionId = "";
+  let submissionFingerprint = "";
 
   try {
     const contentType = String(context.request.headers.get("content-type") || "").toLowerCase();
@@ -165,12 +161,23 @@ export async function onRequestPost(context) {
     }
 
     const files = getSelectedFiles(formData);
-    validateImages(files);
     const session = await readSession(context.env, context.request, { touch: false });
     const applicantEmail = String(session?.user?.email || parsed.data.email || "").trim().toLowerCase();
     if (!z.string().email().safeParse(applicantEmail).success) {
       return json(context.env, { ok: false, error: "이메일을 확인해주세요." }, { status: 400 });
     }
+
+    submissionId = getSubmissionId(context.request, formData);
+    submissionFingerprint = await createSubmissionFingerprint({ ...parsed.data, email: applicantEmail }, files);
+    const existingReceipt = await readRepairRequestBySubmissionId(context.env, submissionId);
+    if (existingReceipt) {
+      if (existingReceipt.submissionFingerprint && existingReceipt.submissionFingerprint !== submissionFingerprint) {
+        return json(context.env, { ok: false, error: "같은 요청 키에 다른 접수 내용이 사용되었습니다." }, { status: 409 });
+      }
+      return buildDuplicateResponse(context.env, existingReceipt);
+    }
+
+    validateImages(files);
 
     const identifiers = createRepairRequestIdentifiers();
 
@@ -214,6 +221,8 @@ export async function onRequestPost(context) {
       ...parsed.data,
       requestId: identifiers.requestId,
       requestNumber: identifiers.requestNumber,
+      submissionId,
+      submissionFingerprint,
       email: applicantEmail,
       preferredContact: "phone",
       contactPreference: "phone",
@@ -228,28 +237,35 @@ export async function onRequestPost(context) {
       archiveConsentAt: parsed.data.archiveConsent ? submittedAt : "",
     }, uploadedImages);
 
-    const notifications = await sendRepairNotifications(context.env, {
-      requestNumber: receipt.requestNumber,
-      applicant: {
-        customerName: parsed.data.customerName,
-        phone: parsed.data.phone,
-        email: applicantEmail,
-      },
-      itemType: parsed.data.itemType,
-      issueDescription: parsed.data.issueDescription,
-      desiredResult: parsed.data.desiredResult,
-      budgetNote: parsed.data.budgetNote,
-    });
+    if (receipt.notificationIds.length && typeof context.waitUntil === "function") {
+      context.waitUntil(processRepairNotificationOutbox(context.env, { ids: receipt.notificationIds }));
+    }
 
     return json(context.env, {
       ok: true,
+      duplicate: false,
       requestNumber: receipt.requestNumber,
       submittedAt: receipt.submittedAt,
-      message: "수선 접수가 완료되었습니다. 확인 후 입력하신 연락처로 안내드리겠습니다.",
-      notifications,
+      message: "수선 접수가 완료되었습니다. 안내 이메일이 발송 대기열에 저장되었습니다.",
+      notificationStatus: "queued",
     }, { status: 201 });
   } catch (error) {
     await removeUploadedImages(bucket, uploadedImages);
+    if (submissionId) {
+      try {
+        const existingReceipt = await readRepairRequestBySubmissionId(context.env, submissionId);
+        if (existingReceipt) {
+          if (existingReceipt.submissionFingerprint && existingReceipt.submissionFingerprint !== submissionFingerprint) {
+            return json(context.env, { ok: false, error: "같은 요청 키에 다른 접수 내용이 사용되었습니다." }, { status: 409 });
+          }
+          return buildDuplicateResponse(context.env, existingReceipt);
+        }
+      } catch (lookupError) {
+        if (lookupError?.status && lookupError.status !== 404) {
+          console.error("Failed to resolve duplicate repair submission.", lookupError);
+        }
+      }
+    }
     return errorResponse(context.env, error, "수선 접수를 완료하지 못했습니다.");
   }
 }
