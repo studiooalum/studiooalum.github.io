@@ -11,6 +11,8 @@ import {
   prepareInitialRepairTicketBundle,
   prepareRepairStatusTicketBundle,
 } from "./repair-tickets.js";
+import { normalizeImageRgb } from "./image-colors.js";
+import { buildRepairGalleryUrl } from "./r2.js";
 
 function getDb(env) {
   return env?.OALUM_DB || null;
@@ -87,14 +89,16 @@ function normalizeRepairMethods(value) {
 }
 
 function formatRepairGalleryImage(row) {
+  const averageRgb = normalizeImageRgb(row.average_rgb);
   return {
     id: row.id,
     filename: row.original_filename || "",
     contentType: row.content_type || "",
     methods: normalizeRepairMethods(decodeJson(row.methods_json, [])),
+    averageRgb,
     sortOrder: Number(row.sort_order || 0),
     status: row.status || "published",
-    url: row.r2_key ? `/api/r2?key=${encodeURIComponent(row.r2_key)}` : "",
+    url: row.r2_key ? buildRepairGalleryUrl(row.r2_key, { averageRgb }) : "",
     createdAt: row.created_at || "",
   };
 }
@@ -762,15 +766,16 @@ export async function createRepairGalleryImage(env, input) {
   const id = cleanText(input.id, 80) || createId("RPG");
   await database.prepare(`
     INSERT INTO repair_gallery_images (
-      id, r2_key, original_filename, content_type, methods_json,
+      id, r2_key, original_filename, content_type, methods_json, average_rgb,
       sort_order, status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, 'published', ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)
   `).bind(
     id,
     cleanText(input.r2Key, 500),
     cleanText(input.filename, 240),
     cleanText(input.contentType, 100),
     JSON.stringify(normalizeRepairMethods(input.methods)),
+    normalizeImageRgb(input.averageRgb),
     Math.max(0, Number(input.sortOrder) || 0),
     now,
     now,

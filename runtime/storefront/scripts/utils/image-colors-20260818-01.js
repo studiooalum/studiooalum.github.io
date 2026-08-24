@@ -1,3 +1,5 @@
+const IMAGE_STORAGE_PREFIX = "studiooalum:image-rgb:";
+
 function toChannel(value) {
   const channel = Number(value);
   return Number.isInteger(channel) && channel >= 0 && channel <= 255 ? channel : null;
@@ -19,6 +21,40 @@ export function normalizeImageRgb(value) {
 
   const normalized = channels.slice(1).map(toChannel);
   return normalized.every((channel) => channel !== null) ? normalized.join(", ") : "";
+}
+
+function getImageStorageKey(source) {
+  try {
+    const url = new URL(source, window.location.href);
+    if (url.protocol === "data:") return "";
+    url.hash = "";
+    return `${IMAGE_STORAGE_PREFIX}${url.toString()}`;
+  } catch {
+    return "";
+  }
+}
+
+export function readStoredImageRgb(source) {
+  const key = getImageStorageKey(source);
+  if (!key) return "";
+
+  try {
+    return normalizeImageRgb(window.localStorage.getItem(key));
+  } catch {
+    return "";
+  }
+}
+
+export function storeImageRgb(source, color) {
+  const key = getImageStorageKey(source);
+  const normalized = normalizeImageRgb(color);
+  if (!key || !normalized) return;
+
+  try {
+    window.localStorage.setItem(key, normalized);
+  } catch {
+    // Storage can be unavailable in private browsing contexts.
+  }
 }
 
 export function readAverageRgbFromImage(image) {

@@ -1,4 +1,10 @@
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock-20260816-01.js";
+import {
+  normalizeImageRgb,
+  readAverageRgbFromImage,
+  readStoredImageRgb,
+  storeImageRgb,
+} from "./utils/image-colors-20260818-01.js";
 
 const MAX_IMAGE_COUNT = 4;
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
@@ -55,20 +61,10 @@ const FIELD_LABELS = {
 };
 
 function setAverageColor(card, image) {
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = 16;
-    canvas.height = 16;
-    const context = canvas.getContext("2d", { willReadFrequently: true });
-    context.drawImage(image, 0, 0, 16, 16);
-    const pixels = context.getImageData(0, 0, 16, 16).data;
-    let red = 0; let green = 0; let blue = 0; let count = 0;
-    for (let index = 0; index < pixels.length; index += 4) {
-      if (pixels[index + 3] < 32) continue;
-      red += pixels[index]; green += pixels[index + 1]; blue += pixels[index + 2]; count += 1;
-    }
-    if (count) card.style.setProperty("--repair-gallery-rgb", `${Math.round(red / count)}, ${Math.round(green / count)}, ${Math.round(blue / count)}`);
-  } catch {}
+  const color = readAverageRgbFromImage(image);
+  if (!color) return;
+  card.style.setProperty("--repair-gallery-rgb", color);
+  storeImageRgb(image.currentSrc || image.src, color);
 }
 
 function formatMethods(methods = []) {
@@ -160,7 +156,10 @@ async function initPublicGallery() {
     button.className = "repair-gallery-card";
     button.setAttribute("aria-label", `${formatMethods(item.methods).join(", ")} 이미지 보기`);
     button.setAttribute("aria-pressed", "false");
+    const averageRgb = normalizeImageRgb(item.averageRgb) || readStoredImageRgb(item.url);
+    if (averageRgb) button.style.setProperty("--repair-gallery-rgb", averageRgb);
     const image = document.createElement("img");
+    if (averageRgb) image.dataset.imageColor = averageRgb;
     image.src = item.url;
     image.alt = item.filename || "수선 작업 이미지";
     image.loading = "lazy";

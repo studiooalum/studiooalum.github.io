@@ -1,11 +1,137 @@
-@import url("/public/fonts/pretendard/static/pretendard.css");
-@import url("/public/fonts/wanted-sans/static/complete/WantedSans.css");
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-ExtraLight.woff2") format("woff2");
+  font-weight: 200;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/public/fonts/pretendard/static/woff2/Pretendard-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Wanted Sans";
+  src: url("/public/fonts/wanted-sans/static/complete/woff2/WantedSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Wanted Sans";
+  src: url("/public/fonts/wanted-sans/static/complete/woff2/WantedSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Wanted Sans";
+  src: url("/public/fonts/wanted-sans/static/complete/woff2/WantedSans-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Wanted Sans";
+  src: url("/public/fonts/wanted-sans/static/complete/woff2/WantedSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Wanted Sans";
+  src: url("/public/fonts/wanted-sans/static/complete/woff2/WantedSans-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Wanted Sans";
+  src: url("/public/fonts/wanted-sans/static/complete/woff2/WantedSans-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: "Wanted Sans";
+  src: url("/public/fonts/wanted-sans/static/complete/woff2/WantedSans-ExtraBlack.woff2") format("woff2");
+  font-weight: 1000;
+  font-style: normal;
+  font-display: optional;
+}
 
 @font-face {
   font-family: "GothamBook";
   src: url("/public/fonts/GothamBook.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
+  font-display: optional;
 }
 
 @font-face {
@@ -13,6 +139,7 @@
   src: url("/public/fonts/Gotham-Font/GothamLight.ttf") format("truetype");
   font-weight: 300;
   font-style: normal;
+  font-display: optional;
 }
 
 @font-face {
@@ -20,6 +147,7 @@
   src: url("/public/fonts/Gotham-Font/GothamMedium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
+  font-display: optional;
 }
 
 @font-face {
@@ -27,6 +155,7 @@
   src: url("/public/fonts/Gotham-Font/GothamBold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
+  font-display: optional;
 }
 
 @font-face {
@@ -34,6 +163,7 @@
   src: url("/public/fonts/GothamBookItalic.woff2") format("woff2");
   font-weight: 400;
   font-style: italic;
+  font-display: optional;
 }
 
 :root {

@@ -1,47 +1,17 @@
-import { normalizeImageRgb, readAverageRgbFromImage } from "../utils/image-colors-20260818-01.js";
+import {
+  normalizeImageRgb,
+  readAverageRgbFromImage,
+  readStoredImageRgb,
+  storeImageRgb,
+} from "../utils/image-colors-20260818-01.js";
 
 const PROGRESSIVE_IMAGE_CLASS = "progressive-image";
-const IMAGE_STORAGE_PREFIX = "studiooalum:image-rgb:";
 const imageRecords = new WeakMap();
 let observer = null;
 let initialized = false;
 
 function getImageSource(image) {
   return String(image.currentSrc || image.getAttribute("src") || "").trim();
-}
-
-function getStorageKey(source) {
-  try {
-    const url = new URL(source, window.location.href);
-    if (url.protocol === "data:") return "";
-    url.hash = "";
-    return `${IMAGE_STORAGE_PREFIX}${url.toString()}`;
-  } catch {
-    return "";
-  }
-}
-
-function readStoredColor(source) {
-  const key = getStorageKey(source);
-  if (!key) return "";
-
-  try {
-    return normalizeImageRgb(window.localStorage.getItem(key));
-  } catch {
-    return "";
-  }
-}
-
-function storeColor(source, color) {
-  const key = getStorageKey(source);
-  const normalized = normalizeImageRgb(color);
-  if (!key || !normalized) return;
-
-  try {
-    window.localStorage.setItem(key, normalized);
-  } catch {
-    // Storage can be unavailable in private browsing contexts.
-  }
 }
 
 function getUrlColor(source) {
@@ -56,7 +26,7 @@ function getUrlColor(source) {
 function getDeclaredColor(image, source) {
   return normalizeImageRgb(image.dataset.imageColor || image.dataset.imageRgb)
     || getUrlColor(source)
-    || readStoredColor(source);
+    || readStoredImageRgb(source);
 }
 
 function shouldSkipProgressiveImage(image) {
@@ -113,7 +83,7 @@ async function revealImage(image, record) {
   const color = readAverageRgbFromImage(image);
   if (color) {
     applyColor(record.wrapper, color);
-    storeColor(record.source, color);
+    storeImageRgb(record.source, color);
   }
 
   try {
@@ -149,7 +119,7 @@ function setImageSourceState(image, { force = false } = {}) {
     readR2Color(source).then((color) => {
       if (imageRecords.get(image) !== record || !color) return;
       applyColor(wrapper, color);
-      storeColor(source, color);
+      storeImageRgb(source, color);
     });
   }
 
@@ -192,7 +162,7 @@ function updateDeclaredColor(image) {
     readR2Color(record.source).then((color) => {
       if (imageRecords.get(image) !== record || !color) return;
       applyColor(record.wrapper, color);
-      storeColor(record.source, color);
+      storeImageRgb(record.source, color);
     });
   }
 }

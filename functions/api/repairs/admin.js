@@ -122,6 +122,7 @@ async function uploadRepairGalleryImage(context, formData) {
       filename: file.name,
       contentType: file.type,
       methods,
+      averageRgb,
       sortOrder: Number(formData.get("sortOrder") || 0),
     });
   } catch (error) {

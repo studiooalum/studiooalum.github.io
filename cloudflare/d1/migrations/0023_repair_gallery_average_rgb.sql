@@ -1,0 +1,1 @@
+ALTER TABLE repair_gallery_images ADD COLUMN average_rgb TEXT NOT NULL DEFAULT '';

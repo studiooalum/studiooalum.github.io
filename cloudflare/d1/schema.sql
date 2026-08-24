@@ -444,6 +444,7 @@ CREATE TABLE IF NOT EXISTS repair_gallery_images (
   original_filename TEXT NOT NULL DEFAULT '',
   content_type TEXT NOT NULL DEFAULT '',
   methods_json TEXT NOT NULL DEFAULT '[]',
+  average_rgb TEXT NOT NULL DEFAULT '',
   sort_order INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'published',
   created_at TEXT NOT NULL,

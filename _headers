@@ -19,8 +19,8 @@
 /styles/*
   Cache-Control: no-store
 
-/public/*
-  Cache-Control: no-store
+/public/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
 
 /api/*
   Cache-Control: no-store

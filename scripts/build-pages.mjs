@@ -15,6 +15,25 @@ const strippedOutputFiles = [
   path.join("scripts", "launch-sanity-studio.sh"),
   path.join("scripts", "launch-sanity-studio.applescript"),
 ];
+const criticalFontPreloads = [
+  "/public/fonts/pretendard/static/woff2/Pretendard-Regular.woff2",
+  "/public/fonts/wanted-sans/static/complete/woff2/WantedSans-SemiBold.woff2",
+  "/public/fonts/GothamBook.woff2",
+];
+const pageFontPreloads = {
+  "repair.html": ["/public/fonts/pretendard/static/woff2/Pretendard-Bold.woff2"],
+};
+
+function injectCriticalFontPreloads(entryName, source) {
+  if (!source.includes("variables-20260818-01.css") || source.includes("data-oalum-font-preload")) {
+    return source;
+  }
+
+  const snippet = [...criticalFontPreloads, ...(pageFontPreloads[entryName] || [])]
+    .map((href) => `  <link rel="preload" href="${href}" as="font" type="font/woff2" crossorigin data-oalum-font-preload>`)
+    .join("\n");
+  return source.replace(/(\s*)<link rel="stylesheet" href="[^\"]*variables-20260818-01\.css">/, `$1${snippet}$1<link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">`);
+}
 
 function injectNamedMetaTag(source, { name, content }) {
   if (!content || source.includes(`name="${name}"`)) {
@@ -45,7 +64,7 @@ function injectCloudflareWebAnalytics(source) {
 }
 
 function transformHtml(entryName, source) {
-  let transformed = source;
+  let transformed = injectCriticalFontPreloads(entryName, source);
 
   if (entryName === "payment.html" && tossClientKey) {
     transformed = transformed.replace(

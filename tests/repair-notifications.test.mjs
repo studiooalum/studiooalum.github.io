@@ -4,9 +4,11 @@ import test from "node:test";
 import { DatabaseSync } from "node:sqlite";
 
 import {
+  createRepairGalleryImage,
   createRepairCustomerInquiry,
   createRepairRequest,
   readRepairAdminSnapshot,
+  readRepairGallery,
   readRepairRequestBySubmissionId,
   updateRepairRequest,
 } from "../cloudflare/lib/repairs.js";
@@ -172,6 +174,53 @@ function createRepairApiContext(env, submissionId, options = {}) {
     }),
   };
 }
+
+test("Repair gallery persists average color in its public image contract", async (t) => {
+  const { database, env } = createFullEnvironment();
+  t.after(() => database.close());
+
+  await createRepairGalleryImage(env, {
+    id: "RPG_COLOR",
+    r2Key: "repair-gallery/color.jpg",
+    filename: "color.jpg",
+    contentType: "image/jpeg",
+    methods: ["patch"],
+    averageRgb: "18, 52, 86",
+  });
+
+  const [image] = await readRepairGallery(env);
+  assert.equal(image.averageRgb, "18, 52, 86");
+  assert.equal(image.url, "/api/r2?key=repair-gallery%2Fcolor.jpg&rgb=18%2C+52%2C+86");
+  assert.equal(database.prepare("SELECT average_rgb FROM repair_gallery_images WHERE id = ?").bind("RPG_COLOR").first().average_rgb, "18, 52, 86");
+});
+
+test("Repair gallery color migration preserves legacy rows", (t) => {
+  const database = new D1Database();
+  t.after(() => database.close());
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0019_repair_gallery.sql", import.meta.url), "utf8"));
+  database.prepare(`
+    INSERT INTO repair_gallery_images (
+      id, r2_key, original_filename, content_type, methods_json,
+      sort_order, status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    "RPG_LEGACY",
+    "repair-gallery/legacy.jpg",
+    "legacy.jpg",
+    "image/jpeg",
+    '["woven"]',
+    1,
+    "published",
+    "2026-08-20T00:00:00.000Z",
+    "2026-08-20T00:00:00.000Z",
+  ).run();
+
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0023_repair_gallery_average_rgb.sql", import.meta.url), "utf8"));
+  const row = database.prepare("SELECT id, r2_key, average_rgb FROM repair_gallery_images WHERE id = ?").bind("RPG_LEGACY").first();
+  assert.equal(row.id, "RPG_LEGACY");
+  assert.equal(row.r2_key, "repair-gallery/legacy.jpg");
+  assert.equal(row.average_rgb, "");
+});
 
 test("notification migration preserves completed work and locks archived legacy cases", (t) => {
   const database = new D1Database();
