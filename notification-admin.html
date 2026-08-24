@@ -27,6 +27,15 @@
     <section class="notification-admin-shell">
       <aside class="notification-admin-sidebar">
         <section class="fulfillment-panel">
+          <nav class="fulfillment-tabs" aria-label="관리자 기능" data-notification-auth-guard hidden>
+            <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
+            <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
+            <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
+            <a href="./repair-admin.html" class="fulfillment-tab">수선 신청</a>
+            <a href="./newsletter-admin.html" class="fulfillment-tab">뉴스레터</a>
+            <a href="./notification-admin.html" class="fulfillment-tab is-active" aria-current="page">Notification Admin</a>
+          </nav>
+
           <h1 class="fulfillment-heading">알림 관리</h1>
           <p class="fulfillment-copy">고객에게 자동으로 전달되는 이메일과 문자의 초안을 관리합니다.</p>
           <form class="fulfillment-auth-form js-notification-auth-form" data-admin-login-only>

@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-admin.css?v=20260824-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-admin.css?v=20260824-02">
   <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
 </head>
 <body class="fulfillment-page repair-admin-page">
@@ -27,14 +27,17 @@
     <section class="fulfillment-shell">
       <aside class="fulfillment-sidebar">
         <section class="fulfillment-panel">
-          <nav class="fulfillment-tabs repair-admin-tabs" aria-label="Repair Admin 메뉴" data-repair-admin-auth-guard hidden>
-            <button type="button" class="fulfillment-tab is-active" data-repair-admin-tab="requests" aria-current="page">수선 신청 관리</button>
-            <button type="button" class="fulfillment-tab" data-repair-admin-tab="content">Repair Studio 콘텐츠</button>
+          <nav class="fulfillment-tabs" aria-label="관리자 기능" data-repair-admin-auth-guard hidden>
+            <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
+            <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
+            <a href="./workshop-admin.html" class="fulfillment-tab">워크숍 예약</a>
+            <a href="./repair-admin.html" class="fulfillment-tab is-active" aria-current="page">수선 신청</a>
+            <a href="./newsletter-admin.html" class="fulfillment-tab">뉴스레터</a>
+            <a href="./notification-admin.html" class="fulfillment-tab">Notification Admin</a>
           </nav>
-          <a href="./notification-admin.html" class="repair-admin-utility" data-repair-admin-auth-guard hidden>Notification Admin</a>
 
-          <h1 class="fulfillment-heading">수선 신청 관리</h1>
-          <p class="fulfillment-copy">접수 상태와 견적, 고객 안내를 관리합니다. 원본 사진은 관리자 세션에서만 확인할 수 있습니다.</p>
+          <h1 class="fulfillment-heading">Repair Studio 운영</h1>
+          <p class="fulfillment-copy">수선 신청과 공개 Repair Studio 콘텐츠를 관리합니다.</p>
 
           <form class="fulfillment-auth-form js-repair-admin-auth-form" data-admin-login-only>
             <label class="fulfillment-field">
@@ -46,6 +49,13 @@
             </div>
           </form>
           <p class="fulfillment-status js-repair-admin-auth-status" data-admin-login-only role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="fulfillment-panel repair-admin-mode-panel" data-repair-admin-auth-guard hidden>
+          <nav class="repair-admin-mode-tabs" role="tablist" aria-label="Repair Studio 관리 모드">
+            <button type="button" class="repair-admin-mode-tab is-active" data-repair-admin-tab="requests" role="tab" aria-selected="true">수선 신청 관리</button>
+            <button type="button" class="repair-admin-mode-tab" data-repair-admin-tab="content" role="tab" aria-selected="false">Repair Studio 콘텐츠</button>
+          </nav>
         </section>
 
         <section class="fulfillment-panel repair-admin-list-panel" data-repair-admin-auth-guard data-repair-admin-section="requests" hidden>
@@ -218,7 +228,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260824-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260824-02"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
 

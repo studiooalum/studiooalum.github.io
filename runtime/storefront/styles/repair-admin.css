@@ -1,26 +1,34 @@
-.repair-admin-page .fulfillment-tabs {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.repair-admin-page [hidden] {
+  display: none !important;
 }
 
-.repair-admin-tabs .fulfillment-tab {
-  width: 100%;
-  border: 0;
+.repair-admin-mode-panel {
+  gap: 0;
+}
+
+.repair-admin-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.repair-admin-mode-tab {
+  min-height: 34px;
+  border: 1px solid rgba(17, 17, 17, 0.2);
+  padding: 0 12px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  letter-spacing: var(--tracking-korean);
   text-align: left;
   cursor: pointer;
 }
 
-.repair-admin-utility {
-  display: inline-flex;
-  width: 100%;
-  min-height: 38px;
-  margin-top: 12px;
-  align-items: center;
-  border: 1px solid #111;
-  padding: 0 12px;
-  color: #111;
-  text-decoration: none;
-  font-family: var(--font-english-ui);
-  font-size: 12px;
+.repair-admin-mode-tab.is-active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
 }
 
 .repair-admin-content,

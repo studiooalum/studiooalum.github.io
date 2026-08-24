@@ -240,7 +240,7 @@ function setActiveTab(tabName) {
   dom.tabs.forEach((tab) => {
     const active = tab.dataset.repairAdminTab === state.activeTab;
     tab.classList.toggle("is-active", active);
-    tab.setAttribute("aria-current", active ? "page" : "false");
+    tab.setAttribute("aria-selected", active ? "true" : "false");
   });
   dom.sections.forEach((section) => {
     section.hidden = section.dataset.repairAdminSection !== state.activeTab;
