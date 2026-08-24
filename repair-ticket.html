@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repair Ticket | Studio OALUM</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-ticket-20260824-01.css">
+</head>
+<body class="repair-ticket-page">
+  <nav class="gnb gnb--account">
+    <a href="./account.html" class="gnb__back js-repair-ticket-back">← Account</a>
+    <span class="gnb__title">Repair Ticket</span>
+    <span class="gnb__spacer"></span>
+  </nav>
+
+  <main class="repair-ticket-main">
+    <section class="repair-ticket-loading js-repair-ticket-loading" role="status">Repair Ticket을 불러오는 중입니다.</section>
+
+    <section class="repair-ticket-shell js-repair-ticket-shell" hidden>
+      <aside class="repair-ticket-summary" aria-label="수선 신청 정보">
+        <header class="repair-ticket-summary__head">
+          <p class="repair-ticket-kicker">Repair Case</p>
+          <h1 class="js-repair-ticket-number"></h1>
+          <p class="repair-ticket-status js-repair-ticket-status"></p>
+        </header>
+        <dl class="repair-ticket-facts js-repair-ticket-facts"></dl>
+        <p class="repair-ticket-closed js-repair-ticket-closed" hidden>종료된 Ticket입니다. 기존 기록만 조회할 수 있습니다.</p>
+      </aside>
+
+      <section class="repair-ticket-thread" aria-label="Repair Ticket 메시지">
+        <header class="repair-ticket-thread__head">
+          <div>
+            <p class="repair-ticket-kicker">Conversation</p>
+            <h2>수선 진행 기록</h2>
+          </div>
+          <button type="button" class="repair-ticket-refresh js-repair-ticket-refresh" aria-label="메시지 새로고침" title="메시지 새로고침">↻</button>
+        </header>
+
+        <div class="repair-ticket-messages js-repair-ticket-messages" aria-live="polite"></div>
+
+        <form class="repair-ticket-composer js-repair-ticket-form" enctype="multipart/form-data" novalidate>
+          <label class="repair-ticket-message-field">
+            <span>메시지</span>
+            <textarea name="body" rows="5" maxlength="4000" placeholder="수선과 관련된 메시지를 남겨주세요." required></textarea>
+          </label>
+          <div class="repair-ticket-composer__tools">
+            <label class="repair-ticket-file-button">
+              <span>사진 첨부</span>
+              <input type="file" name="attachments" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+            </label>
+            <span class="repair-ticket-file-help">최대 4장 · 장당 8MB</span>
+          </div>
+          <div class="repair-ticket-file-list js-repair-ticket-file-list"></div>
+          <div class="repair-ticket-composer__submit">
+            <button type="submit" class="repair-ticket-submit js-repair-ticket-submit">메시지 보내기</button>
+            <p class="repair-ticket-form-status js-repair-ticket-form-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./runtime/storefront/scripts/repair-ticket-20260824-01.js"></script>
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
+    initSiteChrome({ showActions: false });
+  </script>
+</body>
+</html>

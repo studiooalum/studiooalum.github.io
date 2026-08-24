@@ -11,8 +11,18 @@ import {
   updateRepairRequest,
 } from "../cloudflare/lib/repairs.js";
 import { lookupGuestResource, verifyGuestLookupToken } from "../cloudflare/lib/guest-lookup.js";
-import { createManualRepairNotificationResend, processRepairNotificationOutbox } from "../cloudflare/lib/repair-notifications.js";
+import {
+  activateNotificationDraft,
+  createManualNotificationRetry,
+  processNotificationOutbox,
+  restoreNotificationDefault,
+  saveNotificationDraft,
+  validateNotificationTemplate,
+} from "../cloudflare/lib/notifications.js";
+import { createRepairTicketMessage, markRepairTicketRead, readRepairTicketForRepair } from "../cloudflare/lib/repair-tickets.js";
+import { createRepairTicketAccessToken, verifyRepairTicketAccessToken } from "../cloudflare/lib/repair-ticket-tokens.js";
 import { onRequestPost as submitRepairRequest } from "../functions/api/repairs/index.js";
+import { onRequestPost as postRepairTicketMessage } from "../functions/api/repairs/tickets/[id].js";
 
 class D1BoundStatement {
   constructor(statement, values) {
@@ -93,22 +103,11 @@ const migrationNames = [
   "0016_repair_final_amount.sql",
   "0019_repair_gallery.sql",
   "0020_repair_notifications.sql",
+  "0021_repair_tickets_and_notifications.sql",
 ];
 
 function createEnvironment(overrides = {}) {
-  const database = new D1Database();
-  for (const name of migrationNames) {
-    database.exec(readFileSync(new URL(`../cloudflare/d1/migrations/${name}`, import.meta.url), "utf8"));
-  }
-  return {
-    database,
-    env: {
-      OALUM_DB: database,
-      PUBLIC_SITE_URL: "https://studiooalum.test",
-      REPAIR_ADMIN_EMAIL: "admin@example.com",
-      ...overrides,
-    },
-  };
+  return createFullEnvironment(overrides);
 }
 
 function createFullEnvironment(overrides = {}) {
@@ -120,12 +119,13 @@ function createFullEnvironment(overrides = {}) {
       OALUM_DB: database,
       PUBLIC_SITE_URL: "https://studiooalum.test",
       REPAIR_ADMIN_EMAIL: "admin@example.com",
+      AUTH_SECRET: "test-auth-secret",
       ...overrides,
     },
   };
 }
 
-async function createInitialRepair(env, suffix = "A") {
+async function createInitialRepair(env, suffix = "A", overrides = {}) {
   return createRepairRequest(env, {
     requestId: `RPR_${suffix}`,
     requestNumber: `REP-20260823-${suffix}`,
@@ -134,6 +134,7 @@ async function createInitialRepair(env, suffix = "A") {
     customerName: "홍길동",
     email: `customer-${suffix.toLowerCase()}@example.com`,
     phone: "010-1234-5678",
+    countryCode: "OTHER",
     itemType: "자켓",
     issueDescription: "소매가 찢어졌습니다.",
     repairDetails: "소매가 찢어졌습니다.",
@@ -143,6 +144,7 @@ async function createInitialRepair(env, suffix = "A") {
     contactPreference: "phone",
     termsAcceptedAt: "2026-08-23T00:00:00.000Z",
     privacyConsentAt: "2026-08-23T00:00:00.000Z",
+    ...overrides,
   });
 }
 
@@ -151,6 +153,7 @@ function createRepairForm({ imageBody = "image-a", email = "customer@example.com
   formData.set("customerName", "홍길동");
   formData.set("email", email);
   formData.set("phone", "010-1234-5678");
+  formData.set("countryCode", "OTHER");
   formData.set("itemType", "자켓");
   formData.set("issueDescription", "소매가 찢어졌습니다.");
   formData.set("desiredResult", "수선 흔적을 살리고 싶어요");
@@ -173,7 +176,7 @@ function createRepairApiContext(env, submissionId, options = {}) {
 test("notification migration preserves completed work and locks archived legacy cases", (t) => {
   const database = new D1Database();
   t.after(() => database.close());
-  for (const name of migrationNames.slice(0, -1)) {
+  for (const name of migrationNames.slice(0, -2)) {
     database.exec(readFileSync(new URL(`../cloudflare/d1/migrations/${name}`, import.meta.url), "utf8"));
   }
   const insert = database.prepare(`
@@ -237,7 +240,8 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   assert.equal(repeated.requestNumber, first.requestNumber);
   assert.equal(putCount, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_requests").first().count, 1);
-  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_notification_outbox").first().count, 2);
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 1);
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_tickets").first().count, 1);
 
   const conflictingResponse = await submitRepairRequest(createRepairApiContext(env, submissionId, { imageBody: "different-image" }));
   assert.equal(conflictingResponse.status, 409);
@@ -249,10 +253,12 @@ test("submission stores request, event, and rendered outbox atomically", async (
   t.after(() => database.close());
 
   const receipt = await createInitialRepair(env);
-  assert.equal(receipt.notificationIds.length, 2);
+  assert.equal(receipt.notificationIds.length, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_requests").first().count, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_events").first().count, 1);
-  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_notification_outbox").first().count, 2);
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 1);
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_tickets").first().count, 1);
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_ticket_messages").first().count, 1);
 
   const existing = await readRepairRequestBySubmissionId(env, "submission:A:1234567890");
   assert.equal(existing.requestNumber, "REP-20260823-A");
@@ -280,27 +286,6 @@ test("status transitions validate fields, avoid duplicate events, and lock close
     updateRepairRequest(env, { id: "RPR_A", expectedVersion: 1, status: "payment_pending", finalAmount: 30000 }),
     /입금 계좌 또는 결제 안내/,
   );
-  database.prepare(`
-    UPDATE repair_notification_templates
-    SET enabled = 0
-    WHERE event_type = 'repair.payment_pending' AND audience = 'customer'
-  `).run();
-  await assert.rejects(
-    updateRepairRequest(env, {
-      id: "RPR_A",
-      expectedVersion: 1,
-      status: "payment_pending",
-      finalAmount: 30000,
-      bankAccount: "테스트은행 123-456",
-    }),
-    /템플릿/,
-  );
-  database.prepare(`
-    UPDATE repair_notification_templates
-    SET enabled = 1
-    WHERE event_type = 'repair.payment_pending' AND audience = 'customer'
-  `).run();
-
   const payment = await updateRepairRequest(env, {
     id: "RPR_A",
     expectedVersion: 1,
@@ -376,16 +361,7 @@ test("status transitions validate fields, avoid duplicate events, and lock close
     updateRepairRequest(env, { id: "RPR_A", expectedVersion: 4, adminNote: "수정 시도" }),
     /읽기 전용/,
   );
-  const sourceNotification = database.prepare(`
-    SELECT id FROM repair_notification_outbox
-    WHERE repair_request_id = 'RPR_A'
-    ORDER BY created_at ASC
-    LIMIT 1
-  `).first();
-  await assert.rejects(
-    createManualRepairNotificationResend(env, sourceNotification.id, { type: "admin", id: "test-admin" }),
-    /새 안내/,
-  );
+  assert.equal(database.prepare("SELECT status FROM repair_tickets WHERE repair_id = 'RPR_A'").first().status, "closed");
 });
 
 test("inquiries are deduplicated, rate limited, and blocked after close", async (t) => {
@@ -446,6 +422,242 @@ test("inquiries are deduplicated, rate limited, and blocked after close", async 
   );
 });
 
+test("Repair Ticket supports threaded messages, attachments, unread counts, and closure", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  await createInitialRepair(env);
+  const initial = await readRepairTicketForRepair(env, "RPR_A");
+  assert.ok(initial?.ticket.id.startsWith("RPT_"));
+  assert.equal(initial.ticket.messages.length, 1);
+  assert.equal(initial.ticket.messages[0].authorType, "system");
+  const signedAccess = await createRepairTicketAccessToken(env, initial.ticket.id, { ttlMs: 60_000 });
+  assert.equal(await verifyRepairTicketAccessToken(env, signedAccess, initial.ticket.id), true);
+  assert.equal(await verifyRepairTicketAccessToken(env, signedAccess, "RPT_OTHER"), false);
+
+  const customer = await createRepairTicketMessage(env, {
+    ticketId: initial.ticket.id,
+    clientMessageId: "ticket:customer:1234567890",
+    authorType: "customer",
+    clientKey: "customer-key",
+    body: "<script>alert(1)</script> 첫 번째 문의입니다.",
+  }, [{
+    id: "RTA_TEST",
+    r2Key: "repair-tickets/test/message/image.png",
+    filename: "image.png",
+    contentType: "image/png",
+    byteSize: 1200,
+    sortOrder: 0,
+  }]);
+  assert.equal(customer.duplicate, false);
+  assert.equal(customer.notificationIds.length, 1);
+
+  const second = await createRepairTicketMessage(env, {
+    ticketId: initial.ticket.id,
+    clientMessageId: "ticket:customer:abcdefghij",
+    authorType: "customer",
+    clientKey: "customer-key",
+    body: "5분 제한 없이 이어서 보내는 두 번째 문의입니다.",
+  });
+  assert.equal(second.duplicate, false);
+
+  const duplicate = await createRepairTicketMessage(env, {
+    ticketId: initial.ticket.id,
+    clientMessageId: "ticket:customer:1234567890",
+    authorType: "customer",
+    clientKey: "customer-key",
+    body: "첫 번째 문의입니다.",
+  });
+  assert.equal(duplicate.duplicate, true);
+
+  const ticketAfterCustomer = await readRepairTicketForRepair(env, "RPR_A");
+  assert.equal(ticketAfterCustomer.ticket.unreadAdminCount, 2);
+  assert.equal(ticketAfterCustomer.ticket.messages[1].body.includes("<script>"), false);
+  assert.equal(ticketAfterCustomer.ticket.messages[1].attachments.length, 1);
+  await markRepairTicketRead(env, initial.ticket.id, "admin");
+  assert.equal((await readRepairTicketForRepair(env, "RPR_A")).ticket.unreadAdminCount, 0);
+
+  const admin = await createRepairTicketMessage(env, {
+    ticketId: initial.ticket.id,
+    clientMessageId: "ticket:admin:1234567890",
+    authorType: "admin",
+    clientKey: "admin-key",
+    body: "확인 후 안내드리겠습니다.",
+  });
+  assert.equal(admin.notificationIds.length, 1);
+  assert.equal((await readRepairTicketForRepair(env, "RPR_A")).ticket.unreadCustomerCount, 2);
+
+  await updateRepairRequest(env, { id: "RPR_A", expectedVersion: 1, status: "in_progress" });
+  const afterStatus = await readRepairTicketForRepair(env, "RPR_A");
+  assert.equal(afterStatus.ticket.messages.at(-1).authorType, "system");
+  assert.match(afterStatus.ticket.messages.at(-1).body, /수선 작업/);
+
+  await updateRepairRequest(env, { id: "RPR_A", expectedVersion: 2, status: "closed" });
+  const closed = await readRepairTicketForRepair(env, "RPR_A");
+  assert.equal(closed.ticket.status, "closed");
+  assert.ok(closed.ticket.closedAt);
+  await assert.rejects(
+    createRepairTicketMessage(env, {
+      ticketId: initial.ticket.id,
+      clientMessageId: "ticket:closed:1234567890",
+      authorType: "customer",
+      clientKey: "customer-key",
+      body: "종료 후 메시지",
+    }),
+    /종료된 Repair Ticket/,
+  );
+});
+
+test("Repair Ticket API stores private R2 image attachments and deduplicates retries", async (t) => {
+  const objects = new Map();
+  let putCount = 0;
+  let deleteCount = 0;
+  const bucket = {
+    async put(key, body) {
+      putCount += 1;
+      objects.set(key, await new Response(body).arrayBuffer());
+    },
+    async delete(key) {
+      deleteCount += 1;
+      objects.delete(key);
+    },
+  };
+  const { database, env } = createEnvironment({ OALUM_R2: bucket });
+  t.after(() => database.close());
+  await createInitialRepair(env);
+  const ticket = (await readRepairTicketForRepair(env, "RPR_A")).ticket;
+  const accessToken = await createRepairTicketAccessToken(env, ticket.id);
+  const clientMessageId = "ticket:api:1234567890";
+
+  const createContext = () => {
+    const formData = new FormData();
+    formData.set("body", "사진을 첨부한 Ticket 메시지입니다.");
+    formData.set("client_message_id", clientMessageId);
+    formData.append("attachments", new File(["image"], "ticket.png", { type: "image/png" }));
+    return {
+      env,
+      params: { id: ticket.id },
+      request: new Request(`https://studiooalum.test/api/repairs/tickets/${ticket.id}`, {
+        method: "POST",
+        headers: {
+          "Idempotency-Key": clientMessageId,
+          "X-Repair-Ticket-Access": accessToken,
+        },
+        body: formData,
+      }),
+    };
+  };
+
+  const firstResponse = await postRepairTicketMessage(createContext());
+  assert.equal(firstResponse.status, 201);
+  assert.equal((await firstResponse.json()).duplicate, false);
+  const attachment = database.prepare("SELECT r2_key, content_type FROM repair_ticket_message_attachments LIMIT 1").first();
+  assert.match(attachment.r2_key, /^repair-tickets\//);
+  assert.equal(attachment.content_type, "image/png");
+  assert.equal(putCount, 1);
+  assert.equal(objects.size, 1);
+
+  const repeatedResponse = await postRepairTicketMessage(createContext());
+  assert.equal(repeatedResponse.status, 200);
+  assert.equal((await repeatedResponse.json()).duplicate, true);
+  assert.equal(putCount, 2);
+  assert.equal(deleteCount, 1);
+  assert.equal(objects.size, 1);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM repair_ticket_messages WHERE client_message_id = ?").bind(clientMessageId).first().count, 1);
+});
+
+test("Notification templates enforce variables and support draft activation and restore", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  const row = database.prepare(`
+    SELECT * FROM notification_templates
+    WHERE template_key = 'repair.received' AND channel = 'email'
+  `).first();
+  const invalid = validateNotificationTemplate(row, {
+    channel: "email",
+    subject: "수신 완료",
+    body: "{{unsupported_variable}}",
+  });
+  assert.equal(invalid.valid, false);
+  assert.ok(invalid.errors.some((message) => message.includes("지원하지 않는 변수")));
+
+  const body = "{{customer_name}}님, {{product_name}} 제품을 받았습니다. {{repair_ticket_url}}";
+  await saveNotificationDraft(env, {
+    templateKey: "repair.received",
+    channel: "email",
+    subject: "[Studio OALUM] 새 초안",
+    body,
+  }, "test-admin");
+  await activateNotificationDraft(env, { templateKey: "repair.received", channel: "email" }, "test-admin");
+  const active = database.prepare(`SELECT active_subject, active_body FROM notification_templates WHERE template_key = 'repair.received' AND channel = 'email'`).first();
+  assert.equal(active.active_subject, "[Studio OALUM] 새 초안");
+  assert.equal(active.active_body, body);
+  await restoreNotificationDefault(env, { templateKey: "repair.received", channel: "email" }, "test-admin");
+  const restored = database.prepare(`SELECT draft_subject, default_subject FROM notification_templates WHERE template_key = 'repair.received' AND channel = 'email'`).first();
+  assert.equal(restored.draft_subject, restored.default_subject);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_template_revisions").first().count, 3);
+});
+
+test("KR Repair emits four SMS milestones, Ticket email for other states, and dry-run fallback", async (t) => {
+  const { database, env } = createEnvironment({
+    SMS_ENABLED: "false",
+    SMS_DRY_RUN: "true",
+    SMS_COUNTRY_ALLOWLIST: "KR",
+    RESEND_API_KEY: "test-key",
+    RESEND_FROM_EMAIL: "Studio OALUM <noreply@example.com>",
+  });
+  t.after(() => database.close());
+  const receipt = await createInitialRepair(env, "KR", { countryCode: "KR", email: "kr@example.com" });
+  assert.equal(receipt.notificationIds.length, 1);
+
+  await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 1, status: "item_received" });
+  await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 2, status: "in_progress" });
+  await updateRepairRequest(env, {
+    id: "RPR_KR",
+    expectedVersion: 3,
+    status: "payment_pending",
+    finalAmount: 45000,
+    bankAccount: "테스트은행 123",
+  });
+  await updateRepairRequest(env, {
+    id: "RPR_KR",
+    expectedVersion: 4,
+    status: "shipping",
+    paymentConfirmedAt: "2026-08-24T10:00:00.000Z",
+    carrier: "CJ대한통운",
+    trackingNumber: "1234567890",
+    trackingUrl: "https://example.com/tracking",
+  });
+  await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 5, status: "closed" });
+
+  const rows = database.prepare(`
+    SELECT template_key, channel FROM notification_outbox
+    WHERE entity_id IN ('RPR_KR', (SELECT id FROM repair_tickets WHERE repair_id = 'RPR_KR'))
+    ORDER BY created_at
+  `).all().results;
+  assert.deepEqual(rows.filter((row) => row.channel === "sms").map((row) => row.template_key), [
+    "repair.application_submitted",
+    "repair.received",
+    "repair.repair_completed_quote_ready",
+    "repair.payment_confirmed_shipping_started",
+  ]);
+  assert.equal(rows.filter((row) => row.template_key === "ticket.system_message_to_customer").length, 2);
+
+  let providerCalled = false;
+  const dryRun = await processNotificationOutbox(env, {
+    ids: [receipt.notificationIds[0]],
+    fetchImpl: async () => { providerCalled = true; throw new Error("must not call SOLAPI in dry-run"); },
+  });
+  assert.equal(providerCalled, false);
+  assert.equal(dryRun.sent, 1);
+  assert.equal(dryRun.fallback, 1);
+  const fallback = database.prepare(`
+    SELECT id, channel, status FROM notification_outbox
+    WHERE event_key LIKE 'repair:RPR_KR:application_submitted:v1:sms:email-fallback'
+  `).first();
+  assert.equal(fallback.channel, "email");
+  assert.equal(fallback.status, "pending");
+});
+
 test("outbox classifies success, retryable, unknown, and permanent failures", async (t) => {
   const { database, env } = createEnvironment({
     RESEND_API_KEY: "test-key",
@@ -453,10 +665,10 @@ test("outbox classifies success, retryable, unknown, and permanent failures", as
   });
   t.after(() => database.close());
   const receipt = await createInitialRepair(env);
-  const [sentId, retryId] = receipt.notificationIds;
+  const [sentId] = receipt.notificationIds;
 
   let deliveryCalls = 0;
-  const sent = await processRepairNotificationOutbox(env, {
+  const sent = await processNotificationOutbox(env, {
     ids: [sentId],
     fetchImpl: async () => {
       deliveryCalls += 1;
@@ -464,35 +676,37 @@ test("outbox classifies success, retryable, unknown, and permanent failures", as
     },
   });
   assert.equal(sent.sent, 1);
-  const sentAgain = await processRepairNotificationOutbox(env, {
+  const sentAgain = await processNotificationOutbox(env, {
     ids: [sentId],
     fetchImpl: async () => { throw new Error("sent messages must not run twice"); },
   });
   assert.equal(sentAgain.claimed, 0);
   assert.equal(deliveryCalls, 1);
 
-  const manual = await createManualRepairNotificationResend(env, sentId, { type: "admin", id: "test-admin" });
-  const manualSent = await processRepairNotificationOutbox(env, {
-    ids: [manual.notificationId],
+  const manual = await createManualNotificationRetry(env, sentId, "test-admin");
+  const manualSent = await processNotificationOutbox(env, {
+    ids: [manual.id],
     fetchImpl: async () => new Response(JSON.stringify({ id: "email_manual" }), { status: 200 }),
   });
   assert.equal(manualSent.sent, 1);
-  const manualRow = database.prepare("SELECT event_type, status FROM repair_notification_outbox WHERE id = ?").bind(manual.notificationId).first();
-  assert.equal(manualRow.event_type, "repair.manual_resend");
+  const manualRow = database.prepare("SELECT template_key, status FROM notification_outbox WHERE id = ?").bind(manual.id).first();
+  assert.equal(manualRow.template_key, "repair.application_submitted");
   assert.equal(manualRow.status, "sent");
 
-  const retried = await processRepairNotificationOutbox(env, {
+  await createInitialRepair(env, "G");
+  const retryId = (await readRepairRequestBySubmissionId(env, "submission:G:1234567890")).notificationIds[0];
+  const retried = await processNotificationOutbox(env, {
     ids: [retryId],
     fetchImpl: async () => new Response("rate limited", { status: 429 }),
   });
   assert.equal(retried.pending, 1);
-  const retryRow = database.prepare("SELECT status, attempt_count, last_error FROM repair_notification_outbox WHERE id = ?").bind(retryId).first();
+  const retryRow = database.prepare("SELECT status, attempts, last_error FROM notification_outbox WHERE id = ?").bind(retryId).first();
   assert.equal(retryRow.status, "pending");
-  assert.equal(retryRow.attempt_count, 1);
+  assert.equal(retryRow.attempts, 1);
 
   await createInitialRepair(env, "D");
   const serverErrorId = (await readRepairRequestBySubmissionId(env, "submission:D:1234567890")).notificationIds[0];
-  const serverError = await processRepairNotificationOutbox(env, {
+  const serverError = await processNotificationOutbox(env, {
     ids: [serverErrorId],
     fetchImpl: async () => new Response("provider unavailable", { status: 500 }),
   });
@@ -500,7 +714,7 @@ test("outbox classifies success, retryable, unknown, and permanent failures", as
 
   await createInitialRepair(env, "E");
   const networkErrorId = (await readRepairRequestBySubmissionId(env, "submission:E:1234567890")).notificationIds[0];
-  const networkError = await processRepairNotificationOutbox(env, {
+  const networkError = await processNotificationOutbox(env, {
     ids: [networkErrorId],
     fetchImpl: async () => { throw new TypeError("network disconnected"); },
   });
@@ -508,32 +722,32 @@ test("outbox classifies success, retryable, unknown, and permanent failures", as
 
   await createInitialRepair(env, "B");
   const unknownId = (await readRepairRequestBySubmissionId(env, "submission:B:1234567890")).notificationIds[0];
-  const unknown = await processRepairNotificationOutbox(env, {
+  const unknown = await processNotificationOutbox(env, {
     ids: [unknownId],
     fetchImpl: async () => { throw Object.assign(new Error("timeout"), { name: "AbortError" }); },
   });
   assert.equal(unknown.unknown, 1);
-  assert.equal(database.prepare("SELECT status FROM repair_notification_outbox WHERE id = ?").bind(unknownId).first().status, "unknown");
+  assert.equal(database.prepare("SELECT status FROM notification_outbox WHERE id = ?").bind(unknownId).first().status, "unknown");
 
   await createInitialRepair(env, "C");
   const failedId = (await readRepairRequestBySubmissionId(env, "submission:C:1234567890")).notificationIds[0];
   const missingEnv = { ...env, RESEND_API_KEY: "", RESEND_FROM_EMAIL: "" };
-  const failed = await processRepairNotificationOutbox(missingEnv, { ids: [failedId] });
+  const failed = await processNotificationOutbox(missingEnv, { ids: [failedId] });
   assert.equal(failed.failed, 1);
-  assert.match(database.prepare("SELECT last_error FROM repair_notification_outbox WHERE id = ?").bind(failedId).first().last_error, /RESEND_API_KEY/);
+  assert.match(database.prepare("SELECT last_error FROM notification_outbox WHERE id = ?").bind(failedId).first().last_error, /RESEND_API_KEY/);
 
   await createInitialRepair(env, "F");
   const deadLetterId = (await readRepairRequestBySubmissionId(env, "submission:F:1234567890")).notificationIds[0];
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    database.prepare("UPDATE repair_notification_outbox SET available_at = ? WHERE id = ?").bind("2000-01-01T00:00:00.000Z", deadLetterId).run();
-    await processRepairNotificationOutbox(env, {
+    database.prepare("UPDATE notification_outbox SET available_at = ? WHERE id = ?").bind("2000-01-01T00:00:00.000Z", deadLetterId).run();
+    await processNotificationOutbox(env, {
       ids: [deadLetterId],
       fetchImpl: async () => new Response("provider unavailable", { status: 500 }),
     });
   }
-  const deadLetter = database.prepare("SELECT status, attempt_count FROM repair_notification_outbox WHERE id = ?").bind(deadLetterId).first();
+  const deadLetter = database.prepare("SELECT status, attempts FROM notification_outbox WHERE id = ?").bind(deadLetterId).first();
   assert.equal(deadLetter.status, "dead_letter");
-  assert.equal(deadLetter.attempt_count, 5);
+  assert.equal(deadLetter.attempts, 5);
 });
 
 test("unified guest lookup resolves ORD, WKS, and REP references with short-lived hashed tokens", async (t) => {

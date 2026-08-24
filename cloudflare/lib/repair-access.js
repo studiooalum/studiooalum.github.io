@@ -1,6 +1,9 @@
+import { requireAdminAccess } from "./admin.js";
 import { readSession } from "./auth.js";
 import { verifyGuestLookupToken } from "./guest-lookup.js";
 import { readRepairRequestForCustomer, readRepairRequestForEmail, readRepairRequestsForEmail } from "./repairs.js";
+import { readRepairTicketById } from "./repair-tickets.js";
+import { verifyRepairTicketAccessToken } from "./repair-ticket-tokens.js";
 
 function cleanText(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
@@ -39,5 +42,32 @@ export async function authorizeRepairCustomerAccess(context, requestId = "") {
     actor: { type: "member", id: session.user.id },
     request: repairRequest,
     accessToken: "",
+  };
+}
+
+export async function authorizeRepairTicketAccess(context, ticketId) {
+  const ticketResult = await readRepairTicketById(context.env, cleanText(ticketId, 80));
+  const authorization = cleanText(context.request.headers.get("Authorization"), 1000);
+  if (authorization.toLowerCase().startsWith("bearer ")) {
+    const admin = await requireAdminAccess(context);
+    return {
+      actor: { type: "admin", id: admin.issuedAt || admin.method },
+      viewerType: "admin",
+      ...ticketResult,
+    };
+  }
+  const signedToken = cleanText(context.request.headers.get("X-Repair-Ticket-Access"), 4000);
+  if (signedToken && await verifyRepairTicketAccessToken(context.env, signedToken, ticketResult.ticket.id)) {
+    return {
+      actor: { type: "guest", id: ticketResult.ticket.id },
+      viewerType: "customer",
+      ...ticketResult,
+    };
+  }
+  const customer = await authorizeRepairCustomerAccess(context, ticketResult.ticket.repairId);
+  return {
+    actor: customer.actor,
+    viewerType: "customer",
+    ...ticketResult,
   };
 }

@@ -9,19 +9,20 @@ import {
   createRepairRequestIdentifiers,
   readRepairRequestBySubmissionId,
 } from "../../../cloudflare/lib/repairs.js";
-import { processRepairNotificationOutbox } from "../../../cloudflare/lib/repair-notifications.js";
+import { processNotificationOutbox } from "../../../cloudflare/lib/notifications.js";
 import { errorResponse, json, noContent, validationError } from "../../../cloudflare/lib/http.js";
 
 const MAX_IMAGE_COUNT = 4;
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
-const KOREAN_PHONE_PATTERN = /^0\d{1,2}-?\d{3,4}-?\d{4}$/;
+const PHONE_PATTERN = /^\+?[0-9][0-9\s-]{7,19}$/;
 const SUBMISSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,119}$/;
 
 const repairRequestSchema = z.object({
   customerName: z.string().trim().min(1, "성함을 입력해주세요.").max(120),
   email: z.string().trim().max(320).refine((value) => !value || z.string().email().safeParse(value).success, "이메일 형식을 확인해주세요.").default(""),
-  phone: z.string().trim().min(1, "연락처를 입력해주세요.").max(60).regex(KOREAN_PHONE_PATTERN, "연락처 형식을 확인해주세요."),
+  phone: z.string().trim().min(1, "연락처를 입력해주세요.").max(60).regex(PHONE_PATTERN, "연락처 형식을 확인해주세요."),
+  countryCode: z.enum(["KR", "OTHER"], { message: "발송 국가를 선택해주세요." }),
   itemType: z.enum(["자켓", "상의", "하의", "기타", "데님", "니트", "특수소재", "가죽"], { message: "제품 종류를 선택해주세요." }),
   issueDescription: z.string().trim().min(1, "손상된 부분을 입력해주세요.").max(4000),
   desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." }),
@@ -67,6 +68,7 @@ function buildRequestPayload(formData) {
     customerName: asText(formData.get("customerName")),
     email: asText(formData.get("email")),
     phone: asText(formData.get("phone")),
+    countryCode: asText(formData.get("countryCode")),
     itemType: asText(formData.get("itemType")),
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
     desiredResult: asText(formData.get("desiredResult")),
@@ -107,6 +109,7 @@ async function createSubmissionFingerprint(data, files) {
     customerName: data.customerName,
     email: data.email,
     phone: data.phone,
+    countryCode: data.countryCode,
     itemType: data.itemType,
     issueDescription: data.issueDescription,
     desiredResult: data.desiredResult,
@@ -123,6 +126,7 @@ function buildDuplicateResponse(env, receipt) {
     ok: true,
     duplicate: true,
     requestNumber: receipt.requestNumber,
+    ticketId: receipt.ticketId || "",
     submittedAt: receipt.submittedAt,
     message: "이미 완료된 수선 접수입니다. 기존 접수번호를 안내드립니다.",
     notificationStatus: receipt.notificationStatuses?.includes("failed") ? "failed" : "queued",
@@ -223,6 +227,8 @@ export async function onRequestPost(context) {
       requestNumber: identifiers.requestNumber,
       submissionId,
       submissionFingerprint,
+      customerId: session?.user?.id || null,
+      countryCode: parsed.data.countryCode,
       email: applicantEmail,
       preferredContact: "phone",
       contactPreference: "phone",
@@ -238,13 +244,14 @@ export async function onRequestPost(context) {
     }, uploadedImages);
 
     if (receipt.notificationIds.length && typeof context.waitUntil === "function") {
-      context.waitUntil(processRepairNotificationOutbox(context.env, { ids: receipt.notificationIds }));
+      context.waitUntil(processNotificationOutbox(context.env, { ids: receipt.notificationIds }));
     }
 
     return json(context.env, {
       ok: true,
       duplicate: false,
       requestNumber: receipt.requestNumber,
+      ticketId: receipt.ticketId,
       submittedAt: receipt.submittedAt,
       message: "수선 접수가 완료되었습니다. 안내 이메일이 발송 대기열에 저장되었습니다.",
       notificationStatus: "queued",

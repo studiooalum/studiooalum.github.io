@@ -3,12 +3,14 @@ import {
   createRepairEventId,
   createRepairEventStatement,
   createRepairOutboxStatement,
-  getRepairStatusEventType,
   normalizeRepairStatus,
   prepareRepairNotifications,
-  previewRepairNotification,
   REPAIR_STATUS_LABELS,
 } from "./repair-notifications.js";
+import {
+  prepareInitialRepairTicketBundle,
+  prepareRepairStatusTicketBundle,
+} from "./repair-tickets.js";
 
 function getDb(env) {
   return env?.OALUM_DB || null;
@@ -115,6 +117,7 @@ function formatRepairRequest(row) {
 
   return {
     id: row.id,
+    customerId: row.customer_id || null,
     requestNumber: row.request_number,
     customerName: row.customer_name,
     email: row.email,
@@ -137,6 +140,7 @@ function formatRepairRequest(row) {
     isArchiveCandidate: status === "closed" && Boolean(archiveConsentAt),
     status,
     statusLabel: REPAIR_STATUS_LABELS[status] || status,
+    countryCode: row.country_code || "",
     version: Number(row.version || 1),
     isReadOnly: status === "closed",
     adminNote: row.admin_note,
@@ -156,6 +160,11 @@ function formatRepairRequest(row) {
     closedAt: row.closed_at || "",
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || "",
+    ticketId: row.ticket_id || "",
+    ticketStatus: row.ticket_status || "",
+    unreadCustomerCount: Number(row.unread_customer_count || 0),
+    unreadAdminCount: Number(row.unread_admin_count || 0),
+    ticketLastMessageAt: row.ticket_last_message_at || "",
     images: [],
     events: [],
     inquiries: [],
@@ -253,13 +262,10 @@ export async function createRepairRequest(env, input, images = []) {
     itemType: cleanText(input.itemType, 100),
     status: "received",
     version: 1,
+    customerId: cleanText(input.customerId, 80) || null,
+    countryCode: cleanText(input.countryCode, 8).toUpperCase(),
   };
-  const notifications = await prepareRepairNotifications(
-    env,
-    requestForNotification,
-    eventId,
-    "repair.received",
-  );
+  const ticketBundle = await prepareInitialRepairTicketBundle(env, requestForNotification, eventId, now);
   const statements = [
     database
       .prepare(`
@@ -268,6 +274,8 @@ export async function createRepairRequest(env, input, images = []) {
           request_number,
           submission_id,
           submission_fingerprint,
+          customer_id,
+          country_code,
           customer_name,
           email,
           email_normalized,
@@ -293,13 +301,15 @@ export async function createRepairRequest(env, input, images = []) {
           version,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
       `)
       .bind(
         requestId,
         requestNumber,
         submissionId,
         submissionFingerprint,
+        cleanText(input.customerId, 80) || null,
+        cleanText(input.countryCode, 8).toUpperCase(),
         customerName,
         email,
         emailNormalized,
@@ -348,7 +358,7 @@ export async function createRepairRequest(env, input, images = []) {
       id: eventId,
       repairRequestId: requestId,
       requestVersion: 1,
-      eventType: "repair.received",
+      eventType: "repair.application_submitted",
       previousStatus: null,
       nextStatus: "received",
       actorType: input.actorType || "customer",
@@ -356,7 +366,7 @@ export async function createRepairRequest(env, input, images = []) {
       payload: { requestNumber },
       createdAt: now,
     }),
-    ...notifications.map((notification) => createRepairOutboxStatement(database, notification)),
+    ...ticketBundle.statements,
   ];
 
   await database.batch(statements);
@@ -366,7 +376,8 @@ export async function createRepairRequest(env, input, images = []) {
     requestNumber,
     submittedAt: now,
     eventId,
-    notificationIds: notifications.map((notification) => notification.id),
+    ticketId: ticketBundle.ticketId,
+    notificationIds: ticketBundle.notifications.map((notification) => notification.id),
   };
 }
 
@@ -382,16 +393,18 @@ export async function readRepairRequestBySubmissionId(env, submissionId) {
   `).bind(normalizedSubmissionId).first();
   if (!row) return null;
   const notificationResult = await database.prepare(`
-    SELECT id, status FROM repair_notification_outbox
-    WHERE repair_request_id = ? AND event_type = 'repair.received'
+    SELECT id, status FROM notification_outbox
+    WHERE entity_type = 'repair' AND entity_id = ? AND template_key = 'repair.application_submitted'
     ORDER BY created_at ASC
   `).bind(row.id).all();
+  const ticket = await database.prepare(`SELECT id FROM repair_tickets WHERE repair_id = ? LIMIT 1`).bind(row.id).first();
   return {
     requestId: row.id,
     requestNumber: row.request_number,
     submissionId: row.submission_id,
     submissionFingerprint: row.submission_fingerprint || "",
     submittedAt: row.created_at,
+    ticketId: ticket?.id || "",
     notificationIds: (notificationResult?.results || []).map((notification) => notification.id),
     notificationStatuses: (notificationResult?.results || []).map((notification) => notification.status),
   };
@@ -404,7 +417,17 @@ export async function readRepairRequestForAdmin(env, requestId) {
   }
   const database = requireDb(env);
   const row = await database.prepare(`
-    SELECT * FROM repair_requests WHERE id = ? LIMIT 1
+    SELECT
+      r.*,
+      t.id AS ticket_id,
+      t.status AS ticket_status,
+      t.unread_customer_count,
+      t.unread_admin_count,
+      t.last_message_at AS ticket_last_message_at
+    FROM repair_requests r
+    LEFT JOIN repair_tickets t ON t.repair_id = r.id
+    WHERE r.id = ?
+    LIMIT 1
   `).bind(normalizedRequestId).first();
   if (!row) {
     throw Object.assign(new Error("수선 접수를 찾을 수 없습니다."), { status: 404 });
@@ -424,6 +447,10 @@ function formatRepairRequestForCustomer(request) {
     status: request.status,
     statusLabel: request.statusLabel,
     isReadOnly: request.isReadOnly,
+    ticketId: request.ticketId,
+    ticketStatus: request.ticketStatus,
+    unreadCustomerCount: request.unreadCustomerCount,
+    ticketLastMessageAt: request.ticketLastMessageAt,
     customerMessage: request.customerMessage,
     finalAmount: request.finalAmount,
     bankAccount: ["payment_pending", "shipping", "closed"].includes(request.status) ? request.bankAccount : "",
@@ -451,6 +478,11 @@ async function readCustomerRepairRows(database, whereClause, bindings, limit = 2
   const result = await database.prepare(`
     SELECT
       r.*,
+      t.id AS ticket_id,
+      t.status AS ticket_status,
+      t.unread_customer_count,
+      t.unread_admin_count,
+      t.last_message_at AS ticket_last_message_at,
       i.id AS image_id,
       i.original_filename AS image_original_filename,
       i.content_type AS image_content_type,
@@ -458,6 +490,7 @@ async function readCustomerRepairRows(database, whereClause, bindings, limit = 2
       i.sort_order AS image_sort_order,
       i.created_at AS image_created_at
     FROM repair_requests r
+    LEFT JOIN repair_tickets t ON t.repair_id = r.id
     LEFT JOIN repair_request_images i ON i.request_id = r.id
     WHERE ${whereClause}
     ORDER BY r.created_at DESC, i.sort_order ASC, i.created_at ASC
@@ -660,6 +693,11 @@ export async function readRepairAdminSnapshot(env) {
     .prepare(`
       SELECT
         r.*,
+        t.id AS ticket_id,
+        t.status AS ticket_status,
+        t.unread_customer_count,
+        t.unread_admin_count,
+        t.last_message_at AS ticket_last_message_at,
         i.id AS image_id,
         i.original_filename AS image_original_filename,
         i.content_type AS image_content_type,
@@ -667,6 +705,7 @@ export async function readRepairAdminSnapshot(env) {
         i.sort_order AS image_sort_order,
         i.created_at AS image_created_at
       FROM repair_requests r
+      LEFT JOIN repair_tickets t ON t.repair_id = r.id
       LEFT JOIN repair_request_images i ON i.request_id = r.id
       ORDER BY r.created_at DESC, i.sort_order ASC, i.created_at ASC
     `)
@@ -747,6 +786,21 @@ export async function deleteRepairGalleryImage(env, id) {
   return { r2Key: row.r2_key, gallery: await readRepairGallery(env, { includeDrafts: true }) };
 }
 
+export async function updateRepairGalleryImageStatus(env, id, published) {
+  const database = requireDb(env);
+  const imageId = cleanText(id, 80);
+  const now = nowIso();
+  const result = await database.prepare(`
+    UPDATE repair_gallery_images
+    SET status = ?, updated_at = ?
+    WHERE id = ?
+  `).bind(published ? "published" : "draft", now, imageId).run();
+  if (Number(result?.meta?.changes ?? result?.changes ?? 0) !== 1) {
+    throw Object.assign(new Error("수선 작업 사진을 찾을 수 없습니다."), { status: 404 });
+  }
+  return readRepairGallery(env, { includeDrafts: true });
+}
+
 export async function updateRepairRequest(env, input) {
   const database = requireDb(env);
   const requestId = cleanText(input.id, 80);
@@ -787,6 +841,7 @@ export async function updateRepairRequest(env, input) {
   const carrier = hasOwn(input, "carrier") ? cleanText(input.carrier, 120) : existing.carrier;
   const trackingNumber = hasOwn(input, "trackingNumber") ? cleanText(input.trackingNumber, 160) : existing.tracking_number;
   const trackingUrl = hasOwn(input, "trackingUrl") ? cleanText(input.trackingUrl, 1000) : existing.tracking_url;
+  const countryCode = hasOwn(input, "countryCode") ? cleanText(input.countryCode, 8).toUpperCase() : existing.country_code;
   if (trackingUrl) {
     let parsedUrl;
     try {
@@ -819,7 +874,8 @@ export async function updateRepairRequest(env, input) {
     || paymentConfirmedAt !== existing.payment_confirmed_at
     || carrier !== existing.carrier
     || trackingNumber !== existing.tracking_number
-    || trackingUrl !== existing.tracking_url;
+    || trackingUrl !== existing.tracking_url
+    || countryCode !== existing.country_code;
   if (!changed) {
     return {
       ...(await readRepairAdminSnapshot(env)),
@@ -835,7 +891,7 @@ export async function updateRepairRequest(env, input) {
   const nextVersion = currentVersion + 1;
   const eventId = createRepairEventId();
   const eventType = statusChanged
-    ? getRepairStatusEventType(status) || `repair.${status}`
+    ? "repair.status_changed"
     : "repair.updated";
   const closedAt = status === "closed" ? now : existing.closed_at;
   const acceptedAt = status === "in_progress" ? existing.accepted_at || now : existing.accepted_at;
@@ -855,21 +911,18 @@ export async function updateRepairRequest(env, input) {
     carrier,
     trackingNumber,
     trackingUrl,
+    countryCode,
     closedAt: closedAt || "",
   };
-  const notificationEventType = statusChanged ? getRepairStatusEventType(status) : "";
-  if (status === "payment_pending") {
-    await previewRepairNotification(env, updatedRequest, "repair.payment_pending");
-  }
-  const notifications = notificationEventType
-    ? await prepareRepairNotifications(env, updatedRequest, eventId, notificationEventType)
-    : [];
+  const ticketBundle = statusChanged
+    ? await prepareRepairStatusTicketBundle(env, updatedRequest, eventId, currentStatus, status, now)
+    : null;
 
   const updateStatement = database.prepare(`
     UPDATE repair_requests
     SET status = ?, admin_note = ?, customer_message = ?, quote_amount = ?, final_amount = ?,
         bank_account = ?, payment_instructions = ?, payment_confirmed_at = ?, carrier = ?,
-        tracking_number = ?, tracking_url = ?, accepted_at = ?, completed_at = ?,
+        tracking_number = ?, tracking_url = ?, country_code = ?, accepted_at = ?, completed_at = ?,
         archived_at = ?, closed_at = ?, version = ?, updated_at = ?
     WHERE id = ? AND version = ?
   `).bind(
@@ -884,6 +937,7 @@ export async function updateRepairRequest(env, input) {
     carrier,
     trackingNumber,
     trackingUrl,
+    countryCode,
     acceptedAt,
     completedAt,
     archivedAt,
@@ -910,7 +964,7 @@ export async function updateRepairRequest(env, input) {
     await database.batch([
       updateStatement,
       eventStatement,
-      ...notifications.map((notification) => createRepairOutboxStatement(database, notification)),
+      ...(ticketBundle?.statements || []),
     ]);
   } catch (error) {
     const latest = await database.prepare(`SELECT version FROM repair_requests WHERE id = ? LIMIT 1`).bind(requestId).first();
@@ -926,10 +980,11 @@ export async function updateRepairRequest(env, input) {
       changed: true,
       statusChanged,
       eventId,
-      notificationStatus: notifications.length
-        ? (notifications.some((notification) => notification.status === "failed") ? "failed" : "pending")
+      notificationStatus: ticketBundle?.notifications.length
+        ? (ticketBundle.notifications.some((notification) => notification.status === "failed") ? "failed" : "pending")
         : "not_created",
-      notificationIds: notifications.map((notification) => notification.id),
+      notificationIds: (ticketBundle?.notifications || []).map((notification) => notification.id),
+      ticketMessageId: ticketBundle?.messageId || "",
     },
   };
 }

@@ -29,6 +29,7 @@ export function isPrivateR2Key(key) {
   const normalizedKey = String(key || "").trim();
   return normalizedKey.startsWith("repairs/")
     || normalizedKey.startsWith("repair-requests/")
+    || normalizedKey.startsWith("repair-tickets/")
     || normalizedKey.startsWith("public-content-snapshots/");
 }
 
@@ -69,6 +70,15 @@ export function buildRepairImageKey({ requestId = "request", imageId = "image", 
   const nameSegment = sanitizeSegment(String(fileName || "").replace(/\.[a-z0-9]+$/i, ""), "upload");
   const extension = extensionFromName(fileName) || extensionFromType(fileType);
   return `repair-requests/${requestSegment}/${Date.now()}-${imageSegment}-${nameSegment}${extension}`;
+}
+
+export function buildRepairTicketAttachmentKey({ ticketId = "ticket", messageId = "message", attachmentId = "image", fileName = "", fileType = "" } = {}) {
+  const ticketSegment = sanitizeSegment(ticketId, "ticket");
+  const messageSegment = sanitizeSegment(messageId, "message");
+  const attachmentSegment = sanitizeSegment(attachmentId, "image");
+  const nameSegment = sanitizeSegment(String(fileName || "").replace(/\.[a-z0-9]+$/i, ""), "upload");
+  const extension = extensionFromName(fileName) || extensionFromType(fileType);
+  return `repair-tickets/${ticketSegment}/${messageSegment}/${Date.now()}-${attachmentSegment}-${nameSegment}${extension}`;
 }
 
 export function buildRepairGalleryKey({ imageId = "image", fileName = "", fileType = "" } = {}) {

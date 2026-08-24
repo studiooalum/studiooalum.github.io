@@ -137,7 +137,14 @@
               </label>
               <label class="repair-field">
                 <span>연락처</span>
-                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="tel" pattern="0[0-9]{1,2}-?[0-9]{3,4}-?[0-9]{4}" maxlength="60" placeholder="010-0000-0000" title="전화번호 형식으로 입력해주세요." required>
+                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="tel" pattern="\+?[0-9][0-9\s-]{7,19}" maxlength="60" placeholder="010-0000-0000" title="전화번호 형식으로 입력해주세요." required>
+              </label>
+              <label class="repair-field">
+                <span>발송 국가</span>
+                <select name="countryCode" required>
+                  <option value="KR" selected>대한민국</option>
+                  <option value="OTHER">해외</option>
+                </select>
               </label>
               <label class="repair-field js-repair-email-field">
                 <span>이메일</span>

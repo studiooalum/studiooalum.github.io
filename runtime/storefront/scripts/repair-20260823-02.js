@@ -53,7 +53,33 @@ function bindSubmissionId() {
   });
 }
 
+async function loadRepairStudioContent() {
+  try {
+    const response = await fetch("./api/repairs/content", { headers: { Accept: "application/json" } });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.content) return;
+    const content = payload.content;
+    const title = document.querySelector("#repair-title");
+    const body = document.querySelector(".repair-body-copy");
+    const button = document.querySelector("#repairApplyBtn");
+    if (title && content.title) title.textContent = content.title;
+    if (body && content.lead && Array.isArray(content.paragraphs) && content.paragraphs.length) {
+      body.replaceChildren();
+      const lead = document.createElement("p");
+      lead.className = "repair-body-copy__lead";
+      lead.textContent = content.lead;
+      body.append(lead, ...content.paragraphs.map((text) => {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = text;
+        return paragraph;
+      }));
+    }
+    if (button && content.ctaLabel) button.textContent = content.ctaLabel;
+  } catch {}
+}
+
 export function initRepairRequest() {
   initExistingRepairRequest();
   bindSubmissionId();
+  void loadRepairStudioContent();
 }

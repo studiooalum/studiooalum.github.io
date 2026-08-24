@@ -1,7 +1,7 @@
 function getCorsHeaders(env) {
   return {
     "Access-Control-Allow-Origin": env?.ALLOWED_ORIGIN || "*",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Idempotency-Key, X-Guest-Access-Token",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Idempotency-Key, X-Guest-Access-Token, X-Repair-Ticket-Access",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   };
 }

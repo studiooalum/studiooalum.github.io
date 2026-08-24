@@ -527,19 +527,16 @@ export function initAccountPage() {
     renderRepairRequests(state.repairs);
   });
 
-  repairsEl.addEventListener("submit", (event) => {
-    const form = event.target.closest("[data-repair-inquiry-form]");
-    if (!form) return;
-    event.preventDefault();
-    void handleRepairInquiry(form, { guest: false });
-  });
+  function preserveGuestTicketToken(event) {
+    const link = event.target.closest("[data-repair-ticket-id]");
+    if (!link || !state.guestAccessToken) return;
+    try {
+      sessionStorage.setItem(`studiooalum:repair-ticket-token:${link.dataset.repairTicketId}`, state.guestAccessToken);
+    } catch {}
+  }
 
-  guestResultEl.addEventListener("submit", (event) => {
-    const form = event.target.closest("[data-repair-inquiry-form]");
-    if (!form) return;
-    event.preventDefault();
-    void handleRepairInquiry(form, { guest: true });
-  });
+  repairsEl.addEventListener("click", preserveGuestTicketToken);
+  guestResultEl.addEventListener("click", preserveGuestTicketToken);
 
   function createPaginationMarkup(pageType, currentPage, totalPages) {
     if (totalPages <= 1) {
@@ -662,36 +659,6 @@ export function initAccountPage() {
     `;
   }
 
-  function renderRepairInquiryHistory(request) {
-    const inquiries = Array.isArray(request?.inquiries) ? request.inquiries : [];
-    if (!inquiries.length) return "";
-    return `
-      <div class="account-repair-inquiries">
-        ${inquiries.map((inquiry) => `
-          <p><strong>${escapeHtml(formatDate(inquiry.createdAt))}</strong><span>${escapeHtml(inquiry.message || "")}</span></p>
-        `).join("")}
-      </div>
-    `;
-  }
-
-  function renderRepairInquiryForm(request) {
-    if (request?.isReadOnly) {
-      return '<p class="account-record__notice">완료된 수선 내역은 읽기 전용 Archive로 보관됩니다.</p>';
-    }
-    return `
-      <form class="account-repair-inquiry-form" data-repair-inquiry-form="${escapeHtml(request.id)}">
-        <label class="account-field">
-          <span>수선 문의</span>
-          <textarea name="message" rows="3" maxlength="2000" placeholder="문의 내용을 남겨주세요." required></textarea>
-        </label>
-        <div class="account-repair-inquiry-actions">
-          <button type="submit" class="account-btn account-btn--secondary">문의 보내기</button>
-          <p class="account-status" data-repair-inquiry-status role="status" aria-live="polite"></p>
-        </div>
-      </form>
-    `;
-  }
-
   function renderRepairCard(request) {
     const trackingUrl = getSafeTrackingUrl(request?.trackingUrl);
     const paymentMarkup = request?.finalAmount !== null && request?.finalAmount !== undefined
@@ -701,6 +668,8 @@ export function initAccountPage() {
     const trackingMarkup = trackingText
       ? `<p class="account-record__status-detail">${trackingUrl ? `<a class="account-inline-link" href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 ${escapeHtml(trackingText)}</a>` : `운송장 ${escapeHtml(trackingText)}`}</p>`
       : "";
+    const ticketHref = request?.ticketId ? `./repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}` : "";
+    const unread = Number(request?.unreadCustomerCount || 0);
     return `
       <article class="account-record account-record--repair">
         <div class="account-record__media">
@@ -715,11 +684,10 @@ export function initAccountPage() {
             <span class="account-order-id">${escapeHtml(request?.requestNumber || "-")}</span>
             <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
           </div>
-          ${request?.customerMessage ? `<p class="account-record__notice">${escapeHtml(request.customerMessage)}</p>` : ""}
           ${paymentMarkup}
           ${trackingMarkup}
-          ${renderRepairInquiryHistory(request)}
-          ${renderRepairInquiryForm(request)}
+          ${ticketHref ? `<div class="account-record__actions"><a class="account-btn account-btn--secondary" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}">Repair Ticket${unread ? ` · 새 메시지 ${unread}` : ""}</a></div>` : ""}
+          ${request?.isReadOnly ? '<p class="account-record__notice">완료된 수선 내역과 대화는 읽기 전용으로 보관됩니다.</p>' : ""}
         </div>
       </article>
     `;
@@ -827,6 +795,11 @@ export function initAccountPage() {
     state.guestResourceType = resourceType || "";
     state.guestResource = resource || null;
     state.guestAccessToken = accessToken || "";
+    if (resourceType === "repair" && resource?.ticketId && accessToken) {
+      try {
+        sessionStorage.setItem(`studiooalum:repair-ticket-token:${resource.ticketId}`, accessToken);
+      } catch {}
+    }
     if (!resource) {
       renderGuestOrder(null);
       guestResultEl.hidden = true;
@@ -943,47 +916,6 @@ export function initAccountPage() {
       setStatus(memberStatusEl, getFriendlyApiMessage(error, "주문 취소를 처리하지 못했습니다."), "error");
     } finally {
       setButtonLoading(button, false, mode === "request_approval" ? "요청 중…" : "취소 중…");
-    }
-  }
-
-  async function handleRepairInquiry(form, { guest }) {
-    const requestId = String(form?.dataset?.repairInquiryForm || "").trim();
-    const message = String(form?.elements?.message?.value || "").trim();
-    const button = form?.querySelector("button[type='submit']");
-    const localStatus = form?.querySelector("[data-repair-inquiry-status]");
-    if (!requestId || !message) {
-      setStatus(localStatus, "문의 내용을 입력해주세요.", "error");
-      form?.elements?.message?.focus();
-      return;
-    }
-    setButtonLoading(button, true, "등록 중…");
-    setStatus(localStatus, "문의를 등록하는 중입니다.");
-    if (!form.dataset.inquiryId) form.dataset.inquiryId = `inquiry:${crypto.randomUUID()}`;
-    try {
-      const payload = await requestJson("./api/repairs/customer", {
-        method: "POST",
-        headers: guest && state.guestAccessToken
-          ? { "X-Guest-Access-Token": state.guestAccessToken }
-          : {},
-        body: {
-          requestId,
-          inquiryId: form.dataset.inquiryId,
-          message,
-        },
-      });
-      if (guest) {
-        renderGuestResource("repair", payload.repair, state.guestAccessToken);
-        setStatus(guestStatusEl, "문의 저장 완료 · 관리자 안내 발송 대기", "success");
-      } else {
-        state.repairs = state.repairs.map((request) => request.id === payload.repair?.id ? payload.repair : request);
-        renderRepairRequests(state.repairs);
-        setStatus(memberStatusEl, "문의 저장 완료 · 관리자 안내 발송 대기", "success");
-      }
-      delete form.dataset.inquiryId;
-    } catch (error) {
-      setStatus(localStatus, getFriendlyApiMessage(error, "문의를 등록하지 못했습니다."), "error");
-    } finally {
-      setButtonLoading(button, false, "등록 중…");
     }
   }
 

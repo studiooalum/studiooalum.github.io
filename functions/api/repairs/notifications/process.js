@@ -1,5 +1,6 @@
 import { requireAdminAccess } from "../../../../cloudflare/lib/admin.js";
 import { errorResponse, json, noContent } from "../../../../cloudflare/lib/http.js";
+import { processNotificationOutbox } from "../../../../cloudflare/lib/notifications.js";
 import { processRepairNotificationOutbox } from "../../../../cloudflare/lib/repair-notifications.js";
 
 function readBearerToken(request) {
@@ -36,11 +37,15 @@ export function onRequestOptions(context) {
 export async function onRequestPost(context) {
   try {
     const access = await authorizeProcessor(context);
-    const processing = await processRepairNotificationOutbox(context.env, {
+    const processing = await processNotificationOutbox(context.env, {
       limit: 25,
       workerId: `repair-${access.method || "manual"}-${crypto.randomUUID()}`,
     });
-    return json(context.env, { ok: true, processing });
+    const legacyProcessing = await processRepairNotificationOutbox(context.env, {
+      limit: 10,
+      workerId: `repair-legacy-${access.method || "manual"}-${crypto.randomUUID()}`,
+    });
+    return json(context.env, { ok: true, processing, legacyProcessing });
   } catch (error) {
     return errorResponse(context.env, error, "수선 안내 발송 대기열을 처리하지 못했습니다.");
   }
