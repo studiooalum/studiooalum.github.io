@@ -232,6 +232,9 @@ export async function activateNotificationDraft(env, input, actorId = "") {
   const database = requireDb(env);
   const template = await readNotificationTemplate(env, input.templateKey, input.channel);
   if (!template) throw Object.assign(new Error("알림 템플릿을 찾을 수 없습니다."), { status: 404 });
+  if (["shop", "workshop"].includes(template.area)) {
+    throw Object.assign(new Error("Shop과 Workshop은 기존 발송 경로를 유지하는 전환 준비 템플릿입니다. 현재는 초안과 테스트만 사용할 수 있습니다."), { status: 409 });
+  }
   const validation = validateNotificationTemplate(template, { channel: template.channel, subject: template.draft_subject, body: template.draft_body });
   if (!validation.valid) throw Object.assign(new Error(validation.errors.join("\n")), { status: 400, details: { errors: validation.errors } });
   const now = nowIso();
@@ -267,6 +270,9 @@ export async function setNotificationTemplateEnabled(env, input, actorId = "") {
   const database = requireDb(env);
   const template = await readNotificationTemplate(env, input.templateKey, input.channel);
   if (!template) throw Object.assign(new Error("알림 템플릿을 찾을 수 없습니다."), { status: 404 });
+  if (input.enabled && ["shop", "workshop"].includes(template.area)) {
+    throw Object.assign(new Error("Shop과 Workshop은 기존 발송 경로를 유지하는 전환 준비 템플릿입니다. 활성화할 수 없습니다."), { status: 409 });
+  }
   const now = nowIso();
   await database.batch([
     database.prepare(`

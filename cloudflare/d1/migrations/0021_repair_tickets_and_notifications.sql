@@ -271,3 +271,12 @@ INSERT OR IGNORE INTO notification_templates (
   ('ticket.customer_message_to_admin', 'email', 'ticket', '고객 티켓 메시지 알림', '고객이 새 메시지를 남기면 관리자에게 알립니다.', '고객 메시지', '[Repair Ticket] 고객 메시지가 등록되었습니다', '{{repair_number}} 티켓에 고객 메시지가 등록되었습니다. 현재 상태: {{repair_status}}. 티켓: {{repair_ticket_url}}', '[Repair Ticket] 고객 메시지가 등록되었습니다', '{{repair_number}} 티켓에 고객 메시지가 등록되었습니다. 현재 상태: {{repair_status}}. 티켓: {{repair_ticket_url}}', '[Repair Ticket] 고객 메시지가 등록되었습니다', '{{repair_number}} 티켓에 고객 메시지가 등록되었습니다. 현재 상태: {{repair_status}}. 티켓: {{repair_ticket_url}}', '["repair_number","repair_status","repair_ticket_url"]', '["repair_number","repair_status","repair_ticket_url"]', 0, 1, '2026-08-23T00:00:00.000Z', '2026-08-23T00:00:00.000Z', '2026-08-23T00:00:00.000Z'),
   ('ticket.admin_message_to_customer', 'email', 'ticket', '관리자 티켓 답변 알림', '관리자가 새 메시지를 남기면 고객에게 알립니다.', '관리자 메시지', '[Studio OALUM] Repair Ticket에 새 답변이 있습니다', '{{customer_name}}님, Repair Ticket에 새 답변이 등록되었습니다. 현재 상태: {{repair_status}}. 티켓: {{repair_ticket_url}}', '[Studio OALUM] Repair Ticket에 새 답변이 있습니다', '{{customer_name}}님, Repair Ticket에 새 답변이 등록되었습니다. 현재 상태: {{repair_status}}. 티켓: {{repair_ticket_url}}', '[Studio OALUM] Repair Ticket에 새 답변이 있습니다', '{{customer_name}}님, Repair Ticket에 새 답변이 등록되었습니다. 현재 상태: {{repair_status}}. 티켓: {{repair_ticket_url}}', '["customer_name","repair_number","repair_status","repair_ticket_url"]', '["customer_name","repair_status","repair_ticket_url"]', 0, 1, '2026-08-23T00:00:00.000Z', '2026-08-23T00:00:00.000Z', '2026-08-23T00:00:00.000Z'),
   ('ticket.system_message_to_customer', 'email', 'ticket', '수선 상태 안내', 'milestone 외 상태 변경을 Ticket 이메일로 안내합니다.', '상태 변경', '[Studio OALUM] 수선 상태가 업데이트되었습니다', '{{customer_name}}님, 수선 상태가 {{repair_status}}로 변경되었습니다. 티켓: {{repair_ticket_url}}', '[Studio OALUM] 수선 상태가 업데이트되었습니다', '{{customer_name}}님, 수선 상태가 {{repair_status}}로 변경되었습니다. 티켓: {{repair_ticket_url}}', '[Studio OALUM] 수선 상태가 업데이트되었습니다', '{{customer_name}}님, 수선 상태가 {{repair_status}}로 변경되었습니다. 티켓: {{repair_ticket_url}}', '["customer_name","repair_number","repair_status","repair_ticket_url"]', '["customer_name","repair_status","repair_ticket_url"]', 0, 1, '2026-08-23T00:00:00.000Z', '2026-08-23T00:00:00.000Z', '2026-08-23T00:00:00.000Z');
+
+UPDATE notification_templates
+SET is_enabled = 0,
+    activated_at = NULL,
+    description = CASE
+      WHEN instr(description, '기존 발송 경로') > 0 THEN description
+      ELSE description || ' 기존 발송 경로를 유지하는 전환 준비 템플릿입니다.'
+    END
+WHERE area IN ('shop', 'workshop');

@@ -36,6 +36,7 @@
 - 수동 재발송은 기존 outbox를 덮어쓰지 않고 새 outbox row와 revision 기록을 생성합니다.
 - 국내(`country_code=KR`) milestone은 SOLAPI SMS/LMS, 해외/미확인은 Resend 이메일을 사용합니다. Ticket 메시지는 국가와 무관하게 이메일만 사용합니다.
 - `SMS_ENABLED=false` 또는 `SMS_DRY_RUN=true`에서는 SOLAPI를 호출하지 않고 dry-run을 기록한 뒤 이메일 fallback을 생성합니다.
+- Shop/Workshop 템플릿은 기존 외부 order-sync/예약 발송 경로의 회귀를 피하기 위한 전환 준비 초안입니다. Notification Admin에서 편집·미리보기·테스트는 가능하지만 실제 활성화는 차단합니다.
 
 ## 고객 조회
 

@@ -1008,6 +1008,15 @@ SELECT
   '2026-08-23T00:00:00.000Z', '2026-08-23T00:00:00.000Z'
 FROM template_seed;
 
+UPDATE notification_templates
+SET is_enabled = 0,
+    activated_at = NULL,
+    description = CASE
+      WHEN instr(description, '기존 발송 경로') > 0 THEN description
+      ELSE description || ' 기존 발송 경로를 유지하는 전환 준비 템플릿입니다.'
+    END
+WHERE area IN ('shop', 'workshop');
+
 CREATE TRIGGER IF NOT EXISTS trg_workshop_reservations_capacity_update
 BEFORE UPDATE OF slot_key, attendee_count, status ON workshop_reservations
 WHEN NEW.status IN ('waiting_for_group', 'waiting_for_payment', 'confirmed')

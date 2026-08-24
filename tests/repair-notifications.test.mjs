@@ -595,6 +595,11 @@ test("Notification templates enforce variables and support draft activation and 
   const restored = database.prepare(`SELECT draft_subject, default_subject FROM notification_templates WHERE template_key = 'repair.received' AND channel = 'email'`).first();
   assert.equal(restored.draft_subject, restored.default_subject);
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_template_revisions").first().count, 3);
+  assert.equal(database.prepare("SELECT is_enabled FROM notification_templates WHERE template_key = 'shop.order_completed' AND channel = 'email'").first().is_enabled, 0);
+  await assert.rejects(
+    activateNotificationDraft(env, { templateKey: "shop.order_completed", channel: "email" }, "test-admin"),
+    /전환 준비 템플릿/,
+  );
 });
 
 test("KR Repair emits four SMS milestones, Ticket email for other states, and dry-run fallback", async (t) => {
