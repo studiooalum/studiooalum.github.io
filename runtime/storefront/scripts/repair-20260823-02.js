@@ -1,4 +1,4 @@
-import { initRepairRequest as initExistingRepairRequest } from "./repair-20260818-02.js";
+import { initRepairRequest as initExistingRepairRequest } from "./repair-20260818-02.js?v=20260825-01";
 
 const SUBMISSION_STORAGE_KEY = "studiooalum:repair-submission-id";
 

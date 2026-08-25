@@ -133,14 +133,6 @@
                 <span>최종 가격 <em>선택</em></span>
                 <input type="number" name="finalAmount" min="0" max="100000000" step="100" inputmode="numeric" placeholder="KRW">
               </label>
-              <label class="fulfillment-field">
-                <span>고객 국가</span>
-                <select name="countryCode">
-                  <option value="">미확인 · 이메일 안내</option>
-                  <option value="KR">대한민국 · 문자 안내</option>
-                  <option value="OTHER">해외 · 이메일 안내</option>
-                </select>
-              </label>
               <label class="fulfillment-field" data-repair-payment-field>
                 <span>입금 계좌</span>
                 <input type="text" name="bankAccount" maxlength="500" autocomplete="off" placeholder="은행명 · 계좌번호 · 예금주">
@@ -228,7 +220,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260824-02"></script>
+  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260825-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
 

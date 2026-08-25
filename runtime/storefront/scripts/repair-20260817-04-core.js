@@ -21,6 +21,10 @@ const dom = {
   emailField: document.querySelector(".js-repair-email-field"),
   emailInput: document.querySelector(".js-repair-email-input"),
   phoneInput: document.querySelector(".js-repair-phone-input"),
+  shippingAddress: document.querySelector(".js-repair-shipping-address"),
+  useAccountAddressField: document.querySelector(".js-repair-use-account-address-field"),
+  useAccountAddress: document.querySelector(".js-repair-use-account-address"),
+  useAccountAddressLabel: document.querySelector(".js-repair-use-account-address-label"),
   imageInput: document.querySelector(".js-repair-image-input"),
   imageList: document.querySelector(".js-repair-image-preview-list"),
   imageHelp: document.querySelector(".js-repair-image-help"),
@@ -40,6 +44,9 @@ const state = {
   isDrawerOpen: false,
   trigger: null,
   accountEmail: "",
+  accountAddress: "",
+  accountSyncVersion: 0,
+  manualShippingAddress: "",
   gallery: [],
 };
 
@@ -54,6 +61,7 @@ const FIELD_LABELS = {
   customerName: "성함",
   phone: "연락처",
   email: "이메일",
+  shippingAddress: "발송지 주소",
   itemType: "제품 종류",
   issueDescription: "손상 부위",
   desiredResult: "수선 방향",
@@ -188,24 +196,71 @@ async function initPublicGallery() {
   bindGalleryDots(track, dots);
 }
 
-async function syncApplicantEmail() {
+function formatAccountAddress(user) {
+  const address1 = String(user?.address1 || "").trim();
+  if (!address1) return "";
+  const zipcode = String(user?.zipcode || "").trim();
+  return [zipcode ? `[${zipcode}]` : "", address1, user?.address2]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+function syncAccountAddressControl() {
+  if (!dom.useAccountAddressField || !dom.useAccountAddress || !dom.useAccountAddressLabel) return;
+  const isMember = Boolean(state.accountEmail);
+  dom.useAccountAddressField.hidden = !isMember;
+  dom.useAccountAddress.checked = false;
+  dom.useAccountAddress.disabled = !state.accountAddress;
+  dom.useAccountAddressLabel.textContent = state.accountAddress ? "내 주소 사용" : "저장된 내 주소 없음";
+}
+
+function clearAccountAutofill() {
+  state.accountSyncVersion += 1;
+  const usedAccountAddress = Boolean(dom.useAccountAddress?.checked);
+  if (usedAccountAddress && dom.shippingAddress) {
+    dom.shippingAddress.value = "";
+    dom.shippingAddress.readOnly = false;
+  }
+  if (dom.useAccountAddress) {
+    dom.useAccountAddress.checked = false;
+    dom.useAccountAddress.disabled = true;
+  }
+  if (dom.useAccountAddressField) dom.useAccountAddressField.hidden = true;
+  if (dom.emailField?.hidden && dom.emailInput) {
+    dom.emailField.hidden = false;
+    dom.emailInput.required = true;
+    dom.emailInput.value = "";
+  }
+  state.accountEmail = "";
+  state.accountAddress = "";
+}
+
+async function syncApplicantAccount() {
   if (!dom.emailField || !dom.emailInput) return;
 
+  const syncVersion = ++state.accountSyncVersion;
+  let accountUser = null;
   try {
-    const response = await fetch("./api/auth/session", {
+    const response = await fetch("./api/auth/address", {
       headers: { Accept: "application/json" },
       credentials: "same-origin",
     });
     const payload = await response.json().catch(() => null);
-    state.accountEmail = payload?.authenticated ? String(payload.user?.email || "").trim() : "";
+    accountUser = response.ok && payload?.authenticated ? payload.user || null : null;
   } catch {
-    state.accountEmail = "";
+    accountUser = null;
   }
 
+  if (syncVersion !== state.accountSyncVersion) return;
+
+  state.accountEmail = String(accountUser?.email || "").trim();
+  state.accountAddress = formatAccountAddress(accountUser);
   const usesAccountEmail = Boolean(state.accountEmail);
   dom.emailField.hidden = usesAccountEmail;
   dom.emailInput.required = !usesAccountEmail;
-  dom.emailInput.value = usesAccountEmail ? state.accountEmail : "";
+  if (usesAccountEmail) dom.emailInput.value = state.accountEmail;
+  syncAccountAddressControl();
 }
 
 function formatFileSize(value) {
@@ -220,13 +275,6 @@ function setStatus(message = "", type = "info") {
   dom.status.classList.remove("is-success", "is-error");
   if (type === "success") dom.status.classList.add("is-success");
   if (type === "error") dom.status.classList.add("is-error");
-}
-
-function sanitizePhoneInput() {
-  if (!dom.phoneInput) return;
-
-  const sanitized = dom.phoneInput.value.replace(/[^\d-]/g, "");
-  if (dom.phoneInput.value !== sanitized) dom.phoneInput.value = sanitized;
 }
 
 function sanitizeEmailInput() {
@@ -256,7 +304,6 @@ function getValidationOwner(control) {
 function getValidationMessage(invalidControls) {
   const labels = [...new Set(invalidControls.map((control) => {
     if (control.name === "email" && control.validity.typeMismatch) return "이메일 형식";
-    if (control.name === "phone" && control.validity.patternMismatch) return "연락처 형식";
     return FIELD_LABELS[control.name] || "입력 내용";
   }))];
 
@@ -449,6 +496,9 @@ function addSelectedImages(fileList) {
 
 function resetForm() {
   dom.form?.reset();
+  state.manualShippingAddress = "";
+  if (dom.shippingAddress) dom.shippingAddress.readOnly = false;
+  syncAccountAddressControl();
   state.files = [];
   refreshImageList();
   clearValidationFeedback();
@@ -502,7 +552,7 @@ async function submitRepairRequest() {
 export function initRepairRequest() {
   if (!dom.form) return;
 
-  void syncApplicantEmail();
+  void syncApplicantAccount();
   void initPublicGallery();
 
   dom.apply?.addEventListener("click", openDrawer);
@@ -528,8 +578,22 @@ export function initRepairRequest() {
     void submitRepairRequest();
   });
 
-  dom.phoneInput?.addEventListener("input", sanitizePhoneInput);
   dom.emailInput?.addEventListener("input", sanitizeEmailInput);
+  dom.shippingAddress?.addEventListener("input", () => {
+    if (!dom.useAccountAddress?.checked) state.manualShippingAddress = dom.shippingAddress.value;
+  });
+  dom.useAccountAddress?.addEventListener("change", () => {
+    if (!dom.shippingAddress) return;
+    if (dom.useAccountAddress.checked && state.accountAddress) {
+      state.manualShippingAddress = dom.shippingAddress.value;
+      dom.shippingAddress.value = state.accountAddress;
+      dom.shippingAddress.readOnly = true;
+    } else {
+      dom.shippingAddress.readOnly = false;
+      dom.shippingAddress.value = state.manualShippingAddress;
+    }
+    updateValidationFeedback();
+  });
   dom.form.addEventListener("input", updateValidationFeedback);
   dom.form.addEventListener("change", updateValidationFeedback);
 
@@ -539,8 +603,14 @@ export function initRepairRequest() {
     if (event.key === "Escape" && state.isDrawerOpen) closeDrawer();
   });
   window.addEventListener("pagehide", () => {
+    clearAccountAutofill();
     setDrawerOpen(false, { restoreFocus: false });
     resetObjectUrls();
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (!event.persisted) return;
+    clearAccountAutofill();
+    void syncApplicantAccount();
   });
   refreshImageList();
 }

@@ -1469,6 +1469,37 @@ export async function readAccount(env, userId) {
   };
 }
 
+export async function readAccountAddress(env, userId) {
+  const database = requireDb(env);
+  const userRow = await database.prepare(`
+    SELECT id, email, email_normalized, zipcode, address1, address2
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+  `).bind(userId).first();
+  if (!userRow) {
+    throw Object.assign(new Error("회원 정보를 찾을 수 없습니다."), { status: 404 });
+  }
+
+  const needsOrderFallback = !userRow.zipcode || !userRow.address1;
+  const latestOrderProfile = needsOrderFallback
+    ? await database.prepare(`
+      SELECT zipcode, address1, address2
+      FROM orders
+      WHERE user_id = ? OR lower(customer_email) = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `).bind(userRow.id, userRow.email_normalized).first()
+    : null;
+
+  return {
+    email: userRow.email || "",
+    zipcode: userRow.zipcode || latestOrderProfile?.zipcode || "",
+    address1: userRow.address1 || latestOrderProfile?.address1 || "",
+    address2: userRow.address2 || latestOrderProfile?.address2 || "",
+  };
+}
+
 export async function updateAccount(env, userId, input) {
   const database = requireDb(env);
   const now = nowIso();

@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-09.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260818-04.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260825-01">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -137,14 +137,15 @@
               </label>
               <label class="repair-field">
                 <span>연락처</span>
-                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="tel" pattern="\+?[0-9][0-9\s-]{7,19}" maxlength="60" placeholder="010-0000-0000" title="전화번호 형식으로 입력해주세요." required>
+                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="tel" maxlength="60" placeholder="010-0000-0000" required>
               </label>
-              <label class="repair-field">
-                <span>발송 국가</span>
-                <select name="countryCode" required>
-                  <option value="KR" selected>대한민국</option>
-                  <option value="OTHER">해외</option>
-                </select>
+              <label class="repair-checkbox repair-use-account-address js-repair-use-account-address-field" hidden>
+                <input class="js-repair-use-account-address" type="checkbox">
+                <span class="js-repair-use-account-address-label">내 주소 사용</span>
+              </label>
+              <label class="repair-field repair-shipping-address-field">
+                <span>발송지 주소</span>
+                <textarea class="js-repair-shipping-address" name="shippingAddress" rows="3" minlength="5" maxlength="500" autocomplete="street-address" placeholder="우편번호와 상세 주소를 입력해주세요. 해외 주소는 국가명을 포함해주세요." required></textarea>
               </label>
               <label class="repair-field js-repair-email-field">
                 <span>이메일</span>
@@ -192,7 +193,7 @@
           <section class="repair-request-form__section repair-request-form__consent">
             <label class="repair-checkbox">
               <input type="checkbox" name="privacyConsent" required>
-              <span>수선 검토를 위해 입력한 연락처와 사진을 수집·이용하는 것에 동의합니다.</span>
+              <span>수선 검토를 위해 입력한 연락처, 발송지 주소와 사진을 수집·이용하는 것에 동의합니다.</span>
             </label>
           </section>
 
@@ -221,7 +222,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260825-01";
 
     initSiteChrome();
     initCartUI();

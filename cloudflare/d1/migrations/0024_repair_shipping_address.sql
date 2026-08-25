@@ -1,0 +1,1 @@
+ALTER TABLE repair_requests ADD COLUMN shipping_address TEXT NOT NULL DEFAULT '';

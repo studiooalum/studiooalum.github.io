@@ -1,3 +1,29 @@
+.repair-hero-copy h1 {
+  font-family: var(--font-book);
+  font-weight: 400;
+}
+
+.repair-apply-btn {
+  margin-top: 16px;
+}
+
+.repair-request-form .repair-choice-group > div {
+  margin-top: 14px;
+}
+
+.repair-use-account-address {
+  width: fit-content;
+}
+
+.repair-use-account-address[hidden] {
+  display: none !important;
+}
+
+.repair-shipping-address-field textarea[readonly] {
+  background: #f3f3f1;
+  color: rgba(17, 17, 17, 0.72);
+}
+
 @media (max-width: 768px) {
   html:has(body.repair-page) {
     scrollbar-gutter: auto;
@@ -85,7 +111,7 @@
     width: 100%;
     min-width: 0;
     min-height: 50px;
-    margin-top: 30px;
+    margin-top: 40px;
     padding: 0 16px;
     font-size: 14.5px;
     line-height: 21.5px;

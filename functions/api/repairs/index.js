@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { readSession } from "../../../cloudflare/lib/auth.js";
+import { inferRepairCountryCode } from "../../../cloudflare/lib/repair-address.js";
 import { buildRepairImageKey } from "../../../cloudflare/lib/r2.js";
 import {
   assertRepairStorage,
@@ -15,20 +16,25 @@ import { errorResponse, json, noContent, validationError } from "../../../cloudf
 const MAX_IMAGE_COUNT = 4;
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
-const PHONE_PATTERN = /^\+?[0-9][0-9\s-]{7,19}$/;
 const SUBMISSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,119}$/;
 
 const repairRequestSchema = z.object({
   customerName: z.string().trim().min(1, "성함을 입력해주세요.").max(120),
   email: z.string().trim().max(320).refine((value) => !value || z.string().email().safeParse(value).success, "이메일 형식을 확인해주세요.").default(""),
-  phone: z.string().trim().min(1, "연락처를 입력해주세요.").max(60).regex(PHONE_PATTERN, "연락처 형식을 확인해주세요."),
-  countryCode: z.enum(["KR", "OTHER"], { message: "발송 국가를 선택해주세요." }),
+  phone: z.string().trim().min(1, "연락처를 입력해주세요.").max(60).refine((value) => value.replace(/\D/g, "").length >= 7, "연락처 형식을 확인해주세요."),
+  shippingAddress: z.string().trim().max(500, "발송지 주소는 500자 이하로 입력해주세요.").optional().default(""),
+  countryCode: z.enum(["KR", "OTHER"]).optional(),
   itemType: z.enum(["자켓", "상의", "하의", "기타", "데님", "니트", "특수소재", "가죽"], { message: "제품 종류를 선택해주세요." }),
   issueDescription: z.string().trim().min(1, "손상된 부분을 입력해주세요.").max(4000),
   desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." }),
   budgetNote: z.string().trim().max(1000).default(""),
   archiveConsent: z.boolean().optional().default(false),
   privacyConsent: z.literal(true, { message: "개인정보 수집·이용에 동의해주세요." }),
+}).refine((value) => value.shippingAddress
+  ? value.shippingAddress.length >= 5
+  : Boolean(value.countryCode), {
+  message: "발송지 주소를 입력해주세요.",
+  path: ["shippingAddress"],
 });
 
 function asBoolean(value) {
@@ -68,7 +74,8 @@ function buildRequestPayload(formData) {
     customerName: asText(formData.get("customerName")),
     email: asText(formData.get("email")),
     phone: asText(formData.get("phone")),
-    countryCode: asText(formData.get("countryCode")),
+    shippingAddress: asText(formData.get("shippingAddress")),
+    countryCode: asText(formData.get("countryCode")) || undefined,
     itemType: asText(formData.get("itemType")),
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
     desiredResult: asText(formData.get("desiredResult")),
@@ -105,7 +112,18 @@ async function createSubmissionFingerprint(data, files) {
       digest: Array.from(new Uint8Array(fileDigest), (byte) => byte.toString(16).padStart(2, "0")).join(""),
     });
   }
-  const payload = JSON.stringify({
+  const payload = JSON.stringify(data.shippingAddress ? {
+    customerName: data.customerName,
+    email: data.email,
+    phone: data.phone,
+    shippingAddress: data.shippingAddress,
+    itemType: data.itemType,
+    issueDescription: data.issueDescription,
+    desiredResult: data.desiredResult,
+    budgetNote: data.budgetNote,
+    archiveConsent: data.archiveConsent,
+    files: fileFingerprints,
+  } : {
     customerName: data.customerName,
     email: data.email,
     phone: data.phone,
@@ -228,7 +246,10 @@ export async function onRequestPost(context) {
       submissionId,
       submissionFingerprint,
       customerId: session?.user?.id || null,
-      countryCode: parsed.data.countryCode,
+      countryCode: parsed.data.shippingAddress
+        ? inferRepairCountryCode({ shippingAddress: parsed.data.shippingAddress })
+        : parsed.data.countryCode,
+      shippingAddress: parsed.data.shippingAddress,
       email: applicantEmail,
       preferredContact: "phone",
       contactPreference: "phone",
@@ -253,7 +274,7 @@ export async function onRequestPost(context) {
       requestNumber: receipt.requestNumber,
       ticketId: receipt.ticketId,
       submittedAt: receipt.submittedAt,
-      message: "수선 접수가 완료되었습니다. 안내 이메일이 발송 대기열에 저장되었습니다.",
+      message: "수선 접수가 완료되었습니다. 안내가 발송 대기열에 저장되었습니다.",
       notificationStatus: "queued",
     }, { status: 201 });
   } catch (error) {

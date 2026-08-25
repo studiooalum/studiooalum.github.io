@@ -132,7 +132,6 @@ function getFormRequestPayload(request) {
     carrier: String(dom.form.elements.carrier.value || "").trim(),
     trackingNumber: String(dom.form.elements.trackingNumber.value || "").trim(),
     trackingUrl: String(dom.form.elements.trackingUrl.value || "").trim(),
-    countryCode: String(dom.form.elements.countryCode.value || "").trim(),
     adminNote: String(dom.form.elements.adminNote.value || "").trim(),
   };
 }
@@ -315,6 +314,7 @@ function renderCustomerDetails(request) {
   dom.customer.innerHTML = `
     <dl>
       <div><dt>연락처</dt><dd>${escapeHtml(request.phone || "-")}${email ? `<br>${escapeHtml(email)}` : ""}</dd></div>
+      <div><dt>발송지 주소</dt><dd>${escapeHtml(request.shippingAddress || "기존 접수 · 주소 미수집")}<br>${request.countryCode === "KR" ? "국내 발송" : request.countryCode === "OTHER" ? "해외 발송" : "국가 미확인"}</dd></div>
       <div><dt>수선 의뢰 제품에 대한 설명</dt><dd>${escapeHtml(request.issueDescription || request.repairDetails || "-")}</dd></div>
       <div><dt>수선 의뢰 기한</dt><dd>${escapeHtml(request.desiredCompletionDate || "미입력")}</dd></div>
       ${legacyDetails}
@@ -422,7 +422,6 @@ function renderSelectedRequest() {
   dom.form.elements.carrier.value = request.carrier || "";
   dom.form.elements.trackingNumber.value = request.trackingNumber || "";
   dom.form.elements.trackingUrl.value = request.trackingUrl || "";
-  dom.form.elements.countryCode.value = request.countryCode || "";
   dom.form.elements.adminNote.value = request.adminNote || "";
   if (dom.requestNumber) dom.requestNumber.textContent = request.requestNumber || "";
   if (dom.title) dom.title.textContent = `${request.customerName || "수선"} · 수선 의뢰`;

@@ -1,4 +1,4 @@
-import { initRepairRequest as initExistingRepairRequest } from "./repair-20260817-04.js";
+import { initRepairRequest as initExistingRepairRequest } from "./repair-20260817-04.js?v=20260825-01";
 
 function initRepairPricePanelHeight() {
   const panels = Array.from(document.querySelectorAll("[data-repair-price-panel]"));

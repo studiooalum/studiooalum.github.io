@@ -1,4 +1,4 @@
-import { initRepairRequest as initExistingRepairRequest } from "./repair-20260817-05.js";
+import { initRepairRequest as initExistingRepairRequest } from "./repair-20260817-05.js?v=20260825-01";
 
 function initRepairInfoAccordions() {
   const accordions = Array.from(document.querySelectorAll(".repair-stage__rail details"));

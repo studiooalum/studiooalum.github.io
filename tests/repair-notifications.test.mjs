@@ -25,6 +25,7 @@ import { createRepairTicketMessage, markRepairTicketRead, readRepairTicketForRep
 import { createRepairTicketAccessToken, verifyRepairTicketAccessToken } from "../cloudflare/lib/repair-ticket-tokens.js";
 import { onRequestPost as submitRepairRequest } from "../functions/api/repairs/index.js";
 import { onRequestPost as postRepairTicketMessage } from "../functions/api/repairs/tickets/[id].js";
+import { inferRepairCountryCode } from "../cloudflare/lib/repair-address.js";
 
 class D1BoundStatement {
   constructor(statement, values) {
@@ -137,6 +138,7 @@ async function createInitialRepair(env, suffix = "A", overrides = {}) {
     email: `customer-${suffix.toLowerCase()}@example.com`,
     phone: "010-1234-5678",
     countryCode: "OTHER",
+    shippingAddress: "123 Main Street, Portland, OR, USA",
     itemType: "자켓",
     issueDescription: "소매가 찢어졌습니다.",
     repairDetails: "소매가 찢어졌습니다.",
@@ -155,7 +157,7 @@ function createRepairForm({ imageBody = "image-a", email = "customer@example.com
   formData.set("customerName", "홍길동");
   formData.set("email", email);
   formData.set("phone", "010-1234-5678");
-  formData.set("countryCode", "OTHER");
+  formData.set("shippingAddress", "123 Main Street, Portland, OR, USA");
   formData.set("itemType", "자켓");
   formData.set("issueDescription", "소매가 찢어졌습니다.");
   formData.set("desiredResult", "수선 흔적을 살리고 싶어요");
@@ -220,6 +222,28 @@ test("Repair gallery color migration preserves legacy rows", (t) => {
   assert.equal(row.id, "RPG_LEGACY");
   assert.equal(row.r2_key, "repair-gallery/legacy.jpg");
   assert.equal(row.average_rgb, "");
+});
+
+test("Repair shipping address derives country and migration preserves legacy rows", (t) => {
+  assert.equal(inferRepairCountryCode({ shippingAddress: "[02450] 서울특별시 동대문구 이문로 145" }), "KR");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "145 Imun-ro, Seoul, South Korea 02450" }), "KR");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "123 Main Street, Portland, OR, USA" }), "OTHER");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "일본 오사카시 주오구 1-2-3" }), "OTHER");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "베트남 호치민시 1군" }), "OTHER");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "Pyongyang, North Korea" }), "OTHER");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "Korea Town, Los Angeles" }), "OTHER");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "South Korean Cultural Center, LA" }), "OTHER");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "서울시립대학교 기숙사" }), "OTHER");
+  assert.equal(inferRepairCountryCode({ shippingAddress: "[한국] 경기도 성남시" }), "KR");
+
+  const database = new D1Database();
+  t.after(() => database.close());
+  database.exec("CREATE TABLE repair_requests (id TEXT PRIMARY KEY)");
+  database.exec("INSERT INTO repair_requests (id) VALUES ('RPR_LEGACY')");
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0024_repair_shipping_address.sql", import.meta.url), "utf8"));
+  const row = database.prepare("SELECT id, shipping_address FROM repair_requests WHERE id = ?").bind("RPR_LEGACY").first();
+  assert.equal(row.id, "RPR_LEGACY");
+  assert.equal(row.shipping_address, "");
 });
 
 test("notification migration preserves completed work and locks archived legacy cases", (t) => {
@@ -289,12 +313,45 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   assert.equal(repeated.requestNumber, first.requestNumber);
   assert.equal(putCount, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_requests").first().count, 1);
+  const storedRequest = database.prepare("SELECT shipping_address, country_code FROM repair_requests LIMIT 1").first();
+  assert.equal(storedRequest.shipping_address, "123 Main Street, Portland, OR, USA");
+  assert.equal(storedRequest.country_code, "OTHER");
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_tickets").first().count, 1);
 
   const conflictingResponse = await submitRepairRequest(createRepairApiContext(env, submissionId, { imageBody: "different-image" }));
   assert.equal(conflictingResponse.status, 409);
   assert.match((await conflictingResponse.json()).error, /다른 접수 내용/);
+
+  const legacyForm = createRepairForm({ imageBody: "legacy-image" });
+  legacyForm.delete("shippingAddress");
+  legacyForm.set("countryCode", "KR");
+  const legacyResponse = await submitRepairRequest({
+    env,
+    request: new Request("https://studiooalum.test/api/repairs", {
+      method: "POST",
+      headers: { "Idempotency-Key": "repair:44444444-4444-4444-8444-444444444444" },
+      body: legacyForm,
+    }),
+  });
+  assert.equal(legacyResponse.status, 201);
+  const legacyRequest = database.prepare("SELECT shipping_address, country_code FROM repair_requests WHERE submission_id = ?").bind("repair:44444444-4444-4444-8444-444444444444").first();
+  assert.equal(legacyRequest.shipping_address, "");
+  assert.equal(legacyRequest.country_code, "KR");
+
+  const shortAddressForm = createRepairForm({ imageBody: "short-address-image" });
+  shortAddressForm.set("shippingAddress", "US");
+  shortAddressForm.set("countryCode", "OTHER");
+  const shortAddressResponse = await submitRepairRequest({
+    env,
+    request: new Request("https://studiooalum.test/api/repairs", {
+      method: "POST",
+      headers: { "Idempotency-Key": "repair:55555555-5555-4555-8555-555555555555" },
+      body: shortAddressForm,
+    }),
+  });
+  assert.equal(shortAddressResponse.status, 400);
+  assert.match((await shortAddressResponse.json()).error, /발송지 주소/);
 });
 
 test("submission stores request, event, and rendered outbox atomically", async (t) => {
@@ -660,7 +717,11 @@ test("KR Repair emits four SMS milestones, Ticket email for other states, and dr
     RESEND_FROM_EMAIL: "Studio OALUM <noreply@example.com>",
   });
   t.after(() => database.close());
-  const receipt = await createInitialRepair(env, "KR", { countryCode: "KR", email: "kr@example.com" });
+  const receipt = await createInitialRepair(env, "KR", {
+    countryCode: "KR",
+    shippingAddress: "[02450] 서울특별시 동대문구 이문로 145",
+    email: "kr@example.com",
+  });
   assert.equal(receipt.notificationIds.length, 1);
 
   await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 1, status: "item_received" });
@@ -853,6 +914,7 @@ test("unified guest lookup resolves ORD, WKS, and REP references with short-live
     customerName: "홍길동",
     email: "guest@example.com",
     phone: "010-1234-5678",
+    shippingAddress: "[02400] 서울시 테스트로 1",
     itemType: "자켓",
     issueDescription: "테스트 수선",
     repairDetails: "테스트 수선",

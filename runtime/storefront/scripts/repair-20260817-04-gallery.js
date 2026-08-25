@@ -1,4 +1,4 @@
-import { initRepairRequest as initLegacyRepairRequest } from "./repair-20260817-04-core.js";
+import { initRepairRequest as initLegacyRepairRequest } from "./repair-20260817-04-core.js?v=20260825-01";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock-20260816-01.js";
 
 const LIGHTBOX_SCROLL_LOCK_KEY = "repair-gallery-lightbox";

@@ -371,6 +371,7 @@ CREATE TABLE IF NOT EXISTS repair_requests (
   submission_fingerprint TEXT NOT NULL DEFAULT '',
   customer_id TEXT,
   country_code TEXT NOT NULL DEFAULT '',
+  shipping_address TEXT NOT NULL DEFAULT '',
   customer_name TEXT NOT NULL,
   email TEXT NOT NULL,
   email_normalized TEXT NOT NULL,

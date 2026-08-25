@@ -12,6 +12,7 @@ import {
   prepareRepairStatusTicketBundle,
 } from "./repair-tickets.js";
 import { normalizeImageRgb } from "./image-colors.js";
+import { inferRepairCountryCode, normalizeRepairShippingAddress } from "./repair-address.js";
 import { buildRepairGalleryUrl } from "./r2.js";
 
 function getDb(env) {
@@ -145,6 +146,7 @@ function formatRepairRequest(row) {
     status,
     statusLabel: REPAIR_STATUS_LABELS[status] || status,
     countryCode: row.country_code || "",
+    shippingAddress: row.shipping_address || "",
     version: Number(row.version || 1),
     isReadOnly: status === "closed",
     adminNote: row.admin_note,
@@ -250,8 +252,12 @@ export async function createRepairRequest(env, input, images = []) {
   const preferredContact = normalizePreferredContact(input.preferredContact || input.contactPreference);
   const material = cleanText(input.material || input.itemMaterial, 120);
   const issueDescription = cleanText(input.issueDescription || input.repairDetails, 4000);
+  const shippingAddress = normalizeRepairShippingAddress(input.shippingAddress);
+  const countryCode = shippingAddress
+    ? inferRepairCountryCode({ shippingAddress })
+    : cleanText(input.countryCode, 8).toUpperCase();
 
-  if (!requestId || !requestNumber || !customerName || !emailNormalized || !cleanText(input.phone, 60) || !issueDescription) {
+  if (!requestId || !requestNumber || !customerName || !emailNormalized || !cleanText(input.phone, 60) || !countryCode || !issueDescription) {
     throw Object.assign(new Error("수선 접수 정보를 다시 확인해주세요."), { status: 400 });
   }
 
@@ -267,7 +273,8 @@ export async function createRepairRequest(env, input, images = []) {
     status: "received",
     version: 1,
     customerId: cleanText(input.customerId, 80) || null,
-    countryCode: cleanText(input.countryCode, 8).toUpperCase(),
+    countryCode,
+    shippingAddress,
   };
   const ticketBundle = await prepareInitialRepairTicketBundle(env, requestForNotification, eventId, now);
   const statements = [
@@ -280,6 +287,7 @@ export async function createRepairRequest(env, input, images = []) {
           submission_fingerprint,
           customer_id,
           country_code,
+          shipping_address,
           customer_name,
           email,
           email_normalized,
@@ -305,7 +313,7 @@ export async function createRepairRequest(env, input, images = []) {
           version,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
       `)
       .bind(
         requestId,
@@ -313,7 +321,8 @@ export async function createRepairRequest(env, input, images = []) {
         submissionId,
         submissionFingerprint,
         cleanText(input.customerId, 80) || null,
-        cleanText(input.countryCode, 8).toUpperCase(),
+        countryCode,
+        shippingAddress,
         customerName,
         email,
         emailNormalized,
@@ -846,7 +855,7 @@ export async function updateRepairRequest(env, input) {
   const carrier = hasOwn(input, "carrier") ? cleanText(input.carrier, 120) : existing.carrier;
   const trackingNumber = hasOwn(input, "trackingNumber") ? cleanText(input.trackingNumber, 160) : existing.tracking_number;
   const trackingUrl = hasOwn(input, "trackingUrl") ? cleanText(input.trackingUrl, 1000) : existing.tracking_url;
-  const countryCode = hasOwn(input, "countryCode") ? cleanText(input.countryCode, 8).toUpperCase() : existing.country_code;
+  const countryCode = existing.country_code;
   if (trackingUrl) {
     let parsedUrl;
     try {
@@ -879,8 +888,7 @@ export async function updateRepairRequest(env, input) {
     || paymentConfirmedAt !== existing.payment_confirmed_at
     || carrier !== existing.carrier
     || trackingNumber !== existing.tracking_number
-    || trackingUrl !== existing.tracking_url
-    || countryCode !== existing.country_code;
+    || trackingUrl !== existing.tracking_url;
   if (!changed) {
     return {
       ...(await readRepairAdminSnapshot(env)),
@@ -927,7 +935,7 @@ export async function updateRepairRequest(env, input) {
     UPDATE repair_requests
     SET status = ?, admin_note = ?, customer_message = ?, quote_amount = ?, final_amount = ?,
         bank_account = ?, payment_instructions = ?, payment_confirmed_at = ?, carrier = ?,
-        tracking_number = ?, tracking_url = ?, country_code = ?, accepted_at = ?, completed_at = ?,
+        tracking_number = ?, tracking_url = ?, accepted_at = ?, completed_at = ?,
         archived_at = ?, closed_at = ?, version = ?, updated_at = ?
     WHERE id = ? AND version = ?
   `).bind(
@@ -942,7 +950,6 @@ export async function updateRepairRequest(env, input) {
     carrier,
     trackingNumber,
     trackingUrl,
-    countryCode,
     acceptedAt,
     completedAt,
     archivedAt,

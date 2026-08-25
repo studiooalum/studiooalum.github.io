@@ -46,7 +46,6 @@ const repairUpdateSchema = z.object({
       return false;
     }
   }, "배송 조회 URL을 다시 확인해주세요.").optional(),
-  countryCode: z.enum(["", "KR", "OTHER"]).optional(),
 }).refine((request) => (
   request.status !== undefined
   || request.adminNote !== undefined
@@ -58,7 +57,6 @@ const repairUpdateSchema = z.object({
   || request.carrier !== undefined
   || request.trackingNumber !== undefined
   || request.trackingUrl !== undefined
-  || request.countryCode !== undefined
 ), {
   message: "변경할 수선 접수 정보를 입력해주세요.",
 });
