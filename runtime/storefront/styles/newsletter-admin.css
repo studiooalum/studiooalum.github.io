@@ -159,6 +159,25 @@
   letter-spacing: var(--tracking-korean);
 }
 
+.newsletter-admin-font-family-label {
+  display: inline-flex;
+  align-items: stretch;
+  min-height: 36px;
+  border-left: 1px solid #111;
+}
+
+.newsletter-admin-font-family {
+  width: 164px;
+  border: 0;
+  border-radius: 0;
+  padding: 0 30px 0 10px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .newsletter-admin-font-size-label {
   display: inline-flex;
   align-items: center;
@@ -196,24 +215,37 @@
 }
 
 .newsletter-admin-tool:hover,
-.newsletter-admin-tool:focus-visible {
+.newsletter-admin-tool:focus-visible,
+.newsletter-admin-tool[aria-pressed="true"] {
   background: #111;
   color: #fff;
   outline: 0;
 }
 
+.newsletter-admin-tool:disabled {
+  background: #fff;
+  color: rgba(17, 17, 17, 0.28);
+  cursor: not-allowed;
+}
+
 .newsletter-admin-editor {
   min-height: 420px;
-  padding: 20px;
-  outline: 0;
   font-family: var(--font-kor-body);
   font-size: 15px;
   line-height: 1.9;
   letter-spacing: var(--tracking-korean);
 }
 
-.newsletter-admin-editor:empty::before {
+.newsletter-admin-editor__content {
+  min-height: 420px;
+  padding: 20px;
+  outline: 0;
+}
+
+.newsletter-admin-editor__content p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
+  float: left;
+  height: 0;
   color: rgba(17, 17, 17, 0.4);
   pointer-events: none;
 }
@@ -359,6 +391,18 @@
   color: rgba(17, 17, 17, 0.62);
 }
 
+.newsletter-admin-editor hr,
+.newsletter-admin-preview hr {
+  margin: 30px 0;
+  border: 0;
+  border-top: 1px solid #111;
+}
+
+.newsletter-admin-editor .ProseMirror-selectednode {
+  outline: 2px solid #111;
+  outline-offset: 4px;
+}
+
 .newsletter-admin-settings {
   border: 1px solid rgba(17, 17, 17, 0.14);
 }
@@ -469,7 +513,15 @@
 
   .newsletter-admin-editor {
     min-height: 320px;
+  }
+
+  .newsletter-admin-editor__content {
+    min-height: 320px;
     padding: 14px;
+  }
+
+  .newsletter-admin-font-family {
+    width: 148px;
   }
 
   .newsletter-admin-action-bar {

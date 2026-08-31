@@ -1,4 +1,10 @@
 import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
+import { Editor, Node } from "@tiptap/core";
+import FontFamily from "@tiptap/extension-font-family";
+import Placeholder from "@tiptap/extension-placeholder";
+import TextAlign from "@tiptap/extension-text-align";
+import { FontSize, TextStyle } from "@tiptap/extension-text-style";
+import StarterKit from "@tiptap/starter-kit";
 
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
@@ -24,6 +30,7 @@ const dom = {
   imageSize: document.querySelector(".js-newsletter-admin-image-size"),
   imagePosition: document.querySelector(".js-newsletter-admin-image-position"),
   imageColumns: document.querySelector(".js-newsletter-admin-image-columns"),
+  fontFamily: document.querySelector(".js-newsletter-admin-font-family"),
   fontSize: document.querySelector(".js-newsletter-admin-font-size"),
   inlineImageInput: document.querySelector(".js-newsletter-admin-inline-image-input"),
   inlineImageButton: document.querySelector(".js-newsletter-admin-inline-image-upload"),
@@ -39,9 +46,9 @@ const state = {
   posts: [],
   selectedSlug: "",
   isDirty: false,
-  editorRange: null,
-  selectedImageFigure: null,
 };
+
+let editor = null;
 
 const IMAGE_LAYOUT_DEFAULTS = {
   align: "center",
@@ -56,6 +63,100 @@ const IMAGE_LAYOUT_VALUES = {
   position: new Set(["inline", "breakout"]),
   layout: new Set(["single", "pair-left", "pair-right"]),
 };
+
+const OalumTextAlign = TextAlign.extend({
+  addGlobalAttributes() {
+    return [{
+      types: this.options.types,
+      attributes: {
+        textAlign: {
+          default: this.options.defaultAlignment,
+          parseHTML: (element) => element.getAttribute("data-text-align") || element.style.textAlign || this.options.defaultAlignment,
+          renderHTML: (attributes) => attributes.textAlign
+            ? { "data-text-align": attributes.textAlign }
+            : {},
+        },
+      },
+    }];
+  },
+});
+
+function getImageElement(element) {
+  return element?.matches?.("img") ? element : element?.querySelector?.("img");
+}
+
+const FigureImage = Node.create({
+  name: "figureImage",
+  group: "block",
+  atom: true,
+  selectable: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      src: {
+        default: "",
+        parseHTML: (element) => getImageElement(element)?.getAttribute("src") || "",
+      },
+      alt: {
+        default: "",
+        parseHTML: (element) => getImageElement(element)?.getAttribute("alt") || "",
+      },
+      caption: {
+        default: "",
+        parseHTML: (element) => element.matches?.("figure") ? (element.querySelector("figcaption")?.textContent || "") : "",
+      },
+      align: {
+        default: IMAGE_LAYOUT_DEFAULTS.align,
+        parseHTML: (element) => normalizeImageLayoutValue("align", element.getAttribute("data-image-align")),
+      },
+      size: {
+        default: IMAGE_LAYOUT_DEFAULTS.size,
+        parseHTML: (element) => normalizeImageLayoutValue("size", element.getAttribute("data-image-size")),
+      },
+      position: {
+        default: IMAGE_LAYOUT_DEFAULTS.position,
+        parseHTML: (element) => normalizeImageLayoutValue("position", element.getAttribute("data-image-position")),
+      },
+      layout: {
+        default: IMAGE_LAYOUT_DEFAULTS.layout,
+        parseHTML: (element) => normalizeImageLayoutValue("layout", element.getAttribute("data-image-layout")),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      { tag: "figure", getAttrs: (element) => element.querySelector("img") ? null : false },
+      { tag: "img[src]" },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const { src, alt, caption, align, size, position, layout } = HTMLAttributes;
+    const figure = [
+      "figure",
+      {
+        "data-image-align": normalizeImageLayoutValue("align", align),
+        "data-image-size": normalizeImageLayoutValue("size", size),
+        "data-image-position": normalizeImageLayoutValue("position", position),
+        "data-image-layout": normalizeImageLayoutValue("layout", layout),
+      },
+      ["img", { src: String(src || ""), alt: String(alt || "") }],
+    ];
+    if (caption) figure.push(["figcaption", {}, String(caption)]);
+    return figure;
+  },
+
+  addCommands() {
+    return {
+      setFigureImage: (attributes) => ({ commands }) => commands.insertContent({
+        type: this.name,
+        attrs: attributes,
+      }),
+    };
+  },
+});
 
 function escapeHtml(value) {
   return String(value || "")
@@ -223,7 +324,7 @@ function renderCover(post = {}) {
 }
 
 function resetForm(post = null) {
-  if (!dom.form || !dom.editor) return;
+  if (!dom.form || !editor) return;
   const item = post || {};
   dom.form.elements.id.value = item.id || "";
   dom.form.elements.slug.value = item.slug || "";
@@ -234,9 +335,9 @@ function resetForm(post = null) {
   dom.form.elements.coverImageR2Key.value = item.coverImageR2Key || "";
   dom.form.elements.coverImageAlt.value = item.coverImageAlt || "";
   dom.form.elements.publishedAt.value = formatDateTimeLocal(item.publishedAt);
-  dom.editor.innerHTML = item.contentHtml || "";
-  state.selectedImageFigure = null;
+  editor.commands.setContent(item.contentHtml || "", { emitUpdate: false });
   syncImageLayoutControls();
+  syncToolbarState();
   renderCover(item);
   if (dom.postStatus) dom.postStatus.textContent = item.slug ? getStatusLabel(item.status) : "새 초안";
   setDirty(false);
@@ -246,7 +347,8 @@ function focusField(field, message) {
   const target = typeof field === "string" ? dom.form?.elements[field] : field;
   setStatus(dom.status, message, "error");
   target?.scrollIntoView({ behavior: "smooth", block: "center" });
-  target?.focus({ preventScroll: true });
+  if (target === dom.editor) editor?.commands.focus();
+  else target?.focus({ preventScroll: true });
 }
 
 function collectPost(status) {
@@ -261,7 +363,7 @@ function collectPost(status) {
     title,
     excerpt: String(dom.form?.elements.excerpt.value || "").trim(),
     categories: [...new Set(String(dom.form?.elements.categories.value || "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))].slice(0, 8),
-    contentHtml: String(dom.editor?.innerHTML || "").trim(),
+    contentHtml: String(editor?.getHTML() || "").trim(),
     coverImageUrl: String(dom.form?.elements.coverImageUrl.value || "").trim(),
     coverImageR2Key: String(dom.form?.elements.coverImageR2Key.value || "").trim(),
     coverImageAlt: String(dom.form?.elements.coverImageAlt.value || "").trim(),
@@ -275,7 +377,7 @@ function validatePost(post, status) {
     focusField("title", "제목을 입력해주세요.");
     return false;
   }
-  if (status === "published" && !dom.editor?.textContent.trim()) {
+  if (status === "published" && !editor?.getText().trim()) {
     focusField(dom.editor, "게시하려면 본문을 작성해주세요.");
     return false;
   }
@@ -366,50 +468,22 @@ async function archivePost() {
   }
 }
 
-function saveEditorRange() {
-  const selection = window.getSelection();
-  if (!selection?.rangeCount || !dom.editor?.contains(selection.anchorNode)) return;
-  state.editorRange = selection.getRangeAt(0).cloneRange();
-}
-
-function restoreEditorRange() {
-  if (!state.editorRange || !dom.editor) return;
-  const selection = window.getSelection();
-  selection?.removeAllRanges();
-  selection?.addRange(state.editorRange);
-}
-
 function normalizeImageLayoutValue(type, value) {
   const normalized = String(value || "").trim().toLowerCase();
   return IMAGE_LAYOUT_VALUES[type].has(normalized) ? normalized : IMAGE_LAYOUT_DEFAULTS[type];
 }
 
-function getImageFigureFromNode(node) {
-  const element = node instanceof Element ? node : node?.parentElement;
-  const figure = element?.closest("figure");
-  return figure?.querySelector("img") ? figure : null;
-}
-
-function getSelectedImageFigure() {
-  if (state.selectedImageFigure?.isConnected && dom.editor?.contains(state.selectedImageFigure)) {
-    return state.selectedImageFigure;
-  }
-
-  const selection = window.getSelection();
-  return selection?.rangeCount ? getImageFigureFromNode(selection.anchorNode) : null;
-}
-
-function syncImageLayoutControls(figure = getSelectedImageFigure()) {
+function syncImageLayoutControls() {
   if (!dom.imageLayout) return;
-  const selected = figure || null;
-  state.selectedImageFigure = selected;
+  const selected = Boolean(editor?.isActive("figureImage"));
   dom.imageLayout.hidden = !selected;
   if (!selected) return;
 
-  const align = normalizeImageLayoutValue("align", selected.getAttribute("data-image-align"));
-  const size = normalizeImageLayoutValue("size", selected.getAttribute("data-image-size"));
-  const position = normalizeImageLayoutValue("position", selected.getAttribute("data-image-position"));
-  const layout = normalizeImageLayoutValue("layout", selected.getAttribute("data-image-layout"));
+  const attributes = editor.getAttributes("figureImage");
+  const align = normalizeImageLayoutValue("align", attributes.align);
+  const size = normalizeImageLayoutValue("size", attributes.size);
+  const position = normalizeImageLayoutValue("position", attributes.position);
+  const layout = normalizeImageLayoutValue("layout", attributes.layout);
   if (dom.imageSize) dom.imageSize.value = size;
   if (dom.imagePosition) dom.imagePosition.value = position;
   if (dom.imageColumns) dom.imageColumns.value = layout;
@@ -419,122 +493,163 @@ function syncImageLayoutControls(figure = getSelectedImageFigure()) {
 }
 
 function applyImageLayout(type, value) {
-  const figure = getSelectedImageFigure();
-  if (!figure) {
+  if (!editor?.isActive("figureImage")) {
     setStatus(dom.status, "레이아웃을 바꿀 본문 이미지를 선택해주세요.", "error");
     return;
   }
 
   const normalized = normalizeImageLayoutValue(type, value);
-  const attribute = {
-    align: "data-image-align",
-    size: "data-image-size",
-    position: "data-image-position",
-    layout: "data-image-layout",
-  }[type];
-  figure.setAttribute(attribute, normalized);
-  syncImageLayoutControls(figure);
-  markEditorDirty();
+  editor.chain().focus().updateAttributes("figureImage", { [type]: normalized }).run();
+  syncImageLayoutControls();
 }
 
 function markEditorDirty() {
   setDirty(true);
 }
 
-function insertHtmlAtSelection(html) {
-  if (!dom.editor) return;
-  dom.editor.focus();
-  restoreEditorRange();
-  document.execCommand("insertHTML", false, html);
-  saveEditorRange();
-  markEditorDirty();
-}
-
-function applyTextAlignment(alignment) {
-  const selection = window.getSelection();
-  if (!selection?.rangeCount || selection.isCollapsed || !dom.editor?.contains(selection.anchorNode)) {
-    setStatus(dom.status, "정렬할 텍스트를 드래그해 선택해주세요.", "error");
-    return;
-  }
-
-  const node = selection.anchorNode instanceof Element ? selection.anchorNode : selection.anchorNode?.parentElement;
-  const block = node?.closest("p, h2, h3, blockquote, li");
-  if (!block || !dom.editor.contains(block)) {
-    setStatus(dom.status, "문단, 제목 또는 인용문 안에서 정렬을 선택해주세요.", "error");
-    return;
-  }
-
-  block.setAttribute("data-text-align", alignment);
-  saveEditorRange();
-  markEditorDirty();
-}
-
 function applyTextFontSize(value) {
-  restoreEditorRange();
-  const selection = window.getSelection();
   const size = Math.round(Number(value));
-  if (!selection?.rangeCount || selection.isCollapsed || !dom.editor?.contains(selection.anchorNode) || size < 8 || size > 40) {
-    setStatus(dom.status, "크기를 바꿀 텍스트를 드래그해 선택해주세요.", "error");
+  if (!editor || size < 8 || size > 40) {
+    setStatus(dom.status, "글자 크기는 8px부터 40px까지 설정할 수 있습니다.", "error");
     return;
   }
-  const range = selection.getRangeAt(0);
-  const span = document.createElement("span");
-  span.setAttribute("data-font-size", String(size));
-  span.style.fontSize = `${size}px`;
+  editor.chain().focus().setFontSize(`${size}px`).run();
+}
+
+function applyFontFamily(value) {
+  if (!editor) return;
+  const fontFamily = String(value || "").trim();
+  if (fontFamily) editor.chain().focus().setFontFamily(fontFamily).run();
+  else editor.chain().focus().unsetFontFamily().run();
+}
+
+function applyLink() {
+  if (!editor) return;
+  const previousUrl = String(editor.getAttributes("link").href || "");
+  const rawUrl = window.prompt("링크 주소", previousUrl || "https://");
+  if (rawUrl === null) return;
+  if (!rawUrl.trim()) {
+    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    return;
+  }
+
   try {
-    range.surroundContents(span);
-    selection.removeAllRanges();
-    const nextRange = document.createRange();
-    nextRange.selectNodeContents(span);
-    selection.addRange(nextRange);
-    saveEditorRange();
-    markEditorDirty();
+    const url = new URL(rawUrl, window.location.origin);
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid URL");
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url.toString() }).run();
   } catch {
-    setStatus(dom.status, "하나의 문단 안에서 텍스트를 선택해주세요.", "error");
+    setStatus(dom.status, "http 또는 https 주소를 입력해주세요.", "error");
   }
 }
 
 function applyEditorCommand(command) {
+  if (!editor) return;
+  const chain = editor.chain().focus();
+  const actions = {
+    bold: () => chain.toggleBold().run(),
+    italic: () => chain.toggleItalic().run(),
+    underline: () => chain.toggleUnderline().run(),
+    h2: () => chain.toggleHeading({ level: 2 }).run(),
+    h3: () => chain.toggleHeading({ level: 3 }).run(),
+    quote: () => chain.toggleBlockquote().run(),
+    bullet: () => chain.toggleBulletList().run(),
+    number: () => chain.toggleOrderedList().run(),
+    "align-left": () => chain.setTextAlign("left").run(),
+    "align-center": () => chain.setTextAlign("center").run(),
+    "align-right": () => chain.setTextAlign("right").run(),
+    link: applyLink,
+    clear: () => chain.unsetAllMarks().clearNodes().run(),
+    divider: () => chain.setHorizontalRule().run(),
+    undo: () => chain.undo().run(),
+    redo: () => chain.redo().run(),
+  };
+  actions[command]?.();
+}
+
+function syncToolbarState() {
+  if (!editor || !dom.toolbar) return;
+  const activeStates = {
+    bold: editor.isActive("bold"),
+    italic: editor.isActive("italic"),
+    underline: editor.isActive("underline"),
+    h2: editor.isActive("heading", { level: 2 }),
+    h3: editor.isActive("heading", { level: 3 }),
+    quote: editor.isActive("blockquote"),
+    bullet: editor.isActive("bulletList"),
+    number: editor.isActive("orderedList"),
+    "align-left": editor.isActive({ textAlign: "left" }),
+    "align-center": editor.isActive({ textAlign: "center" }),
+    "align-right": editor.isActive({ textAlign: "right" }),
+    link: editor.isActive("link"),
+  };
+
+  dom.toolbar.querySelectorAll("[data-editor-command]").forEach((button) => {
+    const command = button.dataset.editorCommand || "";
+    if (command in activeStates) button.setAttribute("aria-pressed", String(activeStates[command]));
+    if (command === "undo") button.disabled = !editor.can().chain().focus().undo().run();
+    if (command === "redo") button.disabled = !editor.can().chain().focus().redo().run();
+  });
+
+  const textStyle = editor.getAttributes("textStyle");
+  if (dom.fontFamily && document.activeElement !== dom.fontFamily) {
+    const selectedFont = String(textStyle.fontFamily || "");
+    dom.fontFamily.value = Array.from(dom.fontFamily.options).some((option) => option.value === selectedFont) ? selectedFont : "";
+  }
+  if (dom.fontSize && document.activeElement !== dom.fontSize) {
+    const size = Math.round(Number.parseFloat(textStyle.fontSize));
+    if (size >= 8 && size <= 40) dom.fontSize.value = String(size);
+  }
+}
+
+function initializeEditor() {
   if (!dom.editor) return;
-  dom.editor.focus();
-  restoreEditorRange();
-
-  const selection = window.getSelection();
-  if (!selection?.rangeCount || selection.isCollapsed || !dom.editor.contains(selection.anchorNode)) {
-    setStatus(dom.status, "편집할 텍스트를 드래그해 선택해주세요.", "error");
-    return;
-  }
-
-  if (["align-left", "align-center", "align-right"].includes(command)) {
-    applyTextAlignment(command.replace("align-", ""));
-    return;
-  } else if (command === "h2" || command === "h3") {
-    document.execCommand("formatBlock", false, command.toUpperCase());
-  } else if (command === "quote") {
-    document.execCommand("formatBlock", false, "BLOCKQUOTE");
-  } else if (command === "bullet") {
-    document.execCommand("insertUnorderedList");
-  } else if (command === "number") {
-    document.execCommand("insertOrderedList");
-  } else if (command === "link") {
-    const rawUrl = window.prompt("링크 주소");
-    if (!rawUrl) return;
-    try {
-      const url = new URL(rawUrl, window.location.origin);
-      if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid URL");
-      document.execCommand("createLink", false, url.toString());
-    } catch {
-      setStatus(dom.status, "http 또는 https 주소를 입력해주세요.", "error");
-      return;
-    }
-  } else if (command === "clear") {
-    document.execCommand("removeFormat");
-  } else {
-    document.execCommand(command);
-  }
-
-  saveEditorRange();
-  markEditorDirty();
+  editor = new Editor({
+    element: dom.editor,
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+        code: false,
+        codeBlock: false,
+        strike: false,
+        link: {
+          openOnClick: false,
+          autolink: true,
+          defaultProtocol: "https",
+          HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
+        },
+      }),
+      TextStyle,
+      FontFamily.configure({ types: ["textStyle"] }),
+      FontSize.configure({ types: ["textStyle"] }),
+      OalumTextAlign.configure({
+        types: ["heading", "paragraph", "blockquote"],
+        alignments: ["left", "center", "right"],
+      }),
+      Placeholder.configure({ placeholder: "본문을 작성하세요." }),
+      FigureImage,
+    ],
+    content: "",
+    editorProps: {
+      attributes: {
+        class: "newsletter-admin-editor__content",
+        role: "textbox",
+        "aria-label": "뉴스레터 본문",
+        "aria-multiline": "true",
+      },
+    },
+    onUpdate: () => {
+      markEditorDirty();
+      syncToolbarState();
+    },
+    onSelectionUpdate: () => {
+      syncToolbarState();
+      syncImageLayoutControls();
+    },
+    onCreate: () => {
+      syncToolbarState();
+      syncImageLayoutControls();
+    },
+  });
 }
 
 async function uploadImage(file, target) {
@@ -573,10 +688,12 @@ async function uploadInlineImage(file) {
     const payload = await uploadImage(file, "body");
     const url = String(payload.image?.url || "").trim();
     if (!url) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
-    insertHtmlAtSelection(`<figure data-image-align="center" data-image-size="full" data-image-position="inline" data-image-layout="single"><img src="${escapeHtml(url)}" alt=""></figure>`);
-    const insertedFigures = Array.from(dom.editor?.querySelectorAll("figure") || []);
-    const inserted = insertedFigures.reverse().find((figure) => figure.querySelector("img")?.getAttribute("src") === url);
-    syncImageLayoutControls(inserted || null);
+    editor?.chain().focus().setFigureImage({
+      src: url,
+      alt: "",
+      ...IMAGE_LAYOUT_DEFAULTS,
+    }).run();
+    syncImageLayoutControls();
     setStatus(dom.status, "본문 이미지를 추가했습니다.", "success");
   } catch (error) {
     setStatus(dom.status, error.message || "본문 이미지를 업로드하지 못했습니다.", "error");
@@ -659,26 +776,6 @@ function attachEvents() {
     markEditorDirty();
   });
 
-  dom.editor?.addEventListener("keyup", () => {
-    saveEditorRange();
-    syncImageLayoutControls();
-  });
-  dom.editor?.addEventListener("mouseup", () => {
-    saveEditorRange();
-    syncImageLayoutControls();
-  });
-  dom.editor?.addEventListener("focus", saveEditorRange);
-  dom.editor?.addEventListener("click", (event) => {
-    syncImageLayoutControls(getImageFigureFromNode(event.target));
-  });
-  dom.editor?.addEventListener("input", markEditorDirty);
-  dom.editor?.addEventListener("paste", (event) => {
-    event.preventDefault();
-    const text = event.clipboardData?.getData("text/plain") || "";
-    document.execCommand("insertText", false, text);
-    markEditorDirty();
-  });
-
   dom.toolbar?.addEventListener("mousedown", (event) => {
     if (event.target.closest("button")) event.preventDefault();
   });
@@ -693,6 +790,7 @@ function attachEvents() {
   dom.imageSize?.addEventListener("change", () => applyImageLayout("size", dom.imageSize.value));
   dom.imagePosition?.addEventListener("change", () => applyImageLayout("position", dom.imagePosition.value));
   dom.imageColumns?.addEventListener("change", () => applyImageLayout("layout", dom.imageColumns.value));
+  dom.fontFamily?.addEventListener("change", () => applyFontFamily(dom.fontFamily.value));
   dom.fontSize?.addEventListener("change", () => applyTextFontSize(dom.fontSize.value));
   dom.inlineImageButton?.addEventListener("click", () => dom.inlineImageInput?.click());
   dom.inlineImageInput?.addEventListener("change", (event) => uploadInlineImage(event.target.files?.[0]));
@@ -708,6 +806,7 @@ function attachEvents() {
   });
 }
 
+initializeEditor();
 attachEvents();
 applyAccessState();
 renderPostList();
