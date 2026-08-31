@@ -104,6 +104,31 @@ const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
 const IMAGE_LAYOUTS = new Set(["single", "pair-left", "pair-right"]);
 const TEXT_ALIGNMENTS = new Set(["left", "center", "right"]);
 const TEXT_ALIGNMENT_TAGS = new Set(["p", "h2", "h3", "blockquote", "li"]);
+const ALLOWED_FONT_FAMILIES = new Map([
+  ["pretendard", "Pretendard"],
+  ["wanted sans", "Wanted Sans"],
+  ["gothambook", "GothamBook"],
+  ["gothamlight", "GothamLight"],
+  ["gothammedium", "GothamMedium"],
+  ["gothambold", "GothamBold"],
+  ["system-ui", "system-ui"],
+  ["arial", "Arial"],
+  ["helvetica", "Helvetica"],
+  ["verdana", "Verdana"],
+  ["tahoma", "Tahoma"],
+  ["trebuchet ms", "Trebuchet MS"],
+  ["gill sans", "Gill Sans"],
+  ["times new roman", "Times New Roman"],
+  ["georgia", "Georgia"],
+  ["garamond", "Garamond"],
+  ["courier new", "Courier New"],
+  ["comic sans ms", "Comic Sans MS"],
+  ["brush script mt", "Brush Script MT"],
+  ["sans-serif", "sans-serif"],
+  ["serif", "serif"],
+  ["monospace", "monospace"],
+  ["cursive", "cursive"],
+]);
 
 function sanitizeImageLayoutValue(value, allowedValues) {
   const normalized = cleanText(value, 20).toLowerCase();
@@ -111,8 +136,33 @@ function sanitizeImageLayoutValue(value, allowedValues) {
 }
 
 function sanitizeFontSize(value) {
-  const size = Math.round(Number(cleanText(value, 4)));
+  const raw = cleanText(value, 12).match(/^-?\d+(?:\.\d+)?/i)?.[0] || "";
+  const size = Math.round(Number(raw));
   return size >= 8 && size <= 40 ? String(size) : "";
+}
+
+function readStyleProperty(source, property) {
+  const target = String(property || "").trim().toLowerCase();
+  for (const declaration of String(source || "").split(";")) {
+    const separator = declaration.indexOf(":");
+    if (separator < 0) continue;
+    const name = declaration.slice(0, separator).trim().toLowerCase();
+    if (name === target) return declaration.slice(separator + 1).trim();
+  }
+  return "";
+}
+
+function sanitizeFontFamily(value) {
+  const primaryFamily = cleanText(value, 100)
+    .split(",")[0]
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .toLowerCase();
+  return ALLOWED_FONT_FAMILIES.get(primaryFamily) || "";
+}
+
+function toCssFontFamily(value) {
+  return /\s/.test(value) ? `"${value}"` : value;
 }
 
 export function sanitizeNewsletterHtml(value) {
@@ -154,12 +204,26 @@ export function sanitizeNewsletterHtml(value) {
     }
 
     if (TEXT_ALIGNMENT_TAGS.has(tagName) || tagName === "span") {
-      const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-text-align"), TEXT_ALIGNMENTS);
-      const fontSize = sanitizeFontSize(readAttribute(attributes, "data-font-size"));
+      const sourceStyle = readAttribute(attributes, "style");
+      const alignment = sanitizeImageLayoutValue(
+        readAttribute(attributes, "data-text-align") || readStyleProperty(sourceStyle, "text-align"),
+        TEXT_ALIGNMENTS,
+      );
+      const fontSize = sanitizeFontSize(
+        readAttribute(attributes, "data-font-size") || readStyleProperty(sourceStyle, "font-size"),
+      );
+      const fontFamily = tagName === "span"
+        ? sanitizeFontFamily(readAttribute(attributes, "data-font-family") || readStyleProperty(sourceStyle, "font-family"))
+        : "";
+      const inlineStyles = [
+        fontSize ? `font-size: ${fontSize}px` : "",
+        fontFamily ? `font-family: ${toCssFontFamily(fontFamily)}` : "",
+      ].filter(Boolean).join("; ");
       const textAttributes = [
         alignment ? ` data-text-align="${alignment}"` : "",
         fontSize ? ` data-font-size="${fontSize}"` : "",
-        fontSize ? ` style="font-size: ${fontSize}px"` : "",
+        fontFamily ? ` data-font-family="${escapeHtml(fontFamily)}"` : "",
+        inlineStyles ? ` style="${escapeHtml(inlineStyles)}"` : "",
       ].join("");
       return `<${tagName}${textAttributes}>`;
     }

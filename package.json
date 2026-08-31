@@ -1,11 +1,14 @@
 {
+  "name": "studiooalum.github.io",
   "private": true,
   "scripts": {
     "site:serve": "python3 -m http.server 4173",
-    "cf:build": "node ./scripts/build-pages.mjs",
+    "editor:build": "esbuild ./runtime/storefront/scripts/newsletter-admin.js --bundle --minify --format=esm --target=es2020 --outfile=./runtime/storefront/scripts/newsletter-admin.bundle.js",
+    "cf:build": "npm run editor:build && node ./scripts/build-pages.mjs",
     "cf:pages:dev": "npm run cf:build && npx wrangler pages dev dist",
     "cf:pages:deploy": "npm run cf:build && npx wrangler pages deploy dist --project-name studiooalum",
     "cf:repair-notifications:deploy": "npx wrangler deploy --config wrangler.repair-notifications.jsonc",
+    "test:newsletter": "node --test tests/newsletter-editor.test.mjs",
     "test:repair": "node --test tests/repair-notifications.test.mjs",
     "web:dev": "next dev ./apps/web",
     "web:build": "next build ./apps/web",
@@ -15,6 +18,12 @@
     "@sanity/client": "^7.14.1",
     "@sanity/image-url": "^2.0.2",
     "@shopify/storefront-api-client": "^1.0.9",
+    "@tiptap/core": "^3.30.5",
+    "@tiptap/extension-font-family": "^3.30.5",
+    "@tiptap/extension-placeholder": "^3.30.5",
+    "@tiptap/extension-text-align": "^3.30.5",
+    "@tiptap/extension-text-style": "^3.30.5",
+    "@tiptap/starter-kit": "^3.30.5",
     "clsx": "^2.1.1",
     "gsap": "^3.14.2",
     "next": "^16.1.1",
@@ -24,6 +33,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.23",
+    "esbuild": "^0.28.2",
     "postcss": "^8.5.6",
     "sanity": "^5.1.0",
     "tailwindcss": "^4.1.18"
