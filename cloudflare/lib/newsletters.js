@@ -84,6 +84,7 @@ const ALLOWED_RICH_TEXT_TAGS = new Set([
   "em",
   "i",
   "u",
+  "s",
   "h2",
   "h3",
   "blockquote",

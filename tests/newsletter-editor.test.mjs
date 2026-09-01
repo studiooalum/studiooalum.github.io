@@ -36,3 +36,14 @@ test("newsletter sanitizer preserves legacy image layout and Tiptap alignment", 
   assert.match(html, /data-image-size="medium"/);
   assert.match(html, /<img src="https:\/\/example\.com\/image\.jpg" alt="작업 이미지">/);
 });
+
+test("newsletter sanitizer preserves standard Tiptap text formatting", () => {
+  const sanitized = sanitizeNewsletterHtml('<p><strong>굵게</strong> <em>기울임</em> <u>밑줄</u> <s>취소선</s></p><ul><li>목록</li></ul><blockquote><p>인용</p></blockquote>');
+
+  assert.match(sanitized, /<strong>굵게<\/strong>/);
+  assert.match(sanitized, /<em>기울임<\/em>/);
+  assert.match(sanitized, /<u>밑줄<\/u>/);
+  assert.match(sanitized, /<s>취소선<\/s>/);
+  assert.match(sanitized, /<ul><li>목록<\/li><\/ul>/);
+  assert.match(sanitized, /<blockquote><p>인용<\/p><\/blockquote>/);
+});

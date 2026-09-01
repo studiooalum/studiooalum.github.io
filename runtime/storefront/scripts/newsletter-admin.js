@@ -30,6 +30,7 @@ const dom = {
   imageSize: document.querySelector(".js-newsletter-admin-image-size"),
   imagePosition: document.querySelector(".js-newsletter-admin-image-position"),
   imageColumns: document.querySelector(".js-newsletter-admin-image-columns"),
+  blockStyle: document.querySelector(".js-newsletter-admin-block-style"),
   fontFamily: document.querySelector(".js-newsletter-admin-font-family"),
   fontSize: document.querySelector(".js-newsletter-admin-font-size"),
   inlineImageInput: document.querySelector(".js-newsletter-admin-inline-image-input"),
@@ -508,12 +509,25 @@ function markEditorDirty() {
 }
 
 function applyTextFontSize(value) {
+  if (!editor) return;
+  if (!String(value || "").trim()) {
+    editor.chain().focus().unsetFontSize().run();
+    return;
+  }
   const size = Math.round(Number(value));
-  if (!editor || size < 8 || size > 40) {
+  if (size < 8 || size > 40) {
     setStatus(dom.status, "글자 크기는 8px부터 40px까지 설정할 수 있습니다.", "error");
     return;
   }
   editor.chain().focus().setFontSize(`${size}px`).run();
+}
+
+function applyBlockStyle(value) {
+  if (!editor) return;
+  const chain = editor.chain().focus();
+  if (value === "h2") chain.setHeading({ level: 2 }).run();
+  else if (value === "h3") chain.setHeading({ level: 3 }).run();
+  else chain.setParagraph().run();
 }
 
 function applyFontFamily(value) {
@@ -549,8 +563,7 @@ function applyEditorCommand(command) {
     bold: () => chain.toggleBold().run(),
     italic: () => chain.toggleItalic().run(),
     underline: () => chain.toggleUnderline().run(),
-    h2: () => chain.toggleHeading({ level: 2 }).run(),
-    h3: () => chain.toggleHeading({ level: 3 }).run(),
+    strike: () => chain.toggleStrike().run(),
     quote: () => chain.toggleBlockquote().run(),
     bullet: () => chain.toggleBulletList().run(),
     number: () => chain.toggleOrderedList().run(),
@@ -572,8 +585,7 @@ function syncToolbarState() {
     bold: editor.isActive("bold"),
     italic: editor.isActive("italic"),
     underline: editor.isActive("underline"),
-    h2: editor.isActive("heading", { level: 2 }),
-    h3: editor.isActive("heading", { level: 3 }),
+    strike: editor.isActive("strike"),
     quote: editor.isActive("blockquote"),
     bullet: editor.isActive("bulletList"),
     number: editor.isActive("orderedList"),
@@ -590,6 +602,14 @@ function syncToolbarState() {
     if (command === "redo") button.disabled = !editor.can().chain().focus().redo().run();
   });
 
+  if (dom.blockStyle && document.activeElement !== dom.blockStyle) {
+    dom.blockStyle.value = editor.isActive("heading", { level: 2 })
+      ? "h2"
+      : editor.isActive("heading", { level: 3 })
+        ? "h3"
+        : "paragraph";
+  }
+
   const textStyle = editor.getAttributes("textStyle");
   if (dom.fontFamily && document.activeElement !== dom.fontFamily) {
     const selectedFont = String(textStyle.fontFamily || "");
@@ -597,7 +617,8 @@ function syncToolbarState() {
   }
   if (dom.fontSize && document.activeElement !== dom.fontSize) {
     const size = Math.round(Number.parseFloat(textStyle.fontSize));
-    if (size >= 8 && size <= 40) dom.fontSize.value = String(size);
+    const matchingSize = Array.from(dom.fontSize.options).some((option) => option.value === String(size));
+    dom.fontSize.value = matchingSize ? String(size) : "";
   }
 }
 
@@ -610,7 +631,6 @@ function initializeEditor() {
         heading: { levels: [2, 3] },
         code: false,
         codeBlock: false,
-        strike: false,
         link: {
           openOnClick: false,
           autolink: true,
@@ -790,6 +810,7 @@ function attachEvents() {
   dom.imageSize?.addEventListener("change", () => applyImageLayout("size", dom.imageSize.value));
   dom.imagePosition?.addEventListener("change", () => applyImageLayout("position", dom.imagePosition.value));
   dom.imageColumns?.addEventListener("change", () => applyImageLayout("layout", dom.imageColumns.value));
+  dom.blockStyle?.addEventListener("change", () => applyBlockStyle(dom.blockStyle.value));
   dom.fontFamily?.addEventListener("change", () => applyFontFamily(dom.fontFamily.value));
   dom.fontSize?.addEventListener("change", () => applyTextFontSize(dom.fontSize.value));
   dom.inlineImageButton?.addEventListener("click", () => dom.inlineImageInput?.click());

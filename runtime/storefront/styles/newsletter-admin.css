@@ -23,8 +23,7 @@
 }
 
 .newsletter-admin-new-button,
-.newsletter-admin-icon-button,
-.newsletter-admin-tool {
+.newsletter-admin-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -47,6 +46,22 @@
 .newsletter-admin-new-button {
   background: #111;
   color: #fff;
+}
+
+.newsletter-admin-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 34px;
+  border: 0;
+  border-radius: 3px;
+  padding: 0;
+  background: transparent;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .newsletter-admin-status-label {
@@ -114,14 +129,55 @@
 }
 
 .newsletter-admin-editor-shell {
-  border: 1px solid #111;
+  border: 1px solid rgba(17, 17, 17, 0.24);
+  background: #fff;
 }
 
 .newsletter-admin-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
-  border-bottom: 1px solid #111;
+  gap: 6px;
+  align-items: center;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.18);
+  padding: 8px;
+  background: #f7f7f4;
+}
+
+.newsletter-admin-tool-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  border-right: 1px solid rgba(17, 17, 17, 0.14);
+  padding-right: 6px;
+}
+
+.newsletter-admin-tool-group:last-of-type {
+  border-right: 0;
+}
+
+.newsletter-admin-select-label {
+  display: inline-flex;
+  align-items: stretch;
+  min-height: 34px;
+}
+
+.newsletter-admin-select {
+  min-height: 34px;
+  border: 1px solid rgba(17, 17, 17, 0.22);
+  border-radius: 3px;
+  padding: 0 28px 0 9px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.newsletter-admin-block-style {
+  width: 94px;
 }
 
 .newsletter-admin-image-layout {
@@ -139,7 +195,9 @@
 }
 
 .newsletter-admin-image-layout__alignment .newsletter-admin-tool {
-  margin: 0 -1px 0 0;
+  border: 1px solid rgba(17, 17, 17, 0.22);
+  border-radius: 0;
+  margin-right: -1px;
 }
 
 .newsletter-admin-image-layout__alignment .newsletter-admin-tool[aria-pressed="true"] {
@@ -160,43 +218,19 @@
 }
 
 .newsletter-admin-font-family-label {
-  display: inline-flex;
-  align-items: stretch;
-  min-height: 36px;
-  border-left: 1px solid #111;
+  min-height: 34px;
 }
 
 .newsletter-admin-font-family {
-  width: 164px;
-  border: 0;
-  border-radius: 0;
-  padding: 0 30px 0 10px;
-  background: #fff;
-  color: #111;
-  font-family: var(--font-kor-button);
-  font-size: 11px;
-  cursor: pointer;
+  width: 166px;
 }
 
 .newsletter-admin-font-size-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding-right: 8px;
-  font-family: var(--font-book);
-  font-size: 10px;
+  min-height: 34px;
 }
 
 .newsletter-admin-font-size {
-  width: 54px;
-  min-height: 36px;
-  border: 0;
-  border-left: 1px solid #111;
-  border-radius: 0;
-  padding: 0 10px;
-  background: #fff;
-  font-family: var(--font-kor-button);
-  font-size: 11px;
+  width: 96px;
 }
 
 .sr-only {
@@ -207,11 +241,17 @@
   clip-path: inset(50%);
 }
 
-.newsletter-admin-tool {
-  width: 38px;
-  height: 36px;
-  margin: -1px 0 0 -1px;
-  font-size: 12px;
+.newsletter-admin-tool--text {
+  width: auto;
+  min-width: 42px;
+  padding: 0 9px;
+  white-space: nowrap;
+}
+
+.newsletter-admin-tool--primary {
+  margin-left: auto;
+  background: #111;
+  color: #fff;
 }
 
 .newsletter-admin-tool:hover,
@@ -222,10 +262,45 @@
   outline: 0;
 }
 
+.newsletter-admin-tool--primary:hover,
+.newsletter-admin-tool--primary:focus-visible {
+  background: rgba(17, 17, 17, 0.78);
+}
+
 .newsletter-admin-tool:disabled {
-  background: #fff;
+  background: transparent;
   color: rgba(17, 17, 17, 0.28);
   cursor: not-allowed;
+}
+
+.newsletter-admin-align-icon {
+  display: grid;
+  width: 15px;
+  gap: 3px;
+}
+
+.newsletter-admin-align-icon::before,
+.newsletter-admin-align-icon::after {
+  content: "";
+  display: block;
+  width: 15px;
+  height: 1px;
+  background: currentColor;
+  box-shadow: 0 4px 0 currentColor;
+}
+
+.newsletter-admin-align-icon--left::after,
+.newsletter-admin-align-icon--right::after {
+  width: 10px;
+}
+
+.newsletter-admin-align-icon--right::after {
+  margin-left: auto;
+}
+
+.newsletter-admin-align-icon--center::after {
+  width: 10px;
+  margin-inline: auto;
 }
 
 .newsletter-admin-editor {
@@ -238,7 +313,7 @@
 
 .newsletter-admin-editor__content {
   min-height: 420px;
-  padding: 20px;
+  padding: 26px 28px;
   outline: 0;
 }
 
