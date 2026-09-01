@@ -17,19 +17,21 @@ test("newsletter sanitizer preserves supported Tiptap font styles", () => {
 
 test("newsletter sanitizer preserves safe line height and colors", () => {
   const html = sanitizeNewsletterHtml(
-    '<p data-text-align="justify"><span style="line-height: 1.8; color: #123abc; background-color: #fff2a8">서식</span></p>',
+    '<p data-text-align="justify"><span style="line-height: 0; color: #123abc; background-color: #fff2a8">좁게</span><span style="line-height: 2">넓게</span></p>',
   );
 
   assert.match(html, /data-text-align="justify"/);
-  assert.match(html, /data-line-height="1.8"/);
-  assert.match(html, /line-height: 1.8/);
+  assert.match(html, /data-line-height="0"/);
+  assert.match(html, /line-height: 0/);
+  assert.match(html, /data-line-height="2"/);
+  assert.match(html, /line-height: 2/);
   assert.match(html, /color: #123abc/);
   assert.match(html, /background-color: #fff2a8/);
 });
 
 test("newsletter sanitizer rejects unsafe line height and colors", () => {
   const html = sanitizeNewsletterHtml(
-    '<p><span style="line-height: 99; color: expression(alert(1)); background-color: url(javascript:alert(1))">text</span></p>',
+    '<p><span style="line-height: 2.1; color: expression(alert(1)); background-color: url(javascript:alert(1))">text</span></p>',
   );
 
   assert.equal(html, "<p><span>text</span></p>");

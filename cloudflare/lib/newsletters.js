@@ -105,7 +105,6 @@ const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
 const IMAGE_LAYOUTS = new Set(["single", "pair-left", "pair-right"]);
 const TEXT_ALIGNMENTS = new Set(["left", "center", "right", "justify"]);
 const TEXT_ALIGNMENT_TAGS = new Set(["p", "h2", "h3", "blockquote", "li"]);
-const TEXT_LINE_HEIGHTS = new Set(["1.2", "1.4", "1.6", "1.8", "2", "2.0", "2.2"]);
 const ALLOWED_FONT_FAMILIES = new Map([
   ["pretendard", "Pretendard"],
   ["wanted sans", "Wanted Sans"],
@@ -145,7 +144,8 @@ function sanitizeFontSize(value) {
 
 function sanitizeLineHeight(value) {
   const normalized = cleanText(value, 12).toLowerCase().replace(/\s*!important\s*$/i, "");
-  return TEXT_LINE_HEIGHTS.has(normalized) ? (normalized === "2.0" ? "2" : normalized) : "";
+  if (!/^(?:0(?:\.\d)?|1(?:\.\d)?|2(?:\.0)?)$/.test(normalized)) return "";
+  return String(Number(normalized));
 }
 
 function sanitizeHexColor(value) {
