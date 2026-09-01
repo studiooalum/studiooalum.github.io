@@ -25,7 +25,11 @@ const dom = {
   editorStatus: document.querySelector(".js-notification-editor-status"),
   updated: document.querySelector(".js-notification-editor-updated"),
   revisionList: document.querySelector(".js-notification-revision-list"),
+  toggleRevisions: document.querySelector(".js-notification-toggle-revisions"),
+  purgeRevisions: document.querySelector(".js-notification-purge-revisions"),
   process: document.querySelector(".js-notification-process"),
+  purgeOutbox: document.querySelector(".js-notification-purge-outbox"),
+  deliveryStatus: document.querySelector(".js-notification-delivery-status"),
   deliveryList: document.querySelector(".js-notification-delivery-list"),
   previewModes: Array.from(document.querySelectorAll("[data-preview-mode]")),
 };
@@ -40,6 +44,7 @@ const state = {
   selectedChannel: "",
   previewMode: "mobile",
   focusedField: null,
+  showAllRevisions: false,
 };
 
 function escapeHtml(value) {
@@ -177,15 +182,22 @@ function renderEditor() {
 }
 
 function renderRevisions(template) {
-  const revisions = state.revisions
-    .filter((revision) => revision.templateKey === template.templateKey && revision.channel === template.channel)
-    .slice(0, 5);
+  const allRevisions = state.revisions
+    .filter((revision) => revision.templateKey === template.templateKey && revision.channel === template.channel);
+  const revisions = state.showAllRevisions ? allRevisions : allRevisions.slice(0, 5);
+  if (dom.toggleRevisions) {
+    dom.toggleRevisions.hidden = allRevisions.length <= 5;
+    dom.toggleRevisions.textContent = state.showAllRevisions ? "최근 5개만" : `전체 ${allRevisions.length}개`;
+  }
   if (!revisions.length) {
-    dom.revisionList.innerHTML = "";
+    dom.revisionList.innerHTML = '<div class="fulfillment-empty">저장된 수정 이력이 없습니다.</div>';
     return;
   }
   const labels = { draft_saved: "초안 저장", activated: "활성화", default_restored: "기본값 복원", enabled: "활성", disabled: "비활성", manual_retry: "재시도" };
-  dom.revisionList.innerHTML = `<strong>최근 수정 이력</strong>${revisions.map((revision) => `<p>${escapeHtml(labels[revision.action] || revision.action)} · ${escapeHtml(formatDate(revision.createdAt))}</p>`).join("")}`;
+  dom.revisionList.innerHTML = revisions.map((revision) => `<div class="notification-revision-item">
+    <p>${escapeHtml(labels[revision.action] || revision.action)} · ${escapeHtml(formatDate(revision.createdAt))}</p>
+    <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-notification-delete-revision="${escapeHtml(revision.id)}">삭제</button>
+  </div>`).join("");
 }
 
 function renderPreview(preview) {
@@ -276,6 +288,7 @@ dom.list?.addEventListener("click", (event) => {
   if (!button) return;
   state.selectedKey = button.dataset.templateKey || "";
   state.selectedChannel = button.dataset.templateChannel || "";
+  state.showAllRevisions = false;
   renderList();
   renderEditor();
 });
@@ -316,11 +329,57 @@ dom.editor?.elements.isEnabled?.addEventListener("change", async () => {
     return;
   }
   try {
-    applyPayload(await requestAdmin({ method: "POST", body: { action: "setEnabled", templateKey: template.templateKey, channel: template.channel, enabled: dom.editor.elements.isEnabled.checked } }));
+    const enabled = dom.editor.elements.isEnabled.checked;
+    const payload = await requestAdmin({ method: "POST", body: { action: "setEnabled", templateKey: template.templateKey, channel: template.channel, enabled } });
+    if (!enabled && dom.enabledFilter?.value === "enabled") {
+      state.selectedKey = "";
+      state.selectedChannel = "";
+    }
+    applyPayload(payload);
+    setStatus(dom.editorStatus, payload.message || "알림 상태를 변경했습니다.", "success");
   } catch (error) {
     setStatus(dom.editorStatus, error.message, "error");
   }
 });
+
+dom.toggleRevisions?.addEventListener("click", () => {
+  state.showAllRevisions = !state.showAllRevisions;
+  const template = selectedTemplate();
+  if (template) renderRevisions(template);
+});
+
+dom.revisionList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-notification-delete-revision]");
+  if (!button || !window.confirm("이 수정 이력을 영구 삭제할까요?")) return;
+  setButtonLoading(button, true, "삭제 중...");
+  try {
+    const payload = await requestAdmin({ method: "POST", body: { action: "deleteRevision", revisionId: button.dataset.notificationDeleteRevision } });
+    applyPayload(payload);
+    setStatus(dom.editorStatus, payload.message || "수정 이력을 삭제했습니다.", "success");
+  } catch (error) {
+    setStatus(dom.editorStatus, error.message || "수정 이력을 삭제하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(button, false, "삭제 중...");
+  }
+});
+
+async function purgeHistory(scope, days, button, statusTarget) {
+  const label = scope === "revisions" ? "수정 이력" : "완료된 발송 기록";
+  if (!window.confirm(`${days}일이 지난 ${label}을 영구 삭제할까요?\n\n대기·처리 중인 발송 기록은 삭제되지 않습니다.`)) return;
+  setButtonLoading(button, true, "정리 중...");
+  try {
+    const payload = await requestAdmin({ method: "POST", body: { action: "purgeHistory", scope, olderThanDays: days } });
+    applyPayload(payload);
+    setStatus(statusTarget, payload.message || "오래된 기록을 정리했습니다.", "success");
+  } catch (error) {
+    setStatus(statusTarget, error.message || "오래된 기록을 정리하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(button, false, "정리 중...");
+  }
+}
+
+dom.purgeRevisions?.addEventListener("click", () => void purgeHistory("revisions", 30, dom.purgeRevisions, dom.editorStatus));
+dom.purgeOutbox?.addEventListener("click", () => void purgeHistory("outbox", 90, dom.purgeOutbox, dom.deliveryStatus));
 
 dom.process?.addEventListener("click", async () => {
   setButtonLoading(dom.process, true, "확인 중...");

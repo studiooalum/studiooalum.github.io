@@ -5,7 +5,9 @@ import {
   archiveWorkshopContent,
   cancelWorkshopGroup,
   createWorkshopDateBlock,
+  deleteWorkshopContent,
   deleteWorkshopDateBlock,
+  deleteWorkshopReservation,
   finalizeWorkshopGroup,
   readWorkshopAdminSnapshot,
   refundWorkshopPayment,
@@ -199,6 +201,14 @@ const workshopAdminActionSchema = z.discriminatedUnion("action", [
     slug: z.string().trim().min(1).max(120),
   }),
   z.object({
+    action: z.literal("deleteWorkshopContent"),
+    slug: z.string().trim().min(1).max(120),
+  }),
+  z.object({
+    action: z.literal("deleteWorkshopReservation"),
+    reservationId: z.string().trim().min(1).max(80),
+  }),
+  z.object({
     action: z.literal("finalizeWorkshopGroup"),
     groupId: z.string().trim().min(1).max(80),
   }),
@@ -365,6 +375,15 @@ export async function onRequestPost(context) {
     } else if (data.action === "archiveWorkshopContent") {
       await archiveWorkshopContent(context.env, { slug: data.slug });
       resultMessage = "워크숍 콘텐츠를 보관 상태로 변경했습니다.";
+    } else if (data.action === "deleteWorkshopContent") {
+      actionResult = await deleteWorkshopContent(context.env, { slug: data.slug });
+      if (context.env?.OALUM_R2) {
+        await Promise.allSettled(actionResult.r2Keys.map((key) => context.env.OALUM_R2.delete(key)));
+      }
+      resultMessage = "워크숍 콘텐츠와 연결 이미지를 삭제했습니다.";
+    } else if (data.action === "deleteWorkshopReservation") {
+      actionResult = await deleteWorkshopReservation(context.env, { reservationId: data.reservationId });
+      resultMessage = "취소된 워크숍 예약을 삭제했습니다.";
     } else if (data.action === "finalizeWorkshopGroup") {
       actionResult = await finalizeWorkshopGroup(context.env, data);
       resultMessage = "그룹 모집을 마감하고 최종 결제 금액을 계산했습니다.";

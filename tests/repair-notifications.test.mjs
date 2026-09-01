@@ -7,6 +7,7 @@ import {
   createRepairGalleryImage,
   createRepairCustomerInquiry,
   createRepairRequest,
+  deleteRepairRequest,
   readRepairAdminSnapshot,
   readRepairGallery,
   readRepairRequestBySubmissionId,
@@ -16,7 +17,9 @@ import { lookupGuestResource, verifyGuestLookupToken } from "../cloudflare/lib/g
 import {
   activateNotificationDraft,
   createManualNotificationRetry,
+  deleteNotificationRevision,
   processNotificationOutbox,
+  purgeNotificationHistory,
   restoreNotificationDefault,
   saveNotificationDraft,
   validateNotificationTemplate,
@@ -974,4 +977,57 @@ test("unified guest lookup resolves ORD, WKS, and REP references with short-live
     }),
     (error) => error.status === 429,
   );
+});
+
+test("admin deletion removes only eligible Repair requests", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+
+  await createInitialRepair(env, "DELETE_OK");
+  const removed = await deleteRepairRequest(env, "RPR_DELETE_OK");
+  assert.equal(removed.requestId, "RPR_DELETE_OK");
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM repair_requests WHERE id = 'RPR_DELETE_OK'").first().count, 0);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM repair_tickets WHERE repair_id = 'RPR_DELETE_OK'").first().count, 0);
+
+  await createInitialRepair(env, "DELETE_BLOCKED");
+  database.prepare("UPDATE repair_requests SET final_amount = 50000 WHERE id = 'RPR_DELETE_BLOCKED'").run();
+  await assert.rejects(
+    deleteRepairRequest(env, "RPR_DELETE_BLOCKED"),
+    (error) => error.status === 409 && /결제 또는 최종 금액/.test(error.message),
+  );
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM repair_requests WHERE id = 'RPR_DELETE_BLOCKED'").first().count, 1);
+});
+
+test("notification history can delete revisions and purges only terminal old outbox rows", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+
+  await saveNotificationDraft(env, {
+    templateKey: "repair.received",
+    channel: "email",
+    subject: "[Studio OALUM] 정리 테스트",
+    body: "{{customer_name}}님, {{product_name}} 접수가 완료되었습니다. {{repair_ticket_url}}",
+  }, "test-admin");
+  const revision = database.prepare("SELECT id FROM notification_template_revisions ORDER BY created_at DESC LIMIT 1").first();
+  await deleteNotificationRevision(env, revision.id);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_template_revisions WHERE id = ?").bind(revision.id).first().count, 0);
+
+  await saveNotificationDraft(env, {
+    templateKey: "repair.received",
+    channel: "email",
+    subject: "[Studio OALUM] 오래된 초안",
+    body: "{{customer_name}}님, {{product_name}} 접수가 완료되었습니다. {{repair_ticket_url}}",
+  }, "test-admin");
+  database.prepare("UPDATE notification_template_revisions SET created_at = '2020-01-01T00:00:00.000Z'").run();
+  const revisionsPurged = await purgeNotificationHistory(env, { scope: "revisions", olderThanDays: 30 });
+  assert.equal(revisionsPurged.deletedCount, 1);
+
+  await createInitialRepair(env, "OUTBOX_SENT");
+  await createInitialRepair(env, "OUTBOX_PENDING");
+  const outboxRows = database.prepare("SELECT id FROM notification_outbox ORDER BY created_at ASC").all().results;
+  database.prepare("UPDATE notification_outbox SET status = 'sent', created_at = '2020-01-01T00:00:00.000Z' WHERE id = ?").bind(outboxRows[0].id).run();
+  database.prepare("UPDATE notification_outbox SET status = 'pending', created_at = '2020-01-01T00:00:00.000Z' WHERE id = ?").bind(outboxRows[1].id).run();
+  const outboxPurged = await purgeNotificationHistory(env, { scope: "outbox", olderThanDays: 90 });
+  assert.equal(outboxPurged.deletedCount, 1);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_outbox WHERE id = ?").bind(outboxRows[1].id).first().count, 1);
 });

@@ -12,8 +12,8 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
-  <link rel="stylesheet" href="./runtime/storefront/styles/notification-admin-20260824-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260901-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/notification-admin-20260824-01.css?v=20260901-01">
   <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
 </head>
 <body class="fulfillment-page notification-admin-page">
@@ -49,7 +49,7 @@
           <div class="notification-filter-grid">
             <label class="fulfillment-field"><span>사용 영역</span><select class="js-notification-area-filter"><option value="all">전체</option><option value="shop">Shop</option><option value="workshop">Workshop</option><option value="repair">Repair</option><option value="ticket">Ticket</option></select></label>
             <label class="fulfillment-field"><span>발송 채널</span><select class="js-notification-channel-filter"><option value="all">전체</option><option value="email">이메일</option><option value="sms">문자</option></select></label>
-            <label class="fulfillment-field"><span>상태</span><select class="js-notification-enabled-filter"><option value="all">전체</option><option value="enabled">활성화됨</option><option value="disabled">비활성화됨</option></select></label>
+            <label class="fulfillment-field"><span>상태</span><select class="js-notification-enabled-filter"><option value="enabled" selected>활성화됨</option><option value="disabled">숨김/비활성</option><option value="all">전체</option></select></label>
           </div>
           <div class="notification-template-list js-notification-template-list"></div>
         </section>
@@ -64,7 +64,7 @@
               <h2 class="fulfillment-subheading js-notification-editor-title"></h2>
               <p class="fulfillment-copy js-notification-editor-description"></p>
             </div>
-            <label class="notification-enabled-toggle"><input type="checkbox" name="isEnabled"><span>알림 활성화</span></label>
+            <label class="notification-enabled-toggle"><input type="checkbox" name="isEnabled"><span>알림 활성화 · 끄면 기본 목록에서 숨김</span></label>
           </header>
 
           <label class="fulfillment-field js-notification-subject-field"><span>이메일 제목</span><input type="text" name="subject" maxlength="500"></label>
@@ -96,21 +96,32 @@
           </div>
           <p class="fulfillment-status js-notification-editor-status" role="status" aria-live="polite"></p>
           <p class="notification-editor__updated js-notification-editor-updated"></p>
+          <div class="notification-history-tools">
+            <strong>수정 이력</strong>
+            <div>
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-notification-toggle-revisions">전체 보기</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--danger js-notification-purge-revisions">30일 이전 정리</button>
+            </div>
+          </div>
           <div class="notification-revision-list js-notification-revision-list"></div>
         </form>
 
         <section class="fulfillment-panel notification-delivery-panel">
           <div class="notification-delivery-head">
             <div><h2 class="fulfillment-subheading">발송 기록</h2><p class="fulfillment-copy">실패 및 확인이 필요한 알림을 확인하고 명시적으로 재시도합니다.</p></div>
-            <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-notification-process">대기열 확인</button>
+            <div class="notification-delivery-actions">
+              <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-notification-process">대기열 확인</button>
+              <button type="button" class="fulfillment-btn fulfillment-btn--danger js-notification-purge-outbox">90일 이전 완료 기록 정리</button>
+            </div>
           </div>
+          <p class="fulfillment-status js-notification-delivery-status" role="status" aria-live="polite"></p>
           <div class="notification-delivery-list js-notification-delivery-list"></div>
         </section>
       </section>
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/notification-admin-20260824-01.js"></script>
+  <script type="module" src="./runtime/storefront/scripts/notification-admin-20260824-01.js?v=20260901-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
     initSiteChrome({ showActions: false });

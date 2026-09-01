@@ -1144,6 +1144,59 @@ export async function readFulfillmentOrders(env, { query = "", limit = 20 } = {}
   return orders;
 }
 
+export async function deleteUnpaidOrder(env, orderId) {
+  const database = getDb(env);
+  const normalizedId = String(orderId || "").trim().slice(0, 80);
+  if (!database) {
+    throw Object.assign(new Error("D1 바인딩이 아직 준비되지 않았습니다."), { status: 503 });
+  }
+  if (!normalizedId) {
+    throw Object.assign(new Error("삭제할 주문을 확인해주세요."), { status: 400 });
+  }
+
+  const order = await findOrderRecord(database, normalizedId);
+  if (!order) {
+    throw Object.assign(new Error("주문 정보를 찾을 수 없습니다."), { status: 404 });
+  }
+  const protectedOrderStatuses = new Set(["paid", "completed", "fulfilled", "refunded"]);
+  const protectedPaymentStatuses = new Set(["paid", "done", "completed", "refunded", "partial_refunded"]);
+  if (order.paid_at
+    || protectedOrderStatuses.has(String(order.status || "").toLowerCase())
+    || protectedPaymentStatuses.has(String(order.payment_status || "").toLowerCase())) {
+    throw Object.assign(new Error("결제·완료·환불 기록이 있는 주문은 보존해야 합니다."), { status: 409 });
+  }
+  if (order.coupon_id || Number(order.points_used || 0) > 0 || Number(order.points_earned || 0) > 0) {
+    throw Object.assign(new Error("쿠폰 또는 포인트 이력이 연결된 주문은 기록 보호를 위해 삭제할 수 없습니다."), { status: 409 });
+  }
+
+  const [approvedPayment, progressedShipment] = await Promise.all([
+    database.prepare(`
+      SELECT id FROM payments
+      WHERE order_id = ?
+        AND (approved_at IS NOT NULL OR COALESCE(approved_amount, 0) > 0 OR lower(status) IN ('paid', 'done', 'completed', 'refunded', 'partial_refunded'))
+      LIMIT 1
+    `).bind(normalizedId).first(),
+    database.prepare(`
+      SELECT id FROM shipments
+      WHERE order_id = ? AND lower(status) IN ('shipped', 'delivered', 'returned')
+      LIMIT 1
+    `).bind(normalizedId).first(),
+  ]);
+  if (approvedPayment) {
+    throw Object.assign(new Error("승인 또는 환불된 결제 이력이 있어 주문을 삭제할 수 없습니다."), { status: 409 });
+  }
+  if (progressedShipment) {
+    throw Object.assign(new Error("배송 이력이 있는 주문은 삭제할 수 없습니다."), { status: 409 });
+  }
+
+  await database.batch([
+    database.prepare(`DELETE FROM guest_lookup_tokens WHERE resource_type = 'order' AND resource_id = ?`).bind(normalizedId),
+    database.prepare(`DELETE FROM notification_outbox WHERE entity_type = 'order' AND entity_id = ?`).bind(normalizedId),
+    database.prepare(`DELETE FROM orders WHERE id = ?`).bind(normalizedId),
+  ]);
+  return { orderId: normalizedId };
+}
+
 function shouldApplyOrderLifecycle({ currentStatus, activePaymentKey, paymentKey, lifecycle }) {
   if (!paymentKey || !lifecycle) {
     return true;

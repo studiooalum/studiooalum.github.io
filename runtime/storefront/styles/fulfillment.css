@@ -242,12 +242,26 @@
 
 .fulfillment-btn:disabled {
   opacity: 0.56;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .fulfillment-btn--secondary {
   background: transparent;
   color: #111;
+}
+
+.fulfillment-btn--danger {
+  margin-left: auto;
+  border-color: #9e2f26;
+  background: #fff;
+  color: #9e2f26;
+}
+
+.fulfillment-btn--danger:hover,
+.fulfillment-btn--danger:focus-visible {
+  border-color: #9e2f26;
+  background: #9e2f26;
+  color: #fff;
 }
 
 .fulfillment-order-list,

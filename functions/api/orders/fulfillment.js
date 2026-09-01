@@ -8,7 +8,7 @@ import {
   searchDeliveryTrackerCarriers,
 } from "../../../cloudflare/lib/delivery-tracker.js";
 import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
-import { readFulfillmentOrders, readOrderSyncSnapshot, updateShipment } from "../../../cloudflare/lib/d1.js";
+import { deleteUnpaidOrder, readFulfillmentOrders, readOrderSyncSnapshot, updateShipment } from "../../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
 const shipmentUpdateSchema = z.object({
@@ -28,6 +28,11 @@ const shipmentUpdateSchema = z.object({
       message: "trackingNumber is required when status is shipped.",
     });
   }
+});
+
+const deleteOrderSchema = z.object({
+  action: z.literal("deleteOrder"),
+  orderId: z.string().trim().min(1).max(80),
 });
 
 function mapShipmentResponse(shipment) {
@@ -129,6 +134,18 @@ export async function onRequestPost(context) {
     await requireAdminAccess(context);
 
     const payload = await readJson(context.request);
+    if (payload?.action === "deleteOrder") {
+      const deleteParsed = deleteOrderSchema.safeParse(payload);
+      if (!deleteParsed.success) return validationError(context.env, deleteParsed.error);
+      await deleteUnpaidOrder(context.env, deleteParsed.data.orderId);
+      const orders = await readFulfillmentOrders(context.env, { limit: 20 });
+      return json(context.env, {
+        ok: true,
+        message: "미결제 주문을 삭제했습니다.",
+        orders,
+        config: getFulfillmentConfig(context.env),
+      });
+    }
     const parsed = shipmentUpdateSchema.safeParse(payload);
 
     if (!parsed.success) {

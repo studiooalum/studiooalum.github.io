@@ -4,6 +4,7 @@ import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
 import {
   createRepairGalleryImage,
   deleteRepairGalleryImage,
+  deleteRepairRequest,
   readRepairAdminSnapshot,
   updateRepairGalleryImageStatus,
   updateRepairRequest,
@@ -75,6 +76,7 @@ const repairAdminActionSchema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("setRepairGalleryPublished"), id: z.string().trim().min(1).max(80), published: z.boolean() }),
   z.object({ action: z.literal("deleteRepairGalleryImage"), id: z.string().trim().min(1).max(80) }),
+  z.object({ action: z.literal("deleteRepairRequest"), id: z.string().trim().min(1).max(80) }),
 ]);
 
 const GALLERY_METHODS = new Set(["patch", "woven", "sashiko", "boro"]);
@@ -167,7 +169,13 @@ export async function onRequestPost(context) {
     }
 
     let snapshot;
-    if (parsed.data.action === "deleteRepairGalleryImage") {
+    if (parsed.data.action === "deleteRepairRequest") {
+      const removed = await deleteRepairRequest(context.env, parsed.data.id);
+      if (context.env?.OALUM_R2) {
+        await Promise.allSettled(removed.r2Keys.map((key) => context.env.OALUM_R2.delete(key)));
+      }
+      snapshot = await readFullSnapshot(context.env);
+    } else if (parsed.data.action === "deleteRepairGalleryImage") {
       const removed = await deleteRepairGalleryImage(context.env, parsed.data.id);
       if (context.env?.OALUM_R2 && removed.r2Key) await context.env.OALUM_R2.delete(removed.r2Key);
       snapshot = await readFullSnapshot(context.env);
@@ -191,7 +199,7 @@ export async function onRequestPost(context) {
     }
     return json(context.env, {
       ok: true,
-      message: "수선 접수 상태를 저장했습니다.",
+      message: parsed.data.action === "deleteRepairRequest" ? "수선 접수를 삭제했습니다." : "수선 접수 상태를 저장했습니다.",
       ...snapshot,
     });
   } catch (error) {

@@ -192,6 +192,40 @@ export async function readNotificationAdminSnapshot(env) {
   };
 }
 
+export async function deleteNotificationRevision(env, revisionId) {
+  const database = requireDb(env);
+  const normalizedId = cleanText(revisionId, 80);
+  if (!normalizedId) {
+    throw Object.assign(new Error("삭제할 수정 이력을 확인해주세요."), { status: 400 });
+  }
+  const revision = await database.prepare(`SELECT id FROM notification_template_revisions WHERE id = ? LIMIT 1`).bind(normalizedId).first();
+  if (!revision) {
+    throw Object.assign(new Error("수정 이력을 찾을 수 없습니다."), { status: 404 });
+  }
+  await database.prepare(`DELETE FROM notification_template_revisions WHERE id = ?`).bind(normalizedId).run();
+  return readNotificationAdminSnapshot(env);
+}
+
+export async function purgeNotificationHistory(env, { scope, olderThanDays }) {
+  const database = requireDb(env);
+  const normalizedScope = cleanText(scope, 20).toLowerCase();
+  const days = Number(olderThanDays);
+  if (![30, 90].includes(days) || !["revisions", "outbox"].includes(normalizedScope)) {
+    throw Object.assign(new Error("정리할 기록 범위를 다시 확인해주세요."), { status: 400 });
+  }
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const result = normalizedScope === "revisions"
+    ? await database.prepare(`DELETE FROM notification_template_revisions WHERE created_at < ?`).bind(cutoff).run()
+    : await database.prepare(`
+      DELETE FROM notification_outbox
+      WHERE created_at < ? AND status IN ('sent', 'failed', 'unknown', 'dead_letter')
+    `).bind(cutoff).run();
+  return {
+    deletedCount: Number(result?.meta?.changes || 0),
+    ...(await readNotificationAdminSnapshot(env)),
+  };
+}
+
 function createRevisionStatement(database, template, action, actorId, subject, body, isEnabled, createdAt) {
   return database.prepare(`
     INSERT INTO notification_template_revisions (

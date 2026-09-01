@@ -3,7 +3,7 @@ import { Editor, Node } from "@tiptap/core";
 import FontFamily from "@tiptap/extension-font-family";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
-import { FontSize, TextStyle } from "@tiptap/extension-text-style";
+import { BackgroundColor, Color, FontSize, LineHeight, TextStyle } from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
@@ -33,11 +33,15 @@ const dom = {
   blockStyle: document.querySelector(".js-newsletter-admin-block-style"),
   fontFamily: document.querySelector(".js-newsletter-admin-font-family"),
   fontSize: document.querySelector(".js-newsletter-admin-font-size"),
+  lineHeight: document.querySelector(".js-newsletter-admin-line-height"),
+  textColor: document.querySelector(".js-newsletter-admin-text-color"),
+  backgroundColor: document.querySelector(".js-newsletter-admin-background-color"),
   inlineImageInput: document.querySelector(".js-newsletter-admin-inline-image-input"),
   inlineImageButton: document.querySelector(".js-newsletter-admin-inline-image-upload"),
   saveDraftButton: document.querySelector(".js-newsletter-admin-save-draft"),
   publishButton: document.querySelector(".js-newsletter-admin-publish"),
   archiveButton: document.querySelector(".js-newsletter-admin-archive"),
+  deleteButton: document.querySelector(".js-newsletter-admin-delete"),
 };
 
 const state = {
@@ -341,6 +345,8 @@ function resetForm(post = null) {
   syncToolbarState();
   renderCover(item);
   if (dom.postStatus) dom.postStatus.textContent = item.slug ? getStatusLabel(item.status) : "새 초안";
+  if (dom.archiveButton) dom.archiveButton.disabled = !item.slug;
+  if (dom.deleteButton) dom.deleteButton.disabled = !item.slug;
   setDirty(false);
 }
 
@@ -469,6 +475,34 @@ async function archivePost() {
   }
 }
 
+async function deletePost() {
+  const post = getSelectedPost();
+  if (!post?.slug) {
+    setStatus(dom.status, "삭제할 글을 먼저 선택해주세요.", "error");
+    return;
+  }
+  const confirmed = window.confirm(`“${post.title || post.slug}” 글을 영구 삭제할까요?\n\n공개 글과 연결된 뉴스레터 이미지도 함께 삭제되며 복구할 수 없습니다.`);
+  if (!confirmed) return;
+
+  setButtonLoading(dom.deleteButton, true, "삭제 중...");
+  try {
+    const payload = await requestAdmin("/api/newsletters/admin", {
+      method: "POST",
+      body: { action: "deleteNewsletterPost", slug: post.slug },
+    });
+    applySnapshot(payload);
+    state.selectedSlug = state.posts[0]?.slug || "";
+    renderPostList();
+    resetForm(getSelectedPost());
+    setStatus(dom.status, "뉴스레터 글과 연결 이미지를 삭제했습니다.", "success");
+  } catch (error) {
+    setStatus(dom.status, error.message || "뉴스레터 글을 삭제하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(dom.deleteButton, false, "삭제 중...");
+    if (dom.deleteButton) dom.deleteButton.disabled = !getSelectedPost()?.slug;
+  }
+}
+
 function normalizeImageLayoutValue(type, value) {
   const normalized = String(value || "").trim().toLowerCase();
   return IMAGE_LAYOUT_VALUES[type].has(normalized) ? normalized : IMAGE_LAYOUT_DEFAULTS[type];
@@ -522,6 +556,23 @@ function applyTextFontSize(value) {
   editor.chain().focus().setFontSize(`${size}px`).run();
 }
 
+function applyLineHeight(value) {
+  if (!editor) return;
+  const lineHeight = String(value || "").trim();
+  if (lineHeight) editor.chain().focus().setLineHeight(lineHeight).run();
+  else editor.chain().focus().unsetLineHeight().run();
+}
+
+function applyTextColor(value) {
+  if (!editor) return;
+  editor.chain().focus().setColor(String(value || "#111111")).run();
+}
+
+function applyBackgroundColor(value) {
+  if (!editor) return;
+  editor.chain().focus().setBackgroundColor(String(value || "#fff2a8")).run();
+}
+
 function applyBlockStyle(value) {
   if (!editor) return;
   const chain = editor.chain().focus();
@@ -570,8 +621,10 @@ function applyEditorCommand(command) {
     "align-left": () => chain.setTextAlign("left").run(),
     "align-center": () => chain.setTextAlign("center").run(),
     "align-right": () => chain.setTextAlign("right").run(),
+    "align-justify": () => chain.setTextAlign("justify").run(),
     link: applyLink,
     clear: () => chain.unsetAllMarks().clearNodes().run(),
+    "clear-colors": () => chain.unsetColor().unsetBackgroundColor().run(),
     divider: () => chain.setHorizontalRule().run(),
     undo: () => chain.undo().run(),
     redo: () => chain.redo().run(),
@@ -592,6 +645,7 @@ function syncToolbarState() {
     "align-left": editor.isActive({ textAlign: "left" }),
     "align-center": editor.isActive({ textAlign: "center" }),
     "align-right": editor.isActive({ textAlign: "right" }),
+    "align-justify": editor.isActive({ textAlign: "justify" }),
     link: editor.isActive("link"),
   };
 
@@ -620,6 +674,16 @@ function syncToolbarState() {
     const matchingSize = Array.from(dom.fontSize.options).some((option) => option.value === String(size));
     dom.fontSize.value = matchingSize ? String(size) : "";
   }
+  if (dom.lineHeight && document.activeElement !== dom.lineHeight) {
+    const lineHeight = String(textStyle.lineHeight || "");
+    dom.lineHeight.value = Array.from(dom.lineHeight.options).some((option) => option.value === lineHeight) ? lineHeight : "";
+  }
+  if (dom.textColor && /^#[0-9a-f]{6}$/i.test(String(textStyle.color || ""))) {
+    dom.textColor.value = textStyle.color;
+  }
+  if (dom.backgroundColor && /^#[0-9a-f]{6}$/i.test(String(textStyle.backgroundColor || ""))) {
+    dom.backgroundColor.value = textStyle.backgroundColor;
+  }
 }
 
 function initializeEditor() {
@@ -641,9 +705,12 @@ function initializeEditor() {
       TextStyle,
       FontFamily.configure({ types: ["textStyle"] }),
       FontSize.configure({ types: ["textStyle"] }),
+      LineHeight.configure({ types: ["textStyle"] }),
+      Color.configure({ types: ["textStyle"] }),
+      BackgroundColor.configure({ types: ["textStyle"] }),
       OalumTextAlign.configure({
         types: ["heading", "paragraph", "blockquote"],
-        alignments: ["left", "center", "right"],
+        alignments: ["left", "center", "right", "justify"],
       }),
       Placeholder.configure({ placeholder: "본문을 작성하세요." }),
       FigureImage,
@@ -813,12 +880,16 @@ function attachEvents() {
   dom.blockStyle?.addEventListener("change", () => applyBlockStyle(dom.blockStyle.value));
   dom.fontFamily?.addEventListener("change", () => applyFontFamily(dom.fontFamily.value));
   dom.fontSize?.addEventListener("change", () => applyTextFontSize(dom.fontSize.value));
+  dom.lineHeight?.addEventListener("change", () => applyLineHeight(dom.lineHeight.value));
+  dom.textColor?.addEventListener("input", () => applyTextColor(dom.textColor.value));
+  dom.backgroundColor?.addEventListener("input", () => applyBackgroundColor(dom.backgroundColor.value));
   dom.inlineImageButton?.addEventListener("click", () => dom.inlineImageInput?.click());
   dom.inlineImageInput?.addEventListener("change", (event) => uploadInlineImage(event.target.files?.[0]));
 
   dom.saveDraftButton?.addEventListener("click", () => savePost("draft", dom.saveDraftButton));
   dom.publishButton?.addEventListener("click", () => savePost("published", dom.publishButton));
   dom.archiveButton?.addEventListener("click", archivePost);
+  dom.deleteButton?.addEventListener("click", deletePost);
 
   window.addEventListener("beforeunload", (event) => {
     if (!state.isDirty) return;

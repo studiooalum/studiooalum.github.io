@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
-  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260901-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260901-02">
   <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
 </head>
 <body class="fulfillment-page newsletter-admin-page">
@@ -172,6 +172,31 @@
                   </select>
                 </label>
 
+                <label class="newsletter-admin-select-label newsletter-admin-line-height-label">
+                  <span class="sr-only">행간</span>
+                  <select class="newsletter-admin-select newsletter-admin-line-height js-newsletter-admin-line-height" aria-label="행간">
+                    <option value="">기본 행간</option>
+                    <option value="1.2">1.2</option>
+                    <option value="1.4">1.4</option>
+                    <option value="1.6">1.6</option>
+                    <option value="1.8">1.8</option>
+                    <option value="2">2.0</option>
+                    <option value="2.2">2.2</option>
+                  </select>
+                </label>
+
+                <div class="newsletter-admin-color-tools" aria-label="글자 및 배경색">
+                  <label class="newsletter-admin-color-control" title="글자색">
+                    <span>글자색</span>
+                    <input type="color" value="#111111" class="js-newsletter-admin-text-color" aria-label="글자색">
+                  </label>
+                  <label class="newsletter-admin-color-control" title="배경색">
+                    <span>배경색</span>
+                    <input type="color" value="#fff2a8" class="js-newsletter-admin-background-color" aria-label="배경색">
+                  </label>
+                  <button type="button" class="newsletter-admin-tool newsletter-admin-tool--text" data-editor-command="clear-colors" aria-label="색상 지우기" title="글자색과 배경색 지우기">색 지우기</button>
+                </div>
+
                 <div class="newsletter-admin-tool-group" aria-label="글자 서식">
                   <button type="button" class="newsletter-admin-tool" data-editor-command="bold" aria-label="굵게" title="굵게"><strong>B</strong></button>
                   <button type="button" class="newsletter-admin-tool" data-editor-command="italic" aria-label="기울임" title="기울임"><em>I</em></button>
@@ -189,6 +214,7 @@
                   <button type="button" class="newsletter-admin-tool" data-editor-command="align-left" aria-label="왼쪽 정렬" title="왼쪽 정렬"><span class="newsletter-admin-align-icon newsletter-admin-align-icon--left" aria-hidden="true"></span></button>
                   <button type="button" class="newsletter-admin-tool" data-editor-command="align-center" aria-label="가운데 정렬" title="가운데 정렬"><span class="newsletter-admin-align-icon newsletter-admin-align-icon--center" aria-hidden="true"></span></button>
                   <button type="button" class="newsletter-admin-tool" data-editor-command="align-right" aria-label="오른쪽 정렬" title="오른쪽 정렬"><span class="newsletter-admin-align-icon newsletter-admin-align-icon--right" aria-hidden="true"></span></button>
+                  <button type="button" class="newsletter-admin-tool newsletter-admin-tool--text" data-editor-command="align-justify" aria-label="양쪽 정렬" title="양쪽 정렬">양쪽</button>
                 </div>
 
                 <div class="newsletter-admin-tool-group" aria-label="삽입 및 정리">
@@ -201,6 +227,7 @@
                 <button type="button" class="newsletter-admin-tool newsletter-admin-tool--primary newsletter-admin-tool--text js-newsletter-admin-inline-image-upload" aria-label="본문 이미지 추가" title="본문 이미지 추가">이미지</button>
               </div>
               <div class="newsletter-admin-image-layout js-newsletter-admin-image-layout" aria-label="선택한 이미지 레이아웃" hidden>
+                <strong class="newsletter-admin-image-layout__label">선택한 이미지</strong>
                 <div class="newsletter-admin-image-layout__alignment" role="group" aria-label="이미지 정렬">
                   <button type="button" class="newsletter-admin-tool" data-image-align="left" aria-label="이미지 왼쪽 정렬" title="이미지 왼쪽 정렬">←</button>
                   <button type="button" class="newsletter-admin-tool" data-image-align="center" aria-label="이미지 가운데 정렬" title="이미지 가운데 정렬">↔</button>
@@ -243,6 +270,7 @@
               <button type="button" class="fulfillment-btn js-newsletter-admin-save-draft">초안 저장</button>
               <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-publish">게시</button>
               <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-newsletter-admin-archive">보관</button>
+              <button type="button" class="fulfillment-btn newsletter-admin-delete-button js-newsletter-admin-delete">영구 삭제</button>
             </div>
             <p class="fulfillment-status newsletter-admin-activity-log js-newsletter-admin-status" role="status" aria-live="polite"></p>
           </form>
@@ -251,7 +279,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.bundle.js?v=20260901-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.bundle.js?v=20260901-02"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
 

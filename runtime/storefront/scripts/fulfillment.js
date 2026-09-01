@@ -18,6 +18,7 @@ const formEl = document.querySelector(".js-fulfillment-form");
 const formStatusEl = document.querySelector(".js-fulfillment-form-status");
 const carrierSearchButton = document.querySelector(".js-fulfillment-carrier-search-btn");
 const carrierResultsEl = document.querySelector(".js-fulfillment-carrier-results");
+const deleteOrderButton = document.querySelector(".js-fulfillment-delete-order");
 const couponSearchInput = document.querySelector(".js-fulfillment-coupon-search-input");
 const couponSearchButton = document.querySelector(".js-fulfillment-coupon-search-btn");
 const couponRefreshButton = document.querySelector(".js-fulfillment-coupon-refresh-btn");
@@ -400,6 +401,25 @@ function getSelectedOrder() {
   return state.orders.find((order) => order.orderId === state.selectedOrderId) || null;
 }
 
+function getOrderDeleteBlockReason(order) {
+  if (!order) return "삭제할 주문을 선택해주세요.";
+  const orderStatus = String(order.status || "").toLowerCase();
+  const paymentStatus = String(order.paymentStatus || order.payment?.status || "").toLowerCase();
+  const shipmentStatus = String(order.shipment?.status || "").toLowerCase();
+  if (order.paidAt || ["paid", "completed", "fulfilled", "refunded"].includes(orderStatus)
+    || ["paid", "done", "completed", "refunded", "partial_refunded"].includes(paymentStatus)
+    || order.payment?.approvedAt || Number(order.payment?.approvedAmount || 0) > 0) {
+    return "결제·완료·환불 기록이 있는 주문은 보존됩니다.";
+  }
+  if (order.coupon || Number(order.pointsUsed || 0) > 0 || Number(order.pointsEarned || 0) > 0) {
+    return "쿠폰 또는 포인트 이력이 연결된 주문은 삭제할 수 없습니다.";
+  }
+  if (["shipped", "delivered", "returned"].includes(shipmentStatus)) {
+    return "배송 이력이 있는 주문은 삭제할 수 없습니다.";
+  }
+  return "";
+}
+
 function getSelectedCoupon() {
   return state.coupons.find((coupon) => coupon.id === state.selectedCouponId) || null;
 }
@@ -566,6 +586,39 @@ function renderSelection() {
   formEl.elements.trackingUrl.value = shipment?.trackingUrl || "";
   formEl.elements.shippedAt.value = formatDateTimeLocal(shipment?.shippedAt);
   formEl.elements.deliveredAt.value = formatDateTimeLocal(shipment?.deliveredAt);
+  if (deleteOrderButton) {
+    const blockedReason = getOrderDeleteBlockReason(order);
+    deleteOrderButton.disabled = Boolean(blockedReason);
+    deleteOrderButton.title = blockedReason || "미결제 테스트 주문을 영구 삭제합니다.";
+  }
+}
+
+async function deleteSelectedOrder() {
+  const order = getSelectedOrder();
+  const blockedReason = getOrderDeleteBlockReason(order);
+  if (!order || blockedReason) {
+    setStatus(formStatusEl, blockedReason || "삭제할 주문을 선택해주세요.", "error");
+    return;
+  }
+  if (!window.confirm(`주문 “${order.orderId}”을 영구 삭제할까요?\n\n미결제·미배송·혜택 미사용 주문만 삭제되며 복구할 수 없습니다.`)) return;
+
+  setButtonLoading(deleteOrderButton, true, "삭제 중…");
+  try {
+    const payload = await requestFulfillment("/api/orders/fulfillment", {
+      method: "POST",
+      body: { action: "deleteOrder", orderId: order.orderId },
+    });
+    state.orders = Array.isArray(payload.orders) ? payload.orders : [];
+    state.selectedOrderId = state.orders[0]?.orderId || "";
+    renderOrders();
+    renderSelection();
+    setStatus(formStatusEl, "미결제 주문을 삭제했습니다.", "success");
+  } catch (error) {
+    setStatus(formStatusEl, error.message || "주문을 삭제하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(deleteOrderButton, false, "삭제 중…");
+    if (deleteOrderButton) deleteOrderButton.disabled = Boolean(getOrderDeleteBlockReason(getSelectedOrder()));
+  }
 }
 
 function applySelectedOrder(order) {
@@ -926,6 +979,7 @@ carrierResultsEl?.addEventListener("click", (event) => {
 });
 
 formEl?.addEventListener("submit", saveShipment);
+deleteOrderButton?.addEventListener("click", deleteSelectedOrder);
 
 couponListEl?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-coupon-id]");

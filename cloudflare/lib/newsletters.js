@@ -103,8 +103,9 @@ const IMAGE_ALIGNMENTS = new Set(["left", "center", "right"]);
 const IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
 const IMAGE_LAYOUTS = new Set(["single", "pair-left", "pair-right"]);
-const TEXT_ALIGNMENTS = new Set(["left", "center", "right"]);
+const TEXT_ALIGNMENTS = new Set(["left", "center", "right", "justify"]);
 const TEXT_ALIGNMENT_TAGS = new Set(["p", "h2", "h3", "blockquote", "li"]);
+const TEXT_LINE_HEIGHTS = new Set(["1.2", "1.4", "1.6", "1.8", "2", "2.0", "2.2"]);
 const ALLOWED_FONT_FAMILIES = new Map([
   ["pretendard", "Pretendard"],
   ["wanted sans", "Wanted Sans"],
@@ -140,6 +141,20 @@ function sanitizeFontSize(value) {
   const raw = cleanText(value, 12).match(/^-?\d+(?:\.\d+)?/i)?.[0] || "";
   const size = Math.round(Number(raw));
   return size >= 8 && size <= 40 ? String(size) : "";
+}
+
+function sanitizeLineHeight(value) {
+  const normalized = cleanText(value, 12).toLowerCase().replace(/\s*!important\s*$/i, "");
+  return TEXT_LINE_HEIGHTS.has(normalized) ? (normalized === "2.0" ? "2" : normalized) : "";
+}
+
+function sanitizeHexColor(value) {
+  const normalized = cleanText(value, 20).toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(normalized)) return normalized;
+  if (/^#[0-9a-f]{3}$/.test(normalized)) {
+    return `#${normalized.slice(1).split("").map((character) => character.repeat(2)).join("")}`;
+  }
+  return "";
 }
 
 function readStyleProperty(source, property) {
@@ -216,14 +231,23 @@ export function sanitizeNewsletterHtml(value) {
       const fontFamily = tagName === "span"
         ? sanitizeFontFamily(readAttribute(attributes, "data-font-family") || readStyleProperty(sourceStyle, "font-family"))
         : "";
+      const lineHeight = tagName === "span"
+        ? sanitizeLineHeight(readAttribute(attributes, "data-line-height") || readStyleProperty(sourceStyle, "line-height"))
+        : "";
+      const color = tagName === "span" ? sanitizeHexColor(readStyleProperty(sourceStyle, "color")) : "";
+      const backgroundColor = tagName === "span" ? sanitizeHexColor(readStyleProperty(sourceStyle, "background-color")) : "";
       const inlineStyles = [
         fontSize ? `font-size: ${fontSize}px` : "",
         fontFamily ? `font-family: ${toCssFontFamily(fontFamily)}` : "",
+        lineHeight ? `line-height: ${lineHeight}` : "",
+        color ? `color: ${color}` : "",
+        backgroundColor ? `background-color: ${backgroundColor}` : "",
       ].filter(Boolean).join("; ");
       const textAttributes = [
         alignment ? ` data-text-align="${alignment}"` : "",
         fontSize ? ` data-font-size="${fontSize}"` : "",
         fontFamily ? ` data-font-family="${escapeHtml(fontFamily)}"` : "",
+        lineHeight ? ` data-line-height="${lineHeight}"` : "",
         inlineStyles ? ` style="${escapeHtml(inlineStyles)}"` : "",
       ].join("");
       return `<${tagName}${textAttributes}>`;
@@ -248,6 +272,24 @@ function textFromHtml(value) {
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function newsletterR2KeysFromPost(row) {
+  const keys = new Set();
+  const coverKey = cleanText(row?.cover_image_r2_key, 500);
+  if (coverKey.startsWith("newsletters/")) keys.add(coverKey);
+
+  for (const match of String(row?.content_html || "").matchAll(/<img\b[^>]*\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi)) {
+    const source = match[1] || match[2] || match[3] || "";
+    try {
+      const url = new URL(source.replace(/&amp;/g, "&"), "https://studiooalum.invalid");
+      const key = cleanText(url.searchParams.get("key"), 500);
+      if (url.pathname === "/api/r2" && key.startsWith("newsletters/")) keys.add(key);
+    } catch {
+      // Ignore non-R2 and malformed image URLs.
+    }
+  }
+  return [...keys];
 }
 
 function formatNewsletterPost(row) {
@@ -439,4 +481,22 @@ export async function archiveNewsletterPost(env, { slug }) {
   const post = formatNewsletterPost(row);
   await syncPublicNewsletterSnapshots(env, post);
   return post;
+}
+
+export async function deleteNewsletterPost(env, { slug }) {
+  const database = requireDb(env);
+  const normalizedSlug = cleanText(slug, 120);
+  if (!normalizedSlug) {
+    throw Object.assign(new Error("뉴스레터 slug를 확인해주세요."), { status: 400 });
+  }
+
+  const existing = await database.prepare(`SELECT * FROM newsletter_posts WHERE slug = ? LIMIT 1`).bind(normalizedSlug).first();
+  if (!existing) {
+    throw Object.assign(new Error("뉴스레터 글을 찾을 수 없습니다."), { status: 404 });
+  }
+
+  const r2Keys = newsletterR2KeysFromPost(existing);
+  await database.prepare(`DELETE FROM newsletter_posts WHERE slug = ?`).bind(normalizedSlug).run();
+  await syncPublicNewsletterSnapshots(env, { slug: normalizedSlug, status: "deleted" });
+  return { slug: normalizedSlug, r2Keys };
 }

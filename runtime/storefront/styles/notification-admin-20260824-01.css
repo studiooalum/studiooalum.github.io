@@ -96,6 +96,40 @@
   color: rgba(17, 17, 17, 0.6);
 }
 
+.notification-history-tools,
+.notification-history-tools > div,
+.notification-delivery-actions,
+.notification-revision-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-history-tools {
+  justify-content: space-between;
+  border-top: 1px solid rgba(17, 17, 17, 0.14);
+  padding-top: 12px;
+  font-family: var(--font-kor-form);
+  font-size: 11px;
+}
+
+.notification-revision-list {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.notification-revision-item {
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.1);
+  padding: 6px 0;
+}
+
+.notification-revision-item .fulfillment-btn {
+  padding: 6px 9px;
+  font-size: 10px;
+}
+
 .notification-template-card.is-active p,
 .notification-template-card.is-active span {
   color: rgba(255, 255, 255, 0.72);

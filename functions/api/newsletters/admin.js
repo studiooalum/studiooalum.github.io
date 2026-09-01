@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
 import {
   archiveNewsletterPost,
+  deleteNewsletterPost,
   readNewsletterAdminSnapshot,
   upsertNewsletterPost,
 } from "../../../cloudflare/lib/newsletters.js";
@@ -30,6 +31,7 @@ const newsletterPostSchema = z.object({
 const newsletterActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("saveNewsletterPost"), post: newsletterPostSchema }),
   z.object({ action: z.literal("archiveNewsletterPost"), slug: z.string().trim().min(1).max(120) }),
+  z.object({ action: z.literal("deleteNewsletterPost"), slug: z.string().trim().min(1).max(120) }),
 ]);
 
 function cleanUploadValue(value, fallback) {
@@ -123,16 +125,24 @@ export async function onRequestPost(context) {
       return validationError(context.env, parsed.error);
     }
 
+    let message = "뉴스레터 글을 저장했습니다.";
     if (parsed.data.action === "saveNewsletterPost") {
       await upsertNewsletterPost(context.env, parsed.data.post);
-    } else {
+    } else if (parsed.data.action === "archiveNewsletterPost") {
       await archiveNewsletterPost(context.env, { slug: parsed.data.slug });
+      message = "뉴스레터 글을 보관했습니다.";
+    } else {
+      const deleted = await deleteNewsletterPost(context.env, { slug: parsed.data.slug });
+      if (context.env?.OALUM_R2) {
+        await Promise.allSettled(deleted.r2Keys.map((key) => context.env.OALUM_R2.delete(key)));
+      }
+      message = "뉴스레터 글과 연결 이미지를 삭제했습니다.";
     }
 
     const snapshot = await readNewsletterAdminSnapshot(context.env);
     return json(context.env, {
       ok: true,
-      message: parsed.data.action === "archiveNewsletterPost" ? "뉴스레터 글을 보관했습니다." : "뉴스레터 글을 저장했습니다.",
+      message,
       ...snapshot,
     });
   } catch (error) {

@@ -29,6 +29,7 @@ const dom = {
   cancelButton: document.querySelector(".js-workshop-admin-cancel-btn"),
   restoreButton: document.querySelector(".js-workshop-admin-restore-btn"),
   refundButton: document.querySelector(".js-workshop-admin-refund-btn"),
+  deleteReservationButton: document.querySelector(".js-workshop-admin-delete-reservation-btn"),
   groupList: document.querySelector(".js-workshop-admin-group-list"),
   groupStatus: document.querySelector(".js-workshop-admin-group-status"),
   groupRefreshButton: document.querySelector(".js-workshop-admin-group-refresh-btn"),
@@ -44,6 +45,7 @@ const dom = {
   previewButton: document.querySelector(".js-workshop-admin-preview-btn"),
   publishButton: document.querySelector(".js-workshop-admin-publish-btn"),
   archiveButton: document.querySelector(".js-workshop-admin-archive-btn"),
+  deleteContentButton: document.querySelector(".js-workshop-admin-delete-content-btn"),
   categorySelect: document.querySelector(".js-workshop-admin-category-select"),
   categoryCustom: document.querySelector(".js-workshop-admin-category-custom"),
   durationSelect: document.querySelector(".js-workshop-admin-duration-select"),
@@ -707,6 +709,18 @@ function renderDetail() {
   if (dom.refundButton) {
     dom.refundButton.hidden = reservation.paymentStatus !== "paid";
   }
+  if (dom.deleteReservationButton) {
+    const terminal = ["cancelled", "expired"].includes(reservation.status);
+    const hasFinancialHistory = Boolean(reservation.paidAt)
+      || Number(reservation.amountPaid || 0) > 0
+      || ["paid", "refunded"].includes(String(reservation.paymentStatus || "").toLowerCase());
+    dom.deleteReservationButton.disabled = !terminal || hasFinancialHistory;
+    dom.deleteReservationButton.title = !terminal
+      ? "취소 또는 만료된 예약만 삭제할 수 있습니다."
+      : hasFinancialHistory
+        ? "결제·환불 기록이 있는 예약은 보존됩니다."
+        : "취소된 예약을 영구 삭제합니다.";
+  }
 }
 
 function renderContentList() {
@@ -954,6 +968,13 @@ function resetContentForm(seed = {}) {
   renderPosterRows(posterImages);
   renderGalleryRows(galleryImages);
   renderSlotRows(slotItems);
+  if (dom.archiveButton) dom.archiveButton.disabled = !workshop.slug;
+  if (dom.deleteContentButton) {
+    dom.deleteContentButton.disabled = !workshop.slug || workshop.status === "published";
+    dom.deleteContentButton.title = workshop.status === "published"
+      ? "게시 중인 워크숍은 먼저 보관해주세요. 예약 이력이 있으면 삭제할 수 없습니다."
+      : "예약 이력이 없는 초안·보관 워크숍만 삭제할 수 있습니다.";
+  }
   setDirtyState(false);
   setStatus(dom.contentStatus, workshop.slug ? `${workshop.slug} 편집 중입니다.` : "새 워크숍 초안을 작성 중입니다.");
 }
@@ -1197,6 +1218,18 @@ async function submitAdminAction(body, { successTarget, successMessage, loadingB
     return null;
   } finally {
     setButtonLoading(loadingButton, false, loadingText);
+    if (loadingButton === dom.deleteContentButton) {
+      const content = getSelectedContentItem();
+      dom.deleteContentButton.disabled = !content?.slug || content.status === "published";
+    }
+    if (loadingButton === dom.deleteReservationButton) {
+      const reservation = getSelectedReservation();
+      const terminal = ["cancelled", "expired"].includes(reservation?.status);
+      const hasFinancialHistory = Boolean(reservation?.paidAt)
+        || Number(reservation?.amountPaid || 0) > 0
+        || ["paid", "refunded"].includes(String(reservation?.paymentStatus || "").toLowerCase());
+      dom.deleteReservationButton.disabled = !reservation || !terminal || hasFinancialHistory;
+    }
   }
 }
 
@@ -1272,6 +1305,29 @@ async function archiveSelectedWorkshop() {
     loadingText: "보관 중…",
     afterSuccess: () => {
       state.selectedContentSlug = selectedContent.slug;
+    },
+  });
+}
+
+async function deleteSelectedWorkshop() {
+  const selectedContent = getSelectedContentItem();
+  if (!selectedContent?.slug) {
+    setStatus(dom.contentStatus, "삭제할 워크숍을 먼저 선택해주세요.", "error");
+    return;
+  }
+  if (!window.confirm(`“${selectedContent.title || selectedContent.slug}” 워크숍을 영구 삭제할까요?\n\n예약 이력이 있거나 게시 중인 워크숍은 삭제되지 않습니다.`)) return;
+
+  await submitAdminAction({
+    action: "deleteWorkshopContent",
+    slug: selectedContent.slug,
+  }, {
+    successTarget: dom.contentStatus,
+    successMessage: "워크숍과 연결 이미지를 삭제했습니다.",
+    loadingButton: dom.deleteContentButton,
+    loadingText: "삭제 중…",
+    afterSuccess: () => {
+      state.selectedContentSlug = "";
+      setDirtyState(false);
     },
   });
 }
@@ -1548,6 +1604,25 @@ function attachEvents() {
     });
   });
 
+  dom.deleteReservationButton?.addEventListener("click", async () => {
+    const reservation = getSelectedReservation();
+    if (!reservation || dom.deleteReservationButton.disabled) return;
+    if (!window.confirm(`${reservation.fullName || "선택한 신청자"}의 취소 예약을 영구 삭제할까요?\n\n이 작업은 복구할 수 없습니다.`)) return;
+
+    await submitAdminAction({
+      action: "deleteWorkshopReservation",
+      reservationId: reservation.reservationId,
+    }, {
+      successTarget: dom.detailStatus,
+      successMessage: "취소된 예약을 삭제했습니다.",
+      loadingButton: dom.deleteReservationButton,
+      loadingText: "삭제 중…",
+      afterSuccess: () => {
+        state.selectedReservationId = "";
+      },
+    });
+  });
+
   dom.groupList?.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-group-action]");
     if (!button) return;
@@ -1766,6 +1841,8 @@ function attachEvents() {
   dom.archiveButton?.addEventListener("click", () => {
     archiveSelectedWorkshop();
   });
+
+  dom.deleteContentButton?.addEventListener("click", deleteSelectedWorkshop);
 
   window.addEventListener("beforeunload", (event) => {
     if (!isWorkshopEditorDirty()) return;

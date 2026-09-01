@@ -10,6 +10,7 @@
     "cf:repair-notifications:deploy": "npx wrangler deploy --config wrangler.repair-notifications.jsonc",
     "test:newsletter": "node --test tests/newsletter-editor.test.mjs",
     "test:repair": "node --test tests/repair-notifications.test.mjs",
+    "test:admin-deletion": "node --test tests/admin-deletion.test.mjs",
     "web:dev": "next dev ./apps/web",
     "web:build": "next build ./apps/web",
     "web:start": "next start ./apps/web"

@@ -6,8 +6,10 @@ import {
   activateNotificationDraft,
   createManualNotificationRetry,
   createNotificationTest,
+  deleteNotificationRevision,
   previewNotificationTemplate,
   processNotificationOutbox,
+  purgeNotificationHistory,
   readNotificationAdminSnapshot,
   restoreNotificationDefault,
   saveNotificationDraft,
@@ -28,6 +30,8 @@ const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("setEnabled"), ...templateIdentity, enabled: z.boolean() }),
   z.object({ action: z.literal("retry"), outboxId: z.string().trim().min(1).max(80) }),
   z.object({ action: z.literal("process"), limit: z.number().int().min(1).max(50).optional() }),
+  z.object({ action: z.literal("deleteRevision"), revisionId: z.string().trim().min(1).max(80) }),
+  z.object({ action: z.literal("purgeHistory"), scope: z.enum(["revisions", "outbox"]), olderThanDays: z.union([z.literal(30), z.literal(90)]) }),
 ]);
 
 function actorId(admin) {
@@ -73,7 +77,14 @@ export async function onRequestPost(context) {
       return json(context.env, { ok: true, message: "기본 템플릿을 초안으로 복원했습니다.", ...(await restoreNotificationDefault(context.env, input, actor)) });
     }
     if (input.action === "setEnabled") {
-      return json(context.env, { ok: true, message: input.enabled ? "알림을 활성화했습니다." : "알림을 비활성화했습니다.", ...(await setNotificationTemplateEnabled(context.env, input, actor)) });
+      return json(context.env, { ok: true, message: input.enabled ? "알림을 활성화했습니다." : "알림을 비활성화하고 기본 목록에서 숨겼습니다.", ...(await setNotificationTemplateEnabled(context.env, input, actor)) });
+    }
+    if (input.action === "deleteRevision") {
+      return json(context.env, { ok: true, message: "수정 이력을 삭제했습니다.", ...(await deleteNotificationRevision(context.env, input.revisionId)) });
+    }
+    if (input.action === "purgeHistory") {
+      const result = await purgeNotificationHistory(context.env, input);
+      return json(context.env, { ok: true, message: `${result.deletedCount}개의 오래된 기록을 정리했습니다.`, ...result });
     }
     if (input.action === "retry") {
       const notification = await createManualNotificationRetry(context.env, input.outboxId, actor);

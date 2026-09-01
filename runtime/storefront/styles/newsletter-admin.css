@@ -233,6 +233,49 @@
   width: 96px;
 }
 
+.newsletter-admin-line-height {
+  width: 104px;
+}
+
+.newsletter-admin-color-tools,
+.newsletter-admin-color-control {
+  display: inline-flex;
+  align-items: center;
+}
+
+.newsletter-admin-color-tools {
+  gap: 5px;
+  border-right: 1px solid rgba(17, 17, 17, 0.14);
+  padding-right: 6px;
+}
+
+.newsletter-admin-color-control {
+  gap: 5px;
+  min-height: 34px;
+  border: 1px solid rgba(17, 17, 17, 0.22);
+  border-radius: 3px;
+  padding: 0 7px;
+  background: #fff;
+  font-family: var(--font-kor-button);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.newsletter-admin-color-control input {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.newsletter-admin-image-layout__label {
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  font-weight: 400;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -503,6 +546,19 @@
   border: 1px solid rgba(17, 17, 17, 0.14);
   padding: 12px 14px;
   background: #fff;
+}
+
+.newsletter-admin-delete-button {
+  margin-left: auto;
+  border-color: #9e2f26;
+  background: #fff;
+  color: #9e2f26;
+}
+
+.newsletter-admin-delete-button:hover,
+.newsletter-admin-delete-button:focus-visible {
+  background: #9e2f26;
+  color: #fff;
 }
 
 .newsletter-admin-activity-log {

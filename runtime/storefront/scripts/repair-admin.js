@@ -26,6 +26,7 @@ const dom = {
   imageCount: document.querySelector(".js-repair-admin-image-count"),
   imageList: document.querySelector(".js-repair-admin-image-list"),
   save: document.querySelector(".js-repair-admin-save"),
+  deleteRequest: document.querySelector(".js-repair-admin-delete"),
   formStatus: document.querySelector(".js-repair-admin-form-status"),
   contentForm: document.querySelector(".js-repair-content-form"),
   contentSave: document.querySelector(".js-repair-content-save"),
@@ -439,6 +440,12 @@ function renderSelectedRequest() {
   }
   updateStatusFields();
   setReadOnlyState(request);
+  if (dom.deleteRequest) {
+    dom.deleteRequest.disabled = !request.canDelete;
+    dom.deleteRequest.title = request.canDelete
+      ? "접수와 첨부 이미지를 영구 삭제합니다."
+      : (request.deleteBlockedReason || "이 접수는 기록 보존을 위해 삭제할 수 없습니다.");
+  }
   renderCustomerDetails(request);
   void renderPrivateImages(request);
 }
@@ -522,6 +529,30 @@ async function saveRequest() {
   }
 }
 
+async function deleteSelectedRequest() {
+  const request = getSelectedRequest();
+  if (!request || !request.canDelete || !dom.deleteRequest) return;
+  if (!window.confirm(`“${request.requestNumber || request.customerName || "선택한 수선 접수"}”를 영구 삭제할까요?\n\n접수 사진과 티켓 첨부 파일도 함께 삭제되며 복구할 수 없습니다.`)) return;
+
+  setButtonLoading(dom.deleteRequest, true, "삭제 중...");
+  try {
+    const payload = await requestAdmin("/api/repairs/admin", {
+      method: "POST",
+      body: { action: "deleteRepairRequest", id: request.id },
+    });
+    applySnapshot(payload);
+    state.selectedId = state.requests[0]?.id || "";
+    renderRequestList();
+    renderSelectedRequest();
+    setStatus(dom.formStatus, "수선 접수와 연결 파일을 삭제했습니다.", "success");
+  } catch (error) {
+    setStatus(dom.formStatus, error.message || "수선 접수를 삭제하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(dom.deleteRequest, false, "삭제 중...");
+    if (dom.deleteRequest) dom.deleteRequest.disabled = !getSelectedRequest()?.canDelete;
+  }
+}
+
 async function saveContent() {
   if (!dom.contentForm) return;
   const paragraphs = String(dom.contentForm.elements.paragraphs.value || "")
@@ -599,6 +630,10 @@ function bindEvents() {
   dom.form?.addEventListener("submit", (event) => {
     event.preventDefault();
     void saveRequest();
+  });
+
+  dom.deleteRequest?.addEventListener("click", () => {
+    void deleteSelectedRequest();
   });
 
   dom.form?.elements.status?.addEventListener("change", () => {

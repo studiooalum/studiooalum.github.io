@@ -795,6 +795,43 @@ export async function updateWorkshopReservationStatus(env, { reservationId, stat
   return formatReservation(updated);
 }
 
+export async function deleteWorkshopReservation(env, { reservationId }) {
+  const database = requireDb(env);
+  const normalizedId = cleanText(reservationId, 80);
+  if (!normalizedId) {
+    throw Object.assign(new Error("삭제할 예약을 확인해주세요."), { status: 400 });
+  }
+
+  const row = await database.prepare(`SELECT * FROM workshop_reservations WHERE id = ? LIMIT 1`).bind(normalizedId).first();
+  if (!row) {
+    throw Object.assign(new Error("예약 정보를 찾을 수 없습니다."), { status: 404 });
+  }
+  if (!["cancelled", "expired"].includes(String(row.status || "").toLowerCase())) {
+    throw Object.assign(new Error("취소 또는 만료된 예약만 영구 삭제할 수 있습니다."), { status: 409 });
+  }
+  if (row.paid_at || Number(row.amount_paid || 0) > 0 || ["paid", "refunded"].includes(String(row.payment_status || "").toLowerCase())) {
+    throw Object.assign(new Error("결제 또는 환불 기록이 있는 예약은 보존해야 합니다."), { status: 409 });
+  }
+
+  const payment = await database.prepare(`
+    SELECT id, status, provider_status, paid_at
+    FROM workshop_payment_orders
+    WHERE reservation_id = ?
+      AND (paid_at IS NOT NULL OR lower(status) IN ('paid', 'refunded') OR lower(provider_status) IN ('done', 'paid', 'refunded'))
+    LIMIT 1
+  `).bind(normalizedId).first();
+  if (payment) {
+    throw Object.assign(new Error("결제 처리 이력이 있는 예약은 영구 삭제할 수 없습니다."), { status: 409 });
+  }
+
+  await database.batch([
+    database.prepare(`DELETE FROM guest_lookup_tokens WHERE resource_type = 'workshop' AND resource_id = ?`).bind(normalizedId),
+    database.prepare(`DELETE FROM notification_outbox WHERE entity_type = 'workshop' AND entity_id = ?`).bind(normalizedId),
+    database.prepare(`DELETE FROM workshop_reservations WHERE id = ?`).bind(normalizedId),
+  ]);
+  return { reservationId: normalizedId };
+}
+
 export async function createWorkshopDateBlock(env, {
   slotDate,
   reason,
@@ -2407,6 +2444,42 @@ export async function archiveWorkshopContent(env, input) {
   const workshop = await archiveWorkshopContentRecord(env, input);
   await syncPublicWorkshopSnapshots(env, workshop);
   return workshop;
+}
+
+export async function deleteWorkshopContent(env, { slug }) {
+  const database = requireDb(env);
+  const normalizedSlug = cleanText(slug, 120);
+  if (!normalizedSlug) {
+    throw Object.assign(new Error("삭제할 워크숍을 확인해주세요."), { status: 400 });
+  }
+
+  const row = await database.prepare(`SELECT * FROM workshops WHERE slug = ? LIMIT 1`).bind(normalizedSlug).first();
+  if (!row) {
+    throw Object.assign(new Error("워크숍 콘텐츠를 찾을 수 없습니다."), { status: 404 });
+  }
+  if (String(row.status || "draft").toLowerCase() === "published") {
+    throw Object.assign(new Error("게시 중인 워크숍은 먼저 보관한 뒤 삭제해주세요."), { status: 409 });
+  }
+
+  const reservation = await database.prepare(`SELECT id FROM workshop_reservations WHERE workshop_slug = ? LIMIT 1`).bind(normalizedSlug).first();
+  if (reservation) {
+    throw Object.assign(new Error("예약 이력이 있는 워크숍은 영구 삭제할 수 없습니다."), { status: 409 });
+  }
+
+  const r2Keys = new Set();
+  const posterKey = cleanText(row.poster_image_r2_key, 500);
+  if (posterKey.startsWith("workshops/")) r2Keys.add(posterKey);
+  for (const image of decodeJson(row.gallery_images_json, [])) {
+    const key = cleanText(image?.r2Key || image?.r2_key, 500);
+    if (key.startsWith("workshops/")) r2Keys.add(key);
+  }
+
+  await database.batch([
+    database.prepare(`DELETE FROM workshop_schedule_blocks WHERE workshop_slug = ?`).bind(normalizedSlug),
+    database.prepare(`DELETE FROM workshops WHERE slug = ?`).bind(normalizedSlug),
+  ]);
+  await syncPublicWorkshopSnapshots(env, { slug: normalizedSlug, status: "deleted" });
+  return { slug: normalizedSlug, r2Keys: [...r2Keys] };
 }
 
 export { WORKSHOP_TYPES, readPublicWorkshopCatalog, readStoredWorkshopCatalog };

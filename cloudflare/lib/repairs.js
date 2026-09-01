@@ -119,6 +119,9 @@ function formatRepairImage(row) {
 function formatRepairRequest(row) {
   const status = normalizeStatus(row.status);
   const archiveConsentAt = row.archive_consent_at || "";
+  const canDelete = ["received", "rejected", "cancelled"].includes(status)
+    && !row.payment_confirmed_at
+    && Math.max(0, Number(row.final_amount) || 0) === 0;
 
   return {
     id: row.id,
@@ -149,6 +152,12 @@ function formatRepairRequest(row) {
     shippingAddress: row.shipping_address || "",
     version: Number(row.version || 1),
     isReadOnly: status === "closed",
+    canDelete,
+    deleteBlockedReason: canDelete
+      ? ""
+      : !["received", "rejected", "cancelled"].includes(status)
+        ? "진행 중이거나 완료된 접수는 기록 보존을 위해 삭제할 수 없습니다."
+        : "결제 또는 최종 금액 기록이 있는 접수는 삭제할 수 없습니다.",
     adminNote: row.admin_note,
     customerMessage: row.customer_message,
     quoteAmount: row.quote_amount === null || row.quote_amount === undefined ? null : Number(row.quote_amount),
@@ -757,6 +766,50 @@ export async function readRepairAdminSnapshot(env) {
 
   const gallery = await readRepairGallery(env, { includeDrafts: true });
   return { requests: Array.from(byId.values()), gallery };
+}
+
+export async function deleteRepairRequest(env, requestId) {
+  const database = requireDb(env);
+  const normalizedId = cleanText(requestId, 80);
+  if (!normalizedId) {
+    throw Object.assign(new Error("삭제할 수선 접수를 확인해주세요."), { status: 400 });
+  }
+
+  const row = await database.prepare(`SELECT * FROM repair_requests WHERE id = ? LIMIT 1`).bind(normalizedId).first();
+  if (!row) {
+    throw Object.assign(new Error("수선 접수를 찾을 수 없습니다."), { status: 404 });
+  }
+  const request = formatRepairRequest(row);
+  if (!request.canDelete) {
+    throw Object.assign(new Error(request.deleteBlockedReason), { status: 409 });
+  }
+
+  const [imageResult, attachmentResult, ticket] = await Promise.all([
+    database.prepare(`SELECT r2_key FROM repair_request_images WHERE request_id = ?`).bind(normalizedId).all(),
+    database.prepare(`
+      SELECT attachment.r2_key
+      FROM repair_ticket_message_attachments attachment
+      INNER JOIN repair_ticket_messages message ON message.id = attachment.message_id
+      INNER JOIN repair_tickets ticket ON ticket.id = message.ticket_id
+      WHERE ticket.repair_id = ?
+    `).bind(normalizedId).all(),
+    database.prepare(`SELECT id FROM repair_tickets WHERE repair_id = ? LIMIT 1`).bind(normalizedId).first(),
+  ]);
+  const r2Keys = [...new Set([
+    ...(imageResult?.results || []).map((item) => cleanText(item.r2_key, 500)),
+    ...(attachmentResult?.results || []).map((item) => cleanText(item.r2_key, 500)),
+  ].filter((key) => key.startsWith("repair-requests/") || key.startsWith("repair-tickets/")))];
+
+  const statements = [
+    database.prepare(`DELETE FROM guest_lookup_tokens WHERE resource_type = 'repair' AND resource_id = ?`).bind(normalizedId),
+    database.prepare(`DELETE FROM notification_outbox WHERE entity_type = 'repair' AND entity_id = ?`).bind(normalizedId),
+  ];
+  if (ticket?.id) {
+    statements.push(database.prepare(`DELETE FROM repair_ticket_abuse_log WHERE ticket_id = ?`).bind(ticket.id));
+  }
+  statements.push(database.prepare(`DELETE FROM repair_requests WHERE id = ?`).bind(normalizedId));
+  await database.batch(statements);
+  return { requestId: normalizedId, r2Keys };
 }
 
 export async function readRepairGallery(env, { includeDrafts = false } = {}) {

@@ -4,7 +4,7 @@ async function startWorkshopAdmin() {
 	});
 
 	try {
-		await import("./workshop-admin-20260809-03.js?v=20260818-01");
+		await import("./workshop-admin-20260809-03.js?v=20260901-01");
 	} catch (error) {
 		console.error("Failed to initialize Workshop Admin.", error);
 		const status = document.querySelector(".js-workshop-admin-auth-status");
