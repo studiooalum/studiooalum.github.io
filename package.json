@@ -8,7 +8,7 @@
     "cf:pages:dev": "npm run cf:build && npx wrangler pages dev dist",
     "cf:pages:deploy": "npm run cf:build && npx wrangler pages deploy dist --project-name studiooalum",
     "cf:repair-notifications:deploy": "npx wrangler deploy --config wrangler.repair-notifications.jsonc",
-    "test:newsletter": "node --test tests/newsletter-editor.test.mjs",
+    "test:newsletter": "node --test tests/newsletter-editor.test.mjs tests/newsletter-html.test.mjs",
     "test:repair": "node --test tests/repair-notifications.test.mjs",
     "test:admin-deletion": "node --test tests/admin-deletion.test.mjs",
     "web:dev": "next dev ./apps/web",

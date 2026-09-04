@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
-import { readCoupons, upsertCoupon } from "../../../cloudflare/lib/coupons.js";
+import { deleteCoupon, readCoupons, upsertCoupon } from "../../../cloudflare/lib/coupons.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
 const couponSchema = z.object({
@@ -19,6 +19,10 @@ const couponSchema = z.object({
   startsAt: z.string().trim().optional().or(z.literal("")),
   expiresAt: z.string().trim().optional().or(z.literal("")),
   isActive: z.boolean().optional().default(true),
+});
+
+const couponDeleteSchema = z.object({
+  id: z.string().trim().min(1).max(80),
 });
 
 export function onRequestOptions(context) {
@@ -62,5 +66,20 @@ export async function onRequestPost(context) {
     });
   } catch (error) {
     return errorResponse(context.env, error, "Failed to save coupon.");
+  }
+}
+
+export async function onRequestDelete(context) {
+  try {
+    await requireAdminAccess(context);
+    const parsed = couponDeleteSchema.safeParse(await readJson(context.request));
+    if (!parsed.success) {
+      return validationError(context.env, parsed.error);
+    }
+
+    const deleted = await deleteCoupon(context.env, parsed.data.id);
+    return json(context.env, { ok: true, message: "쿠폰을 삭제했습니다.", deleted });
+  } catch (error) {
+    return errorResponse(context.env, error, "Failed to delete coupon.");
   }
 }

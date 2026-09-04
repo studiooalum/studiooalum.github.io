@@ -631,6 +631,41 @@ export async function readCoupons(env, { query = "", limit = 20 } = {}) {
   return (result?.results || []).map(mapCouponRecord);
 }
 
+export async function deleteCoupon(env, couponId) {
+  const database = getDb(env);
+  const normalizedCouponId = String(couponId || "").trim();
+  if (!database) {
+    throw Object.assign(new Error("쿠폰 관리를 위한 D1 바인딩이 필요합니다."), { status: 503 });
+  }
+  if (!normalizedCouponId) {
+    throw Object.assign(new Error("삭제할 쿠폰을 확인해주세요."), { status: 400 });
+  }
+
+  const existing = await findCouponById(database, normalizedCouponId);
+  if (!existing) {
+    throw Object.assign(new Error("쿠폰을 찾을 수 없습니다."), { status: 404 });
+  }
+
+  const result = await database.prepare(`
+    DELETE FROM coupons
+    WHERE id = ?
+      AND NOT EXISTS (
+        SELECT 1 FROM coupon_redemptions WHERE coupon_id = ?
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM orders WHERE coupon_id = ?
+      )
+  `).bind(normalizedCouponId, normalizedCouponId, normalizedCouponId).run();
+  if (Number(result?.meta?.changes ?? result?.changes ?? 0) !== 1) {
+    const remaining = await findCouponById(database, normalizedCouponId);
+    if (!remaining) {
+      throw Object.assign(new Error("쿠폰을 찾을 수 없습니다."), { status: 404 });
+    }
+    throw Object.assign(new Error("사용 또는 주문 이력이 있는 쿠폰은 삭제할 수 없습니다."), { status: 409 });
+  }
+  return { couponId: normalizedCouponId, code: existing.code };
+}
+
 export async function upsertCoupon(env, input = {}) {
   const database = getDb(env);
   if (!database) {

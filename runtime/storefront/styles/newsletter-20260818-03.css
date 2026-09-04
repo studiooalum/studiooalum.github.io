@@ -49,6 +49,22 @@
   margin: 0 0 30px;
 }
 
+.newsletter-entry__content {
+  overflow-wrap: anywhere;
+}
+
+.newsletter-entry__content a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.newsletter-entry__content hr {
+  margin: 36px 0;
+  border: 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.34);
+}
+
 @media (min-width: 960px) {
   .newsletter-entry-mode .newsletter-entry__tags {
     grid-column: 1;

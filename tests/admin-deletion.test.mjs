@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DatabaseSync } from "node:sqlite";
 
+import { deleteCoupon, upsertCoupon } from "../cloudflare/lib/coupons.js";
 import { deleteUnpaidOrder, persistOrder } from "../cloudflare/lib/d1.js";
 import {
   archiveWorkshopContent,
@@ -94,6 +95,48 @@ test("only unpaid orders without benefit or shipping history can be deleted", as
     deleteUnpaidOrder(env, "ORD_DELETE_BLOCKED"),
     (error) => error.status === 409 && /쿠폰 또는 포인트/.test(error.message),
   );
+});
+
+test("only coupons without use or order history can be deleted", async (t) => {
+  const { database, env } = environment();
+  t.after(() => database.close());
+
+  const unusedCoupon = await upsertCoupon(env, {
+    code: "DELETE-UNUSED",
+    title: "삭제 가능한 쿠폰",
+    scope: "public",
+    discountType: "fixed",
+    discountValue: 5000,
+    minimumOrderAmount: 10000,
+    usageLimit: 1,
+    isActive: false,
+  });
+  await deleteCoupon(env, unusedCoupon.id);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM coupons WHERE id = ?").bind(unusedCoupon.id).first().count, 0);
+
+  const usedCoupon = await upsertCoupon(env, {
+    code: "DELETE-USED",
+    title: "사용 이력이 있는 쿠폰",
+    scope: "public",
+    discountType: "fixed",
+    discountValue: 5000,
+    minimumOrderAmount: 10000,
+    usageLimit: 1,
+    isActive: false,
+  });
+  await persistOrder(env, orderInput("ORD_COUPON_HISTORY"));
+  const now = new Date().toISOString();
+  database.prepare(`
+    INSERT INTO coupon_redemptions (
+      coupon_id, order_id, email_normalized, status, discount_amount, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).bind(usedCoupon.id, "ORD_COUPON_HISTORY", "test@example.com", "applied", 5000, now, now).run();
+
+  await assert.rejects(
+    deleteCoupon(env, usedCoupon.id),
+    (error) => error.status === 409 && /사용 또는 주문 이력/.test(error.message),
+  );
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM coupons WHERE id = ?").bind(usedCoupon.id).first().count, 1);
 });
 
 function workshopInput(slug, status = "draft") {

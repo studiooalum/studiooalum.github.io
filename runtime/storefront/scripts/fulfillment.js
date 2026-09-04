@@ -28,6 +28,7 @@ const couponFormEl = document.querySelector(".js-fulfillment-coupon-form");
 const couponFormStatusEl = document.querySelector(".js-fulfillment-coupon-form-status");
 const couponResetButton = document.querySelector(".js-fulfillment-coupon-reset-btn");
 const couponGenerateButton = document.querySelector(".js-fulfillment-coupon-generate-btn");
+const couponDeleteButton = document.querySelector(".js-fulfillment-coupon-delete-btn");
 const hasOrderPage = Boolean(orderListEl || selectionEl || formEl || searchInput || searchButton || refreshButton);
 const hasCouponPage = Boolean(couponListEl || couponFormEl || couponSearchInput || couponSearchButton || couponRefreshButton);
 
@@ -480,6 +481,7 @@ function fillCouponForm(coupon = null) {
   couponFormEl.elements.startsAt.value = formatDateTimeLocal(coupon?.startsAt);
   couponFormEl.elements.expiresAt.value = formatDateTimeLocal(coupon?.expiresAt);
   couponFormEl.elements.isActive.checked = coupon?.isActive !== false;
+  if (couponDeleteButton) couponDeleteButton.hidden = !coupon?.id;
   syncCouponTargetField();
 }
 
@@ -878,6 +880,31 @@ async function saveCoupon(event) {
   }
 }
 
+async function deleteSelectedCoupon() {
+  const coupon = getSelectedCoupon();
+  if (!coupon) {
+    setStatus(couponFormStatusEl, "삭제할 쿠폰을 먼저 선택해주세요.", "error");
+    return;
+  }
+  if (!window.confirm(`쿠폰 ${coupon.code}을(를) 영구 삭제할까요?\n\n사용 또는 주문 이력이 있는 쿠폰은 삭제할 수 없습니다.`)) return;
+
+  setButtonLoading(couponDeleteButton, true, "삭제 중…");
+  setStatus(couponFormStatusEl, "쿠폰을 삭제하는 중입니다.");
+  try {
+    await requestFulfillment("/api/orders/coupons", {
+      method: "DELETE",
+      body: { id: coupon.id },
+    });
+    state.coupons = state.coupons.filter((item) => item.id !== coupon.id);
+    resetCouponForm();
+    setStatus(couponStatusEl, "쿠폰을 삭제했습니다.", "success");
+  } catch (error) {
+    setStatus(couponFormStatusEl, error.message || "쿠폰을 삭제하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(couponDeleteButton, false, "삭제 중…");
+  }
+}
+
 authForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const submitButton = authForm.querySelector("button[type='submit']");
@@ -996,6 +1023,8 @@ couponFormEl?.addEventListener("submit", saveCoupon);
 couponResetButton?.addEventListener("click", () => {
   resetCouponForm();
 });
+
+couponDeleteButton?.addEventListener("click", deleteSelectedCoupon);
 
 couponGenerateButton?.addEventListener("click", () => {
   if (!couponFormEl) return;
