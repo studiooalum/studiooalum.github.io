@@ -84,7 +84,7 @@ function ensureLightbox() {
       </button>
       <div class="repair-gallery-lightbox__viewport">
         <figure class="repair-gallery-lightbox__figure">
-          <img class="repair-gallery-lightbox__image" alt="">
+          <img class="repair-gallery-lightbox__image" data-progressive-image="false" alt="">
         </figure>
       </div>
       <button type="button" class="repair-gallery-lightbox__nav repair-gallery-lightbox__nav--next" aria-label="다음 이미지">

@@ -103,7 +103,7 @@ function ensureLightbox() {
       </button>
       <div class="edition-lightbox__viewport">
         <figure class="edition-lightbox__figure">
-          <img class="edition-lightbox__image" alt="">
+          <img class="edition-lightbox__image" data-progressive-image="false" alt="">
         </figure>
       </div>
       <button type="button" class="edition-lightbox__nav edition-lightbox__nav--next" aria-label="다음 이미지">
