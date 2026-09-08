@@ -34,6 +34,18 @@
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
+/my-repairs
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/my-repairs.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/repair-ticket.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+
 /signup
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive

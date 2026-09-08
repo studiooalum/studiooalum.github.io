@@ -28,6 +28,7 @@ import { createRepairTicketMessage, markRepairTicketRead, readRepairTicketForRep
 import { createRepairTicketAccessToken, verifyRepairTicketAccessToken } from "../cloudflare/lib/repair-ticket-tokens.js";
 import { onRequestPost as submitRepairRequest } from "../functions/api/repairs/index.js";
 import { onRequestPost as postRepairTicketMessage } from "../functions/api/repairs/tickets/[id].js";
+import { onRequestGet as openRepairTicketShortLink } from "../functions/t/[code].js";
 import { inferRepairCountryCode } from "../cloudflare/lib/repair-address.js";
 
 class D1BoundStatement {
@@ -249,6 +250,59 @@ test("Repair shipping address derives country and migration preserves legacy row
   assert.equal(row.shipping_address, "");
 });
 
+test("My Oalum repair migration numbers legacy tickets and creates short links", (t) => {
+  const database = new D1Database();
+  t.after(() => database.close());
+  database.exec(`
+    CREATE TABLE repair_requests (
+      id TEXT PRIMARY KEY,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE repair_tickets (
+      id TEXT PRIMARY KEY,
+      repair_id TEXT NOT NULL
+    );
+    CREATE TABLE notification_templates (
+      template_key TEXT NOT NULL,
+      channel TEXT NOT NULL,
+      area TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      trigger_label TEXT NOT NULL DEFAULT '',
+      active_subject TEXT NOT NULL DEFAULT '',
+      active_body TEXT NOT NULL DEFAULT '',
+      draft_subject TEXT NOT NULL DEFAULT '',
+      draft_body TEXT NOT NULL DEFAULT '',
+      default_subject TEXT NOT NULL DEFAULT '',
+      default_body TEXT NOT NULL DEFAULT '',
+      allowed_variables_json TEXT NOT NULL DEFAULT '[]',
+      required_variables_json TEXT NOT NULL DEFAULT '[]',
+      max_length INTEGER NOT NULL DEFAULT 0,
+      is_enabled INTEGER NOT NULL DEFAULT 0,
+      activated_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (template_key, channel)
+    );
+    INSERT INTO repair_requests (id, created_at) VALUES
+      ('RPR_OLDER', '2026-08-01T00:00:00.000Z'),
+      ('RPR_NEWER', '2026-08-02T00:00:00.000Z');
+    INSERT INTO repair_tickets (id, repair_id) VALUES
+      ('RPT_OLDER', 'RPR_OLDER'),
+      ('RPT_NEWER', 'RPR_NEWER');
+  `);
+
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0025_my_oalum_repair_delivery.sql", import.meta.url), "utf8"));
+  const repairs = database.prepare("SELECT ticket_number FROM repair_requests ORDER BY created_at").all().results;
+  const tickets = database.prepare("SELECT short_code FROM repair_tickets ORDER BY id").all().results;
+  const adminTemplate = database.prepare("SELECT is_enabled, active_body FROM notification_templates WHERE template_key = 'repair.application_submitted_admin' AND channel = 'email'").first();
+  assert.deepEqual(repairs.map((row) => row.ticket_number), [1, 2]);
+  assert.equal(new Set(tickets.map((row) => row.short_code)).size, 2);
+  assert.ok(tickets.every((row) => /^[a-f0-9]{18}$/.test(row.short_code)));
+  assert.equal(adminTemplate.is_enabled, 1);
+  assert.match(adminTemplate.active_body, /Repair Ticket/);
+});
+
 test("notification migration preserves completed work and locks archived legacy cases", (t) => {
   const database = new D1Database();
   t.after(() => database.close());
@@ -308,18 +362,33 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   const first = await firstResponse.json();
   assert.equal(firstResponse.status, 201);
   assert.equal(first.duplicate, false);
+  assert.equal(first.ticketNumber, 1);
+  assert.match(first.ticketUrl, /^https:\/\/studiooalum\.test\/t\//);
+
+  const shortCode = new URL(first.ticketUrl).pathname.split("/").at(-1);
+  const shortLinkResponse = await openRepairTicketShortLink({
+    env,
+    params: { code: shortCode },
+    request: new Request(first.ticketUrl),
+  });
+  assert.equal(shortLinkResponse.status, 302);
+  const shortLinkTarget = new URL(shortLinkResponse.headers.get("Location"));
+  assert.equal(shortLinkTarget.pathname, "/repair-ticket.html");
+  assert.equal(shortLinkTarget.searchParams.get("ticket"), first.ticketId);
+  assert.equal(await verifyRepairTicketAccessToken(env, shortLinkTarget.searchParams.get("access"), first.ticketId), true);
 
   const repeatedResponse = await submitRepairRequest(createRepairApiContext(env, submissionId));
   const repeated = await repeatedResponse.json();
   assert.equal(repeatedResponse.status, 200);
   assert.equal(repeated.duplicate, true);
   assert.equal(repeated.requestNumber, first.requestNumber);
+  assert.equal(repeated.ticketNumber, first.ticketNumber);
   assert.equal(putCount, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_requests").first().count, 1);
   const storedRequest = database.prepare("SELECT shipping_address, country_code FROM repair_requests LIMIT 1").first();
   assert.equal(storedRequest.shipping_address, "123 Main Street, Portland, OR, USA");
   assert.equal(storedRequest.country_code, "OTHER");
-  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 1);
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 2);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_tickets").first().count, 1);
 
   const conflictingResponse = await submitRepairRequest(createRepairApiContext(env, submissionId, { imageBody: "different-image" }));
@@ -338,6 +407,8 @@ test("POST /api/repairs returns the original receipt for repeated submission key
     }),
   });
   assert.equal(legacyResponse.status, 201);
+  const legacyReceipt = await legacyResponse.json();
+  assert.equal(legacyReceipt.ticketNumber, 2);
   const legacyRequest = database.prepare("SELECT shipping_address, country_code FROM repair_requests WHERE submission_id = ?").bind("repair:44444444-4444-4444-8444-444444444444").first();
   assert.equal(legacyRequest.shipping_address, "");
   assert.equal(legacyRequest.country_code, "KR");
@@ -362,16 +433,21 @@ test("submission stores request, event, and rendered outbox atomically", async (
   t.after(() => database.close());
 
   const receipt = await createInitialRepair(env);
-  assert.equal(receipt.notificationIds.length, 1);
+  assert.equal(receipt.notificationIds.length, 2);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_requests").first().count, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_events").first().count, 1);
-  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 1);
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 2);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_tickets").first().count, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_ticket_messages").first().count, 1);
+  const adminNotification = database.prepare("SELECT recipient, body_html FROM notification_outbox WHERE template_key = 'repair.application_submitted_admin'").first();
+  assert.equal(adminNotification.recipient, "admin@example.com");
+  assert.match(adminNotification.body_html, /관리자에서 Repair Ticket 확인/);
+  assert.match(adminNotification.body_html, /STUDIO OALUM/);
 
   const existing = await readRepairRequestBySubmissionId(env, "submission:A:1234567890");
   assert.equal(existing.requestNumber, "REP-20260823-A");
   assert.equal(existing.submissionFingerprint, "fingerprint-A");
+  assert.equal(existing.notificationIds.length, 2);
 });
 
 test("status transitions validate fields, avoid duplicate events, and lock closed cases", async (t) => {
@@ -725,7 +801,7 @@ test("KR Repair emits four SMS milestones, Ticket email for other states, and dr
     shippingAddress: "[02450] 서울특별시 동대문구 이문로 145",
     email: "kr@example.com",
   });
-  assert.equal(receipt.notificationIds.length, 1);
+  assert.equal(receipt.notificationIds.length, 2);
 
   await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 1, status: "item_received" });
   await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 2, status: "in_progress" });

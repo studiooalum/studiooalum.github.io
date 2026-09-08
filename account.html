@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260823-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260909-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
 </head>
@@ -88,85 +88,145 @@
       </section>
     </section>
 
-    <section class="account-layout js-account-member-layout" data-account-protected hidden>
-      <section class="account-panel account-panel--profile">
-        <h2 class="account-heading">내 계정 정보</h2>
+    <section class="account-layout js-account-member-layout" data-account-protected data-account-view="dashboard" hidden>
+      <aside class="account-overview">
+        <p class="account-overview__kicker">ACCOUNT</p>
+        <h1 class="account-overview__title">MY OALUM</h1>
+        <div class="account-overview__avatar js-account-avatar" aria-hidden="true">O</div>
+        <div class="account-overview__welcome">
+          <p class="js-account-greeting">안녕하세요.</p>
+          <p>오알룸과 함께한 기록을 확인해보세요.</p>
+        </div>
+        <dl class="account-overview__facts">
+          <div><dt>NAME</dt><dd class="js-account-overview-name">-</dd></div>
+          <div><dt>EMAIL</dt><dd class="js-account-overview-email">-</dd></div>
+          <div><dt>JOINED</dt><dd class="js-account-overview-joined">-</dd></div>
+        </dl>
+        <div class="account-overview__actions">
+          <a class="account-overview__link" href="./account.html?view=profile">회원정보 수정 <span aria-hidden="true">→</span></a>
+          <button type="button" class="account-overview__link js-account-logout">로그아웃</button>
+        </div>
         <p class="account-status js-account-member-status" role="status" aria-live="polite"></p>
-        <form class="account-form js-account-profile-form">
-          <label class="account-field">
-            <span>이메일 주소</span>
-            <input type="email" name="email" value="" readonly />
-          </label>
-          <label class="account-field">
-            <span>이름</span>
-            <input type="text" name="fullName" value="" autocomplete="name" />
-          </label>
-          <label class="account-field">
-            <span>휴대전화</span>
-            <input type="tel" name="phone" value="" autocomplete="tel" />
-          </label>
-          <label class="account-field">
-            <span>우편번호</span>
-            <input type="text" name="zipcode" value="" autocomplete="postal-code" readonly />
-          </label>
-          <label class="account-field">
-            <span>주소</span>
-            <input type="text" name="address1" value="" autocomplete="address-line1" readonly />
-          </label>
-          <div class="account-field account-field--address-tools">
-            <span>주소 검색</span>
-            <div class="account-address-tools">
-              <button type="button" class="account-btn account-btn--secondary js-account-address-search">주소 검색</button>
-              <p class="account-copy account-copy--quiet">우편번호와 기본 주소는 검색을 통해 수정할 수 있습니다.</p>
-            </div>
+      </aside>
+
+      <section class="account-dashboard" aria-label="My Oalum 메뉴">
+        <a class="account-dashboard-card account-dashboard-card--repairs" href="./my-repairs.html">
+          <span class="account-dashboard-card__index">01</span>
+          <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
+          <div class="account-dashboard-card__body">
+            <p>진행 중인 수선</p>
+            <strong><span class="js-account-dashboard-repairs">0</span><small>건</small></strong>
+            <h2>REPAIRS</h2>
+            <span class="account-dashboard-card__copy">맡기신 제품의 현재 상태와 Repair Ticket을 확인해보세요.</span>
           </div>
-          <label class="account-field">
-            <span>상세 주소</span>
-            <input type="text" name="address2" value="" autocomplete="address-line2" />
-          </label>
-          <div class="account-panel-actions">
-            <button type="submit" class="account-btn">변경 내용 저장</button>
-            <button type="button" class="account-btn account-btn--secondary js-account-logout">로그아웃</button>
+        </a>
+        <a class="account-dashboard-card account-dashboard-card--orders" href="./account.html?view=orders">
+          <span class="account-dashboard-card__index">02</span>
+          <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
+          <div class="account-dashboard-card__body">
+            <p>전체 주문 내역</p>
+            <strong><span class="js-account-dashboard-orders">0</span><small>건</small></strong>
+            <h2>ORDERS</h2>
+            <span class="account-dashboard-card__copy">주문하신 제품과 배송 진행 상황을 확인해보세요.</span>
           </div>
-        </form>
+        </a>
+        <a class="account-dashboard-card account-dashboard-card--classes" href="./account.html?view=classes">
+          <span class="account-dashboard-card__index">03</span>
+          <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
+          <div class="account-dashboard-card__body">
+            <p>클래스 예약 기록</p>
+            <strong><span class="js-account-dashboard-classes">0</span><small>개</small></strong>
+            <h2>CLASSES</h2>
+            <span class="account-dashboard-card__copy">예정된 클래스 일정과 지난 참여 기록을 확인해보세요.</span>
+          </div>
+        </a>
+        <a class="account-dashboard-card account-dashboard-card--points" href="./account.html?view=points">
+          <span class="account-dashboard-card__index">04</span>
+          <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
+          <div class="account-dashboard-card__body">
+            <p>사용 가능한 포인트</p>
+            <strong><span class="js-account-dashboard-points">0</span><small>P</small></strong>
+            <h2>POINTS</h2>
+            <span class="account-dashboard-card__copy">현재 포인트와 이용 기준을 확인해보세요.</span>
+          </div>
+        </a>
       </section>
 
-      <div class="account-column account-column--history">
-        <section class="account-panel account-panel--orders">
-          <h2 class="account-heading">주문 / 배송 현황</h2>
+      <section class="account-detail-shell">
+        <a class="account-detail-back" href="./account.html"><span aria-hidden="true">←</span> MY OALUM</a>
+
+        <section class="account-panel account-panel--profile" data-account-detail="profile">
+          <h2 class="account-heading">회원정보 수정</h2>
+          <form class="account-form js-account-profile-form">
+            <label class="account-field">
+              <span>이메일 주소</span>
+              <input type="email" name="email" value="" readonly />
+            </label>
+            <label class="account-field">
+              <span>이름</span>
+              <input type="text" name="fullName" value="" autocomplete="name" />
+            </label>
+            <label class="account-field">
+              <span>휴대전화</span>
+              <input type="tel" name="phone" value="" autocomplete="tel" />
+            </label>
+            <label class="account-field">
+              <span>우편번호</span>
+              <input type="text" name="zipcode" value="" autocomplete="postal-code" readonly />
+            </label>
+            <label class="account-field">
+              <span>주소</span>
+              <input type="text" name="address1" value="" autocomplete="address-line1" readonly />
+            </label>
+            <div class="account-field account-field--address-tools">
+              <span>주소 검색</span>
+              <div class="account-address-tools">
+                <button type="button" class="account-btn account-btn--secondary js-account-address-search">주소 검색</button>
+                <p class="account-copy account-copy--quiet">우편번호와 기본 주소는 검색을 통해 수정할 수 있습니다.</p>
+              </div>
+            </div>
+            <label class="account-field">
+              <span>상세 주소</span>
+              <input type="text" name="address2" value="" autocomplete="address-line2" />
+            </label>
+            <div class="account-panel-actions">
+              <button type="submit" class="account-btn">변경 내용 저장</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="account-panel account-panel--orders" data-account-detail="orders">
+          <h2 class="account-heading">ORDERS</h2>
           <div class="account-orders js-account-orders">
             <div class="account-empty">등록된 주문 내역이 없습니다.</div>
           </div>
         </section>
 
-        <section class="account-panel account-panel--workshops">
-          <h2 class="account-heading">워크숍 예약</h2>
+        <section class="account-panel account-panel--workshops" data-account-detail="classes">
+          <h2 class="account-heading">CLASSES</h2>
           <div class="account-orders js-account-workshops">
-            <div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>
+            <div class="account-empty">등록된 클래스 예약 내역이 없습니다.</div>
           </div>
         </section>
 
-        <section class="account-panel account-panel--repairs">
-          <h2 class="account-heading">수선 신청 내역</h2>
-          <div class="account-orders js-account-repairs">
-            <div class="account-empty">등록된 수선 신청 내역이 없습니다.</div>
-          </div>
+        <section class="account-panel account-panel--points" data-account-detail="points">
+          <h2 class="account-heading">POINTS</h2>
+          <p class="account-points js-account-points">0 포인트</p>
+          <p class="account-copy">상품 구매 시 결제 금액의 3%가 적립되며, 1,000 포인트부터 사용할 수 있습니다.</p>
         </section>
-      </div>
-
-      <section class="account-panel account-panel--points">
-        <h2 class="account-heading">적립금</h2>
-        <p class="account-points js-account-points">0 포인트</p>
-        <p class="account-copy">상품 구매시 결제 금액의 3% 적립해드리며 1,000 포인트부터 사용 가능합니다.</p>
       </section>
+
+      <div class="account-data-cache" hidden>
+        <div class="js-account-repairs"><div class="account-empty">등록된 수선 신청 내역이 없습니다.</div></div>
+      </div>
     </section>
   </main>
 
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
-    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260824-01";
+    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260909-01";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260909-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
 
     initSiteChrome();

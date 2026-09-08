@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Repairs | Studio OALUM</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/my-repairs-20260909-01.css">
+</head>
+<body class="my-repairs-page">
+  <nav class="gnb gnb--account" aria-label="Primary navigation"></nav>
+
+  <main class="my-repairs-main">
+    <a class="my-repairs-back" href="./account.html"><span aria-hidden="true">←</span> MY OALUM</a>
+
+    <div class="my-repairs-layout">
+      <header class="my-repairs-intro">
+        <p class="my-repairs-kicker">01 · ACCOUNT ARCHIVE</p>
+        <h1>MY REPAIRS</h1>
+        <p class="my-repairs-intro__copy">지금까지 맡기신 수선 기록을 확인해보세요. 각 티켓을 선택하면 작업 내용과 진행 과정, 오알룸과 나눈 메시지를 한곳에서 확인할 수 있습니다.</p>
+        <p class="my-repairs-summary js-my-repairs-summary">수선 기록을 불러오는 중입니다.</p>
+      </header>
+
+      <section class="my-repairs-content" aria-label="Repair tickets">
+        <div class="my-repairs-filters" role="group" aria-label="수선 상태 필터">
+          <button type="button" class="is-active" data-repair-filter="all" aria-pressed="true">TOTAL <span class="js-my-repairs-total">0</span></button>
+          <button type="button" data-repair-filter="progress" aria-pressed="false">수선 진행중 <span class="js-my-repairs-progress">0</span></button>
+          <button type="button" data-repair-filter="done" aria-pressed="false">수선 완료 <span class="js-my-repairs-done">0</span></button>
+        </div>
+
+        <div class="my-repairs-list js-my-repairs-list" aria-live="polite">
+          <div class="my-repairs-empty">수선 기록을 불러오는 중입니다.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
+    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260909-01";
+    import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
+    import { initMyRepairs } from "./runtime/storefront/scripts/my-repairs-20260909-01.js";
+
+    initSiteChrome();
+    initCartUI();
+    initSiteFooter();
+    initMyRepairs();
+  </script>
+</body>
+</html>

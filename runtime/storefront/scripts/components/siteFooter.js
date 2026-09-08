@@ -32,7 +32,7 @@ const PANEL_CONTENT = {
         <h3 class="site-policy__section-title">교환, 반품, 환불 안내</h3>
         <div class="site-policy__section-block">
           <p class="site-policy__subheading">가. 교환 및 반품 주소</p>
-          <p class="site-policy__body">(03971) 서울특별시 마포구 월드컵로 110, 2층 202호 / 전화: 010-4746-5999</p>
+          <p class="site-policy__body">서울특별시 동대문구 이문로42길 5, 2층 201호 / 전화: 010-4746-5999</p>
         </div>
         <div class="site-policy__section-block">
           <p class="site-policy__subheading">나. 교환 및 반품이 가능한 경우</p>
@@ -373,8 +373,8 @@ function getFooterMarkup() {
       <div class="site-footer__links" aria-label="사이트 정책 링크">${policyLinks}</div>
     </div>
     <div class="site-footer__text site-footer__text--contact">
-      <p>03971
-서울특별시 성산동 252-3 2층 202호
+      <p>서울특별시 동대문구 이문로42길 5
+2층 201호
 +82-10-4746-5999
 studio.oalum@gmail.com</p>
       <a class="site-footer__instagram" href="https://www.instagram.com/studio_oalum/" target="_blank" rel="noreferrer" aria-label="Instagram">

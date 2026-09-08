@@ -367,6 +367,7 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
 CREATE TABLE IF NOT EXISTS repair_requests (
   id TEXT PRIMARY KEY,
   request_number TEXT NOT NULL UNIQUE,
+  ticket_number INTEGER,
   submission_id TEXT,
   submission_fingerprint TEXT NOT NULL DEFAULT '',
   customer_id TEXT,
@@ -423,6 +424,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_requests_submission_id
   WHERE submission_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_repair_requests_customer
   ON repair_requests(customer_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_requests_ticket_number
+  ON repair_requests(ticket_number)
+  WHERE ticket_number IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS repair_ticket_number_sequence (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  next_number INTEGER NOT NULL CHECK(next_number > 0)
+);
+
+INSERT OR IGNORE INTO repair_ticket_number_sequence (id, next_number) VALUES (1, 1);
+
+CREATE TRIGGER IF NOT EXISTS trg_repair_requests_ticket_number
+AFTER INSERT ON repair_requests
+WHEN NEW.ticket_number IS NULL
+BEGIN
+  UPDATE repair_requests
+  SET ticket_number = COALESCE((SELECT MAX(ticket_number) FROM repair_requests WHERE id <> NEW.id), 0) + 1
+  WHERE id = NEW.id;
+  UPDATE repair_ticket_number_sequence
+  SET next_number = MAX(next_number, (SELECT ticket_number + 1 FROM repair_requests WHERE id = NEW.id))
+  WHERE id = 1;
+END;
 
 CREATE TABLE IF NOT EXISTS repair_request_images (
   id TEXT PRIMARY KEY,
@@ -646,6 +669,7 @@ CREATE TABLE IF NOT EXISTS repair_tickets (
   repair_id TEXT NOT NULL UNIQUE,
   customer_id TEXT,
   guest_access_token_hash TEXT,
+  short_code TEXT,
   status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'closed')),
   unread_customer_count INTEGER NOT NULL DEFAULT 0,
   unread_admin_count INTEGER NOT NULL DEFAULT 0,
@@ -661,6 +685,9 @@ CREATE INDEX IF NOT EXISTS idx_repair_tickets_customer
   ON repair_tickets(customer_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_repair_tickets_status_updated
   ON repair_tickets(status, updated_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_tickets_short_code
+  ON repair_tickets(short_code)
+  WHERE short_code IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS repair_ticket_messages (
   id TEXT PRIMARY KEY,
@@ -983,18 +1010,19 @@ WITH template_seed(
     ('workshop.schedule_changed','email','workshop','워크숍 일정 변경','워크숍 일정 변경 안내입니다.','일정 변경','[Studio OALUM] 워크숍 일정이 변경되었습니다','{{customer_name}}님, {{workshop_name}} 일정이 변경되었습니다. {{schedule_label}}','["customer_name","workshop_name","schedule_label","workshop_url"]','["customer_name","workshop_name","schedule_label"]',0,1),
     ('workshop.cancelled','email','workshop','워크숍 취소','워크숍 취소 안내입니다.','예약 취소','[Studio OALUM] 워크숍 예약이 취소되었습니다','{{customer_name}}님의 {{workshop_name}} 예약이 취소되었습니다.','["customer_name","workshop_name","reservation_number"]','["customer_name","workshop_name"]',0,1),
     ('workshop.payment_completed','email','workshop','워크숍 결제 완료','워크숍 결제 완료 안내입니다.','결제 완료','[Studio OALUM] 워크숍 결제가 완료되었습니다','{{customer_name}}님의 {{workshop_name}} 결제가 완료되었습니다.','["customer_name","workshop_name","reservation_number","workshop_url"]','["customer_name","workshop_name"]',0,1),
-    ('repair.application_submitted','email','repair','수선 신청 완료','수선 신청 직후 안내입니다.','신청 완료','[Studio OALUM] 수선 신청이 완료되었습니다','{{customer_name}}님, {{product_name}} 수선 신청이 완료되었습니다. {{repair_number}} {{repair_ticket_url}}','["customer_name","product_name","repair_number","studio_address","repair_url","repair_ticket_url"]','["customer_name","product_name","repair_number","repair_ticket_url"]',0,1),
-    ('repair.application_submitted','sms','repair','수선 신청 완료','국내 고객에게 보내는 수선 신청 문자입니다.','신청 완료','','[OALUM] {{customer_name}}님 수선 신청 완료. {{repair_number}} {{repair_ticket_url}}','["customer_name","repair_number","repair_ticket_url"]','["customer_name","repair_number","repair_ticket_url"]',2000,1),
-    ('repair.received','email','repair','수선 제품 수신 완료','수선 제품 도착 확인 안내입니다.','제품 수신','[Studio OALUM] 수선 제품을 받았습니다','{{customer_name}}님, {{product_name}} 제품을 정상적으로 받았습니다. {{repair_ticket_url}}','["customer_name","product_name","repair_number","repair_ticket_url"]','["customer_name","product_name","repair_ticket_url"]',0,1),
-    ('repair.received','sms','repair','수선 제품 수신 완료','국내 고객 제품 수신 문자입니다.','제품 수신','','[OALUM] {{customer_name}}님 수선 제품을 받았습니다. {{repair_ticket_url}}','["customer_name","repair_ticket_url"]','["customer_name","repair_ticket_url"]',2000,1),
-    ('repair.repair_completed_quote_ready','email','repair','수선 완료 및 가격 안내','수선 완료 후 최종 가격 안내입니다.','수선 완료','[Studio OALUM] 수선 완료 및 결제 안내','{{customer_name}}님, 수선이 완료되었습니다. {{final_amount}} {{repair_ticket_url}}','["customer_name","product_name","repair_number","final_amount","repair_ticket_url"]','["customer_name","final_amount","repair_ticket_url"]',0,1),
-    ('repair.repair_completed_quote_ready','sms','repair','수선 완료 및 가격 안내','국내 고객 수선 완료 문자입니다.','수선 완료','','[OALUM] {{customer_name}}님 수선 완료. {{final_amount}} {{repair_ticket_url}}','["customer_name","final_amount","repair_ticket_url"]','["customer_name","final_amount","repair_ticket_url"]',2000,1),
-    ('repair.payment_confirmed_shipping_started','email','repair','입금 확인 및 배송 시작','입금 확인과 배송을 한 번에 안내합니다.','입금 확인 및 배송','[Studio OALUM] 입금 확인 및 배송 안내','{{customer_name}}님, 입금을 확인하고 발송했습니다. {{tracking_number}} {{tracking_url}} {{repair_ticket_url}}','["customer_name","product_name","repair_number","tracking_number","tracking_url","repair_ticket_url"]','["customer_name","tracking_number","repair_ticket_url"]',0,1),
-    ('repair.payment_confirmed_shipping_started','sms','repair','입금 확인 및 배송 시작','입금 확인과 배송을 한 문자로 안내합니다.','입금 확인 및 배송','','[OALUM] {{customer_name}}님 입금 확인 및 배송 시작. {{tracking_number}} {{tracking_url}} {{repair_ticket_url}}','["customer_name","tracking_number","tracking_url","repair_ticket_url"]','["customer_name","tracking_number","repair_ticket_url"]',2000,1),
-    ('repair.delivered_closed','email','repair','수선 배송 완료','Ticket 종료 안내입니다.','배송 완료','[Studio OALUM] 수선 배송이 완료되었습니다','{{customer_name}}님, 배송이 완료되었습니다. {{repair_ticket_url}}','["customer_name","repair_number","repair_ticket_url"]','["customer_name","repair_ticket_url"]',0,0),
-    ('ticket.customer_message_to_admin','email','ticket','고객 티켓 메시지 알림','고객 메시지를 관리자에게 알립니다.','고객 메시지','[Repair Ticket] 고객 메시지가 등록되었습니다','{{repair_number}} Ticket에 고객 메시지가 등록되었습니다. {{repair_status}} {{repair_ticket_url}}','["repair_number","repair_status","repair_ticket_url"]','["repair_number","repair_status","repair_ticket_url"]',0,1),
-    ('ticket.admin_message_to_customer','email','ticket','관리자 티켓 답변 알림','관리자 답변을 고객에게 알립니다.','관리자 메시지','[Studio OALUM] Repair Ticket에 새 답변이 있습니다','{{customer_name}}님, 새 답변이 등록되었습니다. {{repair_status}} {{repair_ticket_url}}','["customer_name","repair_number","repair_status","repair_ticket_url"]','["customer_name","repair_status","repair_ticket_url"]',0,1),
-    ('ticket.system_message_to_customer','email','ticket','수선 상태 안내','milestone 외 상태 변경 안내입니다.','상태 변경','[Studio OALUM] 수선 상태가 업데이트되었습니다','{{customer_name}}님, 상태가 {{repair_status}}로 변경되었습니다. {{repair_ticket_url}}','["customer_name","repair_number","repair_status","repair_ticket_url"]','["customer_name","repair_status","repair_ticket_url"]',0,1)
+    ('repair.application_submitted','email','repair','수선 신청 완료','수선 신청 직후 고객에게 보내는 상세 안내입니다.','신청 완료','[Studio OALUM] 수선 신청이 완료되었습니다 · {{repair_number}}','안녕하세요, {{customer_name}}님. {{product_name}} 수선 신청이 정상적으로 접수되었습니다. 티켓 번호: {{repair_number}}. 제품을 {{studio_address}}로 보내주세요. 제품 도착 후 Repair Ticket에서 진행 상황을 안내드립니다. {{repair_ticket_url}}','["customer_name","product_name","repair_number","studio_address","repair_url","repair_ticket_url"]','["customer_name","product_name","repair_number","studio_address","repair_ticket_url"]',0,1),
+    ('repair.application_submitted_admin','email','repair','새 수선 신청 · 관리자','고객이 수선 신청을 완료하면 관리자에게 보내는 필수 알림입니다.','신청 완료','[Repair] 새 수선 신청 {{repair_number}} · {{customer_name}}','새 수선 신청이 접수되었습니다. 티켓 {{repair_number}}, 고객 {{customer_name}}, 이메일 {{customer_email}}, 연락처 {{customer_phone}}, 제품 {{product_name}}, 고객 발송지 {{shipping_address}}. 수선 요청: {{repair_request}}. 관리자 확인: {{repair_admin_url}}','["customer_name","customer_email","customer_phone","product_name","repair_number","repair_request","shipping_address","repair_ticket_url","repair_admin_url"]','["customer_name","customer_email","customer_phone","product_name","repair_number","repair_request","repair_admin_url"]',0,1),
+    ('repair.application_submitted','sms','repair','수선 신청 완료','국내 고객에게 보내는 수선 신청 문자입니다.','신청 완료','','[OALUM] {{customer_name}}님, 수선 신청이 완료되었습니다. 티켓 {{repair_number}}에서 접수 내용과 진행 상황을 확인해주세요: {{repair_ticket_url}}','["customer_name","repair_number","repair_ticket_url"]','["customer_name","repair_number","repair_ticket_url"]',2000,1),
+    ('repair.received','email','repair','수선 제품 수신 완료','수선 제품 도착 확인 안내입니다.','제품 수신','[Studio OALUM] 수선 제품을 받았습니다','안녕하세요, {{customer_name}}님. {{product_name}} 수선 제품을 정상적으로 받았습니다. 제품 상태를 확인한 뒤 다음 절차를 Repair Ticket으로 안내드리겠습니다. {{repair_ticket_url}} 감사합니다. Studio OALUM','["customer_name","product_name","repair_number","repair_ticket_url"]','["customer_name","product_name","repair_ticket_url"]',0,1),
+    ('repair.received','sms','repair','수선 제품 수신 완료','국내 고객 제품 수신 문자입니다.','제품 수신','','[OALUM] {{customer_name}}님, 수선 제품을 잘 받았습니다. 제품 확인 후 다음 절차를 티켓으로 안내드리겠습니다: {{repair_ticket_url}}','["customer_name","repair_ticket_url"]','["customer_name","repair_ticket_url"]',2000,1),
+    ('repair.repair_completed_quote_ready','email','repair','수선 완료 및 가격 안내','수선 완료 후 최종 가격 안내입니다.','수선 완료','[Studio OALUM] 수선 완료 및 결제 안내','안녕하세요, {{customer_name}}님. {{product_name}} 수선 작업이 완료되었습니다. 최종 가격: {{final_amount}}. 결제 안내와 완료 사진은 Repair Ticket에서 확인해주세요. {{repair_ticket_url}} 감사합니다. Studio OALUM','["customer_name","product_name","repair_number","final_amount","repair_ticket_url"]','["customer_name","final_amount","repair_ticket_url"]',0,1),
+    ('repair.repair_completed_quote_ready','sms','repair','수선 완료 및 가격 안내','국내 고객 수선 완료 문자입니다.','수선 완료','','[OALUM] {{customer_name}}님, 수선이 완료되었습니다. 최종 가격은 {{final_amount}}이며 결제 안내와 완료 사진은 티켓에서 확인해주세요: {{repair_ticket_url}}','["customer_name","final_amount","repair_ticket_url"]','["customer_name","final_amount","repair_ticket_url"]',2000,1),
+    ('repair.payment_confirmed_shipping_started','email','repair','입금 확인 및 배송 시작','입금 확인과 배송을 한 번에 안내합니다.','입금 확인 및 배송','[Studio OALUM] 입금 확인 및 배송 안내','안녕하세요, {{customer_name}}님. 입금을 확인했으며 {{product_name}} 수선 제품의 배송을 시작했습니다. 운송장 번호: {{tracking_number}}. 배송 조회: {{tracking_url}}. 수선 기록과 배송 정보는 Repair Ticket에서도 확인할 수 있습니다. {{repair_ticket_url}} 감사합니다. Studio OALUM','["customer_name","product_name","repair_number","tracking_number","tracking_url","repair_ticket_url"]','["customer_name","tracking_number","repair_ticket_url"]',0,1),
+    ('repair.payment_confirmed_shipping_started','sms','repair','입금 확인 및 배송 시작','입금 확인과 배송을 한 문자로 안내합니다.','입금 확인 및 배송','','[OALUM] {{customer_name}}님, 입금을 확인하고 수선 제품을 발송했습니다. 운송장 {{tracking_number}} / 배송과 수선 기록: {{repair_ticket_url}}','["customer_name","tracking_number","tracking_url","repair_ticket_url"]','["customer_name","tracking_number","repair_ticket_url"]',2000,1),
+    ('repair.delivered_closed','email','repair','수선 배송 완료','Ticket 종료 안내입니다.','배송 완료','[Studio OALUM] 수선 배송이 완료되었습니다','안녕하세요, {{customer_name}}님. 수선 제품의 배송이 완료되었습니다. 완료된 수선 내용과 오알룸과 나눈 대화는 Repair Ticket에 읽기 전용 기록으로 보관됩니다. {{repair_ticket_url}} Studio OALUM을 이용해주셔서 감사합니다.','["customer_name","repair_number","repair_ticket_url"]','["customer_name","repair_ticket_url"]',0,0),
+    ('ticket.customer_message_to_admin','email','ticket','고객 티켓 메시지 알림','고객 메시지를 관리자에게 알립니다.','고객 메시지','[Repair Ticket] 고객 메시지가 등록되었습니다','Repair Ticket {{repair_number}}에 고객 메시지가 등록되었습니다. 현재 상태: {{repair_status}}. 아래 관리자 화면에서 메시지를 확인하고 답변해주세요. {{repair_admin_url}}','["repair_number","repair_status","repair_ticket_url","repair_admin_url"]','["repair_number","repair_status","repair_admin_url"]',0,1),
+    ('ticket.admin_message_to_customer','email','ticket','관리자 티켓 답변 알림','관리자 답변을 고객에게 알립니다.','관리자 메시지','[Studio OALUM] Repair Ticket에 새 답변이 있습니다','안녕하세요, {{customer_name}}님. Repair Ticket {{repair_number}}에 Studio OALUM의 새 답변이 등록되었습니다. 현재 상태: {{repair_status}}. 아래 티켓에서 답변을 확인하고 메시지를 남길 수 있습니다. {{repair_ticket_url}} 감사합니다. Studio OALUM','["customer_name","repair_number","repair_status","repair_ticket_url"]','["customer_name","repair_status","repair_ticket_url"]',0,1),
+    ('ticket.system_message_to_customer','email','ticket','수선 상태 안내','milestone 외 상태 변경 안내입니다.','상태 변경','[Studio OALUM] 수선 상태가 업데이트되었습니다','안녕하세요, {{customer_name}}님. Repair Ticket {{repair_number}}의 수선 상태가 업데이트되었습니다. 현재 상태: {{repair_status}}. 상세 내용과 다음 안내는 아래 티켓에서 확인해주세요. {{repair_ticket_url}} 감사합니다. Studio OALUM','["customer_name","repair_number","repair_status","repair_ticket_url"]','["customer_name","repair_status","repair_ticket_url"]',0,1)
 )
 INSERT OR IGNORE INTO notification_templates (
   template_key, channel, area, name, description, trigger_label,

@@ -8,6 +8,7 @@ import {
   REPAIR_STATUS_LABELS,
 } from "./repair-notifications.js";
 import {
+  buildRepairTicketUrl,
   prepareInitialRepairTicketBundle,
   prepareRepairStatusTicketBundle,
 } from "./repair-tickets.js";
@@ -127,6 +128,7 @@ function formatRepairRequest(row) {
     id: row.id,
     customerId: row.customer_id || null,
     requestNumber: row.request_number,
+    ticketNumber: Number(row.ticket_number || 0),
     customerName: row.customer_name,
     email: row.email,
     phone: row.phone,
@@ -270,12 +272,24 @@ export async function createRepairRequest(env, input, images = []) {
     throw Object.assign(new Error("수선 접수 정보를 다시 확인해주세요."), { status: 400 });
   }
 
+  const ticketNumberRow = await database.prepare(`
+    UPDATE repair_ticket_number_sequence
+    SET next_number = next_number + 1
+    WHERE id = 1
+    RETURNING next_number - 1 AS ticket_number
+  `).first();
+  const ticketNumber = Number(ticketNumberRow?.ticket_number || 0);
+  if (!Number.isInteger(ticketNumber) || ticketNumber < 1) {
+    throw Object.assign(new Error("수선 티켓 번호를 생성하지 못했습니다."), { status: 503 });
+  }
+
   const now = nowIso();
   const eventId = createRepairEventId();
   const requestForNotification = {
     ...input,
     id: requestId,
     requestNumber,
+    ticketNumber,
     customerName,
     email: emailNormalized,
     itemType: cleanText(input.itemType, 100),
@@ -292,6 +306,7 @@ export async function createRepairRequest(env, input, images = []) {
         INSERT INTO repair_requests (
           id,
           request_number,
+          ticket_number,
           submission_id,
           submission_fingerprint,
           customer_id,
@@ -322,11 +337,12 @@ export async function createRepairRequest(env, input, images = []) {
           version,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
       `)
       .bind(
         requestId,
         requestNumber,
+        ticketNumber,
         submissionId,
         submissionFingerprint,
         cleanText(input.customerId, 80) || null,
@@ -396,9 +412,11 @@ export async function createRepairRequest(env, input, images = []) {
   return {
     requestId,
     requestNumber,
+    ticketNumber,
     submittedAt: now,
     eventId,
     ticketId: ticketBundle.ticketId,
+    ticketUrl: ticketBundle.ticketUrl,
     notificationIds: ticketBundle.notifications.map((notification) => notification.id),
   };
 }
@@ -408,7 +426,7 @@ export async function readRepairRequestBySubmissionId(env, submissionId) {
   if (!normalizedSubmissionId) return null;
   const database = requireDb(env);
   const row = await database.prepare(`
-    SELECT id, request_number, submission_id, submission_fingerprint, created_at
+    SELECT id, request_number, ticket_number, submission_id, submission_fingerprint, created_at
     FROM repair_requests
     WHERE submission_id = ?
     LIMIT 1
@@ -416,17 +434,20 @@ export async function readRepairRequestBySubmissionId(env, submissionId) {
   if (!row) return null;
   const notificationResult = await database.prepare(`
     SELECT id, status FROM notification_outbox
-    WHERE entity_type = 'repair' AND entity_id = ? AND template_key = 'repair.application_submitted'
+    WHERE entity_type = 'repair' AND entity_id = ?
+      AND template_key IN ('repair.application_submitted', 'repair.application_submitted_admin')
     ORDER BY created_at ASC
   `).bind(row.id).all();
-  const ticket = await database.prepare(`SELECT id FROM repair_tickets WHERE repair_id = ? LIMIT 1`).bind(row.id).first();
+  const ticket = await database.prepare(`SELECT id, short_code FROM repair_tickets WHERE repair_id = ? LIMIT 1`).bind(row.id).first();
   return {
     requestId: row.id,
     requestNumber: row.request_number,
+    ticketNumber: Number(row.ticket_number || 0),
     submissionId: row.submission_id,
     submissionFingerprint: row.submission_fingerprint || "",
     submittedAt: row.created_at,
     ticketId: ticket?.id || "",
+    ticketUrl: ticket?.id ? await buildRepairTicketUrl(env, { id: ticket.id, shortCode: ticket.short_code || "" }) : "",
     notificationIds: (notificationResult?.results || []).map((notification) => notification.id),
     notificationStatuses: (notificationResult?.results || []).map((notification) => notification.status),
   };
@@ -461,6 +482,7 @@ function formatRepairRequestForCustomer(request) {
   return {
     id: request.id,
     requestNumber: request.requestNumber,
+    ticketNumber: request.ticketNumber,
     customerName: request.customerName,
     itemType: request.itemType,
     issueDescription: request.issueDescription,

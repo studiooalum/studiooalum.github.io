@@ -59,6 +59,14 @@ function formatPrice(value) {
   return value === null || value === undefined || value === "" ? "미정" : `${Number(value || 0).toLocaleString("ko-KR")}원`;
 }
 
+function formatTicketNumber(repair) {
+  const ticketNumber = Number(repair?.ticketNumber || 0);
+  if (Number.isInteger(ticketNumber) && ticketNumber > 0) {
+    return `#${String(ticketNumber).padStart(3, "0")}`;
+  }
+  return repair?.requestNumber || "Repair Ticket";
+}
+
 function safeUrl(value) {
   try {
     const url = new URL(String(value || ""), window.location.origin);
@@ -197,7 +205,7 @@ function renderTicket() {
   const ticket = state.ticket;
   if (!ticket) return;
   const repair = ticket.repair || {};
-  dom.number.textContent = repair.requestNumber || "Repair Ticket";
+  dom.number.textContent = formatTicketNumber(repair);
   dom.status.textContent = repair.statusLabel || repair.status || "";
   renderFacts(ticket);
   renderMessages(ticket);

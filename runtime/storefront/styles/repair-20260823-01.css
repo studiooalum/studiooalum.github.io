@@ -24,6 +24,34 @@
   color: rgba(17, 17, 17, 0.72);
 }
 
+.repair-request-success__ticket {
+  display: grid;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.repair-request-success__ticket h3,
+.repair-request-success__ticket p {
+  margin: 0;
+}
+
+.repair-request-success__ticket p {
+  font-size: 12px;
+  line-height: 1.65;
+  color: rgba(17, 17, 17, 0.64);
+}
+
+.repair-request-success__ticket .repair-submit {
+  width: fit-content;
+  margin-top: 4px;
+  text-decoration: none;
+}
+
+.repair-request-success__ticket .repair-submit[hidden] {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   html:has(body.repair-page) {
     scrollbar-gutter: auto;

@@ -144,7 +144,9 @@ function buildDuplicateResponse(env, receipt) {
     ok: true,
     duplicate: true,
     requestNumber: receipt.requestNumber,
+    ticketNumber: receipt.ticketNumber,
     ticketId: receipt.ticketId || "",
+    ticketUrl: receipt.ticketUrl || "",
     submittedAt: receipt.submittedAt,
     message: "이미 완료된 수선 접수입니다. 기존 접수번호를 안내드립니다.",
     notificationStatus: receipt.notificationStatuses?.includes("failed") ? "failed" : "queued",
@@ -265,14 +267,18 @@ export async function onRequestPost(context) {
     }, uploadedImages);
 
     if (receipt.notificationIds.length && typeof context.waitUntil === "function") {
-      context.waitUntil(processNotificationOutbox(context.env, { ids: receipt.notificationIds }));
+      context.waitUntil(processNotificationOutbox(context.env, { ids: receipt.notificationIds }).catch((error) => {
+        console.error("Failed to process Repair application notifications.", error);
+      }));
     }
 
     return json(context.env, {
       ok: true,
       duplicate: false,
       requestNumber: receipt.requestNumber,
+      ticketNumber: receipt.ticketNumber,
       ticketId: receipt.ticketId,
+      ticketUrl: receipt.ticketUrl,
       submittedAt: receipt.submittedAt,
       message: "수선 접수가 완료되었습니다. 안내가 발송 대기열에 저장되었습니다.",
       notificationStatus: "queued",

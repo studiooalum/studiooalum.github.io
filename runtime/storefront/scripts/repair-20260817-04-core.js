@@ -32,6 +32,7 @@ const dom = {
   status: document.querySelector(".js-repair-status"),
   success: document.querySelector(".js-repair-success"),
   successCopy: document.querySelector(".js-repair-success-copy"),
+  successTicket: document.querySelector(".js-repair-success-ticket"),
   reset: document.querySelector(".js-repair-reset"),
   publicGallery: document.querySelector(".repair-image-gallery"),
   priceTabs: Array.from(document.querySelectorAll("[data-repair-price-tab]")),
@@ -504,6 +505,7 @@ function resetForm() {
   clearValidationFeedback();
   setStatus("");
   if (dom.success) dom.success.hidden = true;
+  if (dom.successTicket) dom.successTicket.hidden = true;
   if (dom.form) dom.form.hidden = false;
   dom.imageInput && (dom.imageInput.value = "");
 }
@@ -532,10 +534,19 @@ async function submitRepairRequest() {
     }
 
     const requestNumber = String(payload.requestNumber || "").trim();
+    const ticketNumber = Number(payload.ticketNumber || 0);
+    const displayNumber = Number.isInteger(ticketNumber) && ticketNumber > 0
+      ? `#${String(ticketNumber).padStart(3, "0")}`
+      : requestNumber;
     if (dom.successCopy) {
-      dom.successCopy.textContent = requestNumber
-        ? `접수번호는 ${requestNumber}입니다. 물건이 도착하면 상태를 확인한 뒤 입력하신 연락처로 안내드리겠습니다.`
+      dom.successCopy.textContent = displayNumber
+        ? `Repair Ticket ${displayNumber}이 생성되었습니다. 물건이 도착하면 상태를 확인한 뒤 입력하신 연락처와 티켓으로 안내드리겠습니다.`
         : "물건이 도착하면 상태를 확인한 뒤 입력하신 연락처로 안내드리겠습니다.";
+    }
+    if (dom.successTicket) {
+      const ticketUrl = String(payload.ticketUrl || "").trim();
+      dom.successTicket.href = ticketUrl || "./account.html";
+      dom.successTicket.hidden = !ticketUrl;
     }
     dom.form.hidden = true;
     if (dom.success) dom.success.hidden = false;
