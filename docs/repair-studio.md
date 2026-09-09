@@ -49,7 +49,7 @@
 
 ## 배포 전 준비
 
-1. Repair 기본 migration과 최신 `0025_my_oalum_repair_delivery.sql`까지 운영 D1에 적용합니다. `0025`는 Pages 코드보다 먼저 적용해야 합니다.
+1. Repair 기본 migration과 최신 `0026_repair_notification_content_alignment.sql`까지 운영 D1에 적용합니다. `0025`는 Pages 코드보다 먼저 적용해야 합니다.
 2. Pages에 `OALUM_DB`, `OALUM_R2`, `ORDER_ADMIN_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `REPAIR_NOTIFICATION_CRON_SECRET`을 설정합니다. Ticket 서명은 `REPAIR_TICKET_ACCESS_SECRET`, `AUTH_SECRET`, `ORDER_ADMIN_SECRET` 순으로 사용합니다.
 3. Scheduled Worker에도 같은 `REPAIR_NOTIFICATION_CRON_SECRET`을 secret으로 설정합니다.
 4. SOLAPI 운영 전 `SOLAPI_API_KEY`, `SOLAPI_API_SECRET`, `SOLAPI_SENDER_NUMBER`, `SOLAPI_TEST_PHONE`을 Pages secret으로 설정하고 `SMS_ENABLED=true`, `SMS_DRY_RUN=false`로 전환합니다.

@@ -293,6 +293,7 @@ test("My Oalum repair migration numbers legacy tickets and creates short links",
   `);
 
   database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0025_my_oalum_repair_delivery.sql", import.meta.url), "utf8"));
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0026_repair_notification_content_alignment.sql", import.meta.url), "utf8"));
   const repairs = database.prepare("SELECT ticket_number FROM repair_requests ORDER BY created_at").all().results;
   const tickets = database.prepare("SELECT short_code FROM repair_tickets ORDER BY id").all().results;
   const adminTemplate = database.prepare("SELECT is_enabled, active_body FROM notification_templates WHERE template_key = 'repair.application_submitted_admin' AND channel = 'email'").first();
@@ -301,6 +302,7 @@ test("My Oalum repair migration numbers legacy tickets and creates short links",
   assert.ok(tickets.every((row) => /^[a-f0-9]{18}$/.test(row.short_code)));
   assert.equal(adminTemplate.is_enabled, 1);
   assert.match(adminTemplate.active_body, /Repair Ticket/);
+  assert.match(adminTemplate.active_body, /repair_request/);
 });
 
 test("notification migration preserves completed work and locks archived legacy cases", (t) => {

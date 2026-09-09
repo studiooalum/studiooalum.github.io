@@ -32,7 +32,7 @@ npx wrangler d1 export oalum-orders --remote --output /private/tmp/oalum-orders-
 npx wrangler d1 migrations apply oalum-orders --remote
 ```
 
-Expected new migration: `0025_my_oalum_repair_delivery.sql`.
+Expected migrations: `0025_my_oalum_repair_delivery.sql` and `0026_repair_notification_content_alignment.sql`.
 
 Validate the migration without exposing customer data:
 
