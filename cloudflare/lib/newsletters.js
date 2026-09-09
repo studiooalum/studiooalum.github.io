@@ -494,6 +494,9 @@ export async function deleteNewsletterPost(env, { slug }) {
   if (!existing) {
     throw Object.assign(new Error("뉴스레터 글을 찾을 수 없습니다."), { status: 404 });
   }
+  if (normalizeStatus(existing.status) === "published") {
+    throw Object.assign(new Error("게시 중인 뉴스레터는 먼저 보관한 뒤 삭제해주세요."), { status: 409 });
+  }
 
   const r2Keys = newsletterR2KeysFromPost(existing);
   await database.prepare(`DELETE FROM newsletter_posts WHERE slug = ?`).bind(normalizedSlug).run();

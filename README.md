@@ -35,16 +35,22 @@
 ## Commands
 
 ```bash
+npm run deps:install
+npm run verify
 npm run site:serve
 npm run cf:build
 npm run cf:pages:dev
 npm run web:dev
 ```
 
+- `deps:install`: `npm ci` 대신 기존 dependency tree를 유지하며 lockfile을 동기화합니다. package 파일이 바뀐 경우에만 실행합니다.
+- `verify`: 의존성을 다시 설치하지 않고 전체 테스트와 Cloudflare Pages 빌드를 실행합니다.
 - `site:serve`: 현재 루트 정적 storefront를 로컬에서 정적으로 확인합니다.
 - `cf:build`: Cloudflare Pages 배포용 `dist/` 정적 출력물을 생성합니다.
 - `cf:pages:dev`: Cloudflare Pages + Functions 기준으로 로컬 개발 서버를 실행합니다.
 - `web:dev`: `apps/web` 아래 Next.js storefront 스캐폴드를 실행합니다.
+
+이 dev container에서는 `npm ci`를 사용하지 않습니다. 이 명령은 기존 `node_modules`를 삭제하고 전체 의존성을 다시 설치해 Sanity/SWC 설치 중 세션이 오래 멈추거나 중단될 수 있습니다. `whatwg-encoding` deprecation 문구는 하위 의존성 경고이며 npm 종료 코드가 0이면 실패가 아닙니다.
 
 ## Deployment Reality
 

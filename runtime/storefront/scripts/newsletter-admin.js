@@ -1,10 +1,5 @@
 import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
-import { Editor, Node } from "@tiptap/core";
-import FontFamily from "@tiptap/extension-font-family";
-import Placeholder from "@tiptap/extension-placeholder";
-import TextAlign from "@tiptap/extension-text-align";
-import { BackgroundColor, Color, FontSize, LineHeight, TextStyle } from "@tiptap/extension-text-style";
-import StarterKit from "@tiptap/starter-kit";
+import { mountNewsletterTiptapEditor } from "./newsletter-tiptap-editor.js";
 
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
@@ -24,20 +19,7 @@ const dom = {
   coverRemoveButton: document.querySelector(".js-newsletter-admin-cover-remove"),
   coverPreview: document.querySelector(".js-newsletter-admin-cover-preview"),
   coverAlt: document.querySelector(".newsletter-admin-cover__alt"),
-  editor: document.querySelector(".js-newsletter-admin-editor"),
-  toolbar: document.querySelector(".newsletter-admin-toolbar"),
-  imageLayout: document.querySelector(".js-newsletter-admin-image-layout"),
-  imageSize: document.querySelector(".js-newsletter-admin-image-size"),
-  imagePosition: document.querySelector(".js-newsletter-admin-image-position"),
-  imageColumns: document.querySelector(".js-newsletter-admin-image-columns"),
-  blockStyle: document.querySelector(".js-newsletter-admin-block-style"),
-  fontFamily: document.querySelector(".js-newsletter-admin-font-family"),
-  fontSize: document.querySelector(".js-newsletter-admin-font-size"),
-  lineHeight: document.querySelector(".js-newsletter-admin-line-height"),
-  textColor: document.querySelector(".js-newsletter-admin-text-color"),
-  backgroundColor: document.querySelector(".js-newsletter-admin-background-color"),
-  inlineImageInput: document.querySelector(".js-newsletter-admin-inline-image-input"),
-  inlineImageButton: document.querySelector(".js-newsletter-admin-inline-image-upload"),
+  editorRoot: document.querySelector(".js-newsletter-admin-editor-root"),
   saveDraftButton: document.querySelector(".js-newsletter-admin-save-draft"),
   publishButton: document.querySelector(".js-newsletter-admin-publish"),
   archiveButton: document.querySelector(".js-newsletter-admin-archive"),
@@ -51,117 +33,12 @@ const state = {
   posts: [],
   selectedSlug: "",
   isDirty: false,
+  editorHtml: "",
+  isSaving: false,
+  isUploading: false,
 };
 
-let editor = null;
-
-const IMAGE_LAYOUT_DEFAULTS = {
-  align: "center",
-  size: "full",
-  position: "inline",
-  layout: "single",
-};
-
-const IMAGE_LAYOUT_VALUES = {
-  align: new Set(["left", "center", "right"]),
-  size: new Set(["small", "medium", "large", "full"]),
-  position: new Set(["inline", "breakout"]),
-  layout: new Set(["single", "pair-left", "pair-right"]),
-};
-
-const OalumTextAlign = TextAlign.extend({
-  addGlobalAttributes() {
-    return [{
-      types: this.options.types,
-      attributes: {
-        textAlign: {
-          default: this.options.defaultAlignment,
-          parseHTML: (element) => element.getAttribute("data-text-align") || element.style.textAlign || this.options.defaultAlignment,
-          renderHTML: (attributes) => attributes.textAlign
-            ? { "data-text-align": attributes.textAlign }
-            : {},
-        },
-      },
-    }];
-  },
-});
-
-function getImageElement(element) {
-  return element?.matches?.("img") ? element : element?.querySelector?.("img");
-}
-
-const FigureImage = Node.create({
-  name: "figureImage",
-  group: "block",
-  atom: true,
-  selectable: true,
-  draggable: true,
-
-  addAttributes() {
-    return {
-      src: {
-        default: "",
-        parseHTML: (element) => getImageElement(element)?.getAttribute("src") || "",
-      },
-      alt: {
-        default: "",
-        parseHTML: (element) => getImageElement(element)?.getAttribute("alt") || "",
-      },
-      caption: {
-        default: "",
-        parseHTML: (element) => element.matches?.("figure") ? (element.querySelector("figcaption")?.textContent || "") : "",
-      },
-      align: {
-        default: IMAGE_LAYOUT_DEFAULTS.align,
-        parseHTML: (element) => normalizeImageLayoutValue("align", element.getAttribute("data-image-align")),
-      },
-      size: {
-        default: IMAGE_LAYOUT_DEFAULTS.size,
-        parseHTML: (element) => normalizeImageLayoutValue("size", element.getAttribute("data-image-size")),
-      },
-      position: {
-        default: IMAGE_LAYOUT_DEFAULTS.position,
-        parseHTML: (element) => normalizeImageLayoutValue("position", element.getAttribute("data-image-position")),
-      },
-      layout: {
-        default: IMAGE_LAYOUT_DEFAULTS.layout,
-        parseHTML: (element) => normalizeImageLayoutValue("layout", element.getAttribute("data-image-layout")),
-      },
-    };
-  },
-
-  parseHTML() {
-    return [
-      { tag: "figure", getAttrs: (element) => element.querySelector("img") ? null : false },
-      { tag: "img[src]" },
-    ];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    const { src, alt, caption, align, size, position, layout } = HTMLAttributes;
-    const figure = [
-      "figure",
-      {
-        "data-image-align": normalizeImageLayoutValue("align", align),
-        "data-image-size": normalizeImageLayoutValue("size", size),
-        "data-image-position": normalizeImageLayoutValue("position", position),
-        "data-image-layout": normalizeImageLayoutValue("layout", layout),
-      },
-      ["img", { src: String(src || ""), alt: String(alt || "") }],
-    ];
-    if (caption) figure.push(["figcaption", {}, String(caption)]);
-    return figure;
-  },
-
-  addCommands() {
-    return {
-      setFigureImage: (attributes) => ({ commands }) => commands.insertContent({
-        type: this.name,
-        attrs: attributes,
-      }),
-    };
-  },
-});
+let editorController = null;
 
 function escapeHtml(value) {
   return String(value || "")
@@ -223,6 +100,34 @@ function setButtonLoading(button, loading, label) {
   if (!button.dataset.defaultLabel) button.dataset.defaultLabel = button.textContent || "";
   button.disabled = loading;
   button.textContent = loading ? label : button.dataset.defaultLabel;
+}
+
+function setActionLoading(button, loading, label) {
+  state.isSaving = loading;
+  setButtonLoading(button, loading, label);
+  [dom.saveDraftButton, dom.publishButton, dom.archiveButton, dom.deleteButton].forEach((actionButton) => {
+    if (actionButton) {
+      actionButton.disabled = state.isSaving
+        || state.isUploading
+        || (actionButton === dom.deleteButton && getSelectedPost()?.status === "published");
+    }
+  });
+  editorController?.setDisabled(loading);
+}
+
+function setInlineUploadLoading(loading) {
+  state.isUploading = loading;
+  [dom.saveDraftButton, dom.publishButton, dom.archiveButton, dom.deleteButton].forEach((actionButton) => {
+    if (actionButton) {
+      actionButton.disabled = state.isSaving
+        || state.isUploading
+        || (actionButton === dom.deleteButton && getSelectedPost()?.status === "published");
+    }
+  });
+  if (dom.newButton) dom.newButton.disabled = state.isUploading;
+  dom.postList?.querySelectorAll("[data-newsletter-slug]").forEach((postButton) => {
+    postButton.disabled = state.isUploading;
+  });
 }
 
 function persistAdminAccess(token, expiresAt = "") {
@@ -329,7 +234,7 @@ function renderCover(post = {}) {
 }
 
 function resetForm(post = null) {
-  if (!dom.form || !editor) return;
+  if (!dom.form) return;
   const item = post || {};
   dom.form.elements.id.value = item.id || "";
   dom.form.elements.slug.value = item.slug || "";
@@ -340,13 +245,15 @@ function resetForm(post = null) {
   dom.form.elements.coverImageR2Key.value = item.coverImageR2Key || "";
   dom.form.elements.coverImageAlt.value = item.coverImageAlt || "";
   dom.form.elements.publishedAt.value = formatDateTimeLocal(item.publishedAt);
-  editor.commands.setContent(item.contentHtml || "", { emitUpdate: false });
-  syncImageLayoutControls();
-  syncToolbarState();
+  state.editorHtml = item.contentHtml || "";
+  editorController?.setContent(state.editorHtml, item.id || item.slug || "new");
   renderCover(item);
   if (dom.postStatus) dom.postStatus.textContent = item.slug ? getStatusLabel(item.status) : "새 초안";
-  if (dom.archiveButton) dom.archiveButton.disabled = !item.slug;
-  if (dom.deleteButton) dom.deleteButton.disabled = !item.slug;
+  if (dom.deleteButton) {
+    dom.deleteButton.hidden = !item.slug;
+    dom.deleteButton.disabled = item.status === "published";
+    dom.deleteButton.title = item.status === "published" ? "게시 중인 글은 먼저 보관해주세요." : "뉴스레터 글을 영구 삭제합니다.";
+  }
   setDirty(false);
 }
 
@@ -354,7 +261,7 @@ function focusField(field, message) {
   const target = typeof field === "string" ? dom.form?.elements[field] : field;
   setStatus(dom.status, message, "error");
   target?.scrollIntoView({ behavior: "smooth", block: "center" });
-  if (target === dom.editor) editor?.commands.focus();
+  if (target === dom.editorRoot) editorController?.focus();
   else target?.focus({ preventScroll: true });
 }
 
@@ -370,7 +277,7 @@ function collectPost(status) {
     title,
     excerpt: String(dom.form?.elements.excerpt.value || "").trim(),
     categories: [...new Set(String(dom.form?.elements.categories.value || "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))].slice(0, 8),
-    contentHtml: String(editor?.getHTML() || "").trim(),
+    contentHtml: String(editorController?.getHTML() ?? state.editorHtml).trim(),
     coverImageUrl: String(dom.form?.elements.coverImageUrl.value || "").trim(),
     coverImageR2Key: String(dom.form?.elements.coverImageR2Key.value || "").trim(),
     coverImageAlt: String(dom.form?.elements.coverImageAlt.value || "").trim(),
@@ -384,8 +291,8 @@ function validatePost(post, status) {
     focusField("title", "제목을 입력해주세요.");
     return false;
   }
-  if (status === "published" && !editor?.getText().trim()) {
-    focusField(dom.editor, "게시하려면 본문을 작성해주세요.");
+  if (status === "published" && editorController?.isEmpty()) {
+    focusField(dom.editorRoot, "게시하려면 본문을 작성해주세요.");
     return false;
   }
   return true;
@@ -419,9 +326,10 @@ async function loadPosts({ fatalOnAuthError = false } = {}) {
 }
 
 async function savePost(status, button, { openPreview = false } = {}) {
+  if (state.isSaving || state.isUploading) return null;
   const post = collectPost(status);
   if (!validatePost(post, status)) return null;
-  setButtonLoading(button, true, status === "published" ? "게시 중..." : "저장 중...");
+  setActionLoading(button, true, status === "published" ? "게시 중..." : "저장 중...");
   setStatus(dom.status, status === "published" ? "뉴스레터를 게시하는 중입니다." : "뉴스레터를 저장하는 중입니다.");
 
   try {
@@ -447,17 +355,18 @@ async function savePost(status, button, { openPreview = false } = {}) {
     }
     return null;
   } finally {
-    setButtonLoading(button, false, status === "published" ? "게시 중..." : "저장 중...");
+    setActionLoading(button, false, status === "published" ? "게시 중..." : "저장 중...");
   }
 }
 
 async function archivePost() {
+  if (state.isSaving || state.isUploading) return;
   const post = getSelectedPost();
   if (!post?.slug) {
     setStatus(dom.status, "보관할 글을 먼저 선택해주세요.", "error");
     return;
   }
-  setButtonLoading(dom.archiveButton, true, "보관 중...");
+  setActionLoading(dom.archiveButton, true, "보관 중...");
   try {
     const payload = await requestAdmin("/api/newsletters/admin", {
       method: "POST",
@@ -471,20 +380,25 @@ async function archivePost() {
   } catch (error) {
     setStatus(dom.status, error.message || "뉴스레터 글을 보관하지 못했습니다.", "error");
   } finally {
-    setButtonLoading(dom.archiveButton, false, "보관 중...");
+    setActionLoading(dom.archiveButton, false, "보관 중...");
   }
 }
 
 async function deletePost() {
+  if (state.isSaving || state.isUploading) return;
   const post = getSelectedPost();
   if (!post?.slug) {
     setStatus(dom.status, "삭제할 글을 먼저 선택해주세요.", "error");
     return;
   }
-  const confirmed = window.confirm(`“${post.title || post.slug}” 글을 영구 삭제할까요?\n\n공개 글과 연결된 뉴스레터 이미지도 함께 삭제되며 복구할 수 없습니다.`);
-  if (!confirmed) return;
+  if (post.status === "published") {
+    setStatus(dom.status, "게시 중인 글은 먼저 보관한 뒤 삭제해주세요.", "error");
+    return;
+  }
+  if (!window.confirm(`뉴스레터 '${post.title || post.slug}'을(를) 영구 삭제할까요?`)) return;
 
-  setButtonLoading(dom.deleteButton, true, "삭제 중...");
+  setActionLoading(dom.deleteButton, true, "삭제 중...");
+  setStatus(dom.status, "뉴스레터 글을 삭제하는 중입니다.");
   try {
     const payload = await requestAdmin("/api/newsletters/admin", {
       method: "POST",
@@ -494,249 +408,16 @@ async function deletePost() {
     state.selectedSlug = state.posts[0]?.slug || "";
     renderPostList();
     resetForm(getSelectedPost());
-    setStatus(dom.status, "뉴스레터 글과 연결 이미지를 삭제했습니다.", "success");
+    setStatus(dom.status, "뉴스레터 글을 삭제했습니다.", "success");
   } catch (error) {
     setStatus(dom.status, error.message || "뉴스레터 글을 삭제하지 못했습니다.", "error");
   } finally {
-    setButtonLoading(dom.deleteButton, false, "삭제 중...");
-    if (dom.deleteButton) dom.deleteButton.disabled = !getSelectedPost()?.slug;
+    setActionLoading(dom.deleteButton, false, "삭제 중...");
   }
-}
-
-function normalizeImageLayoutValue(type, value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  return IMAGE_LAYOUT_VALUES[type].has(normalized) ? normalized : IMAGE_LAYOUT_DEFAULTS[type];
-}
-
-function syncImageLayoutControls() {
-  if (!dom.imageLayout) return;
-  const selected = Boolean(editor?.isActive("figureImage"));
-  dom.imageLayout.hidden = !selected;
-  if (!selected) return;
-
-  const attributes = editor.getAttributes("figureImage");
-  const align = normalizeImageLayoutValue("align", attributes.align);
-  const size = normalizeImageLayoutValue("size", attributes.size);
-  const position = normalizeImageLayoutValue("position", attributes.position);
-  const layout = normalizeImageLayoutValue("layout", attributes.layout);
-  if (dom.imageSize) dom.imageSize.value = size;
-  if (dom.imagePosition) dom.imagePosition.value = position;
-  if (dom.imageColumns) dom.imageColumns.value = layout;
-  dom.imageLayout.querySelectorAll("[data-image-align]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.imageAlign === align));
-  });
-}
-
-function applyImageLayout(type, value) {
-  if (!editor?.isActive("figureImage")) {
-    setStatus(dom.status, "레이아웃을 바꿀 본문 이미지를 선택해주세요.", "error");
-    return;
-  }
-
-  const normalized = normalizeImageLayoutValue(type, value);
-  editor.chain().focus().updateAttributes("figureImage", { [type]: normalized }).run();
-  syncImageLayoutControls();
 }
 
 function markEditorDirty() {
   setDirty(true);
-}
-
-function applyTextFontSize(value) {
-  if (!editor) return;
-  if (!String(value || "").trim()) {
-    editor.chain().focus().unsetFontSize().run();
-    return;
-  }
-  const size = Math.round(Number(value));
-  if (size < 8 || size > 40) {
-    setStatus(dom.status, "글자 크기는 8px부터 40px까지 설정할 수 있습니다.", "error");
-    return;
-  }
-  editor.chain().focus().setFontSize(`${size}px`).run();
-}
-
-function applyLineHeight(value) {
-  if (!editor) return;
-  const lineHeight = String(value || "").trim();
-  if (lineHeight) editor.chain().focus().setLineHeight(lineHeight).run();
-  else editor.chain().focus().unsetLineHeight().run();
-}
-
-function applyTextColor(value) {
-  if (!editor) return;
-  editor.chain().focus().setColor(String(value || "#111111")).run();
-}
-
-function applyBackgroundColor(value) {
-  if (!editor) return;
-  editor.chain().focus().setBackgroundColor(String(value || "#fff2a8")).run();
-}
-
-function applyBlockStyle(value) {
-  if (!editor) return;
-  const chain = editor.chain().focus();
-  if (value === "h2") chain.setHeading({ level: 2 }).run();
-  else if (value === "h3") chain.setHeading({ level: 3 }).run();
-  else chain.setParagraph().run();
-}
-
-function applyFontFamily(value) {
-  if (!editor) return;
-  const fontFamily = String(value || "").trim();
-  if (fontFamily) editor.chain().focus().setFontFamily(fontFamily).run();
-  else editor.chain().focus().unsetFontFamily().run();
-}
-
-function applyLink() {
-  if (!editor) return;
-  const previousUrl = String(editor.getAttributes("link").href || "");
-  const rawUrl = window.prompt("링크 주소", previousUrl || "https://");
-  if (rawUrl === null) return;
-  if (!rawUrl.trim()) {
-    editor.chain().focus().extendMarkRange("link").unsetLink().run();
-    return;
-  }
-
-  try {
-    const url = new URL(rawUrl, window.location.origin);
-    if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid URL");
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url.toString() }).run();
-  } catch {
-    setStatus(dom.status, "http 또는 https 주소를 입력해주세요.", "error");
-  }
-}
-
-function applyEditorCommand(command) {
-  if (!editor) return;
-  const chain = editor.chain().focus();
-  const actions = {
-    bold: () => chain.toggleBold().run(),
-    italic: () => chain.toggleItalic().run(),
-    underline: () => chain.toggleUnderline().run(),
-    strike: () => chain.toggleStrike().run(),
-    quote: () => chain.toggleBlockquote().run(),
-    bullet: () => chain.toggleBulletList().run(),
-    number: () => chain.toggleOrderedList().run(),
-    "align-left": () => chain.setTextAlign("left").run(),
-    "align-center": () => chain.setTextAlign("center").run(),
-    "align-right": () => chain.setTextAlign("right").run(),
-    "align-justify": () => chain.setTextAlign("justify").run(),
-    link: applyLink,
-    clear: () => chain.unsetAllMarks().clearNodes().run(),
-    "clear-colors": () => chain.unsetColor().unsetBackgroundColor().run(),
-    divider: () => chain.setHorizontalRule().run(),
-    undo: () => chain.undo().run(),
-    redo: () => chain.redo().run(),
-  };
-  actions[command]?.();
-}
-
-function syncToolbarState() {
-  if (!editor || !dom.toolbar) return;
-  const activeStates = {
-    bold: editor.isActive("bold"),
-    italic: editor.isActive("italic"),
-    underline: editor.isActive("underline"),
-    strike: editor.isActive("strike"),
-    quote: editor.isActive("blockquote"),
-    bullet: editor.isActive("bulletList"),
-    number: editor.isActive("orderedList"),
-    "align-left": editor.isActive({ textAlign: "left" }),
-    "align-center": editor.isActive({ textAlign: "center" }),
-    "align-right": editor.isActive({ textAlign: "right" }),
-    "align-justify": editor.isActive({ textAlign: "justify" }),
-    link: editor.isActive("link"),
-  };
-
-  dom.toolbar.querySelectorAll("[data-editor-command]").forEach((button) => {
-    const command = button.dataset.editorCommand || "";
-    if (command in activeStates) button.setAttribute("aria-pressed", String(activeStates[command]));
-    if (command === "undo") button.disabled = !editor.can().chain().focus().undo().run();
-    if (command === "redo") button.disabled = !editor.can().chain().focus().redo().run();
-  });
-
-  if (dom.blockStyle && document.activeElement !== dom.blockStyle) {
-    dom.blockStyle.value = editor.isActive("heading", { level: 2 })
-      ? "h2"
-      : editor.isActive("heading", { level: 3 })
-        ? "h3"
-        : "paragraph";
-  }
-
-  const textStyle = editor.getAttributes("textStyle");
-  if (dom.fontFamily && document.activeElement !== dom.fontFamily) {
-    const selectedFont = String(textStyle.fontFamily || "");
-    dom.fontFamily.value = Array.from(dom.fontFamily.options).some((option) => option.value === selectedFont) ? selectedFont : "";
-  }
-  if (dom.fontSize && document.activeElement !== dom.fontSize) {
-    const size = Math.round(Number.parseFloat(textStyle.fontSize));
-    const matchingSize = Array.from(dom.fontSize.options).some((option) => option.value === String(size));
-    dom.fontSize.value = matchingSize ? String(size) : "";
-  }
-  if (dom.lineHeight && document.activeElement !== dom.lineHeight) {
-    const lineHeight = String(textStyle.lineHeight || "");
-    dom.lineHeight.value = Array.from(dom.lineHeight.options).some((option) => option.value === lineHeight) ? lineHeight : "";
-  }
-  if (dom.textColor && /^#[0-9a-f]{6}$/i.test(String(textStyle.color || ""))) {
-    dom.textColor.value = textStyle.color;
-  }
-  if (dom.backgroundColor && /^#[0-9a-f]{6}$/i.test(String(textStyle.backgroundColor || ""))) {
-    dom.backgroundColor.value = textStyle.backgroundColor;
-  }
-}
-
-function initializeEditor() {
-  if (!dom.editor) return;
-  editor = new Editor({
-    element: dom.editor,
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [2, 3] },
-        code: false,
-        codeBlock: false,
-        link: {
-          openOnClick: false,
-          autolink: true,
-          defaultProtocol: "https",
-          HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
-        },
-      }),
-      TextStyle,
-      FontFamily.configure({ types: ["textStyle"] }),
-      FontSize.configure({ types: ["textStyle"] }),
-      LineHeight.configure({ types: ["textStyle"] }),
-      Color.configure({ types: ["textStyle"] }),
-      BackgroundColor.configure({ types: ["textStyle"] }),
-      OalumTextAlign.configure({
-        types: ["heading", "paragraph", "blockquote"],
-        alignments: ["left", "center", "right", "justify"],
-      }),
-      Placeholder.configure({ placeholder: "본문을 작성하세요." }),
-      FigureImage,
-    ],
-    content: "",
-    editorProps: {
-      attributes: {
-        class: "newsletter-admin-editor__content",
-        role: "textbox",
-        "aria-label": "뉴스레터 본문",
-        "aria-multiline": "true",
-      },
-    },
-    onUpdate: () => {
-      markEditorDirty();
-      syncToolbarState();
-    },
-    onSelectionUpdate: () => {
-      syncToolbarState();
-      syncImageLayoutControls();
-    },
-    onCreate: () => {
-      syncToolbarState();
-      syncImageLayoutControls();
-    },
-  });
 }
 
 async function uploadImage(file, target) {
@@ -769,25 +450,11 @@ async function uploadCoverImage(file) {
 }
 
 async function uploadInlineImage(file) {
-  if (!file) return;
-  setButtonLoading(dom.inlineImageButton, true, "업로드 중...");
-  try {
-    const payload = await uploadImage(file, "body");
-    const url = String(payload.image?.url || "").trim();
-    if (!url) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
-    editor?.chain().focus().setFigureImage({
-      src: url,
-      alt: "",
-      ...IMAGE_LAYOUT_DEFAULTS,
-    }).run();
-    syncImageLayoutControls();
-    setStatus(dom.status, "본문 이미지를 추가했습니다.", "success");
-  } catch (error) {
-    setStatus(dom.status, error.message || "본문 이미지를 업로드하지 못했습니다.", "error");
-  } finally {
-    setButtonLoading(dom.inlineImageButton, false, "업로드 중...");
-    if (dom.inlineImageInput) dom.inlineImageInput.value = "";
-  }
+  if (!file) return "";
+  const payload = await uploadImage(file, "body");
+  const url = String(payload.image?.url || "").trim();
+  if (!url) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
+  return url;
 }
 
 function attachEvents() {
@@ -829,6 +496,10 @@ function attachEvents() {
 
   dom.postList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-newsletter-slug]");
+    if (state.isUploading) {
+      setStatus(dom.status, "이미지 업로드가 끝난 뒤 다른 글로 이동해주세요.", "error");
+      return;
+    }
     if (!button || !confirmDiscard()) return;
     state.selectedSlug = button.dataset.newsletterSlug || "";
     renderPostList();
@@ -836,6 +507,10 @@ function attachEvents() {
   });
 
   dom.newButton?.addEventListener("click", () => {
+    if (state.isUploading) {
+      setStatus(dom.status, "이미지 업로드가 끝난 뒤 새 글을 작성해주세요.", "error");
+      return;
+    }
     if (!confirmDiscard()) return;
     state.selectedSlug = "";
     renderPostList();
@@ -863,29 +538,6 @@ function attachEvents() {
     markEditorDirty();
   });
 
-  dom.toolbar?.addEventListener("mousedown", (event) => {
-    if (event.target.closest("button")) event.preventDefault();
-  });
-  dom.toolbar?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-editor-command]");
-    if (button) applyEditorCommand(button.dataset.editorCommand || "");
-  });
-  dom.imageLayout?.addEventListener("click", (event) => {
-    const alignmentButton = event.target.closest("[data-image-align]");
-    if (alignmentButton) applyImageLayout("align", alignmentButton.dataset.imageAlign || "");
-  });
-  dom.imageSize?.addEventListener("change", () => applyImageLayout("size", dom.imageSize.value));
-  dom.imagePosition?.addEventListener("change", () => applyImageLayout("position", dom.imagePosition.value));
-  dom.imageColumns?.addEventListener("change", () => applyImageLayout("layout", dom.imageColumns.value));
-  dom.blockStyle?.addEventListener("change", () => applyBlockStyle(dom.blockStyle.value));
-  dom.fontFamily?.addEventListener("change", () => applyFontFamily(dom.fontFamily.value));
-  dom.fontSize?.addEventListener("change", () => applyTextFontSize(dom.fontSize.value));
-  dom.lineHeight?.addEventListener("change", () => applyLineHeight(dom.lineHeight.value));
-  dom.textColor?.addEventListener("input", () => applyTextColor(dom.textColor.value));
-  dom.backgroundColor?.addEventListener("input", () => applyBackgroundColor(dom.backgroundColor.value));
-  dom.inlineImageButton?.addEventListener("click", () => dom.inlineImageInput?.click());
-  dom.inlineImageInput?.addEventListener("change", (event) => uploadInlineImage(event.target.files?.[0]));
-
   dom.saveDraftButton?.addEventListener("click", () => savePost("draft", dom.saveDraftButton));
   dom.publishButton?.addEventListener("click", () => savePost("published", dom.publishButton));
   dom.archiveButton?.addEventListener("click", archivePost);
@@ -898,7 +550,18 @@ function attachEvents() {
   });
 }
 
-initializeEditor();
+editorController = mountNewsletterTiptapEditor(dom.editorRoot, {
+  value: "",
+  contentKey: "new",
+  onChange: (html) => {
+    state.editorHtml = html;
+    markEditorDirty();
+  },
+  onUploadImage: uploadInlineImage,
+  onUploadStateChange: setInlineUploadLoading,
+  onStatus: (message, type) => setStatus(dom.status, message, type),
+});
+
 attachEvents();
 applyAccessState();
 renderPostList();
