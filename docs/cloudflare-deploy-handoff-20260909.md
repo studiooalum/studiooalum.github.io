@@ -23,16 +23,18 @@ Confirm that the Pages project still has these bindings/secrets. Do not print se
 - Optional: `REPAIR_ADMIN_EMAIL` (defaults to `studio.oalum@gmail.com`)
 - Recommended: `PUBLIC_SITE_URL=https://studiooalum.com`
 
-## 2. Back up and migrate the production D1 database
+## 2. Back up and reconcile the production D1 database
+
+The current production database contains the application schema but has an empty `d1_migrations` ledger. Do **not** run `wrangler d1 migrations apply` against this database until the existing migrations have been formally baselined; Wrangler would try to replay every historical migration and collide with existing tables/columns.
 
 Choose a private path outside the repository for the backup, then run:
 
 ```sh
-npx wrangler d1 export oalum-orders --remote --output /private/tmp/oalum-orders-before-0025.sql
-npx wrangler d1 migrations apply oalum-orders --remote
+npx wrangler d1 export oalum-orders --remote --output /private/tmp/oalum-orders-before-0026.sql
+npx wrangler d1 execute oalum-orders --remote --file cloudflare/d1/migrations/0026_repair_notification_content_alignment.sql
 ```
 
-Expected migrations: `0025_my_oalum_repair_delivery.sql` and `0026_repair_notification_content_alignment.sql`.
+`0025_my_oalum_repair_delivery.sql` is already represented in the production schema. The idempotent `0026_repair_notification_content_alignment.sql` aligns its notification copy and variable contract without replaying schema changes.
 
 Validate the migration without exposing customer data:
 
