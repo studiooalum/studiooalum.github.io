@@ -331,7 +331,7 @@ function setReadOnlyState(request) {
   dom.form.classList.toggle("is-readonly", readOnly);
   if (dom.readOnly) dom.readOnly.hidden = !readOnly;
   Array.from(dom.form.elements).forEach((element) => {
-    if (element.name === "id" || element.name === "expectedVersion") return;
+    if (element.name === "id" || element.name === "expectedVersion" || element === dom.deleteRequest) return;
     element.disabled = readOnly;
   });
 }
@@ -429,7 +429,9 @@ function renderSelectedRequest() {
   if (dom.createdAt) dom.createdAt.textContent = formatDate(request.createdAt);
   if (dom.imageCount) dom.imageCount.textContent = `${Number(request.images?.length || 0)}장`;
   if (dom.ticketLink) {
-    dom.ticketLink.href = request.ticketId ? `./repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}&mode=admin` : "./repair-ticket.html?mode=admin";
+    dom.ticketLink.href = request.ticketShortCode
+      ? `/t/${encodeURIComponent(request.ticketShortCode)}?mode=admin`
+      : request.ticketId ? `/repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}&mode=admin` : "/repair-ticket.html?mode=admin";
     dom.ticketLink.toggleAttribute("aria-disabled", !request.ticketId);
   }
   if (dom.archiveCandidate) {

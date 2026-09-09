@@ -532,6 +532,9 @@ export function initAccountPage() {
     if (!link || !state.guestAccessToken) return;
     try {
       sessionStorage.setItem(`studiooalum:repair-ticket-token:${link.dataset.repairTicketId}`, state.guestAccessToken);
+      if (link.dataset.repairTicketCode) {
+        sessionStorage.setItem(`studiooalum:repair-ticket-token:${link.dataset.repairTicketCode}`, state.guestAccessToken);
+      }
     } catch {}
   }
 
@@ -668,7 +671,9 @@ export function initAccountPage() {
     const trackingMarkup = trackingText
       ? `<p class="account-record__status-detail">${trackingUrl ? `<a class="account-inline-link" href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 ${escapeHtml(trackingText)}</a>` : `운송장 ${escapeHtml(trackingText)}`}</p>`
       : "";
-    const ticketHref = request?.ticketId ? `./repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}` : "";
+    const ticketHref = request?.ticketShortCode
+      ? `/t/${encodeURIComponent(request.ticketShortCode)}`
+      : request?.ticketId ? `/repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}` : "";
     const unread = Number(request?.unreadCustomerCount || 0);
     return `
       <article class="account-record account-record--repair">
@@ -681,12 +686,12 @@ export function initAccountPage() {
             <strong class="account-order-total">${escapeHtml(formatRepairStatus(request))}</strong>
           </div>
           <div class="account-record__meta">
-            <span class="account-order-id">${escapeHtml(request?.requestNumber || "-")}</span>
+            <span class="account-order-id">${escapeHtml(request?.ticketNumberLabel || request?.requestNumber || "-")}</span>
             <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
           </div>
           ${paymentMarkup}
           ${trackingMarkup}
-          ${ticketHref ? `<div class="account-record__actions"><a class="account-btn account-btn--secondary" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}">Repair Ticket${unread ? ` · 새 메시지 ${unread}` : ""}</a></div>` : ""}
+          ${ticketHref ? `<div class="account-record__actions"><a class="account-btn account-btn--secondary" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}" data-repair-ticket-code="${escapeHtml(request.ticketShortCode || "")}">Repair Ticket${unread ? ` · 새 메시지 ${unread}` : ""}</a></div>` : ""}
           ${request?.isReadOnly ? '<p class="account-record__notice">완료된 수선 내역과 대화는 읽기 전용으로 보관됩니다.</p>' : ""}
         </div>
       </article>

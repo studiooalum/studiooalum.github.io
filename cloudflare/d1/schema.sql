@@ -367,6 +367,7 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
 CREATE TABLE IF NOT EXISTS repair_requests (
   id TEXT PRIMARY KEY,
   request_number TEXT NOT NULL UNIQUE,
+  ticket_number INTEGER,
   submission_id TEXT,
   submission_fingerprint TEXT NOT NULL DEFAULT '',
   customer_id TEXT,
@@ -423,6 +424,23 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_requests_submission_id
   WHERE submission_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_repair_requests_customer
   ON repair_requests(customer_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_requests_ticket_number
+  ON repair_requests(ticket_number)
+  WHERE ticket_number IS NOT NULL;
+
+CREATE TRIGGER IF NOT EXISTS trg_repair_requests_ticket_number_required
+BEFORE INSERT ON repair_requests
+WHEN NEW.ticket_number IS NULL
+BEGIN
+  SELECT RAISE(ABORT, 'repair_ticket_number_required');
+END;
+
+CREATE TABLE IF NOT EXISTS repair_ticket_number_sequence (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  next_number INTEGER NOT NULL CHECK(next_number > 0)
+);
+
+INSERT OR IGNORE INTO repair_ticket_number_sequence (id, next_number) VALUES (1, 1);
 
 CREATE TABLE IF NOT EXISTS repair_request_images (
   id TEXT PRIMARY KEY,
@@ -644,6 +662,7 @@ CREATE INDEX IF NOT EXISTS idx_guest_lookup_rate_slots_created
 CREATE TABLE IF NOT EXISTS repair_tickets (
   id TEXT PRIMARY KEY,
   repair_id TEXT NOT NULL UNIQUE,
+  short_code TEXT,
   customer_id TEXT,
   guest_access_token_hash TEXT,
   status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'closed')),
@@ -661,6 +680,9 @@ CREATE INDEX IF NOT EXISTS idx_repair_tickets_customer
   ON repair_tickets(customer_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_repair_tickets_status_updated
   ON repair_tickets(status, updated_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_tickets_short_code
+  ON repair_tickets(short_code)
+  WHERE short_code IS NOT NULL AND short_code <> '';
 
 CREATE TABLE IF NOT EXISTS repair_ticket_messages (
   id TEXT PRIMARY KEY,
@@ -984,6 +1006,7 @@ WITH template_seed(
     ('workshop.cancelled','email','workshop','워크숍 취소','워크숍 취소 안내입니다.','예약 취소','[Studio OALUM] 워크숍 예약이 취소되었습니다','{{customer_name}}님의 {{workshop_name}} 예약이 취소되었습니다.','["customer_name","workshop_name","reservation_number"]','["customer_name","workshop_name"]',0,1),
     ('workshop.payment_completed','email','workshop','워크숍 결제 완료','워크숍 결제 완료 안내입니다.','결제 완료','[Studio OALUM] 워크숍 결제가 완료되었습니다','{{customer_name}}님의 {{workshop_name}} 결제가 완료되었습니다.','["customer_name","workshop_name","reservation_number","workshop_url"]','["customer_name","workshop_name"]',0,1),
     ('repair.application_submitted','email','repair','수선 신청 완료','수선 신청 직후 안내입니다.','신청 완료','[Studio OALUM] 수선 신청이 완료되었습니다','{{customer_name}}님, {{product_name}} 수선 신청이 완료되었습니다. {{repair_number}} {{repair_ticket_url}}','["customer_name","product_name","repair_number","studio_address","repair_url","repair_ticket_url"]','["customer_name","product_name","repair_number","repair_ticket_url"]',0,1),
+    ('repair.application_submitted_admin','email','repair','새 수선 신청 · 관리자','새 수선 신청이 접수되면 관리자에게 고객 정보와 Repair Ticket 링크를 전달합니다.','신청 완료','[Studio OALUM] 새 수선 신청 {{repair_number}}','새 수선 신청이 접수되었습니다.\n\n고객명: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n제품: {{product_name}}\n신청 내용: {{repair_details}}\n\nRepair Ticket에서 신청 내용을 확인해주세요.\n{{repair_ticket_url}}','["customer_name","customer_email","customer_phone","product_name","repair_number","repair_details","repair_ticket_url"]','["customer_name","customer_email","customer_phone","product_name","repair_number","repair_details","repair_ticket_url"]',0,1),
     ('repair.application_submitted','sms','repair','수선 신청 완료','국내 고객에게 보내는 수선 신청 문자입니다.','신청 완료','','[OALUM] {{customer_name}}님 수선 신청 완료. {{repair_number}} {{repair_ticket_url}}','["customer_name","repair_number","repair_ticket_url"]','["customer_name","repair_number","repair_ticket_url"]',2000,1),
     ('repair.received','email','repair','수선 제품 수신 완료','수선 제품 도착 확인 안내입니다.','제품 수신','[Studio OALUM] 수선 제품을 받았습니다','{{customer_name}}님, {{product_name}} 제품을 정상적으로 받았습니다. {{repair_ticket_url}}','["customer_name","product_name","repair_number","repair_ticket_url"]','["customer_name","product_name","repair_ticket_url"]',0,1),
     ('repair.received','sms','repair','수선 제품 수신 완료','국내 고객 제품 수신 문자입니다.','제품 수신','','[OALUM] {{customer_name}}님 수선 제품을 받았습니다. {{repair_ticket_url}}','["customer_name","repair_ticket_url"]','["customer_name","repair_ticket_url"]',2000,1),

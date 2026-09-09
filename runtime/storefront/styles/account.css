@@ -383,6 +383,61 @@
   gap: 48px;
 }
 
+.account-menu {
+  display: grid;
+  gap: 18px;
+}
+
+.account-menu__heading {
+  margin: 0;
+  font-family: var(--font-english-ui);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.account-menu__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 620px);
+}
+
+.account-menu__item {
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  padding: clamp(14px, 3vw, 24px);
+  border: 1px solid #111;
+  color: #111;
+  text-decoration: none;
+}
+
+.account-menu__item span,
+.account-menu__item small {
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.account-menu__item strong {
+  align-self: center;
+  font-family: var(--font-english-ui);
+  font-size: clamp(17px, 3vw, 26px);
+  font-weight: 400;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.account-menu__item:hover,
+.account-menu__item:focus-visible {
+  background: #111;
+  color: #fff;
+}
+
 .account-layout .account-panel {
   padding-top: 0;
   border-top: 0;
@@ -728,6 +783,10 @@
 
   .account-layout {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .account-menu {
+    grid-column: 1 / -1;
   }
 
   .account-panel--profile {

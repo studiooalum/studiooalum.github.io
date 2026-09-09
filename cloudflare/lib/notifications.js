@@ -8,14 +8,17 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const NOTIFICATION_VARIABLES = Object.freeze({
   customer_name: { label: "고객명", sample: "홍길동" },
+  customer_email: { label: "고객 이메일", sample: "customer@example.com" },
+  customer_phone: { label: "고객 연락처", sample: "010-1234-5678" },
   product_name: { label: "제품명", sample: "자켓" },
+  repair_details: { label: "수선 신청 내용", sample: "소매가 찢어져 수선을 요청했습니다." },
   repair_number: { label: "수선 번호", sample: "REP-20260823-ABCD1234" },
   final_amount: { label: "최종 가격", sample: "35,000원" },
   tracking_number: { label: "운송장 번호", sample: "1234567890" },
   tracking_url: { label: "배송 조회 링크", sample: "https://example.com/tracking" },
   repair_url: { label: "수선 조회 링크", sample: "https://studiooalum.com/account.html" },
-  repair_ticket_url: { label: "수선 티켓 링크", sample: "https://studiooalum.com/repair-ticket.html?ticket=RPT_SAMPLE" },
-  studio_address: { label: "OALUM Studio 주소", sample: "서울특별시 동대문구 이문로 145 2층 201호" },
+  repair_ticket_url: { label: "수선 티켓 링크", sample: "https://studiooalum.com/t/a1b2c3d4e5f6" },
+  studio_address: { label: "OALUM Studio 주소", sample: "서울특별시 동대문구 이문로42길 5, 2층 201호" },
   repair_status: { label: "현재 수선 상태", sample: "수선 진행 중" },
   order_number: { label: "주문 번호", sample: "ORD-OALUM-CF-SAMPLE" },
   order_url: { label: "주문 조회 링크", sample: "https://studiooalum.com/account.html" },
@@ -157,7 +160,11 @@ function renderNotification(template, payload, source = "active") {
   const selectedBody = validation.valid ? bodyTemplate : template.default_body;
   const subject = renderNotificationText(selectedSubject, payload);
   const bodyText = renderNotificationText(selectedBody, payload);
-  const bodyHtml = `<div style="font-family:Arial,sans-serif;color:#111;line-height:1.7;white-space:pre-wrap">${escapeHtml(bodyText).replace(/\r?\n/g, "<br>")}</div>`;
+  const ticketUrl = cleanText(payload?.repair_ticket_url, 1000);
+  const ticketButton = /^https?:\/\//i.test(ticketUrl)
+    ? `<p style="margin:28px 0 0"><a href="${escapeHtml(ticketUrl)}" style="display:inline-block;padding:12px 18px;background:#111;color:#fff;text-decoration:none;font-size:13px;line-height:1">Repair Ticket</a></p>`
+    : "";
+  const bodyHtml = `<!doctype html><html><body style="margin:0;background:#f5f5f2;color:#111"><div style="max-width:640px;margin:0 auto;padding:40px 24px"><p style="margin:0 0 32px;font-family:Arial,sans-serif;font-size:18px;letter-spacing:0">Studio OALUM</p><div style="padding:32px;background:#fff;border-top:1px solid #111;font-family:Arial,sans-serif;font-size:14px;line-height:1.8"><h1 style="margin:0 0 22px;font-size:20px;font-weight:500;letter-spacing:0">${escapeHtml(subject)}</h1><div style="white-space:pre-wrap">${escapeHtml(bodyText)}</div>${ticketButton}</div><p style="margin:22px 0 0;font-family:Arial,sans-serif;font-size:11px;line-height:1.6;color:#666">서울특별시 동대문구 이문로42길 5, 2층 201호</p></div></body></html>`;
   return { subject, bodyText, bodyHtml, usedFallback: !validation.valid, validation };
 }
 
@@ -630,7 +637,7 @@ export async function createNotificationTest(env, input, actorId = "") {
     payload,
     subject: preview.subject,
     bodyText: preview.body,
-    bodyHtml: `<div style="font-family:Arial,sans-serif;line-height:1.7">${escapeHtml(preview.body).replace(/\r?\n/g, "<br>")}</div>`,
+    bodyHtml: renderNotification(template, payload, "draft").bodyHtml,
     status: "pending",
     attempts: 0,
     availableAt: now,

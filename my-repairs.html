@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Repairs | Studio OALUM</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="./oalum_favicon.png">
+  <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/my-repairs.css?v=20260909-01">
+</head>
+<body class="my-repairs-page">
+  <nav class="gnb gnb--account">
+    <a href="./account.html" class="gnb__back">← My Oalum</a>
+    <span class="gnb__spacer"></span>
+  </nav>
+
+  <main class="my-repairs-main">
+    <header class="my-repairs-header">
+      <div>
+        <p class="my-repairs-kicker">My Oalum</p>
+        <h1>My Repairs</h1>
+      </div>
+      <p class="my-repairs-status js-my-repairs-status" role="status" aria-live="polite">수선 내역을 불러오는 중입니다.</p>
+    </header>
+
+    <nav class="my-repairs-filters" aria-label="수선 상태 필터">
+      <button type="button" class="is-active" data-repair-filter="all">전체</button>
+      <button type="button" data-repair-filter="received">접수</button>
+      <button type="button" data-repair-filter="active">진행 중</button>
+      <button type="button" data-repair-filter="closed">완료</button>
+      <button type="button" data-repair-filter="exception">취소 · 불가</button>
+    </nav>
+
+    <section class="my-repairs-list js-my-repairs-list" aria-live="polite"></section>
+  </main>
+
+  <script type="module" src="./runtime/storefront/scripts/my-repairs.js?v=20260909-01"></script>
+  <script type="module">
+    import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
+    initSiteChrome({ showActions: false });
+  </script>
+</body>
+</html>

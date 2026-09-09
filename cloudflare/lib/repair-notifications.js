@@ -162,7 +162,7 @@ export function buildRepairTemplateVariables(env, request, overrides = {}) {
     bankAccount: cleanText(getRepairValue(request, "bankAccount", "bank_account"), 500),
     paymentInstructions: cleanText(getRepairValue(request, "paymentInstructions", "payment_instructions"), 2000),
     shippingAddress: cleanText(env?.REPAIR_SHIPPING_ADDRESS, 1000)
-      || "서울특별시 동대문구 이문로 145 2층 201호 / 010-4746-5999 / 오알룸 앞",
+      || "서울특별시 동대문구 이문로42길 5, 2층 201호 / 010-4746-5999 / 오알룸 앞",
     carrier: cleanText(getRepairValue(request, "carrier"), 120),
     trackingNumber: cleanText(getRepairValue(request, "trackingNumber", "tracking_number"), 160),
     trackingUrl: cleanText(getRepairValue(request, "trackingUrl", "tracking_url"), 1000),

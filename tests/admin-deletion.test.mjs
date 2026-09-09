@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import { deleteCoupon, upsertCoupon } from "../cloudflare/lib/coupons.js";
 import { deleteUnpaidOrder, persistOrder } from "../cloudflare/lib/d1.js";
+import { archiveNewsletterPost, deleteNewsletterPost, upsertNewsletterPost } from "../cloudflare/lib/newsletters.js";
 import {
   archiveWorkshopContent,
   deleteWorkshopContent,
@@ -137,6 +138,34 @@ test("only coupons without use or order history can be deleted", async (t) => {
     (error) => error.status === 409 && /사용 또는 주문 이력/.test(error.message),
   );
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM coupons WHERE id = ?").bind(usedCoupon.id).first().count, 1);
+});
+
+test("published newsletters must be archived before permanent deletion", async (t) => {
+  const { database, env } = environment();
+  t.after(() => database.close());
+
+  await upsertNewsletterPost(env, {
+    slug: "published-delete-guard",
+    title: "게시 중 삭제 보호",
+    contentHtml: "<p>게시된 뉴스레터입니다.</p>",
+    status: "published",
+  });
+  await assert.rejects(
+    deleteNewsletterPost(env, { slug: "published-delete-guard" }),
+    (error) => error.status === 409 && /먼저 보관/.test(error.message),
+  );
+  await archiveNewsletterPost(env, { slug: "published-delete-guard" });
+  await deleteNewsletterPost(env, { slug: "published-delete-guard" });
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM newsletter_posts WHERE slug = 'published-delete-guard'").first().count, 0);
+
+  await upsertNewsletterPost(env, {
+    slug: "draft-delete",
+    title: "초안 삭제",
+    contentHtml: "<p>초안입니다.</p>",
+    status: "draft",
+  });
+  await deleteNewsletterPost(env, { slug: "draft-delete" });
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM newsletter_posts WHERE slug = 'draft-delete'").first().count, 0);
 });
 
 function workshopInput(slug, status = "draft") {

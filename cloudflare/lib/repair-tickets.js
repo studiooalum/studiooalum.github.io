@@ -1,5 +1,6 @@
 import {
   createNotificationOutboxStatement,
+  prepareNotification,
   prepareRepairMilestoneNotifications,
   prepareTicketMessageNotification,
 } from "./notifications.js";
@@ -65,9 +66,18 @@ function sanitizeMessageBody(value) {
   return stripped;
 }
 
-async function buildTicketUrl(env, ticketId) {
+function formatTicketNumber(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? `#${String(number).padStart(3, "0")}` : "";
+}
+
+export async function createRepairTicketUrl(env, ticket) {
+  const ticketId = cleanText(ticket?.id || ticket, 80);
+  const shortCode = cleanText(ticket?.shortCode, 40).toLowerCase();
   const accessToken = await createRepairTicketAccessToken(env, ticketId);
-  return `${normalizeSiteUrl(env)}/repair-ticket.html?ticket=${encodeURIComponent(ticketId)}&access=${encodeURIComponent(accessToken)}`;
+  const path = shortCode ? `/t/${encodeURIComponent(shortCode)}` : `/repair-ticket.html?ticket=${encodeURIComponent(ticketId)}`;
+  const separator = path.includes("?") ? "&" : "?";
+  return `${normalizeSiteUrl(env)}${path}${separator}access=${encodeURIComponent(accessToken)}`;
 }
 
 function formatAttachment(row) {
@@ -98,6 +108,9 @@ function formatTicketHeader(row) {
   return {
     id: row.id,
     repairId: row.repair_id,
+    shortCode: row.short_code || "",
+    ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
+    ticketNumberLabel: formatTicketNumber(row.ticket_number),
     status: row.status,
     unreadCustomerCount: Number(row.unread_customer_count || 0),
     unreadAdminCount: Number(row.unread_admin_count || 0),
@@ -107,6 +120,8 @@ function formatTicketHeader(row) {
     updatedAt: row.updated_at || "",
     repair: {
       requestNumber: row.request_number,
+      ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
+      ticketNumberLabel: formatTicketNumber(row.ticket_number),
       customerName: row.customer_name,
       itemType: row.item_type,
       issueDescription: row.repair_details,
@@ -130,6 +145,10 @@ export function createRepairTicketId() {
   return createId("RPT");
 }
 
+export function createRepairTicketShortCode() {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 12).toLowerCase();
+}
+
 export function createRepairTicketMessageId() {
   return createId("RTM");
 }
@@ -141,12 +160,13 @@ export function createRepairTicketAttachmentId() {
 export function createRepairTicketStatement(database, input) {
   return database.prepare(`
     INSERT INTO repair_tickets (
-      id, repair_id, customer_id, status, unread_customer_count, unread_admin_count,
+      id, repair_id, short_code, customer_id, status, unread_customer_count, unread_admin_count,
       last_message_at, closed_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     input.id,
     input.repairId,
+    input.shortCode,
     input.customerId || null,
     input.status || "open",
     Number(input.unreadCustomerCount || 0),
@@ -201,6 +221,7 @@ export async function readRepairTicketById(env, ticketId) {
     SELECT
       t.*,
       r.request_number,
+      r.ticket_number,
       r.customer_name,
       r.email,
       r.phone,
@@ -219,9 +240,9 @@ export async function readRepairTicketById(env, ticketId) {
       r.updated_at AS repair_updated_at
     FROM repair_tickets t
     INNER JOIN repair_requests r ON r.id = t.repair_id
-    WHERE t.id = ?
+    WHERE t.id = ? OR lower(t.short_code) = lower(?)
     LIMIT 1
-  `).bind(id).first();
+  `).bind(id, id).first();
   if (!row) throw Object.assign(new Error("Repair Ticket을 찾을 수 없습니다."), { status: 404 });
 
   const ticket = formatTicketHeader(row);
@@ -229,7 +250,7 @@ export async function readRepairTicketById(env, ticketId) {
     SELECT * FROM repair_ticket_messages
     WHERE ticket_id = ?
     ORDER BY created_at ASC, id ASC
-  `).bind(id).all();
+  `).bind(ticket.id).all();
   const messages = (messageResult?.results || []).map(formatMessage);
   const byId = new Map(messages.map((message) => [message.id, message]));
   if (messages.length) {
@@ -274,13 +295,16 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
   return {
     customer_name: value("customerName", "customer_name"),
     product_name: value("itemType", "item_type"),
-    repair_number: value("requestNumber", "request_number"),
+    repair_number: formatTicketNumber(value("ticketNumber", "ticket_number")) || value("requestNumber", "request_number"),
+    customer_email: value("email"),
+    customer_phone: value("phone"),
     final_amount: formatAmount(value("finalAmount", "final_amount")),
+    repair_details: value("issueDescription", "repair_details"),
     tracking_number: value("trackingNumber", "tracking_number"),
     tracking_url: value("trackingUrl", "tracking_url"),
     repair_url: `${normalizeSiteUrl(env)}/account.html`,
-    repair_ticket_url: await buildTicketUrl(env, ticket.id),
-    studio_address: cleanText(env?.REPAIR_SHIPPING_ADDRESS, 1000) || "서울특별시 동대문구 이문로 145 2층 201호",
+    repair_ticket_url: await createRepairTicketUrl(env, ticket),
+    studio_address: cleanText(env?.REPAIR_SHIPPING_ADDRESS, 1000) || "서울특별시 동대문구 이문로42길 5, 2층 201호",
     repair_status: REPAIR_STATUS_LABELS[normalizeRepairStatus(value("status", "repair_status"))] || "",
     email: value("email"),
     ...overrides,
@@ -309,13 +333,14 @@ function getMilestoneTemplate(status) {
 export async function prepareInitialRepairTicketBundle(env, request, eventId, createdAt) {
   const database = requireDb(env);
   const ticketId = createRepairTicketId();
+  const shortCode = createRepairTicketShortCode();
   const messageId = createRepairTicketMessageId();
-  const ticket = { id: ticketId };
+  const ticket = { id: ticketId, shortCode };
   const payload = await buildNotificationPayload(env, {
     ...request,
     repair_status: "received",
   }, ticket);
-  const notifications = await prepareRepairMilestoneNotifications(env, {
+  const customerNotifications = await prepareRepairMilestoneNotifications(env, {
     repairId: request.id,
     templateKey: "repair.application_submitted",
     eventKey: `repair:${request.id}:application_submitted:v1`,
@@ -324,14 +349,28 @@ export async function prepareInitialRepairTicketBundle(env, request, eventId, cr
     email: request.email,
     payload,
   });
+  const adminTicketUrl = `${normalizeSiteUrl(env)}/t/${encodeURIComponent(shortCode)}?mode=admin`;
+  const adminNotification = await prepareNotification(env, {
+    eventKey: `repair:${request.id}:application_submitted:v1:admin:email`,
+    entityType: "repair",
+    entityId: request.id,
+    channel: "email",
+    recipient: cleanText(env?.REPAIR_ADMIN_EMAIL, 320) || "studio.oalum@gmail.com",
+    templateKey: "repair.application_submitted_admin",
+    payload: { ...payload, repair_ticket_url: adminTicketUrl },
+  });
+  const notifications = [...customerNotifications, ...(adminNotification ? [adminNotification] : [])];
   return {
     ticketId,
+    shortCode,
+    ticketUrl: payload.repair_ticket_url,
     messageId,
     notifications,
     statements: [
       createRepairTicketStatement(database, {
         id: ticketId,
         repairId: request.id,
+        shortCode,
         customerId: request.customerId,
         unreadCustomerCount: 1,
         lastMessageAt: createdAt,

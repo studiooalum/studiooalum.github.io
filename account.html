@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Studio OALUM — 계정</title>
+  <title>My Oalum | Studio OALUM</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="icon" type="image/png" href="./oalum_favicon.png">
 
@@ -17,7 +17,7 @@
 <body class="account-page">
   <nav class="gnb gnb--account">
     <a href="./shop.html" class="gnb__back">← 쇼핑</a>
-    <span class="gnb__title">계정</span>
+    <span class="gnb__title">My Oalum</span>
   </nav>
 
   <main class="account-main">
@@ -89,7 +89,17 @@
     </section>
 
     <section class="account-layout js-account-member-layout" data-account-protected hidden>
-      <section class="account-panel account-panel--profile">
+      <section class="account-menu" aria-labelledby="myOalumHeading">
+        <h1 class="account-menu__heading" id="myOalumHeading">My Oalum</h1>
+        <nav class="account-menu__grid" aria-label="My Oalum 메뉴">
+          <a class="account-menu__item" href="#my-orders"><span>01</span><strong>Orders</strong><small>주문 및 배송</small></a>
+          <a class="account-menu__item" href="#my-workshops"><span>02</span><strong>Workshops</strong><small>예약 내역</small></a>
+          <a class="account-menu__item" href="/my-repairs"><span>03</span><strong>My Repairs</strong><small>수선 진행</small></a>
+          <a class="account-menu__item" href="#my-account"><span>04</span><strong>Account</strong><small>계정 정보</small></a>
+        </nav>
+      </section>
+
+      <section class="account-panel account-panel--profile" id="my-account">
         <h2 class="account-heading">내 계정 정보</h2>
         <p class="account-status js-account-member-status" role="status" aria-live="polite"></p>
         <form class="account-form js-account-profile-form">
@@ -132,14 +142,14 @@
       </section>
 
       <div class="account-column account-column--history">
-        <section class="account-panel account-panel--orders">
+        <section class="account-panel account-panel--orders" id="my-orders">
           <h2 class="account-heading">주문 / 배송 현황</h2>
           <div class="account-orders js-account-orders">
             <div class="account-empty">등록된 주문 내역이 없습니다.</div>
           </div>
         </section>
 
-        <section class="account-panel account-panel--workshops">
+        <section class="account-panel account-panel--workshops" id="my-workshops">
           <h2 class="account-heading">워크숍 예약</h2>
           <div class="account-orders js-account-workshops">
             <div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>

@@ -53,6 +53,23 @@ function createRequestNumber(date = new Date()) {
   return `REP-${day}-${suffix}`;
 }
 
+async function assertRepairTicketNumberSequence(database) {
+  const row = await database.prepare(`
+    SELECT next_number
+    FROM repair_ticket_number_sequence
+    WHERE id = 1
+    LIMIT 1
+  `).first();
+  if (!Number.isInteger(Number(row?.next_number)) || Number(row.next_number) < 1) {
+    throw Object.assign(new Error("Repair Ticket 번호 발급 설정이 준비되지 않았습니다."), { status: 503 });
+  }
+}
+
+function formatTicketNumber(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? `#${String(number).padStart(3, "0")}` : "";
+}
+
 function normalizeStatus(value, fallback = "received") {
   return normalizeRepairStatus(value, fallback);
 }
@@ -127,6 +144,8 @@ function formatRepairRequest(row) {
     id: row.id,
     customerId: row.customer_id || null,
     requestNumber: row.request_number,
+    ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
+    ticketNumberLabel: formatTicketNumber(row.ticket_number),
     customerName: row.customer_name,
     email: row.email,
     phone: row.phone,
@@ -176,6 +195,7 @@ function formatRepairRequest(row) {
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || "",
     ticketId: row.ticket_id || "",
+    ticketShortCode: row.ticket_short_code || "",
     ticketStatus: row.ticket_status || "",
     unreadCustomerCount: Number(row.unread_customer_count || 0),
     unreadAdminCount: Number(row.unread_admin_count || 0),
@@ -271,6 +291,7 @@ export async function createRepairRequest(env, input, images = []) {
   }
 
   const now = nowIso();
+  await assertRepairTicketNumberSequence(database);
   const eventId = createRepairEventId();
   const requestForNotification = {
     ...input,
@@ -292,6 +313,7 @@ export async function createRepairRequest(env, input, images = []) {
         INSERT INTO repair_requests (
           id,
           request_number,
+          ticket_number,
           submission_id,
           submission_fingerprint,
           customer_id,
@@ -322,7 +344,7 @@ export async function createRepairRequest(env, input, images = []) {
           version,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
+        ) VALUES (?, ?, (SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
       `)
       .bind(
         requestId,
@@ -353,6 +375,11 @@ export async function createRepairRequest(env, input, images = []) {
         now,
         now,
       ),
+    database.prepare(`
+      UPDATE repair_ticket_number_sequence
+      SET next_number = next_number + 1
+      WHERE id = 1
+    `),
     ...images.map((image, index) => database
       .prepare(`
         INSERT INTO repair_request_images (
@@ -393,12 +420,22 @@ export async function createRepairRequest(env, input, images = []) {
 
   await database.batch(statements);
 
+  const stored = await database.prepare(`SELECT ticket_number FROM repair_requests WHERE id = ? LIMIT 1`).bind(requestId).first();
+  const ticketNumber = Number(stored?.ticket_number);
+  if (!Number.isInteger(ticketNumber) || ticketNumber < 1) {
+    throw Object.assign(new Error("Repair Ticket 번호를 확인하지 못했습니다."), { status: 500 });
+  }
+
   return {
     requestId,
     requestNumber,
+    ticketNumber,
+    ticketNumberLabel: formatTicketNumber(ticketNumber),
     submittedAt: now,
     eventId,
     ticketId: ticketBundle.ticketId,
+    ticketShortCode: ticketBundle.shortCode,
+    ticketUrl: ticketBundle.ticketUrl,
     notificationIds: ticketBundle.notifications.map((notification) => notification.id),
   };
 }
@@ -408,25 +445,30 @@ export async function readRepairRequestBySubmissionId(env, submissionId) {
   if (!normalizedSubmissionId) return null;
   const database = requireDb(env);
   const row = await database.prepare(`
-    SELECT id, request_number, submission_id, submission_fingerprint, created_at
-    FROM repair_requests
-    WHERE submission_id = ?
+    SELECT r.id, r.request_number, r.ticket_number, r.submission_id, r.submission_fingerprint,
+      r.created_at, t.id AS ticket_id, t.short_code AS ticket_short_code
+    FROM repair_requests r
+    LEFT JOIN repair_tickets t ON t.repair_id = r.id
+    WHERE r.submission_id = ?
     LIMIT 1
   `).bind(normalizedSubmissionId).first();
   if (!row) return null;
   const notificationResult = await database.prepare(`
     SELECT id, status FROM notification_outbox
-    WHERE entity_type = 'repair' AND entity_id = ? AND template_key = 'repair.application_submitted'
+    WHERE entity_type = 'repair' AND entity_id = ?
+      AND template_key IN ('repair.application_submitted', 'repair.application_submitted_admin')
     ORDER BY created_at ASC
   `).bind(row.id).all();
-  const ticket = await database.prepare(`SELECT id FROM repair_tickets WHERE repair_id = ? LIMIT 1`).bind(row.id).first();
   return {
     requestId: row.id,
     requestNumber: row.request_number,
+    ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
+    ticketNumberLabel: formatTicketNumber(row.ticket_number),
     submissionId: row.submission_id,
     submissionFingerprint: row.submission_fingerprint || "",
     submittedAt: row.created_at,
-    ticketId: ticket?.id || "",
+    ticketId: row.ticket_id || "",
+    ticketShortCode: row.ticket_short_code || "",
     notificationIds: (notificationResult?.results || []).map((notification) => notification.id),
     notificationStatuses: (notificationResult?.results || []).map((notification) => notification.status),
   };
@@ -442,6 +484,7 @@ export async function readRepairRequestForAdmin(env, requestId) {
     SELECT
       r.*,
       t.id AS ticket_id,
+      t.short_code AS ticket_short_code,
       t.status AS ticket_status,
       t.unread_customer_count,
       t.unread_admin_count,
@@ -470,6 +513,9 @@ function formatRepairRequestForCustomer(request) {
     statusLabel: request.statusLabel,
     isReadOnly: request.isReadOnly,
     ticketId: request.ticketId,
+    ticketShortCode: request.ticketShortCode,
+    ticketNumber: request.ticketNumber,
+    ticketNumberLabel: request.ticketNumberLabel,
     ticketStatus: request.ticketStatus,
     unreadCustomerCount: request.unreadCustomerCount,
     ticketLastMessageAt: request.ticketLastMessageAt,
@@ -501,6 +547,7 @@ async function readCustomerRepairRows(database, whereClause, bindings, limit = 2
     SELECT
       r.*,
       t.id AS ticket_id,
+      t.short_code AS ticket_short_code,
       t.status AS ticket_status,
       t.unread_customer_count,
       t.unread_admin_count,
@@ -716,6 +763,7 @@ export async function readRepairAdminSnapshot(env) {
       SELECT
         r.*,
         t.id AS ticket_id,
+        t.short_code AS ticket_short_code,
         t.status AS ticket_status,
         t.unread_customer_count,
         t.unread_admin_count,

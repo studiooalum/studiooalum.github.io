@@ -64,6 +64,7 @@ const repairUpdateSchema = z.object({
 
 const repairAdminActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("updateRepairRequest"), request: repairUpdateSchema }),
+  z.object({ action: z.literal("deleteRepairRequest"), id: z.string().trim().min(1).max(80) }),
   z.object({
     action: z.literal("updateRepairStudioContent"),
     content: z.object({
@@ -76,7 +77,6 @@ const repairAdminActionSchema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("setRepairGalleryPublished"), id: z.string().trim().min(1).max(80), published: z.boolean() }),
   z.object({ action: z.literal("deleteRepairGalleryImage"), id: z.string().trim().min(1).max(80) }),
-  z.object({ action: z.literal("deleteRepairRequest"), id: z.string().trim().min(1).max(80) }),
 ]);
 
 const GALLERY_METHODS = new Set(["patch", "woven", "sashiko", "boro"]);

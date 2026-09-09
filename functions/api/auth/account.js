@@ -15,7 +15,7 @@ const updateSchema = z.object({
 async function includeRepairRequests(env, account) {
   return {
     ...account,
-    repairRequests: await readRepairRequestsForEmail(env, account?.user?.email || ""),
+    repairRequests: await readRepairRequestsForEmail(env, account?.user?.email || "", 100),
   };
 }
 

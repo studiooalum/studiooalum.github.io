@@ -16,9 +16,9 @@ const orderListEl = document.querySelector(".js-fulfillment-order-list");
 const selectionEl = document.querySelector(".js-fulfillment-selection");
 const formEl = document.querySelector(".js-fulfillment-form");
 const formStatusEl = document.querySelector(".js-fulfillment-form-status");
+const orderDeleteButton = document.querySelector(".js-fulfillment-delete-btn");
 const carrierSearchButton = document.querySelector(".js-fulfillment-carrier-search-btn");
 const carrierResultsEl = document.querySelector(".js-fulfillment-carrier-results");
-const deleteOrderButton = document.querySelector(".js-fulfillment-delete-order");
 const couponSearchInput = document.querySelector(".js-fulfillment-coupon-search-input");
 const couponSearchButton = document.querySelector(".js-fulfillment-coupon-search-btn");
 const couponRefreshButton = document.querySelector(".js-fulfillment-coupon-refresh-btn");
@@ -588,38 +588,10 @@ function renderSelection() {
   formEl.elements.trackingUrl.value = shipment?.trackingUrl || "";
   formEl.elements.shippedAt.value = formatDateTimeLocal(shipment?.shippedAt);
   formEl.elements.deliveredAt.value = formatDateTimeLocal(shipment?.deliveredAt);
-  if (deleteOrderButton) {
+  if (orderDeleteButton) {
     const blockedReason = getOrderDeleteBlockReason(order);
-    deleteOrderButton.disabled = Boolean(blockedReason);
-    deleteOrderButton.title = blockedReason || "미결제 테스트 주문을 영구 삭제합니다.";
-  }
-}
-
-async function deleteSelectedOrder() {
-  const order = getSelectedOrder();
-  const blockedReason = getOrderDeleteBlockReason(order);
-  if (!order || blockedReason) {
-    setStatus(formStatusEl, blockedReason || "삭제할 주문을 선택해주세요.", "error");
-    return;
-  }
-  if (!window.confirm(`주문 “${order.orderId}”을 영구 삭제할까요?\n\n미결제·미배송·혜택 미사용 주문만 삭제되며 복구할 수 없습니다.`)) return;
-
-  setButtonLoading(deleteOrderButton, true, "삭제 중…");
-  try {
-    const payload = await requestFulfillment("/api/orders/fulfillment", {
-      method: "POST",
-      body: { action: "deleteOrder", orderId: order.orderId },
-    });
-    state.orders = Array.isArray(payload.orders) ? payload.orders : [];
-    state.selectedOrderId = state.orders[0]?.orderId || "";
-    renderOrders();
-    renderSelection();
-    setStatus(formStatusEl, "미결제 주문을 삭제했습니다.", "success");
-  } catch (error) {
-    setStatus(formStatusEl, error.message || "주문을 삭제하지 못했습니다.", "error");
-  } finally {
-    setButtonLoading(deleteOrderButton, false, "삭제 중…");
-    if (deleteOrderButton) deleteOrderButton.disabled = Boolean(getOrderDeleteBlockReason(getSelectedOrder()));
+    orderDeleteButton.disabled = Boolean(blockedReason);
+    orderDeleteButton.title = blockedReason || "미결제 테스트 주문을 영구 삭제합니다.";
   }
 }
 
@@ -829,6 +801,35 @@ async function saveShipment(event) {
   }
 }
 
+async function deleteOrder() {
+  const order = getSelectedOrder();
+  const blockedReason = getOrderDeleteBlockReason(order);
+  if (!order || blockedReason) {
+    setStatus(formStatusEl, blockedReason || "삭제할 주문을 선택해주세요.", "error");
+    return;
+  }
+  if (!window.confirm(`주문 “${order.orderId}”을 영구 삭제할까요?\n\n미결제·미배송·혜택 미사용 주문만 삭제되며 복구할 수 없습니다.`)) return;
+
+  setButtonLoading(orderDeleteButton, true, "삭제 중…");
+  setStatus(formStatusEl, "주문을 삭제하는 중입니다.");
+  try {
+    await requestFulfillment("/api/orders/fulfillment", {
+      method: "DELETE",
+      body: { orderId: order.orderId },
+    });
+    state.orders = state.orders.filter((item) => item.orderId !== order.orderId);
+    state.selectedOrderId = state.orders[0]?.orderId || "";
+    renderOrders();
+    renderSelection();
+    setStatus(listStatusEl, "미결제 주문을 삭제했습니다.", "success");
+  } catch (error) {
+    setStatus(formStatusEl, error.message || "주문을 삭제하지 못했습니다.", "error");
+  } finally {
+    setButtonLoading(orderDeleteButton, false, "삭제 중…");
+    if (orderDeleteButton) orderDeleteButton.disabled = Boolean(getOrderDeleteBlockReason(getSelectedOrder()));
+  }
+}
+
 async function saveCoupon(event) {
   event.preventDefault();
 
@@ -1006,7 +1007,7 @@ carrierResultsEl?.addEventListener("click", (event) => {
 });
 
 formEl?.addEventListener("submit", saveShipment);
-deleteOrderButton?.addEventListener("click", deleteSelectedOrder);
+orderDeleteButton?.addEventListener("click", deleteOrder);
 
 couponListEl?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-coupon-id]");
