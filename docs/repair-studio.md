@@ -49,11 +49,11 @@
 
 ## 배포 전 준비
 
-1. Repair 기본 migration, `0020_repair_notifications.sql`, `0021_repair_tickets_and_notifications.sql`을 운영 D1에 적용합니다.
+1. 신규 D1에는 Repair 기본 migration과 최신 `0026_repair_notification_content_alignment.sql`까지 순서대로 적용합니다. 현재 운영 D1은 이력표 없이 스키마가 구축되어 있으므로 `migrations apply`로 과거 migration을 재실행하지 말고, 검토된 idempotent migration만 `d1 execute --file`로 적용합니다.
 2. Pages에 `OALUM_DB`, `OALUM_R2`, `ORDER_ADMIN_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `REPAIR_NOTIFICATION_CRON_SECRET`을 설정합니다. Ticket 서명은 `REPAIR_TICKET_ACCESS_SECRET`, `AUTH_SECRET`, `ORDER_ADMIN_SECRET` 순으로 사용합니다.
 3. Scheduled Worker에도 같은 `REPAIR_NOTIFICATION_CRON_SECRET`을 secret으로 설정합니다.
 4. SOLAPI 운영 전 `SOLAPI_API_KEY`, `SOLAPI_API_SECRET`, `SOLAPI_SENDER_NUMBER`, `SOLAPI_TEST_PHONE`을 Pages secret으로 설정하고 `SMS_ENABLED=true`, `SMS_DRY_RUN=false`로 전환합니다.
 5. `npm run cf:repair-notifications:deploy`로 5분 cron Worker를 배포합니다.
-6. `repair.html`, `repair-admin.html`, `repair-ticket.html`, `notification-admin.html`, `account.html`을 확인합니다.
+6. `repair.html`, `repair-admin.html`, `repair-ticket.html`, `notification-admin.html`, `account.html`, `my-repairs.html`을 확인합니다.
 
 사진이 필수인 Repair 접수에서 `OALUM_R2`가 없으면 의도적으로 `503`을 반환합니다.

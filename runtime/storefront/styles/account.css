@@ -802,3 +802,355 @@
     grid-column: 3;
   }
 }
+
+/* My Oalum dashboard */
+.account-layout.js-account-member-layout {
+  align-items: start;
+}
+
+.account-overview {
+  min-width: 0;
+}
+
+.account-overview__kicker,
+.account-overview__title,
+.account-dashboard-card__index,
+.account-dashboard-card h2,
+.account-detail-back {
+  font-family: var(--font-english-ui);
+  letter-spacing: var(--tracking-latin);
+}
+
+.account-overview__kicker {
+  margin: 0 0 8px;
+  font-size: 10px;
+  color: rgba(17, 17, 17, 0.45);
+}
+
+.account-overview__title {
+  margin: 0;
+  font-family: var(--font-bold);
+  font-size: clamp(34px, 3.2vw, 52px);
+  font-weight: 700;
+  line-height: 0.95;
+}
+
+.account-overview__avatar {
+  display: grid;
+  width: 88px;
+  aspect-ratio: 1;
+  place-items: center;
+  margin-top: 34px;
+  border-radius: 50%;
+  background: #f0f1f1;
+  color: #969ca3;
+  font-family: var(--font-kor-heading);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.account-overview__welcome {
+  display: grid;
+  gap: 3px;
+  margin-top: 24px;
+}
+
+.account-overview__welcome p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.account-overview__welcome p:last-child {
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.account-overview__facts {
+  width: 100%;
+  margin: 40px 0 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.14);
+}
+
+.account-overview__facts > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+}
+
+.account-overview__facts dt {
+  font-family: var(--font-english-ui);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: rgba(17, 17, 17, 0.46);
+}
+
+.account-overview__facts dd {
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.account-overview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.account-overview__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-overview__link span {
+  font-size: 15px;
+  transition: transform 180ms ease;
+}
+
+.account-overview__link:hover span {
+  transform: translateX(3px);
+}
+
+.account-overview > .account-status {
+  margin-top: 16px;
+}
+
+.account-dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--grid-gap);
+  min-width: 0;
+}
+
+.account-dashboard-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding: clamp(18px, 2vw, 32px);
+  overflow: hidden;
+  border: 1px solid #111;
+  color: #111;
+  text-decoration: none;
+}
+
+.account-dashboard-card--repairs {
+  background: #fff;
+}
+
+.account-dashboard-card--orders {
+  border-color: #e34234;
+  background: #e34234;
+  color: #fff;
+}
+
+.account-dashboard-card--classes {
+  border-color: #ffe74d;
+  background: #ffe74d;
+}
+
+.account-dashboard-card--points {
+  border-color: #c9d3d6;
+  background: #c9d3d6;
+}
+
+.account-dashboard-card__index {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+}
+
+.account-dashboard-card__arrow {
+  position: absolute;
+  top: clamp(16px, 2vw, 30px);
+  right: clamp(18px, 2vw, 32px);
+  font-size: 20px;
+  transition: transform 180ms ease;
+}
+
+.account-dashboard-card:hover .account-dashboard-card__arrow {
+  transform: translateX(5px);
+}
+
+.account-dashboard-card__body {
+  min-width: 0;
+}
+
+.account-dashboard-card__body > p {
+  margin: 0 0 14px;
+  font-size: clamp(11px, 1vw, 13px);
+  color: currentColor;
+  opacity: 0.62;
+}
+
+.account-dashboard-card__body > strong {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  margin: 0;
+  font-family: var(--font-kor-heading);
+  font-size: clamp(48px, 6vw, 92px);
+  font-weight: 300;
+  line-height: 0.78;
+  letter-spacing: -0.055em;
+}
+
+.account-dashboard-card__body > strong small {
+  padding-bottom: 2px;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  opacity: 0.68;
+}
+
+.account-dashboard-card--points .account-dashboard-card__body > strong {
+  font-size: clamp(42px, 5vw, 76px);
+}
+
+.account-dashboard-card h2 {
+  margin: clamp(20px, 2vw, 30px) 0 0;
+  font-size: clamp(18px, 1.65vw, 25px);
+  font-weight: 400;
+}
+
+.account-dashboard-card__copy {
+  display: block;
+  max-width: 280px;
+  margin-top: 12px;
+  font-size: clamp(11px, 0.95vw, 14px);
+  line-height: 1.6;
+  opacity: 0.64;
+}
+
+.account-detail-shell {
+  display: none;
+  min-width: 0;
+}
+
+.account-layout[data-account-view="profile"] .account-dashboard,
+.account-layout[data-account-view="orders"] .account-dashboard,
+.account-layout[data-account-view="classes"] .account-dashboard,
+.account-layout[data-account-view="points"] .account-dashboard {
+  display: none;
+}
+
+.account-layout:not([data-account-view="dashboard"]) .account-detail-shell {
+  display: grid;
+  gap: 36px;
+}
+
+.account-detail-back {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+  color: #111;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.account-detail-back span {
+  font-size: 18px;
+  transition: transform 180ms ease;
+}
+
+.account-detail-back:hover span {
+  transform: translateX(-4px);
+}
+
+.account-detail-shell [data-account-detail] {
+  display: none;
+}
+
+.account-layout[data-account-view="profile"] [data-account-detail="profile"],
+.account-layout[data-account-view="orders"] [data-account-detail="orders"],
+.account-layout[data-account-view="classes"] [data-account-detail="classes"],
+.account-layout[data-account-view="points"] [data-account-detail="points"] {
+  display: grid;
+}
+
+.account-detail-shell .account-panel {
+  max-width: 760px;
+}
+
+.account-data-cache {
+  display: none !important;
+}
+
+@media (min-width: 960px) {
+  .account-layout.js-account-member-layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .account-overview {
+    position: sticky;
+    top: calc(var(--gnb-height, 40px) + 32px);
+    grid-column: 1;
+  }
+
+  .account-dashboard,
+  .account-detail-shell {
+    grid-column: 2 / span 2;
+  }
+}
+
+@media (max-width: 959px) {
+  .account-layout.js-account-member-layout {
+    gap: 52px;
+  }
+
+  .account-overview__facts {
+    max-width: 520px;
+  }
+
+  .account-dashboard {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 519px) {
+  .account-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .account-dashboard-card {
+    padding: 22px;
+  }
+
+  .account-dashboard-card__body > strong {
+    font-size: clamp(64px, 22vw, 92px);
+  }
+
+  .account-dashboard-card__copy {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-dashboard-card__arrow,
+  .account-overview__link span,
+  .account-detail-back span {
+    transition: none;
+  }
+}

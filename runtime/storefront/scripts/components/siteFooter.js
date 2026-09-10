@@ -374,7 +374,7 @@ function getFooterMarkup() {
     </div>
     <div class="site-footer__text site-footer__text--contact">
       <p>서울특별시 동대문구 이문로42길 5
-    2층 201호
+2층 201호
 +82-10-4746-5999
 studio.oalum@gmail.com</p>
       <a class="site-footer__instagram" href="https://www.instagram.com/studio_oalum/" target="_blank" rel="noreferrer" aria-label="Instagram">

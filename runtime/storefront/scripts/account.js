@@ -321,6 +321,15 @@ export function initAccountPage() {
   const workshopsEl = document.querySelector(".js-account-workshops");
   const repairsEl = document.querySelector(".js-account-repairs");
   const pointsEl = document.querySelector(".js-account-points");
+  const avatarEl = document.querySelector(".js-account-avatar");
+  const greetingEl = document.querySelector(".js-account-greeting");
+  const overviewNameEl = document.querySelector(".js-account-overview-name");
+  const overviewEmailEl = document.querySelector(".js-account-overview-email");
+  const overviewJoinedEl = document.querySelector(".js-account-overview-joined");
+  const dashboardRepairsEl = document.querySelector(".js-account-dashboard-repairs");
+  const dashboardOrdersEl = document.querySelector(".js-account-dashboard-orders");
+  const dashboardClassesEl = document.querySelector(".js-account-dashboard-classes");
+  const dashboardPointsEl = document.querySelector(".js-account-dashboard-points");
 
   if (
     !authShell
@@ -338,6 +347,11 @@ export function initAccountPage() {
 
   const urlMessage = readStatusFromUrl();
   const initialReference = String(new URLSearchParams(window.location.search).get("reference") || "").trim();
+  const requestedView = String(new URLSearchParams(window.location.search).get("view") || "").trim().toLowerCase();
+  const initialAccountView = new Set(["profile", "orders", "classes", "points"]).has(requestedView)
+    ? requestedView
+    : "dashboard";
+  memberLayout.dataset.accountView = initialAccountView;
   const emptyOrdersMarkup = '<div class="account-empty">등록된 주문 내역이 없습니다.</div>';
   const emptyWorkshopsMarkup = '<div class="account-empty">등록된 워크숍 예약 내역이 없습니다.</div>';
   const emptyRepairsMarkup = '<div class="account-empty">등록된 수선 신청 내역이 없습니다.</div>';
@@ -824,6 +838,19 @@ export function initAccountPage() {
 
   function renderAuthenticated(account) {
     const user = account?.user || {};
+    const orders = Array.isArray(account?.orders) ? account.orders : [];
+    const workshops = Array.isArray(account?.workshopReservations) ? account.workshopReservations : [];
+    const repairs = Array.isArray(account?.repairRequests) ? account.repairRequests : [];
+    const fullName = String(user.fullName || "").trim();
+    const initials = (fullName || String(user.email || "O"))
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "O";
+    const activeRepairs = repairs.filter((request) => !["closed", "cancelled", "rejected"].includes(String(request?.status || "").toLowerCase())).length;
+    const pointsBalance = Number(user.pointsBalance || 0);
 
     document.body.classList.add("is-authenticated");
     authShell.hidden = true;
@@ -835,10 +862,19 @@ export function initAccountPage() {
     profileForm.elements.zipcode.value = user.zipcode || "";
     profileForm.elements.address1.value = user.address1 || "";
     profileForm.elements.address2.value = user.address2 || "";
-    pointsEl.textContent = `${Number(user.pointsBalance || 0).toLocaleString("ko-KR")} 포인트`;
-    renderOrders(account?.orders || []);
-    renderWorkshopReservations(account?.workshopReservations || []);
-    renderRepairRequests(account?.repairRequests || []);
+    if (avatarEl) avatarEl.textContent = initials;
+    if (greetingEl) greetingEl.textContent = fullName ? `안녕하세요, ${fullName}님.` : "안녕하세요.";
+    if (overviewNameEl) overviewNameEl.textContent = fullName || "-";
+    if (overviewEmailEl) overviewEmailEl.textContent = user.email || "-";
+    if (overviewJoinedEl) overviewJoinedEl.textContent = formatDate(user.createdAt) || "-";
+    if (dashboardRepairsEl) dashboardRepairsEl.textContent = activeRepairs.toLocaleString("ko-KR");
+    if (dashboardOrdersEl) dashboardOrdersEl.textContent = orders.length.toLocaleString("ko-KR");
+    if (dashboardClassesEl) dashboardClassesEl.textContent = workshops.length.toLocaleString("ko-KR");
+    if (dashboardPointsEl) dashboardPointsEl.textContent = pointsBalance.toLocaleString("ko-KR");
+    pointsEl.textContent = `${pointsBalance.toLocaleString("ko-KR")} 포인트`;
+    renderOrders(orders);
+    renderWorkshopReservations(workshops);
+    renderRepairRequests(repairs);
   }
 
   function openAddressSearch() {

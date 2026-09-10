@@ -27,31 +27,29 @@
 .repair-request-success__ticket {
   display: grid;
   gap: 10px;
-  padding: 18px;
-  border: 1px solid #111;
+  padding-top: 20px;
+  border-top: 1px solid rgba(17, 17, 17, 0.18);
 }
 
 .repair-request-success__ticket h3,
 .repair-request-success__ticket p {
   margin: 0;
-  font-family: var(--font-kor-body);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.6;
 }
 
-.repair-success__ticket-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.repair-request-success__ticket p {
+  font-size: 12px;
+  line-height: 1.65;
+  color: rgba(17, 17, 17, 0.64);
+}
+
+.repair-request-success__ticket .repair-submit {
   width: fit-content;
-  min-height: 36px;
-  padding: 0 14px;
-  background: #111;
-  color: #fff;
+  margin-top: 4px;
   text-decoration: none;
-  font-family: var(--font-kor-button);
-  font-size: 13px;
+}
+
+.repair-request-success__ticket .repair-submit[hidden] {
+  display: none !important;
 }
 
 @media (max-width: 768px) {

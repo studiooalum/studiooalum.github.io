@@ -8,6 +8,7 @@ import {
   REPAIR_STATUS_LABELS,
 } from "./repair-notifications.js";
 import {
+  buildRepairTicketUrl,
   prepareInitialRepairTicketBundle,
   prepareRepairStatusTicketBundle,
 } from "./repair-tickets.js";
@@ -51,23 +52,6 @@ function createRequestNumber(date = new Date()) {
   ].join("");
   const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
   return `REP-${day}-${suffix}`;
-}
-
-async function assertRepairTicketNumberSequence(database) {
-  const row = await database.prepare(`
-    SELECT next_number
-    FROM repair_ticket_number_sequence
-    WHERE id = 1
-    LIMIT 1
-  `).first();
-  if (!Number.isInteger(Number(row?.next_number)) || Number(row.next_number) < 1) {
-    throw Object.assign(new Error("Repair Ticket 번호 발급 설정이 준비되지 않았습니다."), { status: 503 });
-  }
-}
-
-function formatTicketNumber(value) {
-  const number = Number(value);
-  return Number.isInteger(number) && number > 0 ? `#${String(number).padStart(3, "0")}` : "";
 }
 
 function normalizeStatus(value, fallback = "received") {
@@ -144,8 +128,7 @@ function formatRepairRequest(row) {
     id: row.id,
     customerId: row.customer_id || null,
     requestNumber: row.request_number,
-    ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
-    ticketNumberLabel: formatTicketNumber(row.ticket_number),
+    ticketNumber: Number(row.ticket_number || 0),
     customerName: row.customer_name,
     email: row.email,
     phone: row.phone,
@@ -195,7 +178,6 @@ function formatRepairRequest(row) {
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || "",
     ticketId: row.ticket_id || "",
-    ticketShortCode: row.ticket_short_code || "",
     ticketStatus: row.ticket_status || "",
     unreadCustomerCount: Number(row.unread_customer_count || 0),
     unreadAdminCount: Number(row.unread_admin_count || 0),
@@ -290,13 +272,24 @@ export async function createRepairRequest(env, input, images = []) {
     throw Object.assign(new Error("수선 접수 정보를 다시 확인해주세요."), { status: 400 });
   }
 
+  const ticketNumberRow = await database.prepare(`
+    UPDATE repair_ticket_number_sequence
+    SET next_number = next_number + 1
+    WHERE id = 1
+    RETURNING next_number - 1 AS ticket_number
+  `).first();
+  const ticketNumber = Number(ticketNumberRow?.ticket_number || 0);
+  if (!Number.isInteger(ticketNumber) || ticketNumber < 1) {
+    throw Object.assign(new Error("수선 티켓 번호를 생성하지 못했습니다."), { status: 503 });
+  }
+
   const now = nowIso();
-  await assertRepairTicketNumberSequence(database);
   const eventId = createRepairEventId();
   const requestForNotification = {
     ...input,
     id: requestId,
     requestNumber,
+    ticketNumber,
     customerName,
     email: emailNormalized,
     itemType: cleanText(input.itemType, 100),
@@ -344,11 +337,12 @@ export async function createRepairRequest(env, input, images = []) {
           version,
           created_at,
           updated_at
-        ) VALUES (?, ?, (SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
       `)
       .bind(
         requestId,
         requestNumber,
+        ticketNumber,
         submissionId,
         submissionFingerprint,
         cleanText(input.customerId, 80) || null,
@@ -375,11 +369,6 @@ export async function createRepairRequest(env, input, images = []) {
         now,
         now,
       ),
-    database.prepare(`
-      UPDATE repair_ticket_number_sequence
-      SET next_number = next_number + 1
-      WHERE id = 1
-    `),
     ...images.map((image, index) => database
       .prepare(`
         INSERT INTO repair_request_images (
@@ -420,21 +409,13 @@ export async function createRepairRequest(env, input, images = []) {
 
   await database.batch(statements);
 
-  const stored = await database.prepare(`SELECT ticket_number FROM repair_requests WHERE id = ? LIMIT 1`).bind(requestId).first();
-  const ticketNumber = Number(stored?.ticket_number);
-  if (!Number.isInteger(ticketNumber) || ticketNumber < 1) {
-    throw Object.assign(new Error("Repair Ticket 번호를 확인하지 못했습니다."), { status: 500 });
-  }
-
   return {
     requestId,
     requestNumber,
     ticketNumber,
-    ticketNumberLabel: formatTicketNumber(ticketNumber),
     submittedAt: now,
     eventId,
     ticketId: ticketBundle.ticketId,
-    ticketShortCode: ticketBundle.shortCode,
     ticketUrl: ticketBundle.ticketUrl,
     notificationIds: ticketBundle.notifications.map((notification) => notification.id),
   };
@@ -445,11 +426,9 @@ export async function readRepairRequestBySubmissionId(env, submissionId) {
   if (!normalizedSubmissionId) return null;
   const database = requireDb(env);
   const row = await database.prepare(`
-    SELECT r.id, r.request_number, r.ticket_number, r.submission_id, r.submission_fingerprint,
-      r.created_at, t.id AS ticket_id, t.short_code AS ticket_short_code
-    FROM repair_requests r
-    LEFT JOIN repair_tickets t ON t.repair_id = r.id
-    WHERE r.submission_id = ?
+    SELECT id, request_number, ticket_number, submission_id, submission_fingerprint, created_at
+    FROM repair_requests
+    WHERE submission_id = ?
     LIMIT 1
   `).bind(normalizedSubmissionId).first();
   if (!row) return null;
@@ -459,16 +438,16 @@ export async function readRepairRequestBySubmissionId(env, submissionId) {
       AND template_key IN ('repair.application_submitted', 'repair.application_submitted_admin')
     ORDER BY created_at ASC
   `).bind(row.id).all();
+  const ticket = await database.prepare(`SELECT id, short_code FROM repair_tickets WHERE repair_id = ? LIMIT 1`).bind(row.id).first();
   return {
     requestId: row.id,
     requestNumber: row.request_number,
-    ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
-    ticketNumberLabel: formatTicketNumber(row.ticket_number),
+    ticketNumber: Number(row.ticket_number || 0),
     submissionId: row.submission_id,
     submissionFingerprint: row.submission_fingerprint || "",
     submittedAt: row.created_at,
-    ticketId: row.ticket_id || "",
-    ticketShortCode: row.ticket_short_code || "",
+    ticketId: ticket?.id || "",
+    ticketUrl: ticket?.id ? await buildRepairTicketUrl(env, { id: ticket.id, shortCode: ticket.short_code || "" }) : "",
     notificationIds: (notificationResult?.results || []).map((notification) => notification.id),
     notificationStatuses: (notificationResult?.results || []).map((notification) => notification.status),
   };
@@ -484,7 +463,6 @@ export async function readRepairRequestForAdmin(env, requestId) {
     SELECT
       r.*,
       t.id AS ticket_id,
-      t.short_code AS ticket_short_code,
       t.status AS ticket_status,
       t.unread_customer_count,
       t.unread_admin_count,
@@ -504,6 +482,7 @@ function formatRepairRequestForCustomer(request) {
   return {
     id: request.id,
     requestNumber: request.requestNumber,
+    ticketNumber: request.ticketNumber,
     customerName: request.customerName,
     itemType: request.itemType,
     issueDescription: request.issueDescription,
@@ -513,9 +492,6 @@ function formatRepairRequestForCustomer(request) {
     statusLabel: request.statusLabel,
     isReadOnly: request.isReadOnly,
     ticketId: request.ticketId,
-    ticketShortCode: request.ticketShortCode,
-    ticketNumber: request.ticketNumber,
-    ticketNumberLabel: request.ticketNumberLabel,
     ticketStatus: request.ticketStatus,
     unreadCustomerCount: request.unreadCustomerCount,
     ticketLastMessageAt: request.ticketLastMessageAt,
@@ -547,7 +523,6 @@ async function readCustomerRepairRows(database, whereClause, bindings, limit = 2
     SELECT
       r.*,
       t.id AS ticket_id,
-      t.short_code AS ticket_short_code,
       t.status AS ticket_status,
       t.unread_customer_count,
       t.unread_admin_count,
@@ -763,7 +738,6 @@ export async function readRepairAdminSnapshot(env) {
       SELECT
         r.*,
         t.id AS ticket_id,
-        t.short_code AS ticket_short_code,
         t.status AS ticket_status,
         t.unread_customer_count,
         t.unread_admin_count,

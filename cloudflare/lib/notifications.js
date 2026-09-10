@@ -11,14 +11,16 @@ export const NOTIFICATION_VARIABLES = Object.freeze({
   customer_email: { label: "고객 이메일", sample: "customer@example.com" },
   customer_phone: { label: "고객 연락처", sample: "010-1234-5678" },
   product_name: { label: "제품명", sample: "자켓" },
-  repair_details: { label: "수선 신청 내용", sample: "소매가 찢어져 수선을 요청했습니다." },
-  repair_number: { label: "수선 번호", sample: "REP-20260823-ABCD1234" },
+  repair_number: { label: "수선 티켓 번호", sample: "#001" },
+  repair_request: { label: "수선 요청 내용", sample: "소매의 찢어진 부분을 수선해주세요." },
+  shipping_address: { label: "고객 발송지", sample: "서울특별시 동대문구 예시로 1" },
   final_amount: { label: "최종 가격", sample: "35,000원" },
   tracking_number: { label: "운송장 번호", sample: "1234567890" },
   tracking_url: { label: "배송 조회 링크", sample: "https://example.com/tracking" },
   repair_url: { label: "수선 조회 링크", sample: "https://studiooalum.com/account.html" },
-  repair_ticket_url: { label: "수선 티켓 링크", sample: "https://studiooalum.com/t/a1b2c3d4e5f6" },
-  studio_address: { label: "OALUM Studio 주소", sample: "서울특별시 동대문구 이문로42길 5, 2층 201호" },
+  repair_ticket_url: { label: "수선 티켓 링크", sample: "https://studiooalum.com/t/AbCdEf123456" },
+  repair_admin_url: { label: "수선 관리자 링크", sample: "https://studiooalum.com/repair-ticket.html?ticket=RPT_SAMPLE&mode=admin" },
+  studio_address: { label: "OALUM Studio 주소", sample: "서울특별시 동대문구 이문로42길 5 2층 201호" },
   repair_status: { label: "현재 수선 상태", sample: "수선 진행 중" },
   order_number: { label: "주문 번호", sample: "ORD-OALUM-CF-SAMPLE" },
   order_url: { label: "주문 조회 링크", sample: "https://studiooalum.com/account.html" },
@@ -65,6 +67,91 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function safeHttpUrl(value) {
+  try {
+    const url = new URL(cleanText(value, 2000));
+    return ["http:", "https:"].includes(url.protocol) ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+function getEmailAction(template, payload) {
+  const repairAdminUrl = safeHttpUrl(payload?.repair_admin_url);
+  if (["repair.application_submitted_admin", "ticket.customer_message_to_admin"].includes(template?.template_key) && repairAdminUrl) {
+    return { url: repairAdminUrl, label: "관리자에서 Repair Ticket 확인" };
+  }
+  const repairTicketUrl = safeHttpUrl(payload?.repair_ticket_url);
+  if (repairTicketUrl) {
+    return {
+      url: repairTicketUrl,
+      label: ["repair.application_submitted_admin", "ticket.customer_message_to_admin"].includes(template?.template_key)
+        ? "관리자에서 Repair Ticket 확인"
+        : "Repair Ticket 열기",
+    };
+  }
+
+  const candidates = [
+    [payload?.tracking_url, "배송 조회하기"],
+    [payload?.order_url, "주문 내역 확인"],
+    [payload?.workshop_url, "클래스 정보 확인"],
+    [payload?.repair_url, "수선 내역 확인"],
+  ];
+  const [url, label] = candidates.find(([value]) => safeHttpUrl(value)) || [];
+  return { url: safeHttpUrl(url), label: label || "자세히 보기" };
+}
+
+function linkifyEmailText(value) {
+  const urlPattern = /(https?:\/\/[^\s<]+)/g;
+  return String(value || "").split(urlPattern).map((part) => {
+    const rawUrl = part.replace(/[),.;]+$/, "");
+    const url = safeHttpUrl(rawUrl);
+    if (!url) return escapeHtml(part);
+    const suffix = part.slice(rawUrl.length);
+    return `<a href="${escapeHtml(url)}" style="color:#111;text-decoration:underline;text-underline-offset:3px">${escapeHtml(url)}</a>${escapeHtml(suffix)}`;
+  }).join("");
+}
+
+function renderEmailHtml(template, subject, bodyText, payload) {
+  const action = getEmailAction(template, payload);
+  const htmlBodyText = action.url
+    ? String(bodyText || "").split(action.url).join("").replace(/\n[ \t]+\n/g, "\n\n").trim()
+    : String(bodyText || "").trim();
+  const paragraphs = htmlBodyText
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => `<p style="margin:0 0 20px;font-size:15px;line-height:1.75;color:#202020">${paragraph.split(/\r?\n/).map(linkifyEmailText).join("<br>")}</p>`)
+    .join("");
+  const actionMarkup = action.url
+    ? `<p style="margin:30px 0 8px"><a href="${escapeHtml(action.url)}" style="display:inline-block;box-sizing:border-box;padding:14px 22px;background:#111;color:#fff;font-size:14px;font-weight:600;text-decoration:none">${escapeHtml(action.label)}</a></p>`
+    : "";
+  const preheader = escapeHtml(String(bodyText || "").replace(/\s+/g, " ").slice(0, 120));
+
+  return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f3f0;color:#111;font-family:Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${preheader}</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f3f3f0">
+    <tr><td align="center" style="padding:32px 14px">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px;background:#fff;border:1px solid #deded9">
+        <tr><td style="padding:24px 28px;border-bottom:1px solid #111;font-family:Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:.08em">STUDIO OALUM</td></tr>
+        <tr><td style="padding:34px 28px 38px">
+          <h1 style="margin:0 0 28px;font-size:23px;line-height:1.35;font-weight:600;letter-spacing:-.03em">${escapeHtml(subject)}</h1>
+          ${paragraphs}
+          ${actionMarkup}
+        </td></tr>
+        <tr><td style="padding:22px 28px;background:#111;color:#fff;font-size:11px;line-height:1.7">
+          Studio OALUM<br>
+          서울특별시 동대문구 이문로42길 5 2층 201호<br>
+          studio.oalum@gmail.com · 010-4746-5999
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
 }
 
 function getBackoffMilliseconds(attempts) {
@@ -160,11 +247,9 @@ function renderNotification(template, payload, source = "active") {
   const selectedBody = validation.valid ? bodyTemplate : template.default_body;
   const subject = renderNotificationText(selectedSubject, payload);
   const bodyText = renderNotificationText(selectedBody, payload);
-  const ticketUrl = cleanText(payload?.repair_ticket_url, 1000);
-  const ticketButton = /^https?:\/\//i.test(ticketUrl)
-    ? `<p style="margin:28px 0 0"><a href="${escapeHtml(ticketUrl)}" style="display:inline-block;padding:12px 18px;background:#111;color:#fff;text-decoration:none;font-size:13px;line-height:1">Repair Ticket</a></p>`
+  const bodyHtml = template.channel === "email"
+    ? renderEmailHtml(template, subject, bodyText, payload)
     : "";
-  const bodyHtml = `<!doctype html><html><body style="margin:0;background:#f5f5f2;color:#111"><div style="max-width:640px;margin:0 auto;padding:40px 24px"><p style="margin:0 0 32px;font-family:Arial,sans-serif;font-size:18px;letter-spacing:0">Studio OALUM</p><div style="padding:32px;background:#fff;border-top:1px solid #111;font-family:Arial,sans-serif;font-size:14px;line-height:1.8"><h1 style="margin:0 0 22px;font-size:20px;font-weight:500;letter-spacing:0">${escapeHtml(subject)}</h1><div style="white-space:pre-wrap">${escapeHtml(bodyText)}</div>${ticketButton}</div><p style="margin:22px 0 0;font-family:Arial,sans-serif;font-size:11px;line-height:1.6;color:#666">서울특별시 동대문구 이문로42길 5, 2층 201호</p></div></body></html>`;
   return { subject, bodyText, bodyHtml, usedFallback: !validation.valid, validation };
 }
 
@@ -637,7 +722,7 @@ export async function createNotificationTest(env, input, actorId = "") {
     payload,
     subject: preview.subject,
     bodyText: preview.body,
-    bodyHtml: renderNotification(template, payload, "draft").bodyHtml,
+    bodyHtml: `<div style="font-family:Arial,sans-serif;line-height:1.7">${escapeHtml(preview.body).replace(/\r?\n/g, "<br>")}</div>`,
     status: "pending",
     attempts: 0,
     availableAt: now,

@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260816-09.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260818-04.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260825-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260909-01">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -207,14 +207,14 @@
           <p class="repair-kicker">Submitted</p>
           <h2>수선 의뢰가 완성되었습니다.</h2>
           <p class="js-repair-success-copy"></p>
-          <div class="repair-request-success__ticket">
-            <h3>Repair Ticket</h3>
-            <p>접수 후 상담과 진행 상태는 Repair Ticket에서 이어집니다.</p>
-            <a class="repair-success__ticket-link js-repair-ticket-link" href="/account" hidden>Repair Ticket 열기</a>
-          </div>
           <div class="repair-request-success__delivery">
             <h3>오알룸 주소지 앞으로 택배를 보내주세요.</h3>
             <address>서울특별시 동대문구 이문로42길 5<br>2층 201호<br>010-4746-5999<br>오알룸 앞</address>
+          </div>
+          <div class="repair-request-success__ticket">
+            <h3>Repair Ticket이 함께 생성되었습니다.</h3>
+            <p>진행 상황과 오알룸의 안내를 확인하고, 수선에 관한 메시지를 남길 수 있습니다.</p>
+            <a class="repair-submit js-repair-success-ticket" href="./account.html" hidden>Repair Ticket 열기</a>
           </div>
           <p>신청해주셔서 감사합니다.</p>
           <button type="button" class="repair-success__reset js-repair-reset">새 수선 접수</button>
@@ -225,9 +225,9 @@
 
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
-    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260520-02";
+    import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260909-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260825-01";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260909-01";
 
     initSiteChrome();
     initCartUI();

@@ -6,8 +6,7 @@ const MAX_FILES = 4;
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 
 const params = new URLSearchParams(window.location.search);
-const shortPathMatch = window.location.pathname.match(/\/t\/([^/]+)\/?$/i);
-const ticketId = String(params.get("ticket") || (shortPathMatch ? decodeURIComponent(shortPathMatch[1]) : "")).trim();
+const ticketId = String(params.get("ticket") || "").trim();
 const adminMode = params.get("mode") === "admin";
 const signedAccess = String(params.get("access") || "").trim();
 
@@ -60,6 +59,14 @@ function formatPrice(value) {
   return value === null || value === undefined || value === "" ? "미정" : `${Number(value || 0).toLocaleString("ko-KR")}원`;
 }
 
+function formatTicketNumber(repair) {
+  const ticketNumber = Number(repair?.ticketNumber || 0);
+  if (Number.isInteger(ticketNumber) && ticketNumber > 0) {
+    return `#${String(ticketNumber).padStart(3, "0")}`;
+  }
+  return repair?.requestNumber || "Repair Ticket";
+}
+
 function safeUrl(value) {
   try {
     const url = new URL(String(value || ""), window.location.origin);
@@ -81,9 +88,7 @@ function signedTicketToken() {
   try {
     if (signedAccess) {
       sessionStorage.setItem(`${SIGNED_TOKEN_PREFIX}${ticketId}`, signedAccess);
-      const cleanUrl = shortPathMatch
-        ? `${window.location.pathname}${adminMode ? "?mode=admin" : ""}`
-        : `${window.location.pathname}?ticket=${encodeURIComponent(ticketId)}${adminMode ? "&mode=admin" : ""}`;
+      const cleanUrl = `${window.location.pathname}?ticket=${encodeURIComponent(ticketId)}${adminMode ? "&mode=admin" : ""}`;
       window.history.replaceState({}, document.title, cleanUrl);
     }
     return signedAccess || sessionStorage.getItem(`${SIGNED_TOKEN_PREFIX}${ticketId}`) || "";
@@ -200,25 +205,14 @@ function renderTicket() {
   const ticket = state.ticket;
   if (!ticket) return;
   const repair = ticket.repair || {};
-  dom.number.textContent = ticket.ticketNumberLabel || repair.ticketNumberLabel || repair.requestNumber || "Repair Ticket";
+  dom.number.textContent = formatTicketNumber(repair);
   dom.status.textContent = repair.statusLabel || repair.status || "";
   renderFacts(ticket);
   renderMessages(ticket);
   const closed = ticket.status === "closed";
   dom.closed.hidden = !closed;
   dom.form.hidden = closed;
-  if (adminMode) dom.back.href = "/repair-admin.html";
-  if (ticket.shortCode) {
-    const token = signedTicketToken();
-    if (token) {
-      try {
-        sessionStorage.setItem(`${SIGNED_TOKEN_PREFIX}${ticket.shortCode}`, token);
-      } catch {}
-    }
-    if (!shortPathMatch) {
-      window.history.replaceState({}, document.title, `/t/${encodeURIComponent(ticket.shortCode)}${adminMode ? "?mode=admin" : ""}`);
-    }
-  }
+  if (adminMode) dom.back.href = "./repair-admin.html";
   dom.shell.hidden = false;
   dom.loading.hidden = true;
 }
