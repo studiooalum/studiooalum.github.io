@@ -112,6 +112,7 @@ const NewsletterImage = Image.extend({
       caption,
       ...imageAttributes
     } = HTMLAttributes;
+    imageAttributes["data-progressive-image"] = "false";
 
     if (!legacyFigure) return ["img", imageAttributes];
 

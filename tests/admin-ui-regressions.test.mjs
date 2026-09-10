@@ -14,19 +14,20 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
     read("runtime/storefront/scripts/newsletter-admin.js"),
     read("runtime/storefront/styles/newsletter-admin-20260910-03.css"),
     read("runtime/storefront/scripts/components/newsletter-tiptap-editor.jsx"),
-    read("runtime/storefront/scripts/newsletter-admin-20260910-02.js"),
+    read("runtime/storefront/scripts/newsletter-admin-20260910-04.js"),
     read("package.json"),
   ]);
 
-  assert.match(html, /newsletter-admin-20260910-02\.js/);
+  assert.match(html, /newsletter-admin-20260910-04\.js/);
   assert.match(html, /newsletter-admin-20260910-03\.css/);
   assert.match(html, /data-newsletter-editor-pending/);
   assert.match(html, /window\.setTimeout[\s\S]*8000/);
   assert.match(controller, /components\/newsletter-tiptap-editor\.jsx/);
-  assert.match(packageJson, /newsletter-admin-20260910-02\.js/);
+  assert.match(packageJson, /newsletter-admin-20260910-04\.js/);
   assert.doesNotMatch(bundle, /^\s*import\s/m);
   assert.match(editorSource, /<EditorContent editor=\{editor\}/);
   assert.match(editorSource, /NewsletterEditorErrorBoundary/);
+  assert.match(editorSource, /imageAttributes\["data-progressive-image"\] = "false"/);
   assert.match(stylesheet, /\.newsletter-admin-toolbar\s*\{[\s\S]*position:\s*sticky;[\s\S]*top:\s*calc\(var\(--gnb-height, 40px\) - 1px\);/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor-20260910-01.js", root)));

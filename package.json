@@ -4,7 +4,7 @@
   "scripts": {
     "deps:install": "npm install --ignore-scripts --no-audit --no-fund --no-progress",
     "verify": "node --test tests/*.test.mjs && npm run cf:build",
-    "build:newsletter-editor": "esbuild runtime/storefront/scripts/newsletter-admin.js --bundle --minify --format=esm --target=es2020 --jsx=automatic --outfile=runtime/storefront/scripts/newsletter-admin-20260910-02.js",
+    "build:newsletter-editor": "esbuild runtime/storefront/scripts/newsletter-admin.js --bundle --minify --format=esm --target=es2020 --jsx=automatic --outfile=runtime/storefront/scripts/newsletter-admin-20260910-04.js",
     "site:serve": "python3 -m http.server 4173",
     "cf:build": "npm run build:newsletter-editor && node ./scripts/build-pages.mjs",
     "cf:pages:dev": "npm run cf:build && npx wrangler pages dev dist",
