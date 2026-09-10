@@ -1,6 +1,7 @@
 import { buildPreviewPayment, paymentConfirmSchema } from "../../../cloudflare/lib/commerce.js";
 import { hasD1, persistPayment, readOrderSyncSnapshot } from "../../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
+import { enqueueOrderCompletedAdminNotification } from "../../../cloudflare/lib/notifications.js";
 import { dispatchOrderSync, getOrderSyncEventType, shouldEmailForOrderSyncEvent } from "../../../cloudflare/lib/order-sync.js";
 import { canConfirmWithToss, confirmTossPayment, shouldRequirePersistence } from "../../../cloudflare/lib/toss.js";
 
@@ -70,9 +71,8 @@ export async function onRequestPost(context) {
     }
 
     if (persisted) {
+      const eventType = getOrderSyncEventType(payment.status);
       try {
-        const eventType = getOrderSyncEventType(payment.status);
-
         if (orderSnapshot) {
           syncTriggered = await dispatchOrderSync(context, {
             eventType,
@@ -89,6 +89,15 @@ export async function onRequestPost(context) {
           orderId: payment.orderId,
           message: error?.message || String(error),
         });
+      }
+
+      if (orderSnapshot && eventType === "payment.confirmed") {
+        context.waitUntil(enqueueOrderCompletedAdminNotification(context.env, orderSnapshot).catch((error) => {
+          console.error("Failed to queue paid order administrator notification.", {
+            orderId: payment.orderId,
+            message: error?.message || String(error),
+          });
+        }));
       }
     }
 

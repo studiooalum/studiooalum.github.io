@@ -1,0 +1,48 @@
+INSERT OR IGNORE INTO notification_templates (
+  template_key, channel, area, name, description, trigger_label,
+  active_subject, active_body, draft_subject, draft_body,
+  default_subject, default_body, allowed_variables_json, required_variables_json,
+  max_length, is_enabled, activated_at, created_at, updated_at
+) VALUES
+  (
+    'shop.order_completed_admin',
+    'email',
+    'shop',
+    '주문 결제 완료 · 관리자',
+    '고객의 주문 결제가 완료되면 관리자에게 보내는 알림입니다.',
+    '결제 완료',
+    '[Order] 결제 완료 {{order_number}} · {{customer_name}}',
+    '새 주문 결제가 완료되었습니다.\n\n주문 번호: {{order_number}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 금액: {{final_amount}}\n\n주문 관리: {{order_url}}',
+    '[Order] 결제 완료 {{order_number}} · {{customer_name}}',
+    '새 주문 결제가 완료되었습니다.\n\n주문 번호: {{order_number}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 금액: {{final_amount}}\n\n주문 관리: {{order_url}}',
+    '[Order] 결제 완료 {{order_number}} · {{customer_name}}',
+    '새 주문 결제가 완료되었습니다.\n\n주문 번호: {{order_number}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 금액: {{final_amount}}\n\n주문 관리: {{order_url}}',
+    '["order_number","customer_name","customer_email","customer_phone","final_amount","order_url"]',
+    '["order_number","customer_name","order_url"]',
+    0,
+    1,
+    datetime('now'),
+    datetime('now'),
+    datetime('now')
+  ),
+  (
+    'workshop.reservation_submitted_admin',
+    'email',
+    'workshop',
+    '워크숍 예약 신청 · 관리자',
+    '고객이 워크숍 예약을 신청하면 관리자에게 보내는 알림입니다.',
+    '예약 신청',
+    '[Workshop] 새 예약 {{reservation_number}} · {{customer_name}}',
+    '새 워크숍 예약이 접수되었습니다.\n\n예약 번호: {{reservation_number}}\n워크숍: {{workshop_name}}\n일정: {{schedule_label}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 예정 금액: {{final_amount}}\n\n예약 관리: {{workshop_url}}',
+    '[Workshop] 새 예약 {{reservation_number}} · {{customer_name}}',
+    '새 워크숍 예약이 접수되었습니다.\n\n예약 번호: {{reservation_number}}\n워크숍: {{workshop_name}}\n일정: {{schedule_label}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 예정 금액: {{final_amount}}\n\n예약 관리: {{workshop_url}}',
+    '[Workshop] 새 예약 {{reservation_number}} · {{customer_name}}',
+    '새 워크숍 예약이 접수되었습니다.\n\n예약 번호: {{reservation_number}}\n워크숍: {{workshop_name}}\n일정: {{schedule_label}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 예정 금액: {{final_amount}}\n\n예약 관리: {{workshop_url}}',
+    '["reservation_number","workshop_name","schedule_label","customer_name","customer_email","customer_phone","final_amount","workshop_url"]',
+    '["reservation_number","workshop_name","customer_name","workshop_url"]',
+    0,
+    1,
+    datetime('now'),
+    datetime('now'),
+    datetime('now')
+  );

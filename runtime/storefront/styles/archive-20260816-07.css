@@ -294,6 +294,16 @@
   margin: 0;
 }
 
+.archive-detail-copy {
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
+.archive-detail-meta.is-after-images .archive-detail-copy {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .archive-detail-back {
   display: inline-flex;
   margin-bottom: 26px;
@@ -421,6 +431,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .archive-detail-copy,
   .archive-detail-meta__more {
     transition: none;
   }

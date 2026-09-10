@@ -12,6 +12,21 @@
   gap: 14px;
 }
 
+.newsletter-admin-page .fulfillment-field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 84px;
+  resize: vertical;
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  padding: 10px 12px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: var(--tracking-korean);
+}
+
 .newsletter-admin-list-head,
 .newsletter-admin-editor-head,
 .newsletter-admin-cover__head,
@@ -125,10 +140,14 @@
 }
 
 .newsletter-admin-toolbar {
+  position: sticky;
+  top: var(--gnb-height, 40px);
+  z-index: 4;
   display: flex;
   flex-wrap: wrap;
   gap: 0;
   border-bottom: 1px solid #111;
+  background: #fff;
   overflow: hidden;
 }
 
@@ -360,7 +379,7 @@
 
 .newsletter-admin-action-bar {
   position: sticky;
-  bottom: 34px;
+  bottom: 0;
   z-index: 3;
   display: flex;
   flex-wrap: wrap;
@@ -371,12 +390,11 @@
 }
 
 .newsletter-admin-activity-log {
-  position: sticky;
-  bottom: 0;
-  z-index: 3;
-  border: 1px solid rgba(17, 17, 17, 0.14);
-  padding: 9px 12px;
-  background: #fff;
+  min-height: 0;
+}
+
+.newsletter-admin-activity-log:empty {
+  display: none;
 }
 
 .newsletter-admin-preview-dialog {
@@ -457,10 +475,6 @@
   }
 
   .newsletter-admin-action-bar {
-    position: static;
-  }
-
-  .newsletter-admin-activity-log {
     position: static;
   }
 }

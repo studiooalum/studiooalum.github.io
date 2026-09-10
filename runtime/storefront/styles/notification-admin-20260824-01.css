@@ -25,6 +25,32 @@
   min-width: 0;
 }
 
+.notification-audience-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+
+.notification-audience-tab {
+  min-height: 38px;
+  border: 1px solid #111;
+  padding: 0 12px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.notification-audience-tab + .notification-audience-tab {
+  margin-left: -1px;
+}
+
+.notification-audience-tab.is-active {
+  background: #111;
+  color: #fff;
+}
+
 .notification-template-card {
   display: grid;
   gap: 6px;

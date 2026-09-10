@@ -208,13 +208,15 @@ function renderDetail(shell, item) {
   const tags = item.tags.length ? item.tags : ["archive"];
   meta.innerHTML = `
     <a class="archive-detail-back" href="./archive.html">← Archive</a>
-    <h1>${escapeHtml(item.title)}</h1>
-    <p class="archive-detail-year">${getYear(item.createdDate) || "-"}</p>
-    <div class="archive-detail-meta__more">
-      ${item.material ? `<p><span>Material</span>${escapeHtml(item.material)}</p>` : ""}
-      ${item.size ? `<p><span>Size</span>${escapeHtml(item.size)}</p>` : ""}
-      <p><span>Tags</span>${tags.map(escapeHtml).join(" · ")}</p>
-      ${item.description ? `<p class="archive-detail-description">${escapeHtml(item.description)}</p>` : ""}
+    <div class="archive-detail-copy">
+      <h1>${escapeHtml(item.title)}</h1>
+      <p class="archive-detail-year">${getYear(item.createdDate) || "-"}</p>
+      <div class="archive-detail-meta__more">
+        ${item.material ? `<p><span>Material</span>${escapeHtml(item.material)}</p>` : ""}
+        ${item.size ? `<p><span>Size</span>${escapeHtml(item.size)}</p>` : ""}
+        <p><span>Tags</span>${tags.map(escapeHtml).join(" · ")}</p>
+        ${item.description ? `<p class="archive-detail-description">${escapeHtml(item.description)}</p>` : ""}
+      </div>
     </div>
   `;
 
@@ -247,9 +249,12 @@ function renderDetail(shell, item) {
 
   const syncMeta = () => {
     const threshold = Math.max(80, window.innerHeight * 0.16);
+    const lastImage = gallery.querySelector(".archive-detail-image:last-of-type");
     meta.classList.toggle("is-expanded", window.scrollY > threshold);
+    meta.classList.toggle("is-after-images", Boolean(lastImage && lastImage.getBoundingClientRect().bottom <= meta.getBoundingClientRect().top));
   };
   window.addEventListener("scroll", syncMeta, { passive: true });
+  window.addEventListener("resize", syncMeta, { passive: true });
   syncMeta();
 }
 

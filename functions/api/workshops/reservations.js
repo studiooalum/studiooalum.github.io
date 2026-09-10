@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { readSession } from "../../../cloudflare/lib/auth.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
+import { enqueueWorkshopReservationAdminNotification } from "../../../cloudflare/lib/notifications.js";
 import { createWorkshopReservation } from "../../../cloudflare/lib/workshops.js";
 
 const reservationSchema = z.object({
@@ -38,6 +39,12 @@ export async function onRequestPost(context) {
       accountFullName: session?.user?.fullName || "",
       accountPhone: session?.user?.phone || "",
     });
+    context.waitUntil(enqueueWorkshopReservationAdminNotification(context.env, result.reservation).catch((error) => {
+      console.error("Failed to queue workshop reservation administrator notification.", {
+        reservationId: result.reservation?.reservationId || null,
+        message: error?.message || String(error),
+      });
+    }));
 
     return json(context.env, {
       ok: true,

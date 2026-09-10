@@ -78,10 +78,29 @@ function safeHttpUrl(value) {
   }
 }
 
+function getSiteUrl(env, path) {
+  const configured = cleanText(env?.PUBLIC_SITE_URL || env?.SITE_URL, 500).replace(/\/+$/, "") || "https://studiooalum.com";
+  return new URL(path, `${configured}/`).toString();
+}
+
+function formatKrw(value) {
+  return `${Math.max(0, Math.round(Number(value) || 0)).toLocaleString("ko-KR")}원`;
+}
+
+export function resolveNotificationAdminRecipient(env) {
+  return cleanText(env?.NOTIFICATION_TEST_EMAIL || env?.REPAIR_ADMIN_EMAIL, 320) || "studio.oalum@gmail.com";
+}
+
 function getEmailAction(template, payload) {
   const repairAdminUrl = safeHttpUrl(payload?.repair_admin_url);
   if (["repair.application_submitted_admin", "ticket.customer_message_to_admin"].includes(template?.template_key) && repairAdminUrl) {
     return { url: repairAdminUrl, label: "관리자에서 Repair Ticket 확인" };
+  }
+  if (template?.template_key === "shop.order_completed_admin") {
+    return { url: safeHttpUrl(payload?.order_url), label: "주문 관리에서 확인" };
+  }
+  if (template?.template_key === "workshop.reservation_submitted_admin") {
+    return { url: safeHttpUrl(payload?.workshop_url), label: "예약 관리에서 확인" };
   }
   const repairTicketUrl = safeHttpUrl(payload?.repair_ticket_url);
   if (repairTicketUrl) {
@@ -358,7 +377,7 @@ export async function activateNotificationDraft(env, input, actorId = "") {
   const database = requireDb(env);
   const template = await readNotificationTemplate(env, input.templateKey, input.channel);
   if (!template) throw Object.assign(new Error("알림 템플릿을 찾을 수 없습니다."), { status: 404 });
-  if (["shop", "workshop"].includes(template.area)) {
+  if (["shop", "workshop"].includes(template.area) && !template.template_key.endsWith("_admin")) {
     throw Object.assign(new Error("Shop과 Workshop은 기존 발송 경로를 유지하는 전환 준비 템플릿입니다. 현재는 초안과 테스트만 사용할 수 있습니다."), { status: 409 });
   }
   const validation = validateNotificationTemplate(template, { channel: template.channel, subject: template.draft_subject, body: template.draft_body });
@@ -396,7 +415,7 @@ export async function setNotificationTemplateEnabled(env, input, actorId = "") {
   const database = requireDb(env);
   const template = await readNotificationTemplate(env, input.templateKey, input.channel);
   if (!template) throw Object.assign(new Error("알림 템플릿을 찾을 수 없습니다."), { status: 404 });
-  if (input.enabled && ["shop", "workshop"].includes(template.area)) {
+  if (input.enabled && ["shop", "workshop"].includes(template.area) && !template.template_key.endsWith("_admin")) {
     throw Object.assign(new Error("Shop과 Workshop은 기존 발송 경로를 유지하는 전환 준비 템플릿입니다. 활성화할 수 없습니다."), { status: 409 });
   }
   const now = nowIso();
@@ -452,9 +471,9 @@ export async function prepareNotification(env, input) {
   };
 }
 
-export function createNotificationOutboxStatement(database, notification) {
+export function createNotificationOutboxStatement(database, notification, { ignoreDuplicate = false } = {}) {
   return database.prepare(`
-    INSERT INTO notification_outbox (
+    INSERT ${ignoreDuplicate ? "OR IGNORE " : ""}INTO notification_outbox (
       id, event_key, entity_type, entity_id, channel, recipient, template_key,
       payload_json, subject, body_text, body_html, status, attempts, available_at,
       last_error, created_at, updated_at
@@ -478,6 +497,57 @@ export function createNotificationOutboxStatement(database, notification) {
     notification.createdAt,
     notification.updatedAt,
   );
+}
+
+export async function enqueueNotification(env, input) {
+  const notification = await prepareNotification(env, input);
+  if (!notification) return null;
+  const result = await createNotificationOutboxStatement(requireDb(env), notification, { ignoreDuplicate: true }).run();
+  return readChanges(result) === 1 ? notification : null;
+}
+
+export async function enqueueOrderCompletedAdminNotification(env, order) {
+  const orderId = cleanText(order?.orderId, 120);
+  if (!orderId) return null;
+  return enqueueNotification(env, {
+    eventKey: `shop:${orderId}:order-completed:admin`,
+    entityType: "order",
+    entityId: orderId,
+    channel: "email",
+    recipient: resolveNotificationAdminRecipient(env),
+    templateKey: "shop.order_completed_admin",
+    payload: {
+      order_number: orderId,
+      customer_name: cleanText(order?.customer?.name, 120),
+      customer_email: cleanText(order?.customer?.email, 320),
+      customer_phone: cleanText(order?.customer?.phone, 40),
+      final_amount: formatKrw(order?.totalAmount),
+      order_url: getSiteUrl(env, "/admin.html"),
+    },
+  });
+}
+
+export async function enqueueWorkshopReservationAdminNotification(env, reservation) {
+  const reservationId = cleanText(reservation?.reservationId, 120);
+  if (!reservationId) return null;
+  return enqueueNotification(env, {
+    eventKey: `workshop:${reservationId}:reservation-submitted:admin`,
+    entityType: "workshop",
+    entityId: reservationId,
+    channel: "email",
+    recipient: resolveNotificationAdminRecipient(env),
+    templateKey: "workshop.reservation_submitted_admin",
+    payload: {
+      reservation_number: cleanText(reservation?.reservationNumber, 160) || `WKS-${reservationId}`,
+      workshop_name: cleanText(reservation?.workshopTitle, 200),
+      customer_name: cleanText(reservation?.fullName, 120),
+      customer_email: cleanText(reservation?.email, 320),
+      customer_phone: cleanText(reservation?.phone, 40),
+      schedule_label: cleanText(reservation?.slotLabel, 160),
+      final_amount: formatKrw(reservation?.finalAmount ?? reservation?.amountDue),
+      workshop_url: getSiteUrl(env, "/workshop-admin.html"),
+    },
+  });
 }
 
 function getSmsCountryAllowlist(env) {

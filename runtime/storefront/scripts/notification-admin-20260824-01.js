@@ -8,6 +8,7 @@ const dom = {
   areaFilter: document.querySelector(".js-notification-area-filter"),
   channelFilter: document.querySelector(".js-notification-channel-filter"),
   enabledFilter: document.querySelector(".js-notification-enabled-filter"),
+  audienceTabs: Array.from(document.querySelectorAll("[data-notification-audience]")),
   list: document.querySelector(".js-notification-template-list"),
   editorEmpty: document.querySelector(".js-notification-editor-empty"),
   editor: document.querySelector(".js-notification-editor"),
@@ -40,6 +41,7 @@ const state = {
   outbox: [],
   revisions: [],
   variables: [],
+  audience: "customer",
   selectedKey: "",
   selectedChannel: "",
   previewMode: "mobile",
@@ -116,6 +118,11 @@ function selectedTemplate() {
   return state.templates.find((template) => template.templateKey === state.selectedKey && template.channel === state.selectedChannel) || null;
 }
 
+export function isAdminNotificationTemplate(template) {
+  const templateKey = String(template?.templateKey || "");
+  return templateKey.endsWith("_admin") || templateKey.includes("_to_admin");
+}
+
 function applyPayload(payload) {
   state.templates = Array.isArray(payload.templates) ? payload.templates : [];
   state.outbox = Array.isArray(payload.outbox) ? payload.outbox : [];
@@ -135,7 +142,11 @@ function filteredTemplates() {
     const area = dom.areaFilter.value;
     const channel = dom.channelFilter.value;
     const enabled = dom.enabledFilter.value;
-    return (area === "all" || template.area === area)
+    const matchesAudience = state.audience === "admin"
+      ? isAdminNotificationTemplate(template)
+      : !isAdminNotificationTemplate(template);
+    return matchesAudience
+      && (area === "all" || template.area === area)
       && (channel === "all" || template.channel === channel)
       && (enabled === "all" || (enabled === "enabled") === template.isEnabled);
   });
@@ -283,6 +294,20 @@ dom.authForm?.addEventListener("submit", async (event) => {
 });
 
 [dom.areaFilter, dom.channelFilter, dom.enabledFilter].forEach((filter) => filter?.addEventListener("change", renderList));
+dom.audienceTabs.forEach((tab) => tab.addEventListener("click", () => {
+  state.audience = tab.dataset.notificationAudience === "admin" ? "admin" : "customer";
+  dom.audienceTabs.forEach((item) => {
+    const isActive = item === tab;
+    item.classList.toggle("is-active", isActive);
+    item.setAttribute("aria-selected", String(isActive));
+  });
+  if (selectedTemplate() && isAdminNotificationTemplate(selectedTemplate()) !== (state.audience === "admin")) {
+    state.selectedKey = "";
+    state.selectedChannel = "";
+  }
+  renderList();
+  renderEditor();
+}));
 dom.list?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-template-key]");
   if (!button) return;

@@ -1003,10 +1003,12 @@ WITH template_seed(
 ) AS (
   VALUES
     ('shop.order_completed','email','shop','주문 완료','주문 결제가 완료되었을 때 보내는 이메일입니다.','결제 완료','[Studio OALUM] 주문이 완료되었습니다','{{customer_name}}님의 주문 {{order_number}}이 완료되었습니다.','["customer_name","order_number","order_url"]','["customer_name","order_number"]',0,1),
+    ('shop.order_completed_admin','email','shop','주문 결제 완료 · 관리자','고객의 주문 결제가 완료되면 관리자에게 보내는 알림입니다.','결제 완료','[Order] 결제 완료 {{order_number}} · {{customer_name}}','새 주문 결제가 완료되었습니다.\n\n주문 번호: {{order_number}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 금액: {{final_amount}}\n\n주문 관리: {{order_url}}','["order_number","customer_name","customer_email","customer_phone","final_amount","order_url"]','["order_number","customer_name","order_url"]',0,1),
     ('shop.shipping_started','email','shop','상품 배송 시작','주문 상품 발송 시 보내는 이메일입니다.','배송 시작','[Studio OALUM] 상품이 발송되었습니다','{{customer_name}}님, 주문 {{order_number}}이 발송되었습니다. {{tracking_url}}','["customer_name","order_number","tracking_number","tracking_url"]','["customer_name","order_number"]',0,1),
     ('shop.order_cancelled','email','shop','주문 취소','주문 취소 완료 시 보내는 이메일입니다.','주문 취소','[Studio OALUM] 주문이 취소되었습니다','{{customer_name}}님의 주문 {{order_number}}이 취소되었습니다.','["customer_name","order_number","order_url"]','["customer_name","order_number"]',0,1),
     ('shop.refund_completed','email','shop','환불 완료','환불 완료 시 보내는 이메일입니다.','환불 완료','[Studio OALUM] 환불이 완료되었습니다','{{customer_name}}님의 주문 {{order_number}} 환불이 완료되었습니다.','["customer_name","order_number","order_url"]','["customer_name","order_number"]',0,1),
     ('workshop.reservation_completed','email','workshop','워크숍 예약 완료','워크숍 예약 완료 안내입니다.','예약 완료','[Studio OALUM] 워크숍 예약이 완료되었습니다','{{customer_name}}님의 {{workshop_name}} 예약이 완료되었습니다.','["customer_name","workshop_name","reservation_number","workshop_url"]','["customer_name","workshop_name"]',0,1),
+    ('workshop.reservation_submitted_admin','email','workshop','워크숍 예약 신청 · 관리자','고객이 워크숍 예약을 신청하면 관리자에게 보내는 알림입니다.','예약 신청','[Workshop] 새 예약 {{reservation_number}} · {{customer_name}}','새 워크숍 예약이 접수되었습니다.\n\n예약 번호: {{reservation_number}}\n워크숍: {{workshop_name}}\n일정: {{schedule_label}}\n고객: {{customer_name}}\n이메일: {{customer_email}}\n연락처: {{customer_phone}}\n결제 예정 금액: {{final_amount}}\n\n예약 관리: {{workshop_url}}','["reservation_number","workshop_name","schedule_label","customer_name","customer_email","customer_phone","final_amount","workshop_url"]','["reservation_number","workshop_name","customer_name","workshop_url"]',0,1),
     ('workshop.schedule_changed','email','workshop','워크숍 일정 변경','워크숍 일정 변경 안내입니다.','일정 변경','[Studio OALUM] 워크숍 일정이 변경되었습니다','{{customer_name}}님, {{workshop_name}} 일정이 변경되었습니다. {{schedule_label}}','["customer_name","workshop_name","schedule_label","workshop_url"]','["customer_name","workshop_name","schedule_label"]',0,1),
     ('workshop.cancelled','email','workshop','워크숍 취소','워크숍 취소 안내입니다.','예약 취소','[Studio OALUM] 워크숍 예약이 취소되었습니다','{{customer_name}}님의 {{workshop_name}} 예약이 취소되었습니다.','["customer_name","workshop_name","reservation_number"]','["customer_name","workshop_name"]',0,1),
     ('workshop.payment_completed','email','workshop','워크숍 결제 완료','워크숍 결제 완료 안내입니다.','결제 완료','[Studio OALUM] 워크숍 결제가 완료되었습니다','{{customer_name}}님의 {{workshop_name}} 결제가 완료되었습니다.','["customer_name","workshop_name","reservation_number","workshop_url"]','["customer_name","workshop_name"]',0,1),
@@ -1045,7 +1047,8 @@ SET is_enabled = 0,
       WHEN instr(description, '기존 발송 경로') > 0 THEN description
       ELSE description || ' 기존 발송 경로를 유지하는 전환 준비 템플릿입니다.'
     END
-WHERE area IN ('shop', 'workshop');
+WHERE area IN ('shop', 'workshop')
+  AND substr(template_key, -6) <> '_admin';
 
 CREATE TRIGGER IF NOT EXISTS trg_workshop_reservations_capacity_update
 BEFORE UPDATE OF slot_key, attendee_count, status ON workshop_reservations
