@@ -9,19 +9,27 @@ async function read(relativePath) {
 }
 
 test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
-  const [html, controller, stylesheet, editorSource] = await Promise.all([
+  const [html, controller, stylesheet, editorSource, bundle, packageJson] = await Promise.all([
     read("newsletter-admin.html"),
     read("runtime/storefront/scripts/newsletter-admin.js"),
-    read("runtime/storefront/styles/newsletter-admin.css"),
+    read("runtime/storefront/styles/newsletter-admin-20260910-03.css"),
     read("runtime/storefront/scripts/components/newsletter-tiptap-editor.jsx"),
+    read("runtime/storefront/scripts/newsletter-admin-20260910-02.js"),
+    read("package.json"),
   ]);
 
-  assert.match(html, /newsletter-admin\.js\?v=20260910-01/);
-  assert.match(controller, /newsletter-tiptap-editor-20260910-01\.js/);
+  assert.match(html, /newsletter-admin-20260910-02\.js/);
+  assert.match(html, /newsletter-admin-20260910-03\.css/);
+  assert.match(html, /data-newsletter-editor-pending/);
+  assert.match(html, /window\.setTimeout[\s\S]*8000/);
+  assert.match(controller, /components\/newsletter-tiptap-editor\.jsx/);
+  assert.match(packageJson, /newsletter-admin-20260910-02\.js/);
+  assert.doesNotMatch(bundle, /^\s*import\s/m);
   assert.match(editorSource, /<EditorContent editor=\{editor\}/);
+  assert.match(editorSource, /NewsletterEditorErrorBoundary/);
   assert.match(stylesheet, /\.newsletter-admin-toolbar\s*\{[\s\S]*position:\s*sticky;[\s\S]*top:\s*calc\(var\(--gnb-height, 40px\) - 1px\);/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
-  await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor.js", root)));
+  await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor-20260910-01.js", root)));
 });
 
 test("My Oalum waits for the account response before revealing an auth view", async () => {

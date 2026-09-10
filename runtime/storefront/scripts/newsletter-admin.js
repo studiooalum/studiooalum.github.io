@@ -1,5 +1,5 @@
 import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
-import { mountNewsletterTiptapEditor } from "./newsletter-tiptap-editor-20260910-01.js";
+import { mountNewsletterTiptapEditor } from "./components/newsletter-tiptap-editor.jsx";
 
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
@@ -20,6 +20,8 @@ const dom = {
   coverPreview: document.querySelector(".js-newsletter-admin-cover-preview"),
   coverAlt: document.querySelector(".newsletter-admin-cover__alt"),
   editorRoot: document.querySelector(".js-newsletter-admin-editor-root"),
+  editorContent: document.querySelector(".newsletter-admin-content"),
+  editorBootStatus: document.querySelector(".js-newsletter-admin-boot-status"),
   saveDraftButton: document.querySelector(".js-newsletter-admin-save-draft"),
   publishButton: document.querySelector(".js-newsletter-admin-publish"),
   archiveButton: document.querySelector(".js-newsletter-admin-archive"),
@@ -420,6 +422,23 @@ function markEditorDirty() {
   setDirty(true);
 }
 
+function markEditorReady() {
+  dom.editorContent?.removeAttribute("data-newsletter-editor-pending");
+  if (dom.editorBootStatus) dom.editorBootStatus.hidden = true;
+}
+
+function showEditorLoadError(error) {
+  if (dom.editorContent) {
+    dom.editorContent.setAttribute("data-newsletter-editor-pending", "");
+    dom.editorContent.dataset.newsletterEditorError = "";
+  }
+  if (dom.editorBootStatus) {
+    dom.editorBootStatus.hidden = false;
+    dom.editorBootStatus.textContent = "Tiptap 편집기를 불러오지 못했습니다. 페이지를 새로고침해주세요.";
+  }
+  console.error("Newsletter Tiptap editor failed to initialize.", error);
+}
+
 async function uploadImage(file, target) {
   const formData = new FormData();
   formData.append("action", "uploadNewsletterImage");
@@ -550,22 +569,28 @@ function attachEvents() {
   });
 }
 
-editorController = mountNewsletterTiptapEditor(dom.editorRoot, {
-  value: "",
-  contentKey: "new",
-  onChange: (html) => {
-    state.editorHtml = html;
-    markEditorDirty();
-  },
-  onUploadImage: uploadInlineImage,
-  onUploadStateChange: setInlineUploadLoading,
-  onStatus: (message, type) => setStatus(dom.status, message, type),
-});
+try {
+  editorController = mountNewsletterTiptapEditor(dom.editorRoot, {
+    value: "",
+    contentKey: "new",
+    onChange: (html) => {
+      state.editorHtml = html;
+      markEditorDirty();
+    },
+    onUploadImage: uploadInlineImage,
+    onUploadStateChange: setInlineUploadLoading,
+    onStatus: (message, type) => setStatus(dom.status, message, type),
+    onReady: markEditorReady,
+    onFatalError: showEditorLoadError,
+  });
 
-attachEvents();
-applyAccessState();
-renderPostList();
-resetForm();
+  attachEvents();
+  applyAccessState();
+  renderPostList();
+  resetForm();
+} catch (error) {
+  showEditorLoadError(error);
+}
 
 if (state.accessToken) {
   verifyAdminSession()

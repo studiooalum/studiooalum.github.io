@@ -15,6 +15,24 @@
   min-width: 0;
 }
 
+.newsletter-admin-boot-status {
+  margin: 0;
+  border: 1px solid #111;
+  padding: 18px;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.newsletter-admin-content[data-newsletter-editor-pending] .newsletter-admin-workspace {
+  display: none;
+}
+
+.newsletter-admin-content[data-newsletter-editor-error] .newsletter-admin-boot-status {
+  border-color: #ad2b2b;
+  color: #ad2b2b;
+}
+
 .newsletter-admin-page .fulfillment-tabs {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

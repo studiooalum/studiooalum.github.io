@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Component, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -182,6 +182,22 @@ function ToolbarButton({ active = false, disabled = false, label, onClick, child
   );
 }
 
+class NewsletterEditorErrorBoundary extends Component {
+  state = { error: null };
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error) {
+    this.props.onError?.(error);
+  }
+
+  render() {
+    return this.state.error ? null : this.props.children;
+  }
+}
+
 export function NewsletterTiptapEditor({
   value = "",
   contentKey = "",
@@ -341,10 +357,15 @@ export function mountNewsletterTiptapEditor(element, initialOptions = {}) {
 
   const handleReady = (nextEditor) => {
     editor = nextEditor;
+    if (nextEditor) options.onReady?.();
   };
 
   const render = () => {
-    root.render(<NewsletterTiptapEditor {...options} onReady={handleReady} />);
+    root.render(
+      <NewsletterEditorErrorBoundary onError={options.onFatalError}>
+        <NewsletterTiptapEditor {...options} onReady={handleReady} />
+      </NewsletterEditorErrorBoundary>,
+    );
   };
 
   render();
