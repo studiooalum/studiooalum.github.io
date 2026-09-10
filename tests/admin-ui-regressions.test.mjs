@@ -28,9 +28,29 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.match(editorSource, /<EditorContent editor=\{editor\}/);
   assert.match(editorSource, /NewsletterEditorErrorBoundary/);
   assert.match(editorSource, /imageAttributes\["data-progressive-image"\] = "false"/);
+  assert.match(editorSource, /FONT_SIZE_MIN = 1/);
+  assert.match(editorSource, /FONT_SIZE_MAX = 40/);
+  assert.match(editorSource, /LINE_HEIGHT_MIN = 0/);
+  assert.match(editorSource, /step="0\.1"/);
+  assert.match(editorSource, /Pretendard · 본문[\s\S]*Wanted Sans · 제목[\s\S]*Gotham Book · 영문/);
+  assert.match(editorSource, /resize:\s*\{[\s\S]*enabled:\s*true/);
+  assert.match(editorSource, /setImage\(\{ src: imageUrl/);
   assert.match(stylesheet, /\.newsletter-admin-toolbar\s*\{[\s\S]*position:\s*sticky;[\s\S]*top:\s*calc\(var\(--gnb-height, 40px\) - 1px\);/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor-20260910-01.js", root)));
+});
+
+test("Archive category navigation remains on the list and hides on details", async () => {
+  const [html, controller, stylesheet] = await Promise.all([
+    read("archive.html"),
+    read("runtime/storefront/scripts/archive-20260816-06.js"),
+    read("runtime/storefront/styles/archive-20260818-02.css"),
+  ]);
+
+  assert.match(html, /id="archiveTags"/);
+  assert.match(controller, /if \(detailItem\)[\s\S]*tagsElement\.hidden = true/);
+  assert.match(controller, /else \{[\s\S]*tagsElement\.hidden = false;[\s\S]*renderTags\(tagsElement\)/);
+  assert.match(stylesheet, /\.archive-detail-mode \.archive-tags[\s\S]*display:\s*none/);
 });
 
 test("My Oalum waits for the account response before revealing an auth view", async () => {

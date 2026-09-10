@@ -24,7 +24,7 @@ function cleanPastedHtml(value) {
   const documentNode = new DOMParser().parseFromString(String(value || ""), "text/html");
   documentNode.body.querySelectorAll("*").forEach((element) => {
     Array.from(element.attributes).forEach((attribute) => {
-      if (!["href", "src", "alt"].includes(attribute.name.toLowerCase())) {
+      if (!["href", "src", "alt", "title", "width", "height", "data-image-align"].includes(attribute.name.toLowerCase())) {
         element.removeAttribute(attribute.name);
       }
     });
@@ -44,7 +44,9 @@ const NewsletterImage = Image.extend({
       imageAlign: {
         default: "",
         parseHTML: (element) => element.getAttribute("data-image-align") || "",
-        renderHTML: () => ({}),
+        renderHTML: (attributes) => attributes.imageAlign
+          ? { "data-image-align": attributes.imageAlign }
+          : {},
       },
       imageSize: {
         default: "",
@@ -102,7 +104,7 @@ const NewsletterImage = Image.extend({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ node, HTMLAttributes }) {
     const {
       legacyFigure,
       imageAlign,
@@ -110,12 +112,13 @@ const NewsletterImage = Image.extend({
       imagePosition,
       imageLayout,
       caption,
-      ...imageAttributes
-    } = HTMLAttributes;
+    } = node.attrs;
+    const imageAttributes = { ...HTMLAttributes };
     imageAttributes["data-progressive-image"] = "false";
 
     if (!legacyFigure) return ["img", imageAttributes];
 
+    delete imageAttributes["data-image-align"];
     const figureAttributes = {};
     if (imageAlign) figureAttributes["data-image-align"] = imageAlign;
     if (imageSize) figureAttributes["data-image-size"] = imageSize;
@@ -125,7 +128,19 @@ const NewsletterImage = Image.extend({
     if (caption) children.push(["figcaption", {}, caption]);
     return ["figure", figureAttributes, ...children];
   },
-}).configure({ allowBase64: false });
+}).configure({
+  allowBase64: false,
+  HTMLAttributes: {
+    "data-progressive-image": "false",
+  },
+  resize: {
+    enabled: true,
+    directions: ["bottom-left", "bottom-right"],
+    minWidth: 80,
+    minHeight: 50,
+    alwaysPreserveAspectRatio: true,
+  },
+});
 
 const EDITOR_EXTENSIONS = [
   StarterKit.configure({
@@ -166,6 +181,43 @@ const EDITOR_PROPS = {
   },
   transformPastedHTML: cleanPastedHtml,
 };
+
+const PRIMARY_FONT_OPTIONS = [
+  { value: "Pretendard", label: "Pretendard · 본문" },
+  { value: "Wanted Sans", label: "Wanted Sans · 제목" },
+  { value: "GothamBook", label: "Gotham Book · 영문" },
+  { value: "GothamLight", label: "Gotham Light" },
+  { value: "GothamMedium", label: "Gotham Medium" },
+  { value: "GothamBold", label: "Gotham Bold" },
+];
+
+const SECONDARY_FONT_OPTIONS = [
+  "system-ui",
+  "Arial",
+  "Helvetica",
+  "Verdana",
+  "Tahoma",
+  "Trebuchet MS",
+  "Gill Sans",
+  "Times New Roman",
+  "Georgia",
+  "Garamond",
+  "Courier New",
+];
+
+const FONT_SIZE_MIN = 1;
+const FONT_SIZE_MAX = 40;
+const LINE_HEIGHT_MIN = 0;
+const LINE_HEIGHT_MAX = 10;
+
+function numericStyleValue(value) {
+  const match = String(value || "").trim().match(/^\d+(?:\.\d+)?/);
+  return match ? match[0] : "";
+}
+
+function formatLineHeight(value) {
+  return String(Math.round(value * 10) / 10);
+}
 
 function ToolbarButton({ active = false, disabled = false, label, onClick, children }) {
   return (
@@ -216,6 +268,8 @@ export function NewsletterTiptapEditor({
   const externalContentRef = useRef({ contentKey, value: String(value || "") });
   const initialContentRef = useRef(String(value || ""));
   const [isUploading, setIsUploading] = useState(false);
+  const [fontSizeInput, setFontSizeInput] = useState("");
+  const [lineHeightInput, setLineHeightInput] = useState("");
   callbacksRef.current = { onChange, onUploadImage, onUploadStateChange, onStatus };
 
   const editor = useEditor({
@@ -250,6 +304,74 @@ export function NewsletterTiptapEditor({
   }, [disabled, editor, isUploading]);
 
   const isDisabled = disabled || isUploading || !editor;
+  const textStyleAttributes = editor?.getAttributes("textStyle") || {};
+  const currentFontFamily = String(textStyleAttributes.fontFamily || "");
+  const currentFontSize = numericStyleValue(textStyleAttributes.fontSize);
+  const currentLineHeight = numericStyleValue(textStyleAttributes.lineHeight);
+  const imageSelected = Boolean(editor?.isActive("image"));
+
+  useEffect(() => {
+    setFontSizeInput(currentFontSize);
+  }, [currentFontSize]);
+
+  useEffect(() => {
+    setLineHeightInput(currentLineHeight);
+  }, [currentLineHeight]);
+
+  function setFontFamily(value) {
+    if (!editor) return;
+    const chain = editor.chain().focus();
+    if (value) chain.setFontFamily(value).run();
+    else chain.unsetFontFamily().run();
+  }
+
+  function applyFontSize() {
+    if (!editor) return;
+    const rawValue = String(fontSizeInput || "").trim();
+    if (!rawValue) {
+      editor.commands.unsetFontSize();
+      return;
+    }
+    const size = Math.round(Number(rawValue));
+    if (!Number.isFinite(size) || size < FONT_SIZE_MIN || size > FONT_SIZE_MAX) {
+      setFontSizeInput(currentFontSize);
+      callbacksRef.current.onStatus?.("폰트 크기는 1~40pt 사이로 입력해주세요.", "error");
+      return;
+    }
+    setFontSizeInput(String(size));
+    editor.commands.setFontSize(`${size}pt`);
+  }
+
+  function applyLineHeight() {
+    if (!editor) return;
+    const rawValue = String(lineHeightInput || "").trim();
+    if (!rawValue) {
+      editor.commands.unsetLineHeight();
+      return;
+    }
+    const lineHeight = Number(rawValue);
+    if (!Number.isFinite(lineHeight) || lineHeight < LINE_HEIGHT_MIN || lineHeight > LINE_HEIGHT_MAX) {
+      setLineHeightInput(currentLineHeight);
+      callbacksRef.current.onStatus?.("행간은 0~10 사이에서 0.1 단위로 입력해주세요.", "error");
+      return;
+    }
+    const normalized = formatLineHeight(lineHeight);
+    setLineHeightInput(normalized);
+    editor.commands.setLineHeight(normalized);
+  }
+
+  function handleNumberKeyDown(event, applyValue, resetValue) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applyValue();
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.currentTarget.blur();
+      resetValue();
+      editor?.commands.focus();
+    }
+  }
 
   function updateLink() {
     if (!editor) return;
@@ -292,7 +414,7 @@ export function NewsletterTiptapEditor({
         throw new Error("글이 변경되어 업로드한 이미지를 본문에 삽입하지 않았습니다.");
       }
       const position = Math.min(uploadPositionRef.current ?? editor.state.selection.anchor, editor.state.doc.content.size);
-      editor.chain().focus().insertContentAt(position, { type: "image", attrs: { src: imageUrl, alt: "" } }).run();
+      editor.chain().focus().setTextSelection(position).setImage({ src: imageUrl, alt: "", imageAlign: "center" }).run();
       callbacksRef.current.onStatus?.("본문 이미지를 추가했습니다.", "success");
     } catch (error) {
       callbacksRef.current.onStatus?.(error.message || "본문 이미지를 업로드하지 못했습니다.", "error");
@@ -305,6 +427,67 @@ export function NewsletterTiptapEditor({
   return (
     <>
       <div className="newsletter-admin-toolbar" role="toolbar" aria-label="본문 서식">
+        <div className="newsletter-admin-tool-group newsletter-admin-tool-group--styles" aria-label="서체와 간격">
+          <label className="newsletter-admin-format-control newsletter-admin-format-control--font">
+            <span className="newsletter-admin-format-control__label">서체</span>
+            <select
+              aria-label="폰트"
+              value={currentFontFamily}
+              disabled={isDisabled}
+              onChange={(event) => setFontFamily(event.target.value)}
+            >
+              <option value="">기본 서체</option>
+              <optgroup label="OALUM 주요 폰트">
+                {PRIMARY_FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </optgroup>
+              <optgroup label="기타 폰트">
+                {SECONDARY_FONT_OPTIONS.map((font) => <option key={font} value={font}>{font}</option>)}
+              </optgroup>
+            </select>
+          </label>
+          <label className="newsletter-admin-format-control newsletter-admin-format-control--number">
+            <span className="newsletter-admin-format-control__label">크기</span>
+            <input
+              type="number"
+              min={FONT_SIZE_MIN}
+              max={FONT_SIZE_MAX}
+              step="1"
+              inputMode="numeric"
+              aria-label="폰트 크기, 1에서 40포인트"
+              title="1~40pt · 직접 입력 후 Enter"
+              placeholder="—"
+              value={fontSizeInput}
+              disabled={isDisabled}
+              onChange={(event) => setFontSizeInput(event.target.value)}
+              onBlur={applyFontSize}
+              onKeyDown={(event) => handleNumberKeyDown(event, applyFontSize, () => setFontSizeInput(currentFontSize))}
+            />
+            <span aria-hidden="true">pt</span>
+          </label>
+          <label className="newsletter-admin-format-control newsletter-admin-format-control--number">
+            <span className="newsletter-admin-format-control__label">행간</span>
+            <input
+              type="number"
+              min={LINE_HEIGHT_MIN}
+              max={LINE_HEIGHT_MAX}
+              step="0.1"
+              inputMode="decimal"
+              aria-label="행간, 0부터 0.1 단위"
+              title="0부터 0.1 단위 · 직접 입력 후 Enter"
+              placeholder="—"
+              value={lineHeightInput}
+              disabled={isDisabled}
+              onChange={(event) => setLineHeightInput(event.target.value)}
+              onBlur={applyLineHeight}
+              onKeyDown={(event) => handleNumberKeyDown(event, applyLineHeight, () => setLineHeightInput(currentLineHeight))}
+            />
+          </label>
+          <ToolbarButton
+            label="폰트와 행간 초기화"
+            disabled={isDisabled}
+            onClick={() => editor.chain().focus().unsetFontFamily().unsetFontSize().unsetLineHeight().run()}
+          >Tx</ToolbarButton>
+        </div>
         <div className="newsletter-admin-tool-group" aria-label="문단 형식">
           <ToolbarButton label="일반 문단" active={editor?.isActive("paragraph")} disabled={isDisabled} onClick={() => editor.chain().focus().setParagraph().run()}>P</ToolbarButton>
           <ToolbarButton label="제목 2" active={editor?.isActive("heading", { level: 2 })} disabled={isDisabled} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
@@ -331,6 +514,12 @@ export function NewsletterTiptapEditor({
           <ToolbarButton label="링크 해제" disabled={isDisabled || !editor?.isActive("link")} onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}>×↗</ToolbarButton>
           <ToolbarButton label="이미지 추가" disabled={isDisabled} onClick={chooseImage}>{isUploading ? "…" : "+"}</ToolbarButton>
           <ToolbarButton label="구분선" disabled={isDisabled} onClick={() => editor.chain().focus().setHorizontalRule().run()}>—</ToolbarButton>
+        </div>
+        <div className="newsletter-admin-tool-group" aria-label="선택한 이미지 배치">
+          <ToolbarButton label="이미지 왼쪽 배치" active={editor?.isActive("image", { imageAlign: "left" })} disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().updateAttributes("image", { imageAlign: "left" }).run()}>I←</ToolbarButton>
+          <ToolbarButton label="이미지 가운데 배치" active={editor?.isActive("image", { imageAlign: "center" })} disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().updateAttributes("image", { imageAlign: "center" }).run()}>I↔</ToolbarButton>
+          <ToolbarButton label="이미지 오른쪽 배치" active={editor?.isActive("image", { imageAlign: "right" })} disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().updateAttributes("image", { imageAlign: "right" }).run()}>I→</ToolbarButton>
+          <ToolbarButton label="이미지 삭제" disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().deleteSelection().run()}>I×</ToolbarButton>
         </div>
         <div className="newsletter-admin-tool-group" aria-label="편집 기록">
           <ToolbarButton label="실행 취소" disabled={isDisabled || !editor?.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}>↶</ToolbarButton>

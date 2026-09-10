@@ -1,5 +1,10 @@
 @import url("./archive-20260818-01.css");
 
+.archive-detail-mode .archive-tags,
+.archive-tags[hidden] {
+  display: none;
+}
+
 .archive-card__media > .progressive-image,
 .archive-detail-image:not(.archive-detail-image--main) > .progressive-image {
   display: block;

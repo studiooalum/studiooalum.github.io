@@ -53,6 +53,11 @@
   overflow-wrap: anywhere;
 }
 
+.newsletter-entry__content p:has(> span[data-line-height="0"]) {
+  margin-bottom: 0;
+  line-height: 0;
+}
+
 .newsletter-entry__content a {
   color: inherit;
   text-decoration: underline;
@@ -63,6 +68,25 @@
   margin: 36px 0;
   border: 0;
   border-top: 1px solid rgba(17, 17, 17, 0.34);
+}
+
+.newsletter-entry__content > img {
+  margin: 32px auto;
+}
+
+.newsletter-entry__content > img[data-image-align="left"] {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.newsletter-entry__content > img[data-image-align="center"] {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.newsletter-entry__content > img[data-image-align="right"] {
+  margin-right: 0;
+  margin-left: auto;
 }
 
 @media (min-width: 960px) {

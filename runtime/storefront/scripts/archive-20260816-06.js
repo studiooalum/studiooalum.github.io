@@ -324,12 +324,17 @@ export async function initArchiveBoard() {
     console.error("Failed to load Archive content", error);
   }
 
-  renderTags(tagsElement);
   const detailId = String(new URLSearchParams(window.location.search).get("id") || "").trim();
   const detailItem = detailId ? state.items.find((item) => item.id === detailId) : null;
   if (detailItem) {
+    if (tagsElement) {
+      tagsElement.hidden = true;
+      tagsElement.replaceChildren();
+    }
     renderDetail(document.querySelector(".archive-shell"), detailItem);
   } else {
+    if (tagsElement) tagsElement.hidden = false;
+    renderTags(tagsElement);
     renderBoard(board, loadError);
   }
 

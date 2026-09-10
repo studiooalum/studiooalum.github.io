@@ -137,15 +137,27 @@ function sanitizeImageLayoutValue(value, allowedValues) {
 }
 
 function sanitizeFontSize(value) {
-  const raw = cleanText(value, 12).match(/^-?\d+(?:\.\d+)?/i)?.[0] || "";
-  const size = Math.round(Number(raw));
-  return size >= 8 && size <= 40 ? String(size) : "";
+  const normalized = cleanText(value, 12).toLowerCase().replace(/\s*!important\s*$/i, "").trim();
+  const match = normalized.match(/^(\d+(?:\.\d+)?)(px|pt)?$/);
+  if (!match) return "";
+  const size = Math.round(Number(match[1]));
+  if (size < 1 || size > 40) return "";
+  return `${size}${match[2] || "px"}`;
 }
 
 function sanitizeLineHeight(value) {
   const normalized = cleanText(value, 12).toLowerCase().replace(/\s*!important\s*$/i, "");
-  if (!/^(?:0(?:\.\d)?|1(?:\.\d)?|2(?:\.0)?)$/.test(normalized)) return "";
-  return String(Number(normalized));
+  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return "";
+  const lineHeight = Number(normalized);
+  if (!Number.isFinite(lineHeight) || lineHeight < 0 || lineHeight > 10) return "";
+  return String(Math.round(lineHeight * 10) / 10);
+}
+
+function sanitizeImageDimension(value) {
+  const normalized = cleanText(value, 12).trim();
+  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return "";
+  const dimension = Math.round(Number(normalized));
+  return dimension >= 1 && dimension <= 4000 ? String(dimension) : "";
 }
 
 function sanitizeHexColor(value) {
@@ -202,7 +214,19 @@ export function sanitizeNewsletterHtml(value) {
       const src = sanitizeUrl(readAttribute(attributes, "src"));
       if (!src) return "";
       const alt = cleanText(readAttribute(attributes, "alt"), 200);
-      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
+      const title = cleanText(readAttribute(attributes, "title"), 200);
+      const width = sanitizeImageDimension(readAttribute(attributes, "width"));
+      const height = sanitizeImageDimension(readAttribute(attributes, "height"));
+      const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-align"), IMAGE_ALIGNMENTS);
+      const imageAttributes = [
+        ` src="${escapeHtml(src)}"`,
+        ` alt="${escapeHtml(alt)}"`,
+        title ? ` title="${escapeHtml(title)}"` : "",
+        width ? ` width="${width}"` : "",
+        height ? ` height="${height}"` : "",
+        alignment ? ` data-image-align="${alignment}"` : "",
+      ].join("");
+      return `<img${imageAttributes}>`;
     }
 
     if (tagName === "figure") {
@@ -226,7 +250,7 @@ export function sanitizeNewsletterHtml(value) {
         TEXT_ALIGNMENTS,
       );
       const fontSize = sanitizeFontSize(
-        readAttribute(attributes, "data-font-size") || readStyleProperty(sourceStyle, "font-size"),
+        readStyleProperty(sourceStyle, "font-size") || readAttribute(attributes, "data-font-size"),
       );
       const fontFamily = tagName === "span"
         ? sanitizeFontFamily(readAttribute(attributes, "data-font-family") || readStyleProperty(sourceStyle, "font-family"))
@@ -237,7 +261,7 @@ export function sanitizeNewsletterHtml(value) {
       const color = tagName === "span" ? sanitizeHexColor(readStyleProperty(sourceStyle, "color")) : "";
       const backgroundColor = tagName === "span" ? sanitizeHexColor(readStyleProperty(sourceStyle, "background-color")) : "";
       const inlineStyles = [
-        fontSize ? `font-size: ${fontSize}px` : "",
+        fontSize ? `font-size: ${fontSize}` : "",
         fontFamily ? `font-family: ${toCssFontFamily(fontFamily)}` : "",
         lineHeight ? `line-height: ${lineHeight}` : "",
         color ? `color: ${color}` : "",
@@ -245,7 +269,7 @@ export function sanitizeNewsletterHtml(value) {
       ].filter(Boolean).join("; ");
       const textAttributes = [
         alignment ? ` data-text-align="${alignment}"` : "",
-        fontSize ? ` data-font-size="${fontSize}"` : "",
+        fontSize ? ` data-font-size="${fontSize.replace(/(?:px|pt)$/i, "")}"` : "",
         fontFamily ? ` data-font-family="${escapeHtml(fontFamily)}"` : "",
         lineHeight ? ` data-line-height="${lineHeight}"` : "",
         inlineStyles ? ` style="${escapeHtml(inlineStyles)}"` : "",
