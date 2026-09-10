@@ -288,25 +288,37 @@ export function NewsletterTiptapEditor({
   return (
     <>
       <div className="newsletter-admin-toolbar" role="toolbar" aria-label="본문 서식">
-        <ToolbarButton label="일반 문단" active={editor?.isActive("paragraph")} disabled={isDisabled} onClick={() => editor.chain().focus().setParagraph().run()}>P</ToolbarButton>
-        <ToolbarButton label="제목 2" active={editor?.isActive("heading", { level: 2 })} disabled={isDisabled} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
-        <ToolbarButton label="제목 3" active={editor?.isActive("heading", { level: 3 })} disabled={isDisabled} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolbarButton>
-        <ToolbarButton label="굵게" active={editor?.isActive("bold")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBold().run()}><strong>B</strong></ToolbarButton>
-        <ToolbarButton label="기울임" active={editor?.isActive("italic")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleItalic().run()}><em>I</em></ToolbarButton>
-        <ToolbarButton label="밑줄" active={editor?.isActive("underline")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleUnderline().run()}><u>U</u></ToolbarButton>
-        <ToolbarButton label="취소선" active={editor?.isActive("strike")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></ToolbarButton>
-        <ToolbarButton label="글머리표 목록" active={editor?.isActive("bulletList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBulletList().run()}>•</ToolbarButton>
-        <ToolbarButton label="번호 목록" active={editor?.isActive("orderedList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleOrderedList().run()}>1.</ToolbarButton>
-        <ToolbarButton label="인용문" active={editor?.isActive("blockquote")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBlockquote().run()}>“</ToolbarButton>
-        <ToolbarButton label="왼쪽 정렬" active={editor?.isActive({ textAlign: "left" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("left").run()}>←</ToolbarButton>
-        <ToolbarButton label="가운데 정렬" active={editor?.isActive({ textAlign: "center" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("center").run()}>↔</ToolbarButton>
-        <ToolbarButton label="오른쪽 정렬" active={editor?.isActive({ textAlign: "right" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("right").run()}>→</ToolbarButton>
-        <ToolbarButton label="링크 추가 또는 수정" active={editor?.isActive("link")} disabled={isDisabled} onClick={updateLink}>↗</ToolbarButton>
-        <ToolbarButton label="링크 해제" disabled={isDisabled || !editor?.isActive("link")} onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}>×↗</ToolbarButton>
-        <ToolbarButton label="이미지 추가" disabled={isDisabled} onClick={chooseImage}>{isUploading ? "…" : "+"}</ToolbarButton>
-        <ToolbarButton label="구분선" disabled={isDisabled} onClick={() => editor.chain().focus().setHorizontalRule().run()}>—</ToolbarButton>
-        <ToolbarButton label="실행 취소" disabled={isDisabled || !editor?.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}>↶</ToolbarButton>
-        <ToolbarButton label="다시 실행" disabled={isDisabled || !editor?.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}>↷</ToolbarButton>
+        <div className="newsletter-admin-tool-group" aria-label="문단 형식">
+          <ToolbarButton label="일반 문단" active={editor?.isActive("paragraph")} disabled={isDisabled} onClick={() => editor.chain().focus().setParagraph().run()}>P</ToolbarButton>
+          <ToolbarButton label="제목 2" active={editor?.isActive("heading", { level: 2 })} disabled={isDisabled} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
+          <ToolbarButton label="제목 3" active={editor?.isActive("heading", { level: 3 })} disabled={isDisabled} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolbarButton>
+        </div>
+        <div className="newsletter-admin-tool-group" aria-label="글자 형식">
+          <ToolbarButton label="굵게" active={editor?.isActive("bold")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBold().run()}><strong>B</strong></ToolbarButton>
+          <ToolbarButton label="기울임" active={editor?.isActive("italic")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleItalic().run()}><em>I</em></ToolbarButton>
+          <ToolbarButton label="밑줄" active={editor?.isActive("underline")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleUnderline().run()}><u>U</u></ToolbarButton>
+          <ToolbarButton label="취소선" active={editor?.isActive("strike")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></ToolbarButton>
+        </div>
+        <div className="newsletter-admin-tool-group" aria-label="목록과 인용">
+          <ToolbarButton label="글머리표 목록" active={editor?.isActive("bulletList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBulletList().run()}>•</ToolbarButton>
+          <ToolbarButton label="번호 목록" active={editor?.isActive("orderedList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleOrderedList().run()}>1.</ToolbarButton>
+          <ToolbarButton label="인용문" active={editor?.isActive("blockquote")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBlockquote().run()}>“</ToolbarButton>
+        </div>
+        <div className="newsletter-admin-tool-group" aria-label="정렬">
+          <ToolbarButton label="왼쪽 정렬" active={editor?.isActive({ textAlign: "left" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("left").run()}>←</ToolbarButton>
+          <ToolbarButton label="가운데 정렬" active={editor?.isActive({ textAlign: "center" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("center").run()}>↔</ToolbarButton>
+          <ToolbarButton label="오른쪽 정렬" active={editor?.isActive({ textAlign: "right" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("right").run()}>→</ToolbarButton>
+        </div>
+        <div className="newsletter-admin-tool-group" aria-label="삽입">
+          <ToolbarButton label="링크 추가 또는 수정" active={editor?.isActive("link")} disabled={isDisabled} onClick={updateLink}>↗</ToolbarButton>
+          <ToolbarButton label="링크 해제" disabled={isDisabled || !editor?.isActive("link")} onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}>×↗</ToolbarButton>
+          <ToolbarButton label="이미지 추가" disabled={isDisabled} onClick={chooseImage}>{isUploading ? "…" : "+"}</ToolbarButton>
+          <ToolbarButton label="구분선" disabled={isDisabled} onClick={() => editor.chain().focus().setHorizontalRule().run()}>—</ToolbarButton>
+        </div>
+        <div className="newsletter-admin-tool-group" aria-label="편집 기록">
+          <ToolbarButton label="실행 취소" disabled={isDisabled || !editor?.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}>↶</ToolbarButton>
+          <ToolbarButton label="다시 실행" disabled={isDisabled || !editor?.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}>↷</ToolbarButton>
+        </div>
         <input
           ref={fileInputRef}
           type="file"

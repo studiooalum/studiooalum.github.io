@@ -15,7 +15,6 @@ const strippedOutputFiles = [
   path.join("scripts", "launch-sanity-studio.sh"),
   path.join("scripts", "launch-sanity-studio.applescript"),
   path.join("runtime", "storefront", "scripts", "components", "newsletter-tiptap-editor.jsx"),
-  path.join("runtime", "storefront", "scripts", "newsletter-admin.bundle.js"),
 ];
 const criticalFontPreloads = [
   "/public/fonts/pretendard/static/woff2/Pretendard-Regular.woff2",

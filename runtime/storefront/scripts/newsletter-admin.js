@@ -1,5 +1,5 @@
 import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
-import { mountNewsletterTiptapEditor } from "./newsletter-tiptap-editor.js";
+import { mountNewsletterTiptapEditor } from "./newsletter-tiptap-editor-20260910-01.js";
 
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";

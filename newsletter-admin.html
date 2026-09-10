@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
-  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260910-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin.css?v=20260910-02">
   <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
 </head>
 <body class="fulfillment-page newsletter-admin-page">
@@ -23,10 +23,10 @@
     <span class="gnb__spacer"></span>
   </nav>
 
-  <main class="fulfillment-main">
-    <section class="fulfillment-shell">
-      <aside class="fulfillment-sidebar">
-        <section class="fulfillment-panel">
+  <main class="fulfillment-main newsletter-admin-main">
+    <section class="fulfillment-shell newsletter-admin-shell">
+      <aside class="fulfillment-sidebar newsletter-admin-sidebar">
+        <section class="fulfillment-panel newsletter-admin-access-panel">
           <nav class="fulfillment-tabs" aria-label="관리자 기능" data-newsletter-admin-auth-guard hidden>
             <a href="./admin.html" class="fulfillment-tab">배송 / 주문</a>
             <a href="./coupons.html" class="fulfillment-tab">쿠폰 관리</a>
@@ -63,29 +63,34 @@
       </aside>
 
       <section class="fulfillment-content newsletter-admin-content" data-newsletter-admin-auth-guard hidden>
-        <section class="fulfillment-panel">
+        <section class="newsletter-admin-workspace">
           <form class="newsletter-admin-form js-newsletter-admin-form">
             <input type="hidden" name="id">
             <input type="hidden" name="coverImageUrl">
             <input type="hidden" name="coverImageR2Key">
 
             <header class="newsletter-admin-editor-head">
-              <h2 class="fulfillment-subheading">글 편집</h2>
+              <div>
+                <p class="newsletter-admin-editor-kicker">TIPTAP EDITOR</p>
+                <h2 class="newsletter-admin-editor-title">뉴스레터 편집</h2>
+              </div>
               <p class="newsletter-admin-status-label js-newsletter-admin-post-status">새 초안</p>
             </header>
 
-            <label class="fulfillment-field">
+            <label class="fulfillment-field newsletter-admin-title-field">
               <span>제목</span>
-              <input type="text" name="title" maxlength="200" required>
+              <input type="text" name="title" maxlength="200" placeholder="제목을 입력하세요" required>
             </label>
-            <label class="fulfillment-field">
-              <span>요약</span>
-              <textarea name="excerpt" rows="3" maxlength="500"></textarea>
-            </label>
-            <label class="fulfillment-field">
-              <span>카테고리 태그</span>
-              <input type="text" name="categories" maxlength="320" placeholder="예: repair, studio note, workshop">
-            </label>
+            <div class="newsletter-admin-meta-grid">
+              <label class="fulfillment-field newsletter-admin-summary-field">
+                <span>요약</span>
+                <textarea name="excerpt" rows="3" maxlength="500" placeholder="목록과 상세 상단에 표시할 짧은 소개"></textarea>
+              </label>
+              <label class="fulfillment-field">
+                <span>카테고리 태그</span>
+                <input type="text" name="categories" maxlength="320" placeholder="예: repair, studio note, workshop">
+              </label>
+            </div>
 
             <section class="newsletter-admin-cover">
               <div class="newsletter-admin-cover__head">
@@ -103,7 +108,11 @@
               </label>
             </section>
 
-            <section class="newsletter-admin-editor-shell">
+            <div class="newsletter-admin-section-head">
+              <h3>본문</h3>
+              <span>Tiptap</span>
+            </div>
+            <section class="newsletter-admin-editor-shell" aria-label="뉴스레터 본문 편집기">
               <div class="js-newsletter-admin-editor-root"></div>
             </section>
 
@@ -134,7 +143,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.js?v=20260826-02"></script>
+  <script type="module" src="./runtime/storefront/scripts/newsletter-admin.js?v=20260910-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js";
 

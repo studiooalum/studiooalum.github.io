@@ -342,6 +342,7 @@ export function initAccountPage() {
     || !repairsEl
     || !pointsEl
   ) {
+    document.documentElement.classList.remove("account-session-pending");
     return;
   }
 
@@ -504,6 +505,7 @@ export function initAccountPage() {
     ordersEl.innerHTML = emptyOrdersMarkup;
     workshopsEl.innerHTML = emptyWorkshopsMarkup;
     repairsEl.innerHTML = emptyRepairsMarkup;
+    document.documentElement.classList.remove("account-session-pending");
   }
 
   authTabButtons.forEach((button) => {
@@ -875,6 +877,7 @@ export function initAccountPage() {
     renderOrders(orders);
     renderWorkshopReservations(workshops);
     renderRepairRequests(repairs);
+    document.documentElement.classList.remove("account-session-pending");
   }
 
   function openAddressSearch() {
@@ -1096,7 +1099,6 @@ export function initAccountPage() {
     loadAccount({ silent: true });
   });
 
-  showLoggedOut();
   setActiveAuthPanel(initialReference ? "guest" : (authShell.dataset.activePanel || "login"));
   if (initialReference) guestForm.elements.reference.value = initialReference;
   loadAccount({ silent: true }).finally(() => {

@@ -1,3 +1,20 @@
+.newsletter-admin-page {
+  --site-footer-accent: #cad5d8;
+  --site-scrollbar-accent: #cad5d8;
+}
+
+.newsletter-admin-main {
+  padding-top: calc(var(--gnb-height, 40px) + 24px);
+}
+
+.newsletter-admin-shell {
+  align-items: start;
+}
+
+.newsletter-admin-workspace {
+  min-width: 0;
+}
+
 .newsletter-admin-page .fulfillment-tabs {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -8,6 +25,50 @@
 .newsletter-admin-editor-shell,
 .newsletter-admin-settings__body,
 .newsletter-admin-post-list {
+  display: grid;
+  gap: 14px;
+}
+
+.newsletter-admin-form {
+  gap: 24px;
+}
+
+.newsletter-admin-editor-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #111;
+}
+
+.newsletter-admin-editor-kicker {
+  margin: 0 0 5px;
+  font-family: var(--font-english-ui);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.newsletter-admin-editor-title {
+  margin: 0;
+  font-family: var(--font-kor-button);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.newsletter-admin-title-field input {
+  height: auto;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.28);
+  padding: 4px 0 12px;
+  font-family: var(--font-kor-button);
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.newsletter-admin-title-field input:focus {
+  border-bottom-color: #111;
+  outline: 0;
+}
+
+.newsletter-admin-meta-grid {
   display: grid;
   gap: 14px;
 }
@@ -25,6 +86,10 @@
   font-size: 12px;
   line-height: 1.6;
   letter-spacing: var(--tracking-korean);
+}
+
+.newsletter-admin-summary-field textarea {
+  min-height: 96px;
 }
 
 .newsletter-admin-list-head,
@@ -106,7 +171,7 @@
 }
 
 .newsletter-admin-cover {
-  padding: 14px 0;
+  padding: 18px 0;
   border-top: 1px solid rgba(17, 17, 17, 0.14);
   border-bottom: 1px solid rgba(17, 17, 17, 0.14);
 }
@@ -128,37 +193,76 @@
   object-fit: cover;
 }
 
+.newsletter-admin-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: -14px;
+}
+
+.newsletter-admin-section-head h3,
+.newsletter-admin-section-head span {
+  margin: 0;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.newsletter-admin-section-head span {
+  color: rgba(17, 17, 17, 0.5);
+  font-family: var(--font-english-ui);
+  text-transform: uppercase;
+}
+
 .newsletter-admin-editor-shell {
+  display: block;
   gap: 0;
   min-width: 0;
   border: 1px solid #111;
+  overflow: visible;
 }
 
 .js-newsletter-admin-editor-root,
 .newsletter-admin-editor-content {
+  display: block;
   min-width: 0;
 }
 
 .newsletter-admin-toolbar {
   position: sticky;
-  top: var(--gnb-height, 40px);
-  z-index: 4;
+  top: calc(var(--gnb-height, 40px) - 1px);
+  z-index: 40;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0;
   border-bottom: 1px solid #111;
   background: #fff;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
 }
 
 .newsletter-admin-tool {
-  width: auto;
+  flex: 0 0 auto;
+  width: 38px;
   min-width: 38px;
-  height: 36px;
+  height: 40px;
   margin: -1px 0 0 -1px;
-  padding: 0 8px;
+  padding: 0 6px;
   font-size: 12px;
   white-space: nowrap;
+}
+
+.newsletter-admin-tool-group {
+  display: flex;
+  flex: 0 0 auto;
+  border-right: 1px solid rgba(17, 17, 17, 0.24);
+}
+
+.newsletter-admin-tool-group:last-of-type {
+  border-right: 0;
 }
 
 .newsletter-admin-tool:hover,
@@ -180,8 +284,8 @@
 }
 
 .newsletter-admin-editor {
-  min-height: 420px;
-  padding: 20px;
+  min-height: 56vh;
+  padding: clamp(20px, 4vw, 48px);
   outline: 0;
   font-family: var(--font-kor-body);
   font-size: 15px;
@@ -380,7 +484,7 @@
 .newsletter-admin-action-bar {
   position: sticky;
   bottom: 0;
-  z-index: 3;
+  z-index: 30;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -454,9 +558,24 @@
 }
 
 @media (min-width: 960px) {
-  .newsletter-admin-list-panel {
+  .newsletter-admin-shell {
+    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+    gap: clamp(28px, 4vw, 64px);
+  }
+
+  .newsletter-admin-sidebar {
     position: sticky;
-    top: 14px;
+    top: calc(var(--gnb-height, 40px) + 24px);
+  }
+
+  .newsletter-admin-list-panel {
+    max-height: calc(100vh - var(--gnb-height, 40px) - 250px);
+    overflow-y: auto;
+  }
+
+  .newsletter-admin-meta-grid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.8fr);
+    align-items: start;
   }
 
   .newsletter-admin-settings__body {
@@ -471,7 +590,11 @@
 
   .newsletter-admin-editor {
     min-height: 320px;
-    padding: 14px;
+    padding: 18px 14px;
+  }
+
+  .newsletter-admin-title-field input {
+    font-size: 26px;
   }
 
   .newsletter-admin-action-bar {

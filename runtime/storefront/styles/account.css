@@ -6,6 +6,11 @@
   letter-spacing: var(--tracking-korean);
 }
 
+.account-session-pending .account-auth-shell,
+.account-session-pending .account-layout {
+  visibility: hidden;
+}
+
 .account-main {
   padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 80px;
 }
