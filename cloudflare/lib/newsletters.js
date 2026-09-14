@@ -85,8 +85,12 @@ const ALLOWED_RICH_TEXT_TAGS = new Set([
   "i",
   "u",
   "s",
+  "h1",
   "h2",
   "h3",
+  "h4",
+  "h5",
+  "h6",
   "blockquote",
   "ul",
   "ol",
@@ -104,7 +108,7 @@ const IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 const IMAGE_POSITIONS = new Set(["inline", "breakout"]);
 const IMAGE_LAYOUTS = new Set(["single", "pair-left", "pair-right"]);
 const TEXT_ALIGNMENTS = new Set(["left", "center", "right", "justify"]);
-const TEXT_ALIGNMENT_TAGS = new Set(["p", "h2", "h3", "blockquote", "li"]);
+const TEXT_ALIGNMENT_TAGS = new Set(["p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "li"]);
 const ALLOWED_FONT_FAMILIES = new Map([
   ["pretendard", "Pretendard"],
   ["wanted sans", "Wanted Sans"],
@@ -158,6 +162,13 @@ function sanitizeImageDimension(value) {
   if (!/^\d+(?:\.\d+)?$/.test(normalized)) return "";
   const dimension = Math.round(Number(normalized));
   return dimension >= 1 && dimension <= 4000 ? String(dimension) : "";
+}
+
+function sanitizeGalleryImageCount(value) {
+  const normalized = cleanText(value, 2).trim();
+  if (!/^\d+$/.test(normalized)) return "";
+  const count = Number(normalized);
+  return count >= 2 && count <= 12 ? String(count) : "";
 }
 
 function sanitizeHexColor(value) {
@@ -218,6 +229,7 @@ export function sanitizeNewsletterHtml(value) {
       const width = sanitizeImageDimension(readAttribute(attributes, "width"));
       const height = sanitizeImageDimension(readAttribute(attributes, "height"));
       const alignment = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-align"), IMAGE_ALIGNMENTS);
+      const skipProgressiveImage = readAttribute(attributes, "data-progressive-image").toLowerCase() === "false";
       const imageAttributes = [
         ` src="${escapeHtml(src)}"`,
         ` alt="${escapeHtml(alt)}"`,
@@ -225,6 +237,7 @@ export function sanitizeNewsletterHtml(value) {
         width ? ` width="${width}"` : "",
         height ? ` height="${height}"` : "",
         alignment ? ` data-image-align="${alignment}"` : "",
+        skipProgressiveImage ? ' data-progressive-image="false"' : "",
       ].join("");
       return `<img${imageAttributes}>`;
     }
@@ -234,11 +247,17 @@ export function sanitizeNewsletterHtml(value) {
       const size = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-size"), IMAGE_SIZES);
       const position = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-position"), IMAGE_POSITIONS);
       const layout = sanitizeImageLayoutValue(readAttribute(attributes, "data-image-layout"), IMAGE_LAYOUTS);
+      const galleryMarker = cleanText(readAttribute(attributes, "data-image-gallery"), 10).toLowerCase();
+      const galleryCount = galleryMarker === "true"
+        ? sanitizeGalleryImageCount(readAttribute(attributes, "data-image-count"))
+        : "";
       const layoutAttributes = [
         alignment ? ` data-image-align="${alignment}"` : "",
         size ? ` data-image-size="${size}"` : "",
         position ? ` data-image-position="${position}"` : "",
         layout ? ` data-image-layout="${layout}"` : "",
+        galleryCount ? ' data-image-gallery="true"' : "",
+        galleryCount ? ` data-image-count="${galleryCount}"` : "",
       ].join("");
       return `<figure${layoutAttributes}>`;
     }

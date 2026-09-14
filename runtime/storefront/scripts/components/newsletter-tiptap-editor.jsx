@@ -1,6 +1,7 @@
 import { Component, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { Node as TiptapNode } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -22,15 +23,53 @@ function cleanEditorHtml(editor) {
 
 function cleanPastedHtml(value) {
   const documentNode = new DOMParser().parseFromString(String(value || ""), "text/html");
+  const allowedAttributes = new Set([
+    "href",
+    "src",
+    "alt",
+    "title",
+    "width",
+    "height",
+    "data-image-align",
+    "data-image-size",
+    "data-image-position",
+    "data-image-layout",
+    "data-image-gallery",
+    "data-image-count",
+  ]);
   documentNode.body.querySelectorAll("*").forEach((element) => {
     Array.from(element.attributes).forEach((attribute) => {
-      if (!["href", "src", "alt", "title", "width", "height", "data-image-align"].includes(attribute.name.toLowerCase())) {
+      if (!allowedAttributes.has(attribute.name.toLowerCase())) {
         element.removeAttribute(attribute.name);
       }
     });
   });
   return documentNode.body.innerHTML;
 }
+
+const NewsletterGallery = TiptapNode.create({
+  name: "newsletterGallery",
+  group: "block",
+  content: "image{2,12}",
+  isolating: true,
+  defining: true,
+  draggable: true,
+
+  parseHTML() {
+    return [{ tag: 'figure[data-image-gallery="true"]' }];
+  },
+
+  renderHTML({ node }) {
+    return [
+      "figure",
+      {
+        "data-image-gallery": "true",
+        "data-image-count": String(node.childCount),
+      },
+      0,
+    ];
+  },
+});
 
 const NewsletterImage = Image.extend({
   addAttributes() {
@@ -96,7 +135,11 @@ const NewsletterImage = Image.extend({
     return [
       {
         tag: "figure",
-        getAttrs: (element) => element.querySelector("img") ? {} : false,
+        getAttrs: (element) => (
+          element.getAttribute("data-image-gallery") !== "true" && element.querySelector("img")
+            ? {}
+            : false
+        ),
       },
       {
         tag: "img[src]:not([src^=\"data:\"])",
@@ -146,7 +189,7 @@ const EDITOR_EXTENSIONS = [
   StarterKit.configure({
     code: false,
     codeBlock: false,
-    heading: { levels: [2, 3] },
+    heading: { levels: [1, 2, 3, 4, 5, 6] },
     link: false,
   }),
   TextStyle,
@@ -168,6 +211,7 @@ const EDITOR_EXTENSIONS = [
       rel: "noopener noreferrer",
     },
   }),
+  NewsletterGallery,
   NewsletterImage,
   Placeholder.configure({ placeholder: "본문을 작성하세요." }),
 ];
@@ -183,7 +227,6 @@ const EDITOR_PROPS = {
 };
 
 const PRIMARY_FONT_OPTIONS = [
-  { value: "Pretendard", label: "Pretendard · 본문" },
   { value: "Wanted Sans", label: "Wanted Sans · 제목" },
   { value: "GothamBook", label: "Gotham Book · 영문" },
   { value: "GothamLight", label: "Gotham Light" },
@@ -205,18 +248,120 @@ const SECONDARY_FONT_OPTIONS = [
   "Courier New",
 ];
 
-const FONT_SIZE_MIN = 1;
-const FONT_SIZE_MAX = 40;
-const LINE_HEIGHT_MIN = 0;
-const LINE_HEIGHT_MAX = 10;
+const MAX_GALLERY_IMAGES = 12;
 
-function numericStyleValue(value) {
-  const match = String(value || "").trim().match(/^\d+(?:\.\d+)?/);
-  return match ? match[0] : "";
+const STYLE_OPTIONS = [
+  { key: "paragraph", label: "Normal text", marker: "¶" },
+  ...[1, 2, 3, 4, 5, 6].map((level) => ({
+    key: `heading-${level}`,
+    label: `Heading ${level}`,
+    marker: `H${level}`,
+    level,
+  })),
+];
+
+function ToolIcon({ name }) {
+  const common = {
+    className: "newsletter-admin-tool__icon",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.8",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true",
+  };
+
+  if (name === "undo") return <svg {...common}><path d="M9 7 5 11l4 4"/><path d="M5 11h8a6 6 0 0 1 6 6"/></svg>;
+  if (name === "redo") return <svg {...common}><path d="m15 7 4 4-4 4"/><path d="M19 11h-8a6 6 0 0 0-6 6"/></svg>;
+  if (name === "chevron") return <svg {...common}><path d="m8 10 4 4 4-4"/></svg>;
+  if (name === "link") return <svg {...common}><path d="m10.5 13.5 3-3"/><path d="M7.4 15.6 5.8 17.2a3.4 3.4 0 1 0 4.8 4.8l3.1-3.1a3.4 3.4 0 0 0 0-4.8" transform="translate(0 -4)"/><path d="m16.6 8.4 1.6-1.6A3.4 3.4 0 1 1 23 11.6l-3.1 3.1a3.4 3.4 0 0 1-4.8 0" transform="translate(-4 0)"/></svg>;
+  if (name === "image") return <svg {...common}><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 4.5-4.5 3.2 3.2 2.2-2.2L20 19"/></svg>;
+  if (name === "quote") return <svg {...common}><path d="M7 10H4V7h5v5c0 3-1.5 5-4 6"/><path d="M17 10h-3V7h5v5c0 3-1.5 5-4 6"/></svg>;
+  if (name === "bullet-list") return <svg {...common}><circle cx="5" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="5" cy="17" r="1" fill="currentColor" stroke="none"/><path d="M9 7h10M9 12h10M9 17h10"/></svg>;
+  if (name === "ordered-list") return <svg {...common}><path d="M4 6h1v3M3.5 9H6M3.5 13h2L3.5 16H6M9 7h10M9 12h10M9 17h10"/></svg>;
+  if (name === "align-left") return <svg {...common}><path d="M4 6h16M4 10h11M4 14h16M4 18h9"/></svg>;
+  if (name === "align-center") return <svg {...common}><path d="M4 6h16M6.5 10h11M4 14h16M7.5 18h9"/></svg>;
+  if (name === "align-right") return <svg {...common}><path d="M4 6h16M9 10h11M4 14h16M11 18h9"/></svg>;
+  if (name === "divider") return <svg {...common}><path d="M4 12h16"/></svg>;
+  if (name === "check") return <svg {...common}><path d="m6 12 4 4 8-9"/></svg>;
+  return null;
 }
 
-function formatLineHeight(value) {
-  return String(Math.round(value * 10) / 10);
+function StyleDropdown({ editor, disabled }) {
+  const rootRef = useRef(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handlePointerDown = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
+
+  function isActive(option) {
+    return option.level
+      ? Boolean(editor?.isActive("heading", { level: option.level }))
+      : Boolean(editor?.isActive("paragraph"));
+  }
+
+  function applyStyle(option) {
+    if (!editor) return;
+    const chain = editor.chain().focus();
+    if (option.level) chain.setHeading({ level: option.level }).run();
+    else chain.setParagraph().run();
+    setOpen(false);
+  }
+
+  return (
+    <div className={`newsletter-admin-style-menu${open ? " is-open" : ""}`} ref={rootRef}>
+      <button
+        type="button"
+        className="newsletter-admin-style-menu__trigger"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>Style</span>
+        <ToolIcon name="chevron" />
+      </button>
+      {open ? (
+        <div className="newsletter-admin-style-menu__popover" role="menu" aria-label="문단 스타일">
+          {STYLE_OPTIONS.map((option) => {
+            const active = isActive(option);
+            return (
+              <button
+                key={option.key}
+                type="button"
+                className={`newsletter-admin-style-option newsletter-admin-style-option--${option.key}${active ? " is-active" : ""}`}
+                role="menuitemradio"
+                aria-checked={active}
+                onClick={() => applyStyle(option)}
+              >
+                <span className="newsletter-admin-style-option__marker" aria-hidden="true">{option.marker}</span>
+                <span className="newsletter-admin-style-option__label">{option.label}</span>
+                {active ? <ToolIcon name="check" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function ToolbarButton({ active = false, disabled = false, label, onClick, children }) {
@@ -268,8 +413,7 @@ export function NewsletterTiptapEditor({
   const externalContentRef = useRef({ contentKey, value: String(value || "") });
   const initialContentRef = useRef(String(value || ""));
   const [isUploading, setIsUploading] = useState(false);
-  const [fontSizeInput, setFontSizeInput] = useState("");
-  const [lineHeightInput, setLineHeightInput] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
   callbacksRef.current = { onChange, onUploadImage, onUploadStateChange, onStatus };
 
   const editor = useEditor({
@@ -306,71 +450,12 @@ export function NewsletterTiptapEditor({
   const isDisabled = disabled || isUploading || !editor;
   const textStyleAttributes = editor?.getAttributes("textStyle") || {};
   const currentFontFamily = String(textStyleAttributes.fontFamily || "");
-  const currentFontSize = numericStyleValue(textStyleAttributes.fontSize);
-  const currentLineHeight = numericStyleValue(textStyleAttributes.lineHeight);
-  const imageSelected = Boolean(editor?.isActive("image"));
-
-  useEffect(() => {
-    setFontSizeInput(currentFontSize);
-  }, [currentFontSize]);
-
-  useEffect(() => {
-    setLineHeightInput(currentLineHeight);
-  }, [currentLineHeight]);
 
   function setFontFamily(value) {
     if (!editor) return;
     const chain = editor.chain().focus();
     if (value) chain.setFontFamily(value).run();
     else chain.unsetFontFamily().run();
-  }
-
-  function applyFontSize() {
-    if (!editor) return;
-    const rawValue = String(fontSizeInput || "").trim();
-    if (!rawValue) {
-      editor.commands.unsetFontSize();
-      return;
-    }
-    const size = Math.round(Number(rawValue));
-    if (!Number.isFinite(size) || size < FONT_SIZE_MIN || size > FONT_SIZE_MAX) {
-      setFontSizeInput(currentFontSize);
-      callbacksRef.current.onStatus?.("폰트 크기는 1~40pt 사이로 입력해주세요.", "error");
-      return;
-    }
-    setFontSizeInput(String(size));
-    editor.commands.setFontSize(`${size}pt`);
-  }
-
-  function applyLineHeight() {
-    if (!editor) return;
-    const rawValue = String(lineHeightInput || "").trim();
-    if (!rawValue) {
-      editor.commands.unsetLineHeight();
-      return;
-    }
-    const lineHeight = Number(rawValue);
-    if (!Number.isFinite(lineHeight) || lineHeight < LINE_HEIGHT_MIN || lineHeight > LINE_HEIGHT_MAX) {
-      setLineHeightInput(currentLineHeight);
-      callbacksRef.current.onStatus?.("행간은 0~10 사이에서 0.1 단위로 입력해주세요.", "error");
-      return;
-    }
-    const normalized = formatLineHeight(lineHeight);
-    setLineHeightInput(normalized);
-    editor.commands.setLineHeight(normalized);
-  }
-
-  function handleNumberKeyDown(event, applyValue, resetValue) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      applyValue();
-    }
-    if (event.key === "Escape") {
-      event.preventDefault();
-      event.currentTarget.blur();
-      resetValue();
-      editor?.commands.focus();
-    }
   }
 
   function updateLink() {
@@ -400,26 +485,65 @@ export function NewsletterTiptapEditor({
   }
 
   async function uploadImage(event) {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files || []);
     event.target.value = "";
-    if (!file || !editor || !callbacksRef.current.onUploadImage) return;
+    if (!files.length || !editor || !callbacksRef.current.onUploadImage) return;
+    if (files.length > MAX_GALLERY_IMAGES) {
+      callbacksRef.current.onStatus?.(`갤러리는 한 번에 최대 ${MAX_GALLERY_IMAGES}장까지 추가할 수 있습니다.`, "error");
+      return;
+    }
 
     setIsUploading(true);
     callbacksRef.current.onUploadStateChange?.(true);
-    callbacksRef.current.onStatus?.("본문 이미지를 업로드하는 중입니다.", "info");
+    setUploadStatus(`0 / ${files.length}장 업로드 중`);
+    callbacksRef.current.onStatus?.(`${files.length}장의 본문 이미지를 업로드하는 중입니다.`, "info");
     try {
-      const imageUrl = String(await callbacksRef.current.onUploadImage(file) || "").trim();
-      if (!imageUrl) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
+      const imageUrls = [];
+      const failures = [];
+      for (let index = 0; index < files.length; index += 1) {
+        try {
+          const imageUrl = String(await callbacksRef.current.onUploadImage(files[index]) || "").trim();
+          if (!imageUrl) throw new Error("업로드한 이미지 주소를 확인할 수 없습니다.");
+          imageUrls.push(imageUrl);
+        } catch (error) {
+          failures.push(error);
+        }
+        setUploadStatus(`${index + 1} / ${files.length}장 업로드 중`);
+      }
+
+      if (!imageUrls.length) {
+        throw failures[0] || new Error("본문 이미지를 업로드하지 못했습니다.");
+      }
       if (uploadContentKeyRef.current !== externalContentRef.current.contentKey) {
         throw new Error("글이 변경되어 업로드한 이미지를 본문에 삽입하지 않았습니다.");
       }
       const position = Math.min(uploadPositionRef.current ?? editor.state.selection.anchor, editor.state.doc.content.size);
-      editor.chain().focus().setTextSelection(position).setImage({ src: imageUrl, alt: "", imageAlign: "center" }).run();
-      callbacksRef.current.onStatus?.("본문 이미지를 추가했습니다.", "success");
+      const chain = editor.chain().focus().setTextSelection(position);
+      if (imageUrls.length === 1) {
+        chain.setImage({ src: imageUrls[0], alt: "", imageAlign: "center" }).run();
+      } else {
+        chain.insertContent({
+          type: "newsletterGallery",
+          content: imageUrls.map((src) => ({
+            type: "image",
+            attrs: { src, alt: "", imageAlign: "center" },
+          })),
+        }).run();
+      }
+
+      if (failures.length) {
+        callbacksRef.current.onStatus?.(`${imageUrls.length}장을 추가했고 ${failures.length}장은 업로드하지 못했습니다.`, "error");
+      } else {
+        callbacksRef.current.onStatus?.(
+          imageUrls.length > 1 ? `${imageUrls.length}장을 갤러리로 추가했습니다.` : "본문 이미지를 추가했습니다.",
+          "success",
+        );
+      }
     } catch (error) {
       callbacksRef.current.onStatus?.(error.message || "본문 이미지를 업로드하지 못했습니다.", "error");
     } finally {
       setIsUploading(false);
+      setUploadStatus("");
       callbacksRef.current.onUploadStateChange?.(false);
     }
   }
@@ -427,16 +551,25 @@ export function NewsletterTiptapEditor({
   return (
     <>
       <div className="newsletter-admin-toolbar" role="toolbar" aria-label="본문 서식">
-        <div className="newsletter-admin-tool-group newsletter-admin-tool-group--styles" aria-label="서체와 간격">
+        <div className="newsletter-admin-tool-group" aria-label="편집 기록">
+          <ToolbarButton label="실행 취소" disabled={isDisabled || !editor?.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}>
+            <ToolIcon name="undo" />
+          </ToolbarButton>
+          <ToolbarButton label="다시 실행" disabled={isDisabled || !editor?.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}>
+            <ToolIcon name="redo" />
+          </ToolbarButton>
+        </div>
+        <div className="newsletter-admin-tool-group newsletter-admin-tool-group--styles" aria-label="문단과 서체">
+          <StyleDropdown editor={editor} disabled={isDisabled} />
           <label className="newsletter-admin-format-control newsletter-admin-format-control--font">
-            <span className="newsletter-admin-format-control__label">서체</span>
+            <span className="newsletter-admin-format-control__label">Font</span>
             <select
               aria-label="폰트"
               value={currentFontFamily}
               disabled={isDisabled}
               onChange={(event) => setFontFamily(event.target.value)}
             >
-              <option value="">기본 서체</option>
+              <option value="">Pretendard · 사이트 기본</option>
               <optgroup label="OALUM 주요 폰트">
                 {PRIMARY_FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </optgroup>
@@ -445,96 +578,49 @@ export function NewsletterTiptapEditor({
               </optgroup>
             </select>
           </label>
-          <label className="newsletter-admin-format-control newsletter-admin-format-control--number">
-            <span className="newsletter-admin-format-control__label">크기</span>
-            <input
-              type="number"
-              min={FONT_SIZE_MIN}
-              max={FONT_SIZE_MAX}
-              step="1"
-              inputMode="numeric"
-              aria-label="폰트 크기, 1에서 40포인트"
-              title="1~40pt · 직접 입력 후 Enter"
-              placeholder="—"
-              value={fontSizeInput}
-              disabled={isDisabled}
-              onChange={(event) => setFontSizeInput(event.target.value)}
-              onBlur={applyFontSize}
-              onKeyDown={(event) => handleNumberKeyDown(event, applyFontSize, () => setFontSizeInput(currentFontSize))}
-            />
-            <span aria-hidden="true">pt</span>
-          </label>
-          <label className="newsletter-admin-format-control newsletter-admin-format-control--number">
-            <span className="newsletter-admin-format-control__label">행간</span>
-            <input
-              type="number"
-              min={LINE_HEIGHT_MIN}
-              max={LINE_HEIGHT_MAX}
-              step="0.1"
-              inputMode="decimal"
-              aria-label="행간, 0부터 0.1 단위"
-              title="0부터 0.1 단위 · 직접 입력 후 Enter"
-              placeholder="—"
-              value={lineHeightInput}
-              disabled={isDisabled}
-              onChange={(event) => setLineHeightInput(event.target.value)}
-              onBlur={applyLineHeight}
-              onKeyDown={(event) => handleNumberKeyDown(event, applyLineHeight, () => setLineHeightInput(currentLineHeight))}
-            />
-          </label>
-          <ToolbarButton
-            label="폰트와 행간 초기화"
-            disabled={isDisabled}
-            onClick={() => editor.chain().focus().unsetFontFamily().unsetFontSize().unsetLineHeight().run()}
-          >Tx</ToolbarButton>
-        </div>
-        <div className="newsletter-admin-tool-group" aria-label="문단 형식">
-          <ToolbarButton label="일반 문단" active={editor?.isActive("paragraph")} disabled={isDisabled} onClick={() => editor.chain().focus().setParagraph().run()}>P</ToolbarButton>
-          <ToolbarButton label="제목 2" active={editor?.isActive("heading", { level: 2 })} disabled={isDisabled} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
-          <ToolbarButton label="제목 3" active={editor?.isActive("heading", { level: 3 })} disabled={isDisabled} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolbarButton>
         </div>
         <div className="newsletter-admin-tool-group" aria-label="글자 형식">
-          <ToolbarButton label="굵게" active={editor?.isActive("bold")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBold().run()}><strong>B</strong></ToolbarButton>
-          <ToolbarButton label="기울임" active={editor?.isActive("italic")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleItalic().run()}><em>I</em></ToolbarButton>
-          <ToolbarButton label="밑줄" active={editor?.isActive("underline")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleUnderline().run()}><u>U</u></ToolbarButton>
-          <ToolbarButton label="취소선" active={editor?.isActive("strike")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></ToolbarButton>
+          <ToolbarButton label="굵게" active={editor?.isActive("bold")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBold().run()}><strong className="newsletter-admin-tool__letter">B</strong></ToolbarButton>
+          <ToolbarButton label="기울임" active={editor?.isActive("italic")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleItalic().run()}><em className="newsletter-admin-tool__letter">I</em></ToolbarButton>
+          <ToolbarButton label="밑줄" active={editor?.isActive("underline")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleUnderline().run()}><u className="newsletter-admin-tool__letter">U</u></ToolbarButton>
+          <ToolbarButton label="취소선" active={editor?.isActive("strike")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleStrike().run()}><s className="newsletter-admin-tool__letter">S</s></ToolbarButton>
         </div>
-        <div className="newsletter-admin-tool-group" aria-label="목록과 인용">
-          <ToolbarButton label="글머리표 목록" active={editor?.isActive("bulletList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBulletList().run()}>•</ToolbarButton>
-          <ToolbarButton label="번호 목록" active={editor?.isActive("orderedList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleOrderedList().run()}>1.</ToolbarButton>
-          <ToolbarButton label="인용문" active={editor?.isActive("blockquote")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBlockquote().run()}>“</ToolbarButton>
+        <div className="newsletter-admin-tool-group" aria-label="링크와 미디어">
+          <ToolbarButton label="링크 추가, 수정 또는 해제" active={editor?.isActive("link")} disabled={isDisabled} onClick={updateLink}>
+            <ToolIcon name="link" />
+          </ToolbarButton>
+          <ToolbarButton label="이미지 또는 갤러리 추가" disabled={isDisabled} onClick={chooseImage}>
+            {isUploading ? <span aria-hidden="true">…</span> : <ToolIcon name="image" />}
+          </ToolbarButton>
+          <ToolbarButton label="인용문" active={editor?.isActive("blockquote")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+            <ToolIcon name="quote" />
+          </ToolbarButton>
         </div>
-        <div className="newsletter-admin-tool-group" aria-label="정렬">
-          <ToolbarButton label="왼쪽 정렬" active={editor?.isActive({ textAlign: "left" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("left").run()}>←</ToolbarButton>
-          <ToolbarButton label="가운데 정렬" active={editor?.isActive({ textAlign: "center" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("center").run()}>↔</ToolbarButton>
-          <ToolbarButton label="오른쪽 정렬" active={editor?.isActive({ textAlign: "right" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("right").run()}>→</ToolbarButton>
+        <div className="newsletter-admin-tool-group" aria-label="목록">
+          <ToolbarButton label="글머리표 목록" active={editor?.isActive("bulletList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+            <ToolIcon name="bullet-list" />
+          </ToolbarButton>
+          <ToolbarButton label="번호 목록" active={editor?.isActive("orderedList")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+            <ToolIcon name="ordered-list" />
+          </ToolbarButton>
         </div>
-        <div className="newsletter-admin-tool-group" aria-label="삽입">
-          <ToolbarButton label="링크 추가 또는 수정" active={editor?.isActive("link")} disabled={isDisabled} onClick={updateLink}>↗</ToolbarButton>
-          <ToolbarButton label="링크 해제" disabled={isDisabled || !editor?.isActive("link")} onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}>×↗</ToolbarButton>
-          <ToolbarButton label="이미지 추가" disabled={isDisabled} onClick={chooseImage}>{isUploading ? "…" : "+"}</ToolbarButton>
-          <ToolbarButton label="구분선" disabled={isDisabled} onClick={() => editor.chain().focus().setHorizontalRule().run()}>—</ToolbarButton>
-        </div>
-        <div className="newsletter-admin-tool-group" aria-label="선택한 이미지 배치">
-          <ToolbarButton label="이미지 왼쪽 배치" active={editor?.isActive("image", { imageAlign: "left" })} disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().updateAttributes("image", { imageAlign: "left" }).run()}>I←</ToolbarButton>
-          <ToolbarButton label="이미지 가운데 배치" active={editor?.isActive("image", { imageAlign: "center" })} disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().updateAttributes("image", { imageAlign: "center" }).run()}>I↔</ToolbarButton>
-          <ToolbarButton label="이미지 오른쪽 배치" active={editor?.isActive("image", { imageAlign: "right" })} disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().updateAttributes("image", { imageAlign: "right" }).run()}>I→</ToolbarButton>
-          <ToolbarButton label="이미지 삭제" disabled={isDisabled || !imageSelected} onClick={() => editor.chain().focus().deleteSelection().run()}>I×</ToolbarButton>
-        </div>
-        <div className="newsletter-admin-tool-group" aria-label="편집 기록">
-          <ToolbarButton label="실행 취소" disabled={isDisabled || !editor?.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}>↶</ToolbarButton>
-          <ToolbarButton label="다시 실행" disabled={isDisabled || !editor?.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}>↷</ToolbarButton>
+        <div className="newsletter-admin-tool-group" aria-label="정렬과 구분선">
+          <ToolbarButton label="왼쪽 정렬" active={editor?.isActive({ textAlign: "left" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("left").run()}><ToolIcon name="align-left" /></ToolbarButton>
+          <ToolbarButton label="가운데 정렬" active={editor?.isActive({ textAlign: "center" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("center").run()}><ToolIcon name="align-center" /></ToolbarButton>
+          <ToolbarButton label="오른쪽 정렬" active={editor?.isActive({ textAlign: "right" })} disabled={isDisabled} onClick={() => editor.chain().focus().setTextAlign("right").run()}><ToolIcon name="align-right" /></ToolbarButton>
+          <ToolbarButton label="구분선" disabled={isDisabled} onClick={() => editor.chain().focus().setHorizontalRule().run()}><ToolIcon name="divider" /></ToolbarButton>
         </div>
         <input
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+          multiple
           hidden
           onChange={uploadImage}
         />
       </div>
       <EditorContent editor={editor} className="newsletter-admin-editor-content" />
-      {isUploading ? <p className="newsletter-admin-upload-status" role="status">이미지 업로드 중...</p> : null}
+      {isUploading ? <p className="newsletter-admin-upload-status" role="status">{uploadStatus || "이미지 업로드 중..."}</p> : null}
     </>
   );
 }

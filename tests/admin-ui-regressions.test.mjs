@@ -28,16 +28,42 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.match(editorSource, /<EditorContent editor=\{editor\}/);
   assert.match(editorSource, /NewsletterEditorErrorBoundary/);
   assert.match(editorSource, /imageAttributes\["data-progressive-image"\] = "false"/);
-  assert.match(editorSource, /FONT_SIZE_MIN = 1/);
-  assert.match(editorSource, /FONT_SIZE_MAX = 40/);
-  assert.match(editorSource, /LINE_HEIGHT_MIN = 0/);
-  assert.match(editorSource, /step="0\.1"/);
-  assert.match(editorSource, /Pretendard · 본문[\s\S]*Wanted Sans · 제목[\s\S]*Gotham Book · 영문/);
+  assert.match(editorSource, /STYLE_OPTIONS[\s\S]*Normal text[\s\S]*Heading \$\{level\}/);
+  assert.match(editorSource, /heading:\s*\{ levels:\s*\[1, 2, 3, 4, 5, 6\] \}/);
+  assert.match(editorSource, /Pretendard · 사이트 기본/);
+  assert.match(editorSource, /Wanted Sans · 제목[\s\S]*Gotham Book · 영문/);
+  assert.match(editorSource, /function ToolIcon/);
+  assert.match(editorSource, /type:\s*"newsletterGallery"/);
+  assert.match(editorSource, /data-image-gallery/);
+  assert.match(editorSource, /<ToolIcon name="image"/);
+  assert.match(editorSource, /accept="image\/jpeg,image\/png,image\/webp,image\/gif,image\/avif"[\s\S]*multiple/);
+  assert.doesNotMatch(editorSource, /type="number"/);
+  assert.doesNotMatch(editorSource, />Tx</);
   assert.match(editorSource, /resize:\s*\{[\s\S]*enabled:\s*true/);
-  assert.match(editorSource, /setImage\(\{ src: imageUrl/);
+  assert.match(editorSource, /setImage\(\{ src: imageUrls\[0\]/);
   assert.match(stylesheet, /\.newsletter-admin-toolbar\s*\{[\s\S]*position:\s*sticky;[\s\S]*top:\s*calc\(var\(--gnb-height, 40px\) - 1px\);/);
+  assert.match(stylesheet, /\.newsletter-admin-style-menu__popover/);
+  assert.match(stylesheet, /figure\[data-image-gallery="true"\]/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor-20260910-01.js", root)));
+});
+
+test("Newsletter detail uses the center grid with gallery and image zoom", async () => {
+  const [html, controller, stylesheet, layoutStylesheet] = await Promise.all([
+    read("newsletter.html"),
+    read("runtime/storefront/scripts/newsletter-20260818-02.js"),
+    read("runtime/storefront/styles/newsletter-20260818-03.css"),
+    read("runtime/storefront/styles/newsletter-20260818-01.css"),
+  ]);
+
+  assert.match(html, /newsletter-20260818-03\.css\?v=20260914-01/);
+  assert.match(html, /newsletter-20260818-02\.js\?v=20260914-01/);
+  assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry > \*[\s\S]*grid-column:\s*2/);
+  assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*grid-template-columns:\s*repeat\(2/);
+  assert.match(controller, /function enhanceEntryImages/);
+  assert.match(controller, /data-newsletter-lightbox-close/);
+  assert.match(controller, /lockBodyScroll\("newsletter-lightbox"\)/);
+  assert.match(stylesheet, /\.newsletter-lightbox\.is-open/);
 });
 
 test("Archive category navigation remains on the list and hides on details", async () => {
