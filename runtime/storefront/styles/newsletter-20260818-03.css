@@ -201,6 +201,10 @@
   background: #fbfaf5;
 }
 
+.newsletter-recommend-card__thumb > .progressive-image {
+  height: 100%;
+}
+
 .newsletter-recommend-card__thumb img {
   display: block;
   width: 100%;

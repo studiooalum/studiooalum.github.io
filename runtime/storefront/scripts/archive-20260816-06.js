@@ -251,7 +251,7 @@ function renderDetail(shell, item) {
     const threshold = Math.max(80, window.innerHeight * 0.16);
     const lastImage = gallery.querySelector(".archive-detail-image:last-of-type");
     meta.classList.toggle("is-expanded", window.scrollY > threshold);
-    meta.classList.toggle("is-after-images", Boolean(lastImage && lastImage.getBoundingClientRect().bottom <= meta.getBoundingClientRect().top));
+    meta.classList.toggle("is-after-images", Boolean(lastImage && lastImage.getBoundingClientRect().bottom <= window.innerHeight));
   };
   window.addEventListener("scroll", syncMeta, { passive: true });
   window.addEventListener("resize", syncMeta, { passive: true });
