@@ -41,14 +41,11 @@ test("repair accordion uses the three-column rail and Figma typography", () => {
   assert.match(repairCss, /\.repair-accordion--shipping > div\s*\{[\s\S]*?gap:\s*10px/);
 });
 
-test("collapsed desktop accordion restores yesterday's title rhythm only", () => {
+test("repair accordion keeps summary geometry stable when toggled", () => {
+  assert.doesNotMatch(repairCss, /:has\(\.repair-accordion\[open\]\)/);
   assert.match(
     repairCss,
-    /@media \(min-width:\s*769px\)[\s\S]*?\.repair-stage__rail:not\(:has\(\.repair-accordion\[open\]\)\)\s*\{[\s\S]*?gap:\s*16px/,
-  );
-  assert.match(
-    repairCss,
-    /:not\(:has\(\.repair-accordion\[open\]\)\) \.repair-accordion > summary\s*\{[\s\S]*?min-height:\s*0;[\s\S]*?padding:\s*0;[\s\S]*?line-height:\s*1\.4/,
+    /\.repair-stage__rail \.repair-accordion > summary\s*\{[\s\S]*?min-height:\s*var\(--repair-accordion-summary-height\);[\s\S]*?padding:\s*15px 0;[\s\S]*?font-family:\s*var\(--font-kor-body\);[\s\S]*?line-height:\s*22px/,
   );
 });
 

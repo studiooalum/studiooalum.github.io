@@ -29,4 +29,7 @@ function linkifyDetailTags() {
 export async function initArchiveBoard() {
   await initExistingArchiveBoard();
   linkifyDetailTags();
+
+  const relatedHeading = document.querySelector(".archive-related h2");
+  if (relatedHeading) relatedHeading.textContent = "you may also like";
 }

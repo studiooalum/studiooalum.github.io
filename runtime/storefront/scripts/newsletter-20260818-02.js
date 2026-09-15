@@ -202,6 +202,41 @@ function createPostCard(post) {
   return card;
 }
 
+function createRecommendationCard(post) {
+  const link = document.createElement("a");
+  link.className = "newsletter-recommend-card";
+  link.href = `./newsletter.html?slug=${encodeURIComponent(post.slug)}`;
+  link.setAttribute("aria-label", `${post.title || "뉴스레터"} 읽기`);
+
+  const thumb = document.createElement("div");
+  thumb.className = "newsletter-recommend-card__thumb";
+  const image = document.createElement("img");
+  image.src = post.coverImageUrl;
+  image.alt = post.coverImageAlt || post.title || "";
+  image.loading = "lazy";
+  thumb.append(image);
+  link.append(thumb);
+  return link;
+}
+
+function createRecommendations(posts, currentSlug) {
+  const recommendations = posts
+    .filter((post) => post.slug !== currentSlug && post.coverImageUrl)
+    .slice(0, 4);
+  if (!recommendations.length) return null;
+
+  const section = document.createElement("section");
+  section.className = "newsletter-recommendation";
+  const heading = document.createElement("h2");
+  heading.className = "newsletter-recommendation__title";
+  heading.textContent = "you may also like";
+  const grid = document.createElement("div");
+  grid.className = "newsletter-recommendation__grid";
+  recommendations.forEach((post) => grid.append(createRecommendationCard(post)));
+  section.append(heading, grid);
+  return section;
+}
+
 function renderCategoryTags(posts, selectedCategory) {
   const container = document.getElementById("newsletterTags");
   if (!container) return;
@@ -220,7 +255,7 @@ function renderCategoryTags(posts, selectedCategory) {
   container.replaceChildren(fragment);
 }
 
-function renderPostEntry(container, post) {
+function renderPostEntry(container, post, posts = []) {
   if (!container) return;
   container.innerHTML = "";
 
@@ -247,6 +282,8 @@ function renderPostEntry(container, post) {
   content.innerHTML = post.contentHtml || "";
   enhanceEntryImages(content);
   container.append(back, meta, title, excerpt, tags, content);
+  const recommendations = createRecommendations(posts, post.slug);
+  if (recommendations) container.append(recommendations);
 }
 
 export async function initNewsletterPage() {
@@ -264,13 +301,16 @@ export async function initNewsletterPage() {
   try {
     if (slug) {
       document.body.classList.add("newsletter-entry-mode");
-      const payload = await requestNewsletter(`./api/newsletters?slug=${encodeURIComponent(slug)}`);
+      const [payload, listPayload] = await Promise.all([
+        requestNewsletter(`./api/newsletters?slug=${encodeURIComponent(slug)}`),
+        requestNewsletter("./api/newsletters").catch(() => ({ posts: [] })),
+      ]);
       if (!payload.post) {
         status.hidden = false;
         status.textContent = "요청한 글을 찾을 수 없습니다.";
         return;
       }
-      renderPostEntry(entry, payload.post);
+      renderPostEntry(entry, payload.post, Array.isArray(listPayload.posts) ? listPayload.posts : []);
       entry.hidden = false;
       list.hidden = true;
       status.hidden = true;
