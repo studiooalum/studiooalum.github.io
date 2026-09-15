@@ -1,0 +1,306 @@
+/* Figma 1:208 — Repair Studio accordion rail. */
+.repair-stage__rail {
+  --repair-accordion-summary-height: 53px;
+  display: block;
+  min-height: 0;
+  border: 0;
+}
+
+.repair-stage__rail .repair-accordion,
+.repair-stage__rail .repair-accordion + .repair-accordion,
+.repair-stage__rail .repair-accordion:last-child {
+  margin: 0;
+  border: 0;
+}
+
+.repair-stage__rail .repair-accordion > summary {
+  display: grid;
+  min-height: var(--repair-accordion-summary-height);
+  box-sizing: border-box;
+  grid-template-columns: 8px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  padding: 15px 0;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.48px;
+  line-height: 22px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.repair-stage__rail .repair-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.repair-stage__rail .repair-accordion > summary::before {
+  width: 8px;
+  color: #111;
+  content: "▸";
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.repair-stage__rail .repair-accordion[open] > summary {
+  font-family: var(--font-kor-body);
+  font-weight: 400;
+}
+
+.repair-stage__rail .repair-accordion[open] > summary::before {
+  content: "▾";
+}
+
+.repair-stage__rail .repair-accordion > summary:focus-visible {
+  outline: 1px solid #111;
+  outline-offset: 3px;
+}
+
+.repair-stage__rail .repair-accordion > div {
+  display: block;
+  padding: 0 0 24px;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.36px;
+}
+
+.repair-stage__rail .repair-accordion--price > div {
+  padding-top: 4px;
+}
+
+.repair-stage__rail .repair-price-tabs {
+  display: grid;
+  height: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: #111;
+}
+
+.repair-stage__rail .repair-price-tabs button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 0;
+  padding: 0 10px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-english-ui);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.repair-stage__rail .repair-price-tabs button.is-active {
+  background: #111;
+  color: #fff;
+}
+
+.repair-stage__rail .repair-price-tabs button:focus-visible {
+  outline: 1px solid #111;
+  outline-offset: 2px;
+}
+
+.repair-stage__rail .repair-price-panel {
+  --repair-price-row-height: 36px;
+  min-width: 0;
+  min-height: var(--repair-price-panel-min-height, calc(var(--repair-price-row-height) * 9));
+  margin-top: 12px;
+  overflow-x: visible;
+}
+
+.repair-stage__rail .repair-basic-table,
+.repair-stage__rail .repair-method-matrix {
+  width: 100%;
+  height: auto;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.repair-stage__rail .repair-basic-table {
+  color: rgba(17, 17, 17, 0.82);
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 15px;
+}
+
+.repair-stage__rail .repair-basic-table th,
+.repair-stage__rail .repair-basic-table td {
+  height: var(--repair-price-row-height);
+  padding: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.12);
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.repair-stage__rail .repair-basic-table th:last-child,
+.repair-stage__rail .repair-basic-table td:last-child {
+  font-weight: 400;
+  text-align: right;
+}
+
+.repair-stage__rail .repair-basic-table thead th {
+  color: rgba(17, 17, 17, 0.58);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.repair-stage__rail .repair-method-matrix {
+  color: rgba(17, 17, 17, 0.82);
+  font-family: var(--font-english-ui);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.repair-stage__rail .repair-method-matrix th,
+.repair-stage__rail .repair-method-matrix td {
+  height: var(--repair-price-row-height);
+  padding: 0 2px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.12);
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  text-align: right;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.repair-stage__rail .repair-method-matrix th:first-child,
+.repair-stage__rail .repair-method-matrix td:first-child {
+  width: 30%;
+  padding-left: 0;
+  text-align: left;
+  white-space: normal;
+}
+
+.repair-stage__rail .repair-method-matrix thead th {
+  color: rgba(17, 17, 17, 0.58);
+  font-size: 9px;
+}
+
+.repair-stage__rail .repair-price-notes {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  color: rgba(17, 17, 17, 0.58);
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: -0.36px;
+  line-height: 18px;
+}
+
+.repair-stage__rail .repair-price-notes p {
+  margin: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.repair-stage__rail .repair-accordion--process > div {
+  padding-top: 3px;
+}
+
+.repair-stage__rail .repair-process-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repair-stage__rail .repair-process-list li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 0;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.36px;
+  line-height: 22.4px;
+}
+
+.repair-stage__rail .repair-process-list span {
+  color: rgba(17, 17, 17, 0.3);
+  font-family: var(--font-bold);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: inherit;
+}
+
+.repair-stage__rail .repair-process-note {
+  margin: 15px 0 0;
+  color: rgba(17, 17, 17, 0.58);
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: -0.36px;
+  line-height: 20.4px;
+}
+
+.repair-stage__rail .repair-accordion--shipping > div {
+  display: grid;
+  gap: 10px;
+  padding-top: 3px;
+}
+
+.repair-stage__rail .repair-accordion--shipping p {
+  margin: 0;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.36px;
+  line-height: 17px;
+}
+
+@media (min-width: 960px) {
+  .repair-stage {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .repair-stage__rail {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 768px) {
+  .repair-stage__rail,
+  .repair-stage__rail .repair-accordion,
+  .repair-stage__rail .repair-accordion + .repair-accordion,
+  .repair-stage__rail .repair-accordion:last-child {
+    border: 0;
+  }
+
+  .repair-stage__rail .repair-accordion > summary {
+    --repair-accordion-summary-height: 50px;
+    padding: 14px 0;
+    font-size: 13.5px;
+    letter-spacing: 0;
+    line-height: 20px;
+  }
+
+  .repair-stage__rail .repair-method-matrix {
+    font-size: 8px;
+  }
+}
