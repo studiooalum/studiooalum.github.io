@@ -72,7 +72,6 @@ const state = {
 let posterResizeHandlerBound = false;
 
 const WORKSHOP_TIME_ZONE = "Asia/Seoul";
-const CALENDAR_START_MONTH = "2026-09";
 
 function formatDatePartsInZone(date, timeZone = WORKSHOP_TIME_ZONE) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -247,9 +246,9 @@ function groupSlotsByDate(slots) {
 
 function deriveMonthKeys(slots) {
   const sortedDates = Array.from(new Set((slots || []).map((slot) => String(slot.date || "").trim()).filter(Boolean))).sort();
-  const startMonthKey = CALENDAR_START_MONTH;
+  const startMonthKey = getMonthKey(getTodayDateKey());
   const endMonthKey = getMonthKey(sortedDates[sortedDates.length - 1] || startMonthKey);
-  return enumerateMonthKeys(startMonthKey, endMonthKey < startMonthKey ? startMonthKey : endMonthKey);
+  return enumerateMonthKeys(startMonthKey, endMonthKey);
 }
 
 function getBookingConfig() {
@@ -646,7 +645,7 @@ function renderWorkshopDetails(workshop) {
 }
 
 function createWeekdayRow() {
-  const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+  const weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
   const row = document.createElement("div");
   row.className = "workshop-calendar__weekdays";
 
@@ -669,9 +668,9 @@ function createMonthGrid(monthKey) {
   const grid = document.createElement("div");
   grid.className = "workshop-calendar__grid";
 
-  const mondayFirstIndex = (firstDate.getDay() + 6) % 7;
+  const sundayFirstIndex = firstDate.getDay();
 
-  for (let emptyIndex = 0; emptyIndex < mondayFirstIndex; emptyIndex += 1) {
+  for (let emptyIndex = 0; emptyIndex < sundayFirstIndex; emptyIndex += 1) {
     const blank = document.createElement("span");
     blank.className = "workshop-calendar__blank";
     grid.appendChild(blank);
