@@ -1,8 +1,9 @@
 /* Figma 1:208 — Repair Studio accordion rail. */
 .repair-stage__rail {
-  --repair-accordion-summary-height: 53px;
-  display: block;
+  display: grid;
   min-height: 0;
+  align-content: start;
+  gap: 16px;
   border: 0;
 }
 
@@ -15,18 +16,18 @@
 
 .repair-stage__rail .repair-accordion > summary {
   display: grid;
-  min-height: var(--repair-accordion-summary-height);
+  min-height: 0;
   box-sizing: border-box;
   grid-template-columns: 8px minmax(0, 1fr);
   align-items: center;
   column-gap: 10px;
-  padding: 15px 0;
+  padding: 0;
   color: #111;
   font-family: var(--font-kor-body);
   font-size: 18px;
   font-weight: 400;
   letter-spacing: -0.48px;
-  line-height: 22px;
+  line-height: 1.4;
   list-style: none;
   cursor: pointer;
 }
@@ -292,9 +293,14 @@
     border: 0;
   }
 
+  .repair-stage__rail {
+    display: block;
+    gap: 0;
+  }
+
   .repair-stage__rail .repair-accordion > summary {
-    --repair-accordion-summary-height: 50px;
-    padding: 14px 0;
+    min-height: 0;
+    padding: 15px 0;
     font-size: 13.5px;
     letter-spacing: 0;
     line-height: 20px;

@@ -9,7 +9,7 @@ const repairCss = await readFile(
 );
 
 test("repair page keeps the Figma accordion content contract", () => {
-  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260915-01/);
+  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260915-02/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<summary>([^<]+)<\/summary>/g)].slice(0, 3).map((match) => match[1]),
     ["가격 및 견적", "접수 및 진행", "배송 및 결제"],
@@ -34,7 +34,8 @@ test("repair page keeps the Figma accordion content contract", () => {
 test("repair accordion uses the three-column rail and Figma typography", () => {
   assert.match(repairCss, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(repairCss, /\.repair-stage__rail\s*\{[\s\S]*?grid-column:\s*3;/);
-  assert.match(repairCss, /--repair-accordion-summary-height:\s*53px/);
+  assert.match(repairCss, /\.repair-stage__rail\s*\{[\s\S]*?gap:\s*16px/);
+  assert.match(repairCss, /\.repair-accordion > summary\s*\{[\s\S]*?padding:\s*0;[\s\S]*?line-height:\s*1\.4/);
   assert.match(repairCss, /font-size:\s*18px/);
   assert.match(repairCss, /--repair-price-row-height:\s*36px/);
   assert.match(repairCss, /\.repair-process-list\s*\{[\s\S]*?gap:\s*7px/);
@@ -62,4 +63,5 @@ test("repair accordion omits section divider lines at every viewport", () => {
   }
   assert.match(repairCss, /\.repair-stage__rail\s*\{[\s\S]*?border:\s*0;/);
   assert.match(repairCss, /@media \(max-width:\s*768px\)[\s\S]*?\.repair-stage__rail[\s\S]*?border:\s*0;/);
+  assert.match(repairCss, /@media \(max-width:\s*768px\)[\s\S]*?display:\s*block;[\s\S]*?gap:\s*0;[\s\S]*?padding:\s*15px 0;/);
 });
