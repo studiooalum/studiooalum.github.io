@@ -9,7 +9,7 @@ const repairCss = await readFile(
 );
 
 test("repair page keeps the Figma accordion content contract", () => {
-  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260915-01/);
+  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260915-03/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<summary>([^<]+)<\/summary>/g)].slice(0, 3).map((match) => match[1]),
     ["가격 및 견적", "접수 및 진행", "배송 및 결제"],
@@ -39,6 +39,17 @@ test("repair accordion uses the three-column rail and Figma typography", () => {
   assert.match(repairCss, /--repair-price-row-height:\s*36px/);
   assert.match(repairCss, /\.repair-process-list\s*\{[\s\S]*?gap:\s*7px/);
   assert.match(repairCss, /\.repair-accordion--shipping > div\s*\{[\s\S]*?gap:\s*10px/);
+});
+
+test("collapsed desktop accordion restores yesterday's title rhythm only", () => {
+  assert.match(
+    repairCss,
+    /@media \(min-width:\s*769px\)[\s\S]*?\.repair-stage__rail:not\(:has\(\.repair-accordion\[open\]\)\)\s*\{[\s\S]*?gap:\s*16px/,
+  );
+  assert.match(
+    repairCss,
+    /:not\(:has\(\.repair-accordion\[open\]\)\) \.repair-accordion > summary\s*\{[\s\S]*?min-height:\s*0;[\s\S]*?padding:\s*0;[\s\S]*?line-height:\s*1\.4/,
+  );
 });
 
 test("repair accordion omits section divider lines at every viewport", () => {

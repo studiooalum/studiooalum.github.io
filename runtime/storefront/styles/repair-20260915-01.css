@@ -284,6 +284,21 @@
   }
 }
 
+/* Match yesterday's title rhythm only while every accordion is collapsed. */
+@media (min-width: 769px) {
+  .repair-stage__rail:not(:has(.repair-accordion[open])) {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+  }
+
+  .repair-stage__rail:not(:has(.repair-accordion[open])) .repair-accordion > summary {
+    min-height: 0;
+    padding: 0;
+    line-height: 1.4;
+  }
+}
+
 @media (max-width: 768px) {
   .repair-stage__rail,
   .repair-stage__rail .repair-accordion,
