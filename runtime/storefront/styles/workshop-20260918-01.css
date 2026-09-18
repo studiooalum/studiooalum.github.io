@@ -112,6 +112,10 @@
   gap: 10px;
 }
 
+.workshop-schedule-overview[hidden] {
+  display: none;
+}
+
 .workshop-section-title,
 .workshop-fact__title {
   margin: 0;

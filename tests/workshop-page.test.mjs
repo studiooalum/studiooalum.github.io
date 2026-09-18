@@ -84,6 +84,7 @@ test("workshop summary and application panel use the full available grid width",
 
 test("workshop information uses category-only labeling and clear empty material copy", () => {
   assert.match(workshopHtml, />curriculum<\/h2>/);
+  assert.match(workshopCss, /\.workshop-schedule-overview\[hidden\]\s*\{\s*display:\s*none/);
   assert.doesNotMatch(workshopJs, /workshop \/ \$\{workshop\.category/);
   assert.match(workshopJs, /dom\.kicker\.textContent = category/);
   assert.match(workshopJs, /제공되는 재료가 없습니다\./);
