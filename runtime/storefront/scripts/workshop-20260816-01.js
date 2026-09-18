@@ -7,6 +7,9 @@ import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, upd
 
 const dom = {
   stage: document.getElementById("workshopStage"),
+  media: document.getElementById("workshopMedia"),
+  sidebarTrack: document.getElementById("workshopSidebarTrack"),
+  sidebar: document.getElementById("workshopSidebar"),
   back: document.getElementById("workshopBack"),
   poster: document.getElementById("workshopPoster"),
   kicker: document.getElementById("workshopKicker"),
@@ -70,6 +73,8 @@ const state = {
 };
 
 let posterResizeHandlerBound = false;
+let workshopStickyUpdatesBound = false;
+let workshopStickyObserver = null;
 
 const WORKSHOP_TIME_ZONE = "Asia/Seoul";
 
@@ -497,6 +502,51 @@ function renderGallery(workshop) {
   `).join("");
 }
 
+function syncWorkshopStickyStop() {
+  if (!dom.media || !dom.sidebarTrack || !dom.sidebar) return;
+
+  if (window.innerWidth < 960) {
+    dom.sidebarTrack.style.removeProperty("height");
+    return;
+  }
+
+  const mediaImages = dom.media.querySelectorAll("img");
+  const stickyHeight = Math.ceil(dom.sidebar.offsetHeight);
+
+  if (mediaImages.length === 0) {
+    dom.sidebarTrack.style.height = `${stickyHeight}px`;
+    return;
+  }
+
+  const lastImage = mediaImages[mediaImages.length - 1];
+  const stopOffset = Math.ceil(lastImage.offsetTop + stickyHeight);
+  dom.sidebarTrack.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
+}
+
+function bindWorkshopStickyStopUpdates() {
+  if (!dom.media || !dom.sidebarTrack || !dom.sidebar) return;
+
+  const mediaImages = dom.media.querySelectorAll("img");
+  for (const image of mediaImages) {
+    if (image.complete) continue;
+    image.addEventListener("load", syncWorkshopStickyStop, { once: true });
+  }
+
+  if (!workshopStickyUpdatesBound) {
+    workshopStickyUpdatesBound = true;
+    window.addEventListener("resize", syncWorkshopStickyStop);
+  }
+
+  if (typeof ResizeObserver !== "undefined") {
+    workshopStickyObserver?.disconnect();
+    workshopStickyObserver = new ResizeObserver(syncWorkshopStickyStop);
+    workshopStickyObserver.observe(dom.media);
+    workshopStickyObserver.observe(dom.sidebar);
+  }
+
+  requestAnimationFrame(syncWorkshopStickyStop);
+}
+
 function renderScheduleOverview(workshop) {
   if (!dom.scheduleOverview || !dom.scheduleOverviewList) return;
 
@@ -642,6 +692,7 @@ function renderWorkshopDetails(workshop) {
   renderPoster(workshop);
   renderScheduleOverview(workshop);
   renderGallery(workshop);
+  bindWorkshopStickyStopUpdates();
 }
 
 function createWeekdayRow() {
