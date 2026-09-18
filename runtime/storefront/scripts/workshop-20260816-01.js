@@ -3,6 +3,7 @@ import {
   getWorkshopSlug,
   normalizeWorkshop,
 } from "./utils/workshops-20260816-01.js";
+import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo-20260816-01.js";
 
 const dom = {
@@ -75,8 +76,126 @@ const state = {
 let posterResizeHandlerBound = false;
 let workshopStickyUpdatesBound = false;
 let workshopStickyObserver = null;
+let lightboxEl = null;
+let lightboxCloseEl = null;
+let lightboxImageEl = null;
+let lightboxPrevEl = null;
+let lightboxNextEl = null;
+let lightboxItems = [];
+let lightboxActiveIndex = 0;
+let lightboxPreviouslyFocused = null;
 
 const WORKSHOP_TIME_ZONE = "Asia/Seoul";
+
+function normalizeLightboxIndex(index) {
+  if (!lightboxItems.length) return 0;
+  return (index + lightboxItems.length) % lightboxItems.length;
+}
+
+function preloadLightboxImage(index) {
+  const item = lightboxItems[index];
+  if (!item?.url) return;
+  const image = new Image();
+  image.src = item.url;
+}
+
+function updateLightbox() {
+  if (!lightboxImageEl || !lightboxItems.length) return;
+  const item = lightboxItems[lightboxActiveIndex];
+  lightboxImageEl.src = item.url;
+  lightboxImageEl.alt = item.alt || "워크숍 이미지";
+
+  const hasMultipleImages = lightboxItems.length > 1;
+  lightboxPrevEl?.toggleAttribute("hidden", !hasMultipleImages);
+  lightboxNextEl?.toggleAttribute("hidden", !hasMultipleImages);
+  if (!hasMultipleImages) return;
+  preloadLightboxImage(normalizeLightboxIndex(lightboxActiveIndex - 1));
+  preloadLightboxImage(normalizeLightboxIndex(lightboxActiveIndex + 1));
+}
+
+function stepLightbox(offset) {
+  if (lightboxItems.length < 2) return;
+  lightboxActiveIndex = normalizeLightboxIndex(lightboxActiveIndex + offset);
+  updateLightbox();
+}
+
+function closeLightbox() {
+  if (!lightboxEl) return;
+  lightboxEl.classList.remove("is-open");
+  lightboxEl.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("edition-lightbox-open");
+  unlockBodyScroll("workshop-lightbox");
+  lightboxPreviouslyFocused?.focus?.();
+  lightboxPreviouslyFocused = null;
+}
+
+function ensureLightbox() {
+  if (lightboxEl) return;
+  lightboxEl = document.createElement("div");
+  lightboxEl.className = "edition-lightbox";
+  lightboxEl.setAttribute("aria-hidden", "true");
+  lightboxEl.innerHTML = `
+    <div class="edition-lightbox__backdrop" data-lightbox-close="true"></div>
+    <div class="edition-lightbox__dialog" role="dialog" aria-modal="true" aria-label="워크숍 이미지 확대 보기">
+      <button type="button" class="edition-lightbox__nav edition-lightbox__nav--prev" aria-label="이전 이미지"><span aria-hidden="true">&lt;</span></button>
+      <div class="edition-lightbox__viewport">
+        <figure class="edition-lightbox__figure"><img class="edition-lightbox__image" alt=""></figure>
+      </div>
+      <button type="button" class="edition-lightbox__nav edition-lightbox__nav--next" aria-label="다음 이미지"><span aria-hidden="true">&gt;</span></button>
+      <button type="button" class="edition-lightbox__close" aria-label="확대 이미지 닫기"></button>
+    </div>`;
+  document.body.appendChild(lightboxEl);
+
+  lightboxCloseEl = lightboxEl.querySelector(".edition-lightbox__close");
+  lightboxImageEl = lightboxEl.querySelector(".edition-lightbox__image");
+  lightboxPrevEl = lightboxEl.querySelector(".edition-lightbox__nav--prev");
+  lightboxNextEl = lightboxEl.querySelector(".edition-lightbox__nav--next");
+
+  lightboxEl.addEventListener("click", (event) => {
+    if (event.target.closest(".edition-lightbox__image, .edition-lightbox__nav, .edition-lightbox__close")) return;
+    closeLightbox();
+  });
+  lightboxCloseEl?.addEventListener("click", closeLightbox);
+  lightboxPrevEl?.addEventListener("click", () => stepLightbox(-1));
+  lightboxNextEl?.addEventListener("click", () => stepLightbox(1));
+  window.addEventListener("keydown", (event) => {
+    if (!lightboxEl?.classList.contains("is-open")) return;
+    if (event.key === "Escape") closeLightbox();
+    if (event.key === "ArrowLeft") stepLightbox(-1);
+    if (event.key === "ArrowRight") stepLightbox(1);
+  });
+}
+
+function openLightbox(items, activeIndex = 0) {
+  if (!items.length) return;
+  ensureLightbox();
+  lightboxPreviouslyFocused = document.activeElement;
+  lightboxItems = items;
+  lightboxActiveIndex = normalizeLightboxIndex(activeIndex);
+  updateLightbox();
+  lightboxEl.classList.add("is-open");
+  lightboxEl.setAttribute("aria-hidden", "false");
+  document.body.classList.add("edition-lightbox-open");
+  lockBodyScroll("workshop-lightbox");
+  requestAnimationFrame(() => lightboxCloseEl?.focus());
+}
+
+function bindWorkshopImageLightbox() {
+  if (!dom.media) return;
+  const images = Array.from(dom.media.querySelectorAll("img"));
+  const items = images.map((image) => ({ url: image.currentSrc || image.src, alt: image.alt }));
+  images.forEach((image, index) => {
+    image.tabIndex = 0;
+    image.setAttribute("role", "button");
+    image.setAttribute("aria-label", `${image.alt || "워크숍 이미지"} 확대 보기`);
+    image.addEventListener("click", () => openLightbox(items, index));
+    image.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openLightbox(items, index);
+    });
+  });
+}
 
 function formatDatePartsInZone(date, timeZone = WORKSHOP_TIME_ZONE) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -634,7 +753,9 @@ function renderWorkshopDetails(workshop) {
   }
 
   if (dom.kicker) {
-    dom.kicker.textContent = `workshop / ${workshop.category || "workshop"}`;
+    const category = String(workshop.category || "").trim();
+    dom.kicker.textContent = category;
+    dom.kicker.hidden = !category;
   }
 
   if (dom.title) {
@@ -664,8 +785,8 @@ function renderWorkshopDetails(workshop) {
     }
   }
 
-  setList(dom.materials, workshop.materials, "기본 재료는 현장에서 안내됩니다.");
-  setList(dom.bring, workshop.thingsToBring, "필요한 준비물은 예약 후 개별 안내됩니다.");
+  setList(dom.materials, workshop.materials, "제공되는 재료가 없습니다.");
+  setList(dom.bring, workshop.thingsToBring, "별도로 준비할 재료가 없습니다.");
 
   if (dom.capacity) {
     dom.capacity.textContent = `${workshop.maxCapacity || 0}명 정원`;
@@ -692,6 +813,7 @@ function renderWorkshopDetails(workshop) {
   renderPoster(workshop);
   renderScheduleOverview(workshop);
   renderGallery(workshop);
+  bindWorkshopImageLightbox();
   bindWorkshopStickyStopUpdates();
 }
 

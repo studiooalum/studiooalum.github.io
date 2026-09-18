@@ -229,6 +229,10 @@
                       <input type="text" name="locationAddress" maxlength="240">
                     </label>
                     <label class="fulfillment-field">
+                      <span>상세 주소</span>
+                      <input type="text" name="locationDetail" maxlength="240">
+                    </label>
+                    <label class="fulfillment-field">
                       <span>예약 안내</span>
                       <textarea name="bookingNotice" rows="3" maxlength="500"></textarea>
                     </label>
@@ -276,12 +280,6 @@
                       <span>상세 설명</span>
                       <textarea name="description" rows="8" maxlength="12000" placeholder="문단 사이를 한 줄 띄워 입력하세요."></textarea>
                     </label>
-                  </div>
-                </details>
-
-                <details class="workshop-admin-accordion">
-                  <summary>고급 설정</summary>
-                  <div class="workshop-admin-accordion__body">
                     <div class="workshop-admin-grid workshop-admin-grid--two">
                       <label class="fulfillment-field">
                         <span>제공 재료</span>
@@ -292,17 +290,20 @@
                         <textarea name="thingsToBring" rows="4" placeholder="한 줄에 하나씩 입력"></textarea>
                       </label>
                     </div>
+                  </div>
+                </details>
+
+                <details class="workshop-admin-accordion">
+                  <summary>고급 설정</summary>
+                  <div class="workshop-admin-accordion__body">
                     <div class="workshop-admin-grid workshop-admin-grid--two">
                       <label class="fulfillment-field">
-                        <span>상세 주소</span>
-                        <input type="text" name="locationDetail" maxlength="240">
+                        <span>주소용 이름</span>
+                        <input type="text" name="slug" maxlength="120" placeholder="slug">
                       </label>
                       <label class="fulfillment-field">
-                        <span>주소용 이름과 정렬 순서</span>
-                        <div class="workshop-admin-grid workshop-admin-grid--two">
-                          <input type="text" name="slug" maxlength="120" placeholder="slug">
-                          <input type="number" name="sortOrder" step="1" value="0" placeholder="0">
-                        </div>
+                        <span>정렬 순서</span>
+                        <input type="number" name="sortOrder" step="1" value="0" placeholder="0">
                       </label>
                     </div>
                   </div>
