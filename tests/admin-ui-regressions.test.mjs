@@ -97,3 +97,19 @@ test("My Oalum waits for the account response before revealing an auth view", as
   assert.doesNotMatch(initialization, /\n\s*showLoggedOut\(\);\n\s*setActiveAuthPanel/);
   assert.match(initialization, /setActiveAuthPanel[\s\S]*loadAccount\(\{ silent: true \}\)/);
 });
+
+test("My Oalum keeps logout in the account page and removes it from the GNB", async () => {
+  const [html, stylesheet, siteChrome] = await Promise.all([
+    read("account.html"),
+    read("runtime/storefront/styles/account.css"),
+    read("runtime/storefront/scripts/components/siteChrome-20260818-05.js"),
+  ]);
+
+  assert.match(html, />회원정보 수정<\/a>/);
+  assert.doesNotMatch(html, /회원정보 수정\s*<span[^>]*>→<\/span>/);
+  assert.match(html, /class="account-overview__link js-account-logout">로그아웃<\/button>/);
+  assert.match(stylesheet, /\.account-overview__actions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*8px/);
+  assert.match(stylesheet, /\.account-overview__link\s*\{[\s\S]*?text-decoration:\s*underline/);
+  assert.match(stylesheet, /\.account-dashboard-card--repairs\s*\{[\s\S]*?border:\s*0/);
+  assert.match(siteChrome, /document\.querySelectorAll\("\.gnb \[data-auth-toggle='logout'\]"\)/);
+});

@@ -111,7 +111,7 @@
 .workshop-information,
 .workshop-schedule-overview,
 .workshop-notes {
-  gap: 12px;
+  gap: 8px;
 }
 
 .workshop-schedule-overview[hidden] {
@@ -152,14 +152,14 @@
 
 .workshop-facts {
   grid-template-columns: 1fr;
-  gap: 40px;
+  gap: 24px;
   border: 0;
 }
 
 .workshop-fact,
 .workshop-fact:last-child {
   grid-column: auto;
-  gap: 12px;
+  gap: 8px;
   min-height: 0;
   padding: 0;
   border: 0;
@@ -264,7 +264,7 @@ body.workshop-page .workshop-summary-card__action .workshop-apply-btn:focus-visi
 
 .workshop-stage__summary {
   display: grid;
-  gap: 40px;
+  gap: 24px;
 }
 
 .workshop-calendar__day,
