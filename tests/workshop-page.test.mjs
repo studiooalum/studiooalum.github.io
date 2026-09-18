@@ -50,6 +50,9 @@ test("workshop detail follows the site's three-column grid and typography tokens
   assert.match(workshopCss, /font-family:\s*var\(--font-book\)/);
   assert.match(workshopCss, /font-family:\s*var\(--font-kor-body\)/);
   assert.match(workshopCss, /font-size:\s*clamp\(28px, 2\.6vw, 34px\)/);
+  assert.match(workshopCss, /\.workshop-stage__media\s*\{[\s\S]*?gap:\s*0/);
+  assert.match(workshopCss, /\.workshop-gallery__grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap:\s*0/);
+  assert.match(workshopCss, /\.workshop-gallery__item\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1/);
   assert.match(workshopJs, /function syncWorkshopStickyStop\(\)/);
   assert.match(workshopJs, /lastImage\.offsetTop \+ stickyHeight/);
   assert.match(workshopJs, /new ResizeObserver\(syncWorkshopStickyStop\)/);

@@ -17,7 +17,7 @@
 .workshop-stage__media {
   display: grid;
   align-content: start;
-  gap: var(--grid-gap);
+  gap: 0;
 }
 
 .workshop-stage__sidebar {
@@ -45,23 +45,31 @@
 }
 
 .workshop-gallery {
-  gap: var(--grid-gap);
+  gap: 0;
   padding: 0;
   border: 0;
 }
 
 .workshop-gallery__grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--grid-gap);
+  gap: 0;
 }
 
 .workshop-gallery__item {
-  gap: 6px;
+  aspect-ratio: 1 / 1;
+  gap: 0;
+  overflow: hidden;
 }
 
 .workshop-gallery__item img {
+  width: 100%;
+  height: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
+}
+
+.workshop-gallery__item figcaption {
+  display: none;
 }
 
 .workshop-stage__content {
