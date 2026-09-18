@@ -1,4 +1,4 @@
-import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818-01.js?v=20260910-01";
+import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818-01.js?v=20260915-02";
 
 function linkifyDetailTags() {
   document.querySelectorAll(".archive-detail-meta__more p").forEach((row) => {
@@ -29,4 +29,7 @@ function linkifyDetailTags() {
 export async function initArchiveBoard() {
   await initExistingArchiveBoard();
   linkifyDetailTags();
+
+  const relatedHeading = document.querySelector(".archive-related h2");
+  if (relatedHeading) relatedHeading.textContent = "you may also like";
 }

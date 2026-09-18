@@ -1,4 +1,4 @@
-import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260816-06.js?v=20260910-01";
+import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260816-06.js?v=20260915-02";
 
 export async function initArchiveBoard() {
   await initExistingArchiveBoard();

@@ -56,8 +56,8 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
     read("runtime/storefront/styles/newsletter-20260818-01.css"),
   ]);
 
-  assert.match(html, /newsletter-20260818-03\.css\?v=20260914-01/);
-  assert.match(html, /newsletter-20260818-02\.js\?v=20260914-01/);
+  assert.match(html, /newsletter-20260818-03\.css\?v=20260915-02/);
+  assert.match(html, /newsletter-20260818-02\.js\?v=20260915-01/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry > \*[\s\S]*grid-column:\s*2/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*grid-template-columns:\s*repeat\(2/);
   assert.match(controller, /function enhanceEntryImages/);
@@ -76,6 +76,8 @@ test("Archive category navigation remains on the list and hides on details", asy
   assert.match(html, /id="archiveTags"/);
   assert.match(controller, /if \(detailItem\)[\s\S]*tagsElement\.hidden = true/);
   assert.match(controller, /else \{[\s\S]*tagsElement\.hidden = false;[\s\S]*renderTags\(tagsElement\)/);
+  assert.match(controller, /lastImage\.getBoundingClientRect\(\)\.bottom <= window\.innerHeight/);
+  assert.doesNotMatch(controller, /bottom <= meta\.getBoundingClientRect\(\)\.top/);
   assert.match(stylesheet, /\.archive-detail-mode \.archive-tags[\s\S]*display:\s*none/);
 });
 

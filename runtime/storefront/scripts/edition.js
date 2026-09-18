@@ -247,7 +247,9 @@ function syncStickyStop() {
   }
 
   const lastImage = mediaImages[mediaImages.length - 1];
-  const stopOffset = Math.ceil(lastImage.offsetTop + stickyHeight);
+  const mediaTop = mediaEl.getBoundingClientRect().top;
+  const lastImageTop = lastImage.getBoundingClientRect().top - mediaTop;
+  const stopOffset = Math.ceil(lastImageTop + stickyHeight);
   sidebarTrackEl.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
 }
 
