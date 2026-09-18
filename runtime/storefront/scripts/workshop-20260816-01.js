@@ -22,6 +22,7 @@ const dom = {
   materials: document.getElementById("workshopMaterials"),
   capacity: document.getElementById("workshopCapacity"),
   location: document.getElementById("workshopLocation"),
+  bringSection: document.getElementById("workshopBringSection"),
   bring: document.getElementById("workshopBring"),
   notice: document.getElementById("workshopNotice"),
   scheduleOverview: document.getElementById("workshopScheduleOverview"),
@@ -786,7 +787,14 @@ function renderWorkshopDetails(workshop) {
   }
 
   setList(dom.materials, workshop.materials, "제공되는 재료가 없습니다.");
-  setList(dom.bring, workshop.thingsToBring, "별도로 준비할 재료가 없습니다.");
+  const thingsToBring = Array.isArray(workshop.thingsToBring)
+    ? workshop.thingsToBring.map((item) => String(item || "").trim()).filter(Boolean)
+    : [];
+  if (dom.bringSection && dom.bring) {
+    dom.bringSection.hidden = thingsToBring.length === 0;
+    dom.bring.innerHTML = "";
+    if (thingsToBring.length > 0) setList(dom.bring, thingsToBring, "");
+  }
 
   if (dom.capacity) {
     dom.capacity.textContent = `${workshop.maxCapacity || 0}명 정원`;

@@ -75,20 +75,25 @@ test("workshop imagery preserves the poster ratio and opens in the edition light
   assert.match(workshopJs, /unlockBodyScroll\("workshop-lightbox"\)/);
 });
 
-test("workshop summary and application panel use the full available grid width", () => {
+test("workshop details mirror the edition columns and the application panel stays in column three", () => {
   assert.doesNotMatch(workshopHtml, /날짜와 시간을 선택한 뒤 예약 정보를 입력해 주세요/);
-  assert.match(workshopCss, /\.workshop-summary-card__action\s*\{[\s\S]*?padding:\s*0 24px 24px/);
+  assert.match(workshopCss, /\.workshop-summary-card\s*\{[\s\S]*?border:\s*0/);
+  assert.match(workshopCss, /\.workshop-summary-card__action\s*\{[\s\S]*?padding:\s*0/);
   assert.match(workshopCss, /\.workshop-apply-btn\s*\{[\s\S]*?width:\s*100%/);
-  assert.match(workshopCss, /\.workshop-rail__panel\s*\{[\s\S]*?left:\s*var\(--page-gutter\);[\s\S]*?right:\s*var\(--page-gutter\)/);
+  assert.match(workshopCss, /\.workshop-rail__panel\s*\{[\s\S]*?left:\s*auto;[\s\S]*?right:\s*var\(--page-gutter\);[\s\S]*?width:\s*var\(--page-column-width\)/);
+  assert.match(workshopCss, /\.workshop-calendar__day,[\s\S]*?\.workshop-calendar__blank\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1/);
 });
 
 test("workshop information uses category-only labeling and clear empty material copy", () => {
-  assert.match(workshopHtml, />curriculum<\/h2>/);
+  for (const label of ["소개", "제공하는 재료", "장소", "준비물", "커리큘럼", "안내"]) {
+    assert.match(workshopHtml, new RegExp(`>${label}<\\/h2>`));
+  }
   assert.match(workshopCss, /\.workshop-schedule-overview\[hidden\]\s*\{\s*display:\s*none/);
   assert.doesNotMatch(workshopJs, /workshop \/ \$\{workshop\.category/);
   assert.match(workshopJs, /dom\.kicker\.textContent = category/);
   assert.match(workshopJs, /제공되는 재료가 없습니다\./);
-  assert.match(workshopJs, /별도로 준비할 재료가 없습니다\./);
+  assert.match(workshopJs, /dom\.bringSection\.hidden = thingsToBring\.length === 0/);
+  assert.doesNotMatch(workshopJs, /별도로 준비할 재료가 없습니다\./);
   assert.match(workshopCss, /\.workshop-fact__list li::before\s*\{\s*content:\s*none/);
 });
 
