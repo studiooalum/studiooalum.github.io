@@ -159,16 +159,24 @@
 
 .repair-stage__rail .repair-method-matrix {
   color: rgba(17, 17, 17, 0.82);
-  font-family: var(--font-english-ui);
-  font-size: 10px;
+  min-width: 460px;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
   font-weight: 400;
-  line-height: 1.3;
+  line-height: 15px;
+  table-layout: fixed;
+}
+
+.repair-stage__rail .repair-price-panel[data-repair-price-panel="methods"] {
+  min-height: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .repair-stage__rail .repair-method-matrix th,
 .repair-stage__rail .repair-method-matrix td {
-  height: var(--repair-price-row-height);
-  padding: 0 2px;
+  height: auto;
+  padding: 10px 4px;
   border-bottom: 1px solid rgba(17, 17, 17, 0.12);
   color: inherit;
   font-family: inherit;
@@ -190,7 +198,12 @@
 
 .repair-stage__rail .repair-method-matrix thead th {
   color: rgba(17, 17, 17, 0.58);
-  font-size: 9px;
+  font-size: 11px;
+}
+
+.repair-stage__rail .repair-method-matrix tbody td:not(:first-child) {
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .repair-stage__rail .repair-price-notes {
@@ -300,7 +313,4 @@
     line-height: 20px;
   }
 
-  .repair-stage__rail .repair-method-matrix {
-    font-size: 8px;
-  }
 }
