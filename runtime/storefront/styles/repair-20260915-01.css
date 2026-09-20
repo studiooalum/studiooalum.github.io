@@ -209,14 +209,14 @@
 
 .repair-stage__rail .repair-price-notes {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   margin-top: 14px;
   color: rgba(17, 17, 17, 0.58);
   font-family: var(--font-kor-body);
   font-size: 11px;
   font-weight: 400;
   letter-spacing: -0.36px;
-  line-height: 18px;
+  line-height: 16px;
 }
 
 .repair-stage__rail .repair-price-notes p {

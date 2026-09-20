@@ -9,7 +9,7 @@ const repairCss = await readFile(
 );
 
 test("repair page keeps the Figma accordion content contract", () => {
-  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260920-02/);
+  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260920-03/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<summary>([^<]+)<\/summary>/g)].slice(0, 3).map((match) => match[1]),
     ["가격 및 견적", "접수 및 진행", "배송 및 결제"],
@@ -56,6 +56,11 @@ test("Repair Methods matches Basic typography without a forced panel height", ()
   assert.match(repairCss, /\.repair-price-panel\[data-repair-price-panel="methods"\]\s*\{[^}]*min-height:\s*0;[^}]*overflow-x:\s*auto;/);
   assert.match(repairCss, /\.repair-method-matrix tbody td:not\(:first-child\)\s*\{[^}]*font-size:\s*13px;[^}]*font-weight:\s*400;[^}]*letter-spacing:\s*inherit;/);
   assert.doesNotMatch(repairCss, /@media \(max-width:\s*768px\)[\s\S]*?\.repair-stage__rail \.repair-method-matrix\s*\{[^}]*font-size:\s*8px;/);
+});
+
+test("the shared pricing notes use compact readable line and paragraph spacing", () => {
+  assert.match(repairCss, /\.repair-stage__rail \.repair-price-notes\s*\{[^}]*gap:\s*4px;[^}]*font-size:\s*11px;[^}]*line-height:\s*16px;/);
+  assert.equal((repairHtml.match(/class="repair-price-notes"/g) || []).length, 1);
 });
 
 test("repair accordion omits section divider lines at every viewport", () => {
