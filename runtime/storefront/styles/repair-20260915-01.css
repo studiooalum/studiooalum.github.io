@@ -203,7 +203,8 @@
 
 .repair-stage__rail .repair-method-matrix tbody td:not(:first-child) {
   font-size: 13px;
-  letter-spacing: 0;
+  font-weight: 400;
+  letter-spacing: inherit;
 }
 
 .repair-stage__rail .repair-price-notes {
