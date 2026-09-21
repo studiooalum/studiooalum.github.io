@@ -19,6 +19,7 @@ import {
   createManualNotificationRetry,
   deleteNotificationRevision,
   processNotificationOutbox,
+  previewNotificationTemplate,
   purgeNotificationHistory,
   restoreNotificationDefault,
   saveNotificationDraft,
@@ -364,7 +365,7 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   const first = await firstResponse.json();
   assert.equal(firstResponse.status, 201);
   assert.equal(first.duplicate, false);
-  assert.equal(first.ticketNumber, 1);
+  assert.equal(first.ticketNumber, null);
   assert.match(first.ticketUrl, /^https:\/\/studiooalum\.test\/t\//);
 
   const shortCode = new URL(first.ticketUrl).pathname.split("/").at(-1);
@@ -410,7 +411,7 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   });
   assert.equal(legacyResponse.status, 201);
   const legacyReceipt = await legacyResponse.json();
-  assert.equal(legacyReceipt.ticketNumber, 2);
+  assert.equal(legacyReceipt.ticketNumber, null);
   const legacyRequest = database.prepare("SELECT shipping_address, country_code FROM repair_requests WHERE submission_id = ?").bind("repair:44444444-4444-4444-8444-444444444444").first();
   assert.equal(legacyRequest.shipping_address, "");
   assert.equal(legacyRequest.country_code, "KR");
@@ -450,6 +451,57 @@ test("submission stores request, event, and rendered outbox atomically", async (
   assert.equal(existing.requestNumber, "REP-20260823-A");
   assert.equal(existing.submissionFingerprint, "fingerprint-A");
   assert.equal(existing.notificationIds.length, 2);
+});
+
+test("Repair inquiries receive a ticket number only when work starts and require an estimate on receipt", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  const receipt = await createInitialRepair(env, "LIFECYCLE");
+
+  assert.equal(receipt.ticketNumber, null);
+  assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first().ticket_number, null);
+
+  await assert.rejects(
+    updateRepairRequest(env, { id: "RPR_LIFECYCLE", expectedVersion: 1, status: "item_received" }),
+    /예상 가격/,
+  );
+  await updateRepairRequest(env, {
+    id: "RPR_LIFECYCLE",
+    expectedVersion: 1,
+    status: "item_received",
+    quoteAmount: 35000,
+  });
+  let row = database.prepare("SELECT ticket_number, quote_amount FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first();
+  assert.equal(row.ticket_number, null);
+  assert.equal(row.quote_amount, 35000);
+  const estimateNotice = database.prepare(`
+    SELECT body_text FROM notification_outbox
+    WHERE entity_id = ? AND template_key = 'repair.received'
+  `).bind("RPR_LIFECYCLE").first();
+  assert.match(estimateNotice.body_text, /예상 가격: 35,000원/);
+
+  await updateRepairRequest(env, { id: "RPR_LIFECYCLE", expectedVersion: 2, status: "in_progress" });
+  row = database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first();
+  assert.equal(row.ticket_number, 1);
+  assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 2);
+});
+
+test("ticket lifecycle migration preserves the ledger through #004 and reclaims inquiry numbers", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  await createInitialRepair(env, "DONE");
+  await createInitialRepair(env, "INQUIRY");
+  database.prepare("UPDATE repair_requests SET ticket_number = 2, status = 'closed' WHERE id = ?").bind("RPR_DONE").run();
+  database.prepare("UPDATE repair_requests SET ticket_number = 7, status = 'received' WHERE id = ?").bind("RPR_INQUIRY").run();
+  database.prepare("UPDATE repair_ticket_number_sequence SET next_number = 10 WHERE id = 1").run();
+
+  const migration = readFileSync(new URL("../cloudflare/d1/migrations/0030_repair_ticket_lifecycle.sql", import.meta.url), "utf8");
+  database.exec(migration);
+  database.exec(migration);
+
+  assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_DONE").first().ticket_number, 2);
+  assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_INQUIRY").first().ticket_number, null);
+  assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 5);
 });
 
 test("status transitions validate fields, avoid duplicate events, and lock closed cases", async (t) => {
@@ -767,7 +819,7 @@ test("Notification templates enforce variables and support draft activation and 
   assert.equal(invalid.valid, false);
   assert.ok(invalid.errors.some((message) => message.includes("지원하지 않는 변수")));
 
-  const body = "{{customer_name}}님, {{product_name}} 제품을 받았습니다. {{repair_ticket_url}}";
+  const body = "{{customer_name}}님, {{product_name}} 제품을 받았습니다. 예상 가격: {{quote_amount}} {{repair_ticket_url}}";
   await saveNotificationDraft(env, {
     templateKey: "repair.received",
     channel: "email",
@@ -789,6 +841,68 @@ test("Notification templates enforce variables and support draft activation and 
   );
 });
 
+test("customer notification copy is readable, branded, and remains within LMS limits", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  const migration = readFileSync(new URL("../cloudflare/d1/migrations/0028_repair_customer_notification_copy.sql", import.meta.url), "utf8");
+  database.exec(migration);
+  database.exec(migration);
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0030_repair_ticket_lifecycle.sql", import.meta.url), "utf8"));
+
+  const smsTemplateKeys = [
+    "repair.application_submitted",
+    "repair.received",
+    "repair.repair_completed_quote_ready",
+    "repair.payment_confirmed_shipping_started",
+  ];
+  for (const templateKey of smsTemplateKeys) {
+    const row = database.prepare(`
+      SELECT draft_subject, draft_body FROM notification_templates
+      WHERE template_key = ? AND channel = 'sms'
+    `).bind(templateKey).first();
+    const preview = await previewNotificationTemplate(env, {
+      templateKey,
+      channel: "sms",
+      subject: row.draft_subject,
+      body: row.draft_body,
+    });
+    assert.match(preview.body, /^\[Studio OALUM 수선 안내\]\n/);
+    assert.match(preview.body, /\n\n/);
+    assert.equal(preview.messageType.type, "LMS");
+    assert.ok(preview.messageType.byteLength > 90);
+    assert.ok(preview.messageType.byteLength < 700);
+  }
+
+  const emailTemplateKeys = [
+    "repair.application_submitted",
+    "repair.received",
+    "repair.repair_completed_quote_ready",
+    "repair.payment_confirmed_shipping_started",
+    "ticket.admin_message_to_customer",
+    "ticket.system_message_to_customer",
+  ];
+  for (const templateKey of emailTemplateKeys) {
+    const row = database.prepare(`
+      SELECT draft_subject, draft_body FROM notification_templates
+      WHERE template_key = ? AND channel = 'email'
+    `).bind(templateKey).first();
+    const preview = await previewNotificationTemplate(env, {
+      templateKey,
+      channel: "email",
+      subject: row.draft_subject,
+      body: row.draft_body,
+    });
+    if (["repair.application_submitted", "repair.received"].includes(templateKey)) {
+      assert.doesNotMatch(preview.subject, /#001/);
+    } else {
+      assert.match(preview.subject, /#001/);
+    }
+    assert.match(preview.body, /^안녕하세요, 홍길동님\.\n\n/);
+    assert.match(preview.body, /Studio OALUM/);
+    assert.ok(preview.body.length > 120);
+  }
+});
+
 test("KR Repair emits four SMS milestones, Ticket email for other states, and dry-run fallback", async (t) => {
   const { database, env } = createEnvironment({
     SMS_ENABLED: "false",
@@ -805,7 +919,7 @@ test("KR Repair emits four SMS milestones, Ticket email for other states, and dr
   });
   assert.equal(receipt.notificationIds.length, 2);
 
-  await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 1, status: "item_received" });
+  await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 1, status: "item_received", quoteAmount: 35000 });
   await updateRepairRequest(env, { id: "RPR_KR", expectedVersion: 2, status: "in_progress" });
   await updateRepairRequest(env, {
     id: "RPR_KR",
@@ -944,6 +1058,16 @@ test("outbox classifies success, retryable, unknown, and permanent failures", as
   const deadLetter = database.prepare("SELECT status, attempts FROM notification_outbox WHERE id = ?").bind(deadLetterId).first();
   assert.equal(deadLetter.status, "dead_letter");
   assert.equal(deadLetter.attempts, 5);
+
+  const deadLetterRetry = await createManualNotificationRetry(env, deadLetterId, "test-admin");
+  assert.equal(deadLetterRetry.id, deadLetterId);
+  const deadLetterRetryResult = await processNotificationOutbox(env, {
+    ids: [deadLetterRetry.id],
+    fetchImpl: async () => new Response(JSON.stringify({ id: "email_recovered" }), { status: 200 }),
+  });
+  assert.equal(deadLetterRetryResult.sent, 1);
+  assert.equal(database.prepare("SELECT status FROM notification_outbox WHERE id = ?").bind(deadLetterId).first().status, "sent");
+  assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox WHERE status = 'dead_letter'").first().count, 0);
 });
 
 test("unified guest lookup resolves ORD, WKS, and REP references with short-lived hashed tokens", async (t) => {
@@ -1084,7 +1208,7 @@ test("notification history can delete revisions and purges only terminal old out
     templateKey: "repair.received",
     channel: "email",
     subject: "[Studio OALUM] 정리 테스트",
-    body: "{{customer_name}}님, {{product_name}} 접수가 완료되었습니다. {{repair_ticket_url}}",
+    body: "{{customer_name}}님, {{product_name}} 접수가 완료되었습니다. 예상 가격: {{quote_amount}} {{repair_ticket_url}}",
   }, "test-admin");
   const revision = database.prepare("SELECT id FROM notification_template_revisions ORDER BY created_at DESC LIMIT 1").first();
   await deleteNotificationRevision(env, revision.id);
@@ -1094,7 +1218,7 @@ test("notification history can delete revisions and purges only terminal old out
     templateKey: "repair.received",
     channel: "email",
     subject: "[Studio OALUM] 오래된 초안",
-    body: "{{customer_name}}님, {{product_name}} 접수가 완료되었습니다. {{repair_ticket_url}}",
+    body: "{{customer_name}}님, {{product_name}} 접수가 완료되었습니다. 예상 가격: {{quote_amount}} {{repair_ticket_url}}",
   }, "test-admin");
   database.prepare("UPDATE notification_template_revisions SET created_at = '2020-01-01T00:00:00.000Z'").run();
   const revisionsPurged = await purgeNotificationHistory(env, { scope: "revisions", olderThanDays: 30 });

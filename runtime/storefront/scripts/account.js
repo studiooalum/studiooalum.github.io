@@ -680,6 +680,9 @@ export function initAccountPage() {
 
   function renderRepairCard(request) {
     const trackingUrl = getSafeTrackingUrl(request?.trackingUrl);
+    const quoteMarkup = request?.quoteAmount !== null && request?.quoteAmount !== undefined
+      ? `<p class="account-record__status-detail">예상 가격 ${escapeHtml(formatPrice(request.quoteAmount))}</p>`
+      : "";
     const paymentMarkup = request?.finalAmount !== null && request?.finalAmount !== undefined
       ? `<p class="account-record__status-detail">최종 금액 ${escapeHtml(formatPrice(request.finalAmount))}${request.bankAccount ? ` · ${escapeHtml(request.bankAccount)}` : ""}</p>`
       : "";
@@ -705,6 +708,7 @@ export function initAccountPage() {
             <span class="account-order-id">${escapeHtml(request?.ticketNumberLabel || request?.requestNumber || "-")}</span>
             <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
           </div>
+          ${quoteMarkup}
           ${paymentMarkup}
           ${trackingMarkup}
           ${ticketHref ? `<div class="account-record__actions"><a class="account-btn account-btn--secondary" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}" data-repair-ticket-code="${escapeHtml(request.ticketShortCode || "")}">Repair Ticket${unread ? ` · 새 메시지 ${unread}` : ""}</a></div>` : ""}

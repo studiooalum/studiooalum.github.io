@@ -25,6 +25,8 @@
 
 - 주요 상태: `received`, `item_received`, `in_progress`, `payment_pending`, `shipping`, `closed`
 - 예외 상태: `cancelled`, `rejected`
+- 최초 접수는 번호 없는 수선 문의로 저장하고, `in_progress`로 전환되는 순간에만 연속 티켓 번호를 발급합니다. 운영 이력은 `#004`까지 보존하고 다음 번호는 `#005`입니다.
+- `item_received`은 예상 가격이 필수이며, 저장과 동시에 고객 알림과 공유 페이지에 예상 가격을 표시합니다.
 - `payment_pending`은 최종 금액과 입금/결제 안내가 필요합니다.
 - `shipping`은 입금 확인일, 택배사, 운송장 번호가 필요합니다.
 - `closed`는 이후 수정·문의·재발송이 금지된 읽기 전용 Archive입니다.
@@ -33,9 +35,11 @@
 - `shipping` milestone 한 건에 입금 확인, 배송 시작, 운송장, 조회 링크, Ticket 링크를 함께 담습니다.
 - 템플릿은 `notification_templates`, 렌더링된 발송 본문은 `notification_outbox`에 저장됩니다. 기존 Repair 전용 테이블은 migration 기간 동안 읽기/처리 호환을 유지합니다.
 - `pending`은 5분 Scheduled Worker가 재처리합니다. timeout은 중복 방지를 위해 `unknown`, 최대 재시도 초과는 `dead_letter`로 남습니다.
-- 수동 재발송은 기존 outbox를 덮어쓰지 않고 새 outbox row와 revision 기록을 생성합니다.
+- 실패·불명·DLQ 알림의 수동 재발송은 같은 outbox row를 `pending`으로 되돌립니다. 성공하면 상태가 `sent`가 되어 DLQ 목록에서 즉시 사라지고, 수정 이력은 별도로 남습니다.
 - 국내(`country_code=KR`) milestone은 SOLAPI SMS/LMS, 해외/미확인은 Resend 이메일을 사용합니다. Ticket 메시지는 국가와 무관하게 이메일만 사용합니다.
 - `SMS_ENABLED=false` 또는 `SMS_DRY_RUN=true`에서는 SOLAPI를 호출하지 않고 dry-run을 기록한 뒤 이메일 fallback을 생성합니다.
+- 고객 SMS는 티켓 URL을 포함해 LMS로 발송됩니다. 90byte에 맞춰 문장을 억지로 줄이지 않고, 발신 주체·현재 상태·다음 행동을 줄바꿈으로 구분하되 2,000byte 이내를 유지합니다.
+- 문의 접수 이메일에는 아직 존재하지 않는 티켓 번호를 표시하지 않습니다. 수선 시작 후에는 발급된 티켓 번호를 사용합니다.
 - Shop/Workshop 템플릿은 기존 외부 order-sync/예약 발송 경로의 회귀를 피하기 위한 전환 준비 초안입니다. Notification Admin에서 편집·미리보기·테스트는 가능하지만 실제 활성화는 차단합니다.
 
 ## 고객 조회
@@ -49,7 +53,7 @@
 
 ## 배포 전 준비
 
-1. 신규 D1에는 Repair 기본 migration과 최신 `0026_repair_notification_content_alignment.sql`까지 순서대로 적용합니다. 현재 운영 D1은 이력표 없이 스키마가 구축되어 있으므로 `migrations apply`로 과거 migration을 재실행하지 말고, 검토된 idempotent migration만 `d1 execute --file`로 적용합니다.
+1. 신규 D1에는 Repair 기본 migration과 최신 `0030_repair_ticket_lifecycle.sql`까지 순서대로 적용합니다. 현재 운영 D1은 이력표 없이 스키마가 구축되어 있으므로 `migrations apply`로 과거 migration을 재실행하지 말고, 검토된 idempotent migration만 `d1 execute --file`로 적용합니다.
 2. Pages에 `OALUM_DB`, `OALUM_R2`, `ORDER_ADMIN_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `REPAIR_NOTIFICATION_CRON_SECRET`을 설정합니다. Ticket 서명은 `REPAIR_TICKET_ACCESS_SECRET`, `AUTH_SECRET`, `ORDER_ADMIN_SECRET` 순으로 사용합니다.
 3. Scheduled Worker에도 같은 `REPAIR_NOTIFICATION_CRON_SECRET`을 secret으로 설정합니다.
 4. SOLAPI 운영 전 `SOLAPI_API_KEY`, `SOLAPI_API_SECRET`, `SOLAPI_SENDER_NUMBER`, `SOLAPI_TEST_PHONE`을 Pages secret으로 설정하고 `SMS_ENABLED=true`, `SMS_DRY_RUN=false`로 전환합니다.

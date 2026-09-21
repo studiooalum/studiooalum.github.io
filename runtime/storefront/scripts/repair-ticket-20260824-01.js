@@ -64,7 +64,7 @@ function formatTicketNumber(repair) {
   if (Number.isInteger(ticketNumber) && ticketNumber > 0) {
     return `#${String(ticketNumber).padStart(3, "0")}`;
   }
-  return repair?.requestNumber || "Repair Ticket";
+  return "수선 문의";
 }
 
 function safeUrl(value) {
@@ -157,6 +157,7 @@ function renderFacts(ticket) {
     ["신청자", repair.customerName || "-"],
     ["제품", repair.itemType || "-"],
     ["신청 내용", repair.issueDescription || "-"],
+    ["예상 가격", formatPrice(repair.quoteAmount)],
     ["최종 가격", formatPrice(repair.finalAmount)],
     ["입금 안내", [repair.bankAccount, repair.paymentInstructions].filter(Boolean).join("\n") || "미정"],
     ["배송", [repair.carrier, repair.trackingNumber].filter(Boolean).join(" · ") || "미발송"],

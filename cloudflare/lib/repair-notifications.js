@@ -111,6 +111,12 @@ export function getRepairStatusEventType(status) {
 
 export function assertRepairStatusRequirements(statusValue, request) {
   const status = normalizeRepairStatus(statusValue);
+  if (status === "item_received") {
+    const quoteAmount = getRepairValue(request, "quoteAmount", "quote_amount");
+    if (!Number.isInteger(Number(quoteAmount)) || Number(quoteAmount) <= 0) {
+      throw Object.assign(new Error("수선제품 수신 완료 단계에서는 예상 가격을 입력해주세요."), { status: 400 });
+    }
+  }
   if (status === "payment_pending") {
     const finalAmount = getRepairValue(request, "finalAmount", "final_amount");
     const bankAccount = cleanText(getRepairValue(request, "bankAccount", "bank_account"), 500);

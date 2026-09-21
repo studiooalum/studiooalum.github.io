@@ -499,15 +499,11 @@ async function submitRepairRequest() {
       throw new Error(payload?.error || `Request failed: ${response.status}`);
     }
 
-    const requestNumber = String(payload.requestNumber || "").trim();
     const ticketNumber = Number(payload.ticketNumber || 0);
-    const displayNumber = Number.isInteger(ticketNumber) && ticketNumber > 0
-      ? `#${String(ticketNumber).padStart(3, "0")}`
-      : requestNumber;
     if (dom.successCopy) {
-      dom.successCopy.textContent = displayNumber
-        ? `Repair Ticket ${displayNumber}이 생성되었습니다. 물건이 도착하면 상태를 확인한 뒤 입력하신 연락처와 티켓으로 안내드리겠습니다.`
-        : "물건이 도착하면 상태를 확인한 뒤 입력하신 연락처로 안내드리겠습니다.";
+      dom.successCopy.textContent = Number.isInteger(ticketNumber) && ticketNumber > 0
+        ? `수선 티켓 #${String(ticketNumber).padStart(3, "0")}이 생성되었습니다.`
+        : "수선 문의가 접수되었습니다. 제품 도착 후 수선 가능 여부와 예상 가격을 안내드리며, 실제 수선을 시작할 때 티켓 번호가 발급됩니다.";
     }
     if (dom.successTicket) {
       const ticketUrl = String(payload.ticketUrl || "").trim();

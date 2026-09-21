@@ -14,6 +14,7 @@ export const NOTIFICATION_VARIABLES = Object.freeze({
   repair_number: { label: "수선 티켓 번호", sample: "#001" },
   repair_request: { label: "수선 요청 내용", sample: "소매의 찢어진 부분을 수선해주세요." },
   shipping_address: { label: "고객 발송지", sample: "서울특별시 동대문구 예시로 1" },
+  quote_amount: { label: "예상 가격", sample: "35,000원" },
   final_amount: { label: "최종 가격", sample: "35,000원" },
   tracking_number: { label: "운송장 번호", sample: "1234567890" },
   tracking_url: { label: "배송 조회 링크", sample: "https://example.com/tracking" },
@@ -738,6 +739,27 @@ export async function createManualNotificationRetry(env, outboxId, actorId = "")
   const source = await database.prepare(`SELECT * FROM notification_outbox WHERE id = ? LIMIT 1`).bind(cleanText(outboxId, 80)).first();
   if (!source) throw Object.assign(new Error("재시도할 알림을 찾을 수 없습니다."), { status: 404 });
   const now = nowIso();
+  if (["failed", "unknown", "dead_letter"].includes(source.status)) {
+    const template = await readNotificationTemplate(env, source.template_key, source.channel);
+    await database.batch([
+      database.prepare(`
+        UPDATE notification_outbox
+        SET status = 'pending', attempts = 0, available_at = ?, provider_message_id = NULL,
+            last_error = NULL, locked_at = NULL, sent_at = NULL, updated_at = ?
+        WHERE id = ? AND status IN ('failed', 'unknown', 'dead_letter')
+      `).bind(now, now, source.id),
+      createRevisionStatement(database, template, "manual_retry", actorId, source.subject, source.body_text, Boolean(template?.is_enabled), now),
+    ]);
+    return {
+      ...formatOutboxRow(source),
+      status: "pending",
+      attempts: 0,
+      providerMessageId: "",
+      lastError: "",
+      updatedAt: now,
+      sentAt: "",
+    };
+  }
   const retry = {
     id: createId("NOB"),
     eventKey: `${source.event_key}:manual:${crypto.randomUUID()}`,

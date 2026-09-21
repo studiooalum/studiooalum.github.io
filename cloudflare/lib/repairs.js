@@ -128,7 +128,7 @@ function formatRepairRequest(row) {
     id: row.id,
     customerId: row.customer_id || null,
     requestNumber: row.request_number,
-    ticketNumber: Number(row.ticket_number || 0),
+    ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
     customerName: row.customer_name,
     email: row.email,
     phone: row.phone,
@@ -275,24 +275,13 @@ export async function createRepairRequest(env, input, images = []) {
     throw Object.assign(new Error("수선 접수 정보를 다시 확인해주세요."), { status: 400 });
   }
 
-  const ticketNumberRow = await database.prepare(`
-    UPDATE repair_ticket_number_sequence
-    SET next_number = next_number + 1
-    WHERE id = 1
-    RETURNING next_number - 1 AS ticket_number
-  `).first();
-  const ticketNumber = Number(ticketNumberRow?.ticket_number || 0);
-  if (!Number.isInteger(ticketNumber) || ticketNumber < 1) {
-    throw Object.assign(new Error("수선 티켓 번호를 생성하지 못했습니다."), { status: 503 });
-  }
-
   const now = nowIso();
   const eventId = createRepairEventId();
   const requestForNotification = {
     ...input,
     id: requestId,
     requestNumber,
-    ticketNumber,
+    ticketNumber: null,
     customerName,
     email: emailNormalized,
     itemType: cleanText(input.itemType, 100),
@@ -345,7 +334,7 @@ export async function createRepairRequest(env, input, images = []) {
       .bind(
         requestId,
         requestNumber,
-        ticketNumber,
+        null,
         submissionId,
         submissionFingerprint,
         cleanText(input.customerId, 80) || null,
@@ -415,7 +404,7 @@ export async function createRepairRequest(env, input, images = []) {
   return {
     requestId,
     requestNumber,
-    ticketNumber,
+    ticketNumber: null,
     submittedAt: now,
     eventId,
     ticketId: ticketBundle.ticketId,
@@ -445,7 +434,7 @@ export async function readRepairRequestBySubmissionId(env, submissionId) {
   return {
     requestId: row.id,
     requestNumber: row.request_number,
-    ticketNumber: Number(row.ticket_number || 0),
+    ticketNumber: row.ticket_number == null ? null : Number(row.ticket_number),
     submissionId: row.submission_id,
     submissionFingerprint: row.submission_fingerprint || "",
     submittedAt: row.created_at,
@@ -482,10 +471,12 @@ export async function readRepairRequestForAdmin(env, requestId) {
 }
 
 function formatRepairRequestForCustomer(request) {
+  const ticketNumber = Number(request.ticketNumber || 0);
   return {
     id: request.id,
     requestNumber: request.requestNumber,
-    ticketNumber: request.ticketNumber,
+    ticketNumber,
+    ticketNumberLabel: ticketNumber > 0 ? `#${String(ticketNumber).padStart(3, "0")}` : "수선 문의",
     customerName: request.customerName,
     itemType: request.itemType,
     issueDescription: request.issueDescription,
@@ -499,6 +490,7 @@ function formatRepairRequestForCustomer(request) {
     unreadCustomerCount: request.unreadCustomerCount,
     ticketLastMessageAt: request.ticketLastMessageAt,
     customerMessage: request.customerMessage,
+    quoteAmount: request.quoteAmount,
     finalAmount: request.finalAmount,
     bankAccount: ["payment_pending", "shipping", "closed"].includes(request.status) ? request.bankAccount : "",
     paymentInstructions: ["payment_pending", "shipping", "closed"].includes(request.status) ? request.paymentInstructions : "",
@@ -947,6 +939,7 @@ export async function updateRepairRequest(env, input) {
   }
 
   assertRepairStatusRequirements(status, {
+    quoteAmount,
     finalAmount,
     bankAccount,
     paymentInstructions,
@@ -956,6 +949,17 @@ export async function updateRepairRequest(env, input) {
   });
 
   const statusChanged = status !== currentStatus;
+  const shouldAssignTicketNumber = status === "in_progress" && !Number(existing.ticket_number || 0);
+  let assignedTicketNumber = Number(existing.ticket_number || 0) || null;
+  if (shouldAssignTicketNumber) {
+    const sequence = await database.prepare(`
+      SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1 LIMIT 1
+    `).first();
+    assignedTicketNumber = Number(sequence?.next_number || 0);
+    if (!Number.isInteger(assignedTicketNumber) || assignedTicketNumber < 1) {
+      throw Object.assign(new Error("수선 티켓 번호를 생성하지 못했습니다."), { status: 503 });
+    }
+  }
   const changed = statusChanged
     || adminNote !== existing.admin_note
     || customerMessage !== existing.customer_message
@@ -990,6 +994,7 @@ export async function updateRepairRequest(env, input) {
   const archivedAt = status === "closed" ? existing.archived_at || now : existing.archived_at;
   const updatedRequest = {
     ...formatRepairRequest(existing),
+    ticketNumber: assignedTicketNumber,
     status,
     version: nextVersion,
     adminNote,
@@ -1011,13 +1016,14 @@ export async function updateRepairRequest(env, input) {
 
   const updateStatement = database.prepare(`
     UPDATE repair_requests
-    SET status = ?, admin_note = ?, customer_message = ?, quote_amount = ?, final_amount = ?,
+    SET status = ?, ticket_number = ?, admin_note = ?, customer_message = ?, quote_amount = ?, final_amount = ?,
         bank_account = ?, payment_instructions = ?, payment_confirmed_at = ?, carrier = ?,
         tracking_number = ?, tracking_url = ?, accepted_at = ?, completed_at = ?,
         archived_at = ?, closed_at = ?, version = ?, updated_at = ?
     WHERE id = ? AND version = ?
   `).bind(
     status,
+    assignedTicketNumber,
     adminNote,
     customerMessage,
     quoteAmount,
@@ -1053,6 +1059,11 @@ export async function updateRepairRequest(env, input) {
   try {
     await database.batch([
       updateStatement,
+      ...(shouldAssignTicketNumber ? [database.prepare(`
+        UPDATE repair_ticket_number_sequence
+        SET next_number = next_number + 1
+        WHERE id = 1 AND next_number = ?
+      `).bind(assignedTicketNumber)] : []),
       eventStatement,
       ...(ticketBundle?.statements || []),
     ]);

@@ -19,12 +19,12 @@ function formatDate(value) {
   }).format(date);
 }
 
-function formatTicketNumber(request, fallbackNumber) {
+function formatTicketNumber(request) {
   const ticketNumber = Number(request?.ticketNumber || 0);
   if (Number.isInteger(ticketNumber) && ticketNumber > 0) {
     return `#${String(ticketNumber).padStart(3, "0")}`;
   }
-  return `#${String(Math.max(1, fallbackNumber)).padStart(3, "0")}`;
+  return "수선 문의";
 }
 
 function getFilterGroup(request) {
@@ -34,8 +34,8 @@ function getFilterGroup(request) {
   return "other";
 }
 
-function renderRepairCard(request, fallbackNumber) {
-  const ticketNumber = formatTicketNumber(request, fallbackNumber);
+function renderRepairCard(request) {
+  const ticketNumber = formatTicketNumber(request);
   const ticketHref = request?.ticketId
     ? `./repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}`
     : "";

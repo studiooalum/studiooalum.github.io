@@ -89,7 +89,7 @@ export async function onRequestPost(context) {
     if (input.action === "retry") {
       const notification = await createManualNotificationRetry(context.env, input.outboxId, actor);
       const processing = await processNotificationOutbox(context.env, { ids: [notification.id] });
-      return json(context.env, { ok: true, message: "재시도 기록을 생성했습니다.", processing, ...(await readNotificationAdminSnapshot(context.env)) });
+      return json(context.env, { ok: true, message: processing.sent ? "알림을 다시 발송했습니다." : "알림 재시도를 처리했습니다.", processing, ...(await readNotificationAdminSnapshot(context.env)) });
     }
     if (input.action === "process") {
       const processing = await processNotificationOutbox(context.env, { limit: input.limit || 25 });
