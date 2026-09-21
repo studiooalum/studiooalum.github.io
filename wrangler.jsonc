@@ -4,8 +4,8 @@
 	"pages_build_output_dir": "./dist",
 	"compatibility_date": "2026-04-27",
 	"vars": {
-		"SMS_ENABLED": "false",
-		"SMS_DRY_RUN": "true",
+		"SMS_ENABLED": "true",
+		"SMS_DRY_RUN": "false",
 		"SMS_COUNTRY_ALLOWLIST": "KR"
 	},
 	"d1_databases": [
