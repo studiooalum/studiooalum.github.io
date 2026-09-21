@@ -85,3 +85,30 @@ test("repair accordion omits section divider lines at every viewport", () => {
   assert.match(repairCss, /\.repair-stage__rail\s*\{[\s\S]*?border:\s*0;/);
   assert.match(repairCss, /@media \(max-width:\s*768px\)[\s\S]*?\.repair-stage__rail[\s\S]*?border:\s*0;/);
 });
+
+test("repair request separates applicant and shipping fields without changing questions 1–5", () => {
+  for (const field of [
+    '<span>이름</span>',
+    '<span>전화번호</span>',
+    '<span>이메일 주소</span>',
+    '<span>국가</span>',
+    '<span>우편번호</span>',
+    '<span>주소</span>',
+    '<span>상세주소</span>',
+  ]) {
+    assert.ok(repairHtml.includes(field), `missing request field: ${field}`);
+  }
+
+  assert.match(repairHtml, /name="country"[^>]+value="대한민국"[^>]+required/);
+  assert.doesNotMatch(repairHtml, /저장된 내 주소 없음|js-repair-use-account-address/);
+  assert.deepEqual(
+    [...repairHtml.matchAll(/<(?:span|legend|h3)>([1-5]\. [^<]+)/g)].map((match) => match[1]),
+    [
+      "1. 어떤 제품인가요?",
+      "2. 어떤 부분이 손상되었나요?",
+      "3. 원하시는 방향이 있나요?",
+      "4. 제품 사진을 올려주세요. ",
+      "5. 기타 요청사항 ",
+    ],
+  );
+});

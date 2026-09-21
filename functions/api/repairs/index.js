@@ -19,9 +19,9 @@ const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "i
 const SUBMISSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,119}$/;
 
 const repairRequestSchema = z.object({
-  customerName: z.string().trim().min(1, "성함을 입력해주세요.").max(120),
+  customerName: z.string().trim().min(1, "이름을 입력해주세요.").max(120),
   email: z.string().trim().max(320).refine((value) => !value || z.string().email().safeParse(value).success, "이메일 형식을 확인해주세요.").default(""),
-  phone: z.string().trim().min(1, "연락처를 입력해주세요.").max(60).refine((value) => value.replace(/\D/g, "").length >= 7, "연락처 형식을 확인해주세요."),
+  phone: z.string().trim().min(1, "전화번호를 입력해주세요.").max(60).refine((value) => value.replace(/\D/g, "").length >= 7, "전화번호 형식을 확인해주세요."),
   shippingAddress: z.string().trim().max(500, "발송지 주소는 500자 이하로 입력해주세요.").optional().default(""),
   countryCode: z.enum(["KR", "OTHER"]).optional(),
   itemType: z.enum(["자켓", "상의", "하의", "기타", "데님", "니트", "특수소재", "가죽"], { message: "제품 종류를 선택해주세요." }),
@@ -43,6 +43,32 @@ function asBoolean(value) {
 
 function asText(value) {
   return typeof value === "string" ? value : "";
+}
+
+function normalizeCountryCode(formData) {
+  const existingCode = asText(formData.get("countryCode")).trim();
+  if (existingCode) return existingCode;
+
+  const country = asText(formData.get("country")).trim().toLowerCase().replace(/[.\s_-]+/g, "");
+  if (!country) return undefined;
+  return ["대한민국", "한국", "korea", "southkorea", "republicofkorea", "kr", "kor"].includes(country)
+    ? "KR"
+    : "OTHER";
+}
+
+function buildShippingAddress(formData, countryCode) {
+  const existingAddress = asText(formData.get("shippingAddress")).trim();
+  if (existingAddress) return existingAddress;
+
+  const country = asText(formData.get("country")).trim();
+  const postalCode = asText(formData.get("postalCode")).trim();
+  const addressLine1 = asText(formData.get("addressLine1")).trim();
+  const addressLine2 = asText(formData.get("addressLine2")).trim();
+  if (!addressLine1) return "";
+
+  return [postalCode ? `[${postalCode}]` : "", addressLine1, addressLine2, countryCode === "OTHER" ? country : ""]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function getSelectedFiles(formData) {
@@ -70,12 +96,13 @@ function validateImages(files) {
 }
 
 function buildRequestPayload(formData) {
+  const countryCode = normalizeCountryCode(formData);
   return {
     customerName: asText(formData.get("customerName")),
     email: asText(formData.get("email")),
     phone: asText(formData.get("phone")),
-    shippingAddress: asText(formData.get("shippingAddress")),
-    countryCode: asText(formData.get("countryCode")) || undefined,
+    shippingAddress: buildShippingAddress(formData, countryCode),
+    countryCode,
     itemType: asText(formData.get("itemType")),
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
     desiredResult: asText(formData.get("desiredResult")),
@@ -248,9 +275,7 @@ export async function onRequestPost(context) {
       submissionId,
       submissionFingerprint,
       customerId: session?.user?.id || null,
-      countryCode: parsed.data.shippingAddress
-        ? inferRepairCountryCode({ shippingAddress: parsed.data.shippingAddress })
-        : parsed.data.countryCode,
+      countryCode: parsed.data.countryCode,
       shippingAddress: parsed.data.shippingAddress,
       email: applicantEmail,
       preferredContact: "phone",

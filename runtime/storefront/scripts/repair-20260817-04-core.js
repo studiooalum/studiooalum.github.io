@@ -21,10 +21,10 @@ const dom = {
   emailField: document.querySelector(".js-repair-email-field"),
   emailInput: document.querySelector(".js-repair-email-input"),
   phoneInput: document.querySelector(".js-repair-phone-input"),
-  shippingAddress: document.querySelector(".js-repair-shipping-address"),
-  useAccountAddressField: document.querySelector(".js-repair-use-account-address-field"),
-  useAccountAddress: document.querySelector(".js-repair-use-account-address"),
-  useAccountAddressLabel: document.querySelector(".js-repair-use-account-address-label"),
+  country: document.querySelector(".js-repair-country"),
+  postalCode: document.querySelector(".js-repair-postal-code"),
+  addressLine1: document.querySelector(".js-repair-address-line1"),
+  addressLine2: document.querySelector(".js-repair-address-line2"),
   imageInput: document.querySelector(".js-repair-image-input"),
   imageList: document.querySelector(".js-repair-image-preview-list"),
   imageHelp: document.querySelector(".js-repair-image-help"),
@@ -45,9 +45,7 @@ const state = {
   isDrawerOpen: false,
   trigger: null,
   accountEmail: "",
-  accountAddress: "",
   accountSyncVersion: 0,
-  manualShippingAddress: "",
   gallery: [],
 };
 
@@ -59,10 +57,13 @@ const METHOD_LABELS = {
 };
 
 const FIELD_LABELS = {
-  customerName: "성함",
-  phone: "연락처",
-  email: "이메일",
-  shippingAddress: "발송지 주소",
+  customerName: "이름",
+  phone: "전화번호",
+  email: "이메일 주소",
+  country: "국가",
+  postalCode: "우편번호",
+  addressLine1: "주소",
+  addressLine2: "상세주소",
   itemType: "제품 종류",
   issueDescription: "손상 부위",
   desiredResult: "수선 방향",
@@ -197,44 +198,9 @@ async function initPublicGallery() {
   bindGalleryDots(track, dots);
 }
 
-function formatAccountAddress(user) {
-  const address1 = String(user?.address1 || "").trim();
-  if (!address1) return "";
-  const zipcode = String(user?.zipcode || "").trim();
-  return [zipcode ? `[${zipcode}]` : "", address1, user?.address2]
-    .map((value) => String(value || "").trim())
-    .filter(Boolean)
-    .join(" ");
-}
-
-function syncAccountAddressControl() {
-  if (!dom.useAccountAddressField || !dom.useAccountAddress || !dom.useAccountAddressLabel) return;
-  const isMember = Boolean(state.accountEmail);
-  dom.useAccountAddressField.hidden = !isMember;
-  dom.useAccountAddress.checked = false;
-  dom.useAccountAddress.disabled = !state.accountAddress;
-  dom.useAccountAddressLabel.textContent = state.accountAddress ? "내 주소 사용" : "저장된 내 주소 없음";
-}
-
 function clearAccountAutofill() {
   state.accountSyncVersion += 1;
-  const usedAccountAddress = Boolean(dom.useAccountAddress?.checked);
-  if (usedAccountAddress && dom.shippingAddress) {
-    dom.shippingAddress.value = "";
-    dom.shippingAddress.readOnly = false;
-  }
-  if (dom.useAccountAddress) {
-    dom.useAccountAddress.checked = false;
-    dom.useAccountAddress.disabled = true;
-  }
-  if (dom.useAccountAddressField) dom.useAccountAddressField.hidden = true;
-  if (dom.emailField?.hidden && dom.emailInput) {
-    dom.emailField.hidden = false;
-    dom.emailInput.required = true;
-    dom.emailInput.value = "";
-  }
   state.accountEmail = "";
-  state.accountAddress = "";
 }
 
 async function syncApplicantAccount() {
@@ -256,12 +222,15 @@ async function syncApplicantAccount() {
   if (syncVersion !== state.accountSyncVersion) return;
 
   state.accountEmail = String(accountUser?.email || "").trim();
-  state.accountAddress = formatAccountAddress(accountUser);
-  const usesAccountEmail = Boolean(state.accountEmail);
-  dom.emailField.hidden = usesAccountEmail;
-  dom.emailInput.required = !usesAccountEmail;
-  if (usesAccountEmail) dom.emailInput.value = state.accountEmail;
-  syncAccountAddressControl();
+  dom.emailField.hidden = false;
+  dom.emailInput.required = true;
+  if (state.accountEmail && !dom.emailInput.value) dom.emailInput.value = state.accountEmail;
+  if (accountUser) {
+    if (dom.country && !dom.country.value) dom.country.value = "대한민국";
+    if (dom.postalCode && !dom.postalCode.value) dom.postalCode.value = String(accountUser.zipcode || "").trim();
+    if (dom.addressLine1 && !dom.addressLine1.value) dom.addressLine1.value = String(accountUser.address1 || "").trim();
+    if (dom.addressLine2 && !dom.addressLine2.value) dom.addressLine2.value = String(accountUser.address2 || "").trim();
+  }
 }
 
 function formatFileSize(value) {
@@ -497,9 +466,6 @@ function addSelectedImages(fileList) {
 
 function resetForm() {
   dom.form?.reset();
-  state.manualShippingAddress = "";
-  if (dom.shippingAddress) dom.shippingAddress.readOnly = false;
-  syncAccountAddressControl();
   state.files = [];
   refreshImageList();
   clearValidationFeedback();
@@ -590,21 +556,6 @@ export function initRepairRequest() {
   });
 
   dom.emailInput?.addEventListener("input", sanitizeEmailInput);
-  dom.shippingAddress?.addEventListener("input", () => {
-    if (!dom.useAccountAddress?.checked) state.manualShippingAddress = dom.shippingAddress.value;
-  });
-  dom.useAccountAddress?.addEventListener("change", () => {
-    if (!dom.shippingAddress) return;
-    if (dom.useAccountAddress.checked && state.accountAddress) {
-      state.manualShippingAddress = dom.shippingAddress.value;
-      dom.shippingAddress.value = state.accountAddress;
-      dom.shippingAddress.readOnly = true;
-    } else {
-      dom.shippingAddress.readOnly = false;
-      dom.shippingAddress.value = state.manualShippingAddress;
-    }
-    updateValidationFeedback();
-  });
   dom.form.addEventListener("input", updateValidationFeedback);
   dom.form.addEventListener("change", updateValidationFeedback);
 

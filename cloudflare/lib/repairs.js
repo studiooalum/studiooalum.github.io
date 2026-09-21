@@ -264,9 +264,12 @@ export async function createRepairRequest(env, input, images = []) {
   const material = cleanText(input.material || input.itemMaterial, 120);
   const issueDescription = cleanText(input.issueDescription || input.repairDetails, 4000);
   const shippingAddress = normalizeRepairShippingAddress(input.shippingAddress);
-  const countryCode = shippingAddress
-    ? inferRepairCountryCode({ shippingAddress })
-    : cleanText(input.countryCode, 8).toUpperCase();
+  const explicitCountryCode = cleanText(input.countryCode, 8).toUpperCase();
+  const countryCode = ["KR", "OTHER"].includes(explicitCountryCode)
+    ? explicitCountryCode
+    : shippingAddress
+      ? inferRepairCountryCode({ shippingAddress })
+      : "";
 
   if (!requestId || !requestNumber || !customerName || !emailNormalized || !cleanText(input.phone, 60) || !countryCode || !issueDescription) {
     throw Object.assign(new Error("수선 접수 정보를 다시 확인해주세요."), { status: 400 });
