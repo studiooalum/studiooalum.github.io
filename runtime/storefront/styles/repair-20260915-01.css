@@ -288,6 +288,11 @@
   line-height: 17px;
 }
 
+.repair-request-rail__close:hover {
+  outline: none;
+  outline-offset: 0;
+}
+
 @media (min-width: 960px) {
   .repair-stage {
     grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -9,7 +9,7 @@ const repairCss = await readFile(
 );
 
 test("repair page keeps the Figma accordion content contract", () => {
-  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260920-03/);
+  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260921-04/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<summary>([^<]+)<\/summary>/g)].slice(0, 3).map((match) => match[1]),
     ["가격 및 견적", "접수 및 진행", "배송 및 결제"],
@@ -111,4 +111,8 @@ test("repair request separates applicant and shipping fields without changing qu
       "5. 기타 요청사항 ",
     ],
   );
+});
+
+test("repair request close button has no hover box outline", () => {
+  assert.match(repairCss, /\.repair-request-rail__close:hover\s*\{[^}]*outline:\s*none;[^}]*outline-offset:\s*0;/);
 });
