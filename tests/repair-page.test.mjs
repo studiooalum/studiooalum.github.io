@@ -9,7 +9,7 @@ const repairCss = await readFile(
 );
 
 test("repair page keeps the Figma accordion content contract", () => {
-  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260921-04/);
+  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260921-05/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<summary>([^<]+)<\/summary>/g)].slice(0, 3).map((match) => match[1]),
     ["가격 및 견적", "접수 및 진행", "배송 및 결제"],
@@ -115,4 +115,12 @@ test("repair request separates applicant and shipping fields without changing qu
 
 test("repair request close button has no hover box outline", () => {
   assert.match(repairCss, /\.repair-request-rail__close:hover\s*\{[^}]*outline:\s*none;[^}]*outline-offset:\s*0;/);
+});
+
+test("collapsed desktop accordion titles use compact spacing without changing open content", () => {
+  assert.match(
+    repairCss,
+    /@media \(min-width:\s*960px\)[\s\S]*?\.repair-stage__rail \.repair-accordion:not\(\[open\]\) > summary\s*\{[^}]*min-height:\s*42px;[^}]*padding:\s*9px 0;/,
+  );
+  assert.match(repairCss, /\.repair-stage__rail \.repair-accordion > div\s*\{[^}]*padding:\s*0 0 24px;/);
 });

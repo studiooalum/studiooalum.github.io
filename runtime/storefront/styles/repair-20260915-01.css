@@ -301,6 +301,11 @@
   .repair-stage__rail {
     grid-column: 3;
   }
+
+  .repair-stage__rail .repair-accordion:not([open]) > summary {
+    min-height: 42px;
+    padding: 9px 0;
+  }
 }
 
 @media (max-width: 768px) {
