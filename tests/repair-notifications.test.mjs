@@ -163,6 +163,7 @@ function createRepairForm({
   phone = "010-1234-5678",
   countryCode = "",
   shippingAddress = "123 Main Street, Portland, OR, USA",
+  archiveConsent = false,
 } = {}) {
   const formData = new FormData();
   formData.set("customerName", "홍길동");
@@ -174,6 +175,7 @@ function createRepairForm({
   formData.set("issueDescription", "소매가 찢어졌습니다.");
   formData.set("desiredResult", "수선 흔적을 살리고 싶어요");
   formData.set("privacyConsent", "true");
+  if (archiveConsent) formData.set("archiveConsent", "true");
   formData.append("images", new File([imageBody], "repair.png", { type: "image/png" }));
   return formData;
 }
@@ -453,10 +455,13 @@ test("KR repair submissions normalize mobile numbers for storage and SMS deliver
       phone: "+82 10 9876 5432",
       countryCode: "KR",
       shippingAddress: "[02412] 서울특별시 동대문구 이문로42길 5 2층 201호",
+      archiveConsent: true,
     },
   ));
   assert.equal(validResponse.status, 201);
-  assert.equal(database.prepare("SELECT phone FROM repair_requests LIMIT 1").first().phone, "010-9876-5432");
+  const storedRepair = database.prepare("SELECT phone, archive_consent_at FROM repair_requests LIMIT 1").first();
+  assert.equal(storedRepair.phone, "01098765432");
+  assert.ok(storedRepair.archive_consent_at);
 
   const invalidResponse = await submitRepairRequest(createRepairApiContext(
     env,
@@ -468,7 +473,7 @@ test("KR repair submissions normalize mobile numbers for storage and SMS deliver
     },
   ));
   assert.equal(invalidResponse.status, 400);
-  assert.match((await invalidResponse.json()).error, /010-0000-0000/);
+  assert.match((await invalidResponse.json()).error, /01000000000/);
 });
 
 test("submission stores request, event, and rendered outbox atomically", async (t) => {
@@ -486,6 +491,8 @@ test("submission stores request, event, and rendered outbox atomically", async (
   assert.equal(adminNotification.recipient, "admin@example.com");
   assert.match(adminNotification.body_html, /관리자에서 Repair Ticket 확인/);
   assert.match(adminNotification.body_html, /STUDIO OALUM/);
+  const customerNotification = database.prepare("SELECT body_text FROM notification_outbox WHERE template_key = 'repair.application_submitted' AND channel = 'email'").first();
+  assert.match(customerNotification.body_text, /수선 접수 조회번호: REP-20260823-A/);
 
   const existing = await readRepairRequestBySubmissionId(env, "submission:A:1234567890");
   assert.equal(existing.requestNumber, "REP-20260823-A");
@@ -497,6 +504,7 @@ test("repair application copy migration uses reassuring receipt language", (t) =
   const { database } = createFullEnvironment();
   t.after(() => database.close());
   database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0031_repair_application_copy.sql", import.meta.url), "utf8"));
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0032_repair_lookup_reference.sql", import.meta.url), "utf8"));
 
   const customerTemplate = database.prepare(`
     SELECT name, trigger_label, active_subject, active_body
@@ -506,6 +514,7 @@ test("repair application copy migration uses reassuring receipt language", (t) =
   assert.equal(customerTemplate.name, "수선 접수 완료");
   assert.equal(customerTemplate.trigger_label, "접수 완료");
   assert.match(customerTemplate.active_subject, /수선 접수가 완료되었습니다/);
+  assert.match(customerTemplate.active_body, /수선 접수 조회번호: \{\{repair_number\}\}/);
   assert.doesNotMatch(customerTemplate.active_body, /수선 문의/);
 });
 

@@ -154,6 +154,7 @@ function renderFacts(ticket) {
   const repair = ticket.repair || {};
   const trackingUrl = safeUrl(repair.trackingUrl);
   const facts = [
+    ["수선 접수 조회번호", repair.requestNumber || "-"],
     ["신청자", repair.customerName || "-"],
     ["제품", repair.itemType || "-"],
     ["신청 내용", repair.issueDescription || "-"],

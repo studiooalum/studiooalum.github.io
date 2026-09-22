@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260918-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260922-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260915-02">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
 </head>
@@ -75,7 +75,7 @@
 
         <form class="account-form js-account-guest-form" novalidate>
           <label class="account-field">
-            <span>주문번호, 워크숍 예약번호 또는 수선 접수번호</span>
+            <span>주문번호, 워크숍 예약번호 또는 수선 접수 조회번호</span>
             <input type="text" name="reference" autocomplete="off" placeholder="ORD- · WKS- · REP-" required />
           </label>
           <label class="account-field">
@@ -83,6 +83,7 @@
             <input type="email" name="email" autocomplete="email" inputmode="email" required />
           </label>
           <button type="submit" class="account-btn">조회하기</button>
+          <p class="account-guest-lookup-help">수선 접수 조회번호는 접수 완료 화면과 안내 이메일·문자에서 확인할 수 있습니다.</p>
         </form>
 
         <div class="account-guest-result js-account-guest-result" hidden></div>
@@ -227,7 +228,7 @@
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260918-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260910-01";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260922-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
 
     initSiteChrome();

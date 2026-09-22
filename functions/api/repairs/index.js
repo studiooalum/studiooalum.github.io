@@ -31,10 +31,10 @@ const repairRequestSchema = z.object({
   archiveConsent: z.boolean().optional().default(false),
   privacyConsent: z.literal(true, { message: "개인정보 수집·이용에 동의해주세요." }),
 }).superRefine((value, context) => {
-  if (value.countryCode === "KR" && !/^010-\d{4}-\d{4}$/.test(value.phone)) {
+  if (value.countryCode === "KR" && !/^010\d{8}$/.test(value.phone)) {
     context.addIssue({
       code: "custom",
-      message: "전화번호를 010-0000-0000 형식으로 입력해주세요.",
+      message: "전화번호를 01000000000 형식으로 입력해주세요.",
       path: ["phone"],
     });
   }
@@ -53,11 +53,18 @@ function asText(value) {
   return typeof value === "string" ? value : "";
 }
 
+function readCountryName(formData) {
+  const selected = asText(formData.get("country")).trim();
+  return selected === "__direct__"
+    ? asText(formData.get("countryCustom")).trim()
+    : selected;
+}
+
 function normalizeCountryCode(formData) {
   const existingCode = asText(formData.get("countryCode")).trim();
   if (existingCode) return existingCode;
 
-  const country = asText(formData.get("country")).trim().toLowerCase().replace(/[.\s_-]+/g, "");
+  const country = readCountryName(formData).toLowerCase().replace(/[.\s_-]+/g, "");
   if (!country) return undefined;
   return ["대한민국", "한국", "korea", "southkorea", "republicofkorea", "kr", "kor"].includes(country)
     ? "KR"
@@ -66,18 +73,17 @@ function normalizeCountryCode(formData) {
 
 function normalizeRepairPhone(value, countryCode) {
   const raw = asText(value).trim();
-  if (countryCode !== "KR") return raw;
   let digits = raw.replace(/\D/g, "");
+  if (countryCode !== "KR") return digits;
   if (digits.startsWith("82")) digits = `0${digits.slice(2)}`;
-  if (!/^010\d{8}$/.test(digits)) return raw;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  return /^010\d{8}$/.test(digits) ? digits : raw;
 }
 
 function buildShippingAddress(formData, countryCode) {
   const existingAddress = asText(formData.get("shippingAddress")).trim();
   if (existingAddress) return existingAddress;
 
-  const country = asText(formData.get("country")).trim();
+  const country = readCountryName(formData);
   const postalCode = asText(formData.get("postalCode")).trim();
   const addressLine1 = asText(formData.get("addressLine1")).trim();
   const addressLine2 = asText(formData.get("addressLine2")).trim();
@@ -216,6 +222,14 @@ export async function onRequestPost(context) {
     const formData = await context.request.formData();
     if (asText(formData.get("website")).trim()) {
       return json(context.env, { ok: true, message: "수선 접수가 완료되었습니다." });
+    }
+
+    if (asText(formData.get("country")).trim() === "__direct__" && !asText(formData.get("countryCustom")).trim()) {
+      return json(context.env, {
+        ok: false,
+        error: "국가 이름을 입력해주세요.",
+        fields: { countryCustom: "국가 이름을 입력해주세요." },
+      }, { status: 400 });
     }
 
     const parsed = repairRequestSchema.safeParse(buildRequestPayload(formData));

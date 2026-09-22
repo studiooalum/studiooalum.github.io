@@ -4,6 +4,10 @@
   gap: 8px;
 }
 
+.repair-request-form .repair-field[hidden] {
+  display: none;
+}
+
 .repair-request-form .repair-address-search-button {
   min-width: 92px;
   border: 1px solid rgba(17, 17, 17, 0.24);

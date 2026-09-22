@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260818-04.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260909-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260921-05">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260922-02">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -139,7 +139,7 @@
               </label>
               <label class="repair-field">
                 <span>전화번호</span>
-                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="tel" maxlength="60" placeholder="010-0000-0000" required>
+                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="010[0-9]{8}" placeholder="01000000000" required>
               </label>
               <label class="repair-field js-repair-email-field">
                 <span>이메일 주소</span>
@@ -148,17 +148,21 @@
               <label class="repair-field">
                 <span>국가</span>
                 <select class="js-repair-country" name="country" autocomplete="country-name" required>
-                  <option value="대한민국" selected>대한민국</option>
-                  <option value="미국">미국</option><option value="일본">일본</option><option value="중국">중국</option>
-                  <option value="대만">대만</option><option value="홍콩">홍콩</option><option value="싱가포르">싱가포르</option>
-                  <option value="캐나다">캐나다</option><option value="영국">영국</option><option value="프랑스">프랑스</option>
-                  <option value="독일">독일</option><option value="이탈리아">이탈리아</option><option value="스페인">스페인</option>
-                  <option value="네덜란드">네덜란드</option><option value="스위스">스위스</option><option value="스웨덴">스웨덴</option>
-                  <option value="덴마크">덴마크</option><option value="노르웨이">노르웨이</option><option value="핀란드">핀란드</option>
-                  <option value="호주">호주</option><option value="뉴질랜드">뉴질랜드</option><option value="태국">태국</option>
-                  <option value="베트남">베트남</option><option value="필리핀">필리핀</option><option value="인도네시아">인도네시아</option>
-                  <option value="말레이시아">말레이시아</option><option value="인도">인도</option><option value="기타 국가">기타 국가</option>
+                  <option value="네덜란드">네덜란드</option><option value="노르웨이">노르웨이</option><option value="뉴질랜드">뉴질랜드</option>
+                  <option value="대만">대만</option><option value="대한민국" selected>대한민국</option><option value="덴마크">덴마크</option>
+                  <option value="독일">독일</option><option value="말레이시아">말레이시아</option><option value="미국">미국</option>
+                  <option value="베트남">베트남</option><option value="스웨덴">스웨덴</option><option value="스위스">스위스</option>
+                  <option value="스페인">스페인</option><option value="싱가포르">싱가포르</option><option value="영국">영국</option>
+                  <option value="이탈리아">이탈리아</option><option value="인도">인도</option><option value="인도네시아">인도네시아</option>
+                  <option value="일본">일본</option><option value="중국">중국</option><option value="캐나다">캐나다</option>
+                  <option value="태국">태국</option><option value="프랑스">프랑스</option><option value="핀란드">핀란드</option>
+                  <option value="필리핀">필리핀</option><option value="호주">호주</option><option value="홍콩">홍콩</option>
+                  <option value="__direct__">목록에 없는 국가 직접 입력</option>
                 </select>
+              </label>
+              <label class="repair-field js-repair-country-custom-field" hidden>
+                <span>국가명</span>
+                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120">
               </label>
               <label class="repair-field">
                 <span>우편번호</span>
@@ -211,10 +215,14 @@
           </section>
 
           <section class="repair-request-form__section repair-request-form__section--notes">
-            <label class="repair-field"><span>5. 기타 요청사항 <em>(선택)</em></span><textarea class="js-repair-budget-note" name="budgetNote" rows="4" maxlength="1000" placeholder="의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다. 원치 않으시면 기타 요청사항에 미리 말씀해 주세요."></textarea></label>
+            <label class="repair-field"><span>5. 기타 요청사항 <em>(선택)</em></span><textarea class="js-repair-budget-note" name="budgetNote" rows="4" maxlength="1000"></textarea></label>
           </section>
 
           <section class="repair-request-form__section repair-request-form__consent">
+            <label class="repair-checkbox">
+              <input type="checkbox" name="archiveConsent">
+              <span>수선 전후 사진을 고객 식별정보 없이 Studio OALUM의 Archive와 SNS 작업 기록에 공개·활용하는 데 동의합니다. 사진은 게시물 삭제 요청 전까지 보관되며, 동의하지 않아도 수선 이용에 불이익이 없습니다. <em>(선택)</em></span>
+            </label>
             <label class="repair-checkbox">
               <input type="checkbox" name="privacyConsent" required>
               <span>수선 검토를 위해 입력한 전화번호, 이메일 주소, 배송 주소와 사진을 수집·이용하는 것에 동의합니다.</span>
@@ -252,7 +260,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260918-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260922-01";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260922-02";
 
     initSiteChrome();
     initCartUI();

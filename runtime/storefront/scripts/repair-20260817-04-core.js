@@ -23,6 +23,8 @@ const dom = {
   emailInput: document.querySelector(".js-repair-email-input"),
   phoneInput: document.querySelector(".js-repair-phone-input"),
   country: document.querySelector(".js-repair-country"),
+  countryCustomField: document.querySelector(".js-repair-country-custom-field"),
+  countryCustom: document.querySelector(".js-repair-country-custom"),
   postalCode: document.querySelector(".js-repair-postal-code"),
   addressLine1: document.querySelector(".js-repair-address-line1"),
   addressLine2: document.querySelector(".js-repair-address-line2"),
@@ -63,6 +65,7 @@ const FIELD_LABELS = {
   phone: "전화번호",
   email: "이메일 주소",
   country: "국가",
+  countryCustom: "국가명",
   postalCode: "우편번호",
   addressLine1: "주소",
   addressLine2: "상세주소",
@@ -208,10 +211,7 @@ function clearAccountAutofill() {
 function normalizeKoreanPhone(value) {
   let digits = String(value || "").replace(/\D/g, "");
   if (digits.startsWith("82")) digits = `0${digits.slice(2)}`;
-  digits = digits.slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  return digits.slice(0, 11);
 }
 
 function isKoreanAddress() {
@@ -220,6 +220,9 @@ function isKoreanAddress() {
 
 function syncAddressMode() {
   const korean = isKoreanAddress();
+  const customCountry = dom.country?.value === "__direct__";
+  if (dom.countryCustomField) dom.countryCustomField.hidden = !customCountry;
+  if (dom.countryCustom) dom.countryCustom.required = customCountry;
   if (dom.postalCode) {
     dom.postalCode.readOnly = korean;
     dom.postalCode.inputMode = korean ? "numeric" : "text";
@@ -227,9 +230,12 @@ function syncAddressMode() {
   if (dom.addressLine1) dom.addressLine1.readOnly = korean;
   if (dom.addressSearch) dom.addressSearch.hidden = !korean;
   if (dom.phoneInput) {
-    dom.phoneInput.placeholder = korean ? "010-0000-0000" : "+1 000 000 0000";
-    dom.phoneInput.pattern = korean ? "010-[0-9]{4}-[0-9]{4}" : "";
-    if (korean) dom.phoneInput.value = normalizeKoreanPhone(dom.phoneInput.value);
+    dom.phoneInput.placeholder = korean ? "01000000000" : "국가번호를 포함해 숫자만 입력";
+    dom.phoneInput.pattern = korean ? "010[0-9]{8}" : "[0-9]{7,15}";
+    dom.phoneInput.maxLength = korean ? 11 : 15;
+    dom.phoneInput.value = korean
+      ? normalizeKoreanPhone(dom.phoneInput.value)
+      : String(dom.phoneInput.value || "").replace(/\D/g, "").slice(0, 15);
   }
 }
 
@@ -558,10 +564,11 @@ async function submitRepairRequest() {
     }
 
     const ticketNumber = Number(payload.ticketNumber || 0);
+    const requestNumber = String(payload.requestNumber || "").trim();
     if (dom.successCopy) {
       dom.successCopy.textContent = Number.isInteger(ticketNumber) && ticketNumber > 0
         ? `수선 티켓 #${String(ticketNumber).padStart(3, "0")}이 생성되었습니다.`
-        : "수선 접수가 완료되었습니다. 제품 도착 후 수선 가능 여부와 예상 가격을 안내드리며, 실제 수선을 시작할 때 티켓 번호가 발급됩니다.";
+        : `수선 접수가 완료되었습니다.${requestNumber ? ` 비회원 조회번호는 ${requestNumber}입니다.` : ""} 제품 도착 후 수선 가능 여부와 예상 가격을 안내드리며, 실제 수선을 시작할 때 티켓 번호가 발급됩니다.`;
     }
     if (dom.successTicket) {
       const ticketUrl = String(payload.ticketUrl || "").trim();
@@ -611,7 +618,9 @@ export function initRepairRequest() {
 
   dom.emailInput?.addEventListener("input", sanitizeEmailInput);
   dom.phoneInput?.addEventListener("input", () => {
-    if (isKoreanAddress()) dom.phoneInput.value = normalizeKoreanPhone(dom.phoneInput.value);
+    dom.phoneInput.value = isKoreanAddress()
+      ? normalizeKoreanPhone(dom.phoneInput.value)
+      : String(dom.phoneInput.value || "").replace(/\D/g, "").slice(0, 15);
   });
   dom.country?.addEventListener("change", syncAddressMode);
   dom.addressSearch?.addEventListener("click", openKoreanAddressSearch);

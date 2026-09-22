@@ -297,7 +297,7 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
     product_name: value("itemType", "item_type"),
     repair_number: ticketNumber > 0
       ? `#${String(ticketNumber).padStart(3, "0")}`
-      : "수선 접수",
+      : value("requestNumber", "request_number") || "수선 접수",
     repair_request: value("issueDescription", "repair_details"),
     shipping_address: value("shippingAddress", "shipping_address"),
     quote_amount: formatAmount(value("quoteAmount", "quote_amount")),

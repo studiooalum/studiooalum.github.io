@@ -7,11 +7,18 @@ const repairCss = await readFile(
   new URL("../runtime/storefront/styles/repair-20260915-01.css", import.meta.url),
   "utf8",
 );
+const repairFormCss = await readFile(
+  new URL("../runtime/storefront/styles/repair-20260922-01.css", import.meta.url),
+  "utf8",
+);
 const repairRequestSource = await readFile(
   new URL("../runtime/storefront/scripts/repair-20260817-04-core.js", import.meta.url),
   "utf8",
 );
 const accountAddressApiSource = await readFile(new URL("../functions/api/auth/address.js", import.meta.url), "utf8");
+const accountHtml = await readFile(new URL("../account.html", import.meta.url), "utf8");
+const repairAdminSource = await readFile(new URL("../runtime/storefront/scripts/repair-admin.js", import.meta.url), "utf8");
+const repairTicketSource = await readFile(new URL("../runtime/storefront/scripts/repair-ticket-20260824-01.js", import.meta.url), "utf8");
 
 test("repair page keeps the Figma accordion content contract", () => {
   assert.match(repairHtml, /repair-20260915-01\.css\?v=20260921-05/);
@@ -126,11 +133,38 @@ test("repair request supports postcode search, international entry, account auto
   assert.match(repairRequestSource, /new window\.daum\.Postcode/);
   assert.match(repairRequestSource, /dom\.postalCode\.readOnly = korean/);
   assert.match(repairRequestSource, /dom\.addressLine1\.readOnly = korean/);
-  assert.match(repairRequestSource, /010-\[0-9\]\{4\}-\[0-9\]\{4\}/);
+  assert.match(repairHtml, /name="phone"[^>]+inputmode="numeric"[^>]+maxlength="11"[^>]+pattern="010\[0-9\]\{8\}"[^>]+placeholder="01000000000"/);
+  assert.match(repairRequestSource, /dom\.phoneInput\.value = isKoreanAddress\(\)[\s\S]*?replace\(\/\\D\/g, ""\)/);
   assert.match(repairRequestSource, /accountUser\.fullName/);
   assert.match(repairRequestSource, /accountUser\.phone/);
   assert.match(accountAddressApiSource, /fullName: user\.fullName/);
   assert.match(accountAddressApiSource, /phone: user\.phone/);
+});
+
+test("country choices use Korean alphabetical order with a neutral direct-entry fallback", () => {
+  const countrySelect = repairHtml.match(/<select class="js-repair-country"[\s\S]*?<\/select>/)?.[0] || "";
+  const labels = [...countrySelect.matchAll(/<option value="(?!__direct__)[^"]+"(?: selected)?>([^<]+)<\/option>/g)].map((match) => match[1]);
+  const sorted = [...labels].sort(new Intl.Collator("ko-KR").compare);
+  assert.deepEqual(labels, sorted);
+  assert.doesNotMatch(countrySelect, /기타 국가/);
+  assert.match(countrySelect, /목록에 없는 국가 직접 입력/);
+  assert.match(repairHtml, /name="countryCustom"/);
+  assert.match(repairRequestSource, /countryCustom\.required = customCountry/);
+  assert.match(repairFormCss, /\.repair-request-form \.repair-field\[hidden\]\s*\{[^}]*display:\s*none/);
+});
+
+test("repair image publishing requires explicit optional consent", () => {
+  assert.match(repairHtml, /name="archiveConsent"/);
+  assert.match(repairHtml, /Archive와 SNS 작업 기록에 공개·활용하는 데 동의합니다/);
+  assert.doesNotMatch(repairHtml, /원치 않으시면 기타 요청사항/);
+  assert.match(repairAdminSource, /archiveConsentAt \? "동의함" : "동의 확인 없음"/);
+});
+
+test("guest repair lookup number is provided consistently", () => {
+  assert.match(accountHtml, /수선 접수 조회번호/);
+  assert.match(accountHtml, /접수 완료 화면과 안내 이메일·문자에서 확인/);
+  assert.match(repairRequestSource, /비회원 조회번호는 \$\{requestNumber\}입니다/);
+  assert.match(repairTicketSource, /\["수선 접수 조회번호", repair\.requestNumber \|\| "-"\]/);
 });
 
 test("repair request close button has no hover box outline", () => {
