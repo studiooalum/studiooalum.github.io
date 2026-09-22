@@ -8,6 +8,18 @@
   display: none;
 }
 
+.repair-archive-consent > p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.62);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.repair-archive-consent legend em {
+  font-family: var(--font-kor-meta);
+  font-weight: 400;
+}
+
 .repair-request-form .repair-address-search-button {
   min-width: 92px;
   border: 1px solid rgba(17, 17, 17, 0.24);

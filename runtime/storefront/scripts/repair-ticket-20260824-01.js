@@ -17,6 +17,8 @@ const dom = {
   number: document.querySelector(".js-repair-ticket-number"),
   status: document.querySelector(".js-repair-ticket-status"),
   facts: document.querySelector(".js-repair-ticket-facts"),
+  requestImages: document.querySelector(".js-repair-ticket-request-images"),
+  requestImagesGrid: document.querySelector(".js-repair-ticket-request-images-grid"),
   closed: document.querySelector(".js-repair-ticket-closed"),
   messages: document.querySelector(".js-repair-ticket-messages"),
   refresh: document.querySelector(".js-repair-ticket-refresh"),
@@ -153,6 +155,7 @@ async function fetchTicket() {
 function renderFacts(ticket) {
   const repair = ticket.repair || {};
   const trackingUrl = safeUrl(repair.trackingUrl);
+  const shippingText = [repair.carrier, repair.trackingNumber].filter(Boolean).join(" · ");
   const facts = [
     ["수선 접수 조회번호", repair.requestNumber || "-"],
     ["신청자", repair.customerName || "-"],
@@ -161,7 +164,7 @@ function renderFacts(ticket) {
     ["예상 가격", formatPrice(repair.quoteAmount)],
     ["최종 가격", formatPrice(repair.finalAmount)],
     ["입금 안내", [repair.bankAccount, repair.paymentInstructions].filter(Boolean).join("\n") || "미정"],
-    ["배송", [repair.carrier, repair.trackingNumber].filter(Boolean).join(" · ") || "미발송"],
+    ...(shippingText ? [["배송", shippingText]] : []),
     ["신청일", formatDate(repair.createdAt)],
     ["최근 업데이트", formatDate(repair.updatedAt)],
     ["Ticket 생성일", formatDate(ticket.createdAt)],
@@ -171,10 +174,10 @@ function renderFacts(ticket) {
     + (trackingUrl ? `<div><dt>배송 조회</dt><dd><a href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 열기</a></dd></div>` : "");
 }
 
-async function loadAttachmentImages() {
-  const images = Array.from(dom.messages.querySelectorAll("img[data-attachment-path]"));
+async function loadProtectedImages() {
+  const images = Array.from(document.querySelectorAll("img[data-protected-image-path]"));
   await Promise.all(images.map(async (image) => {
-    const response = await fetch(image.dataset.attachmentPath, { headers: authHeaders(), credentials: "same-origin" });
+    const response = await fetch(image.dataset.protectedImagePath, { headers: authHeaders(), credentials: "same-origin" });
     if (!response.ok) return;
     const objectUrl = URL.createObjectURL(await response.blob());
     state.objectUrls.push(objectUrl);
@@ -182,8 +185,16 @@ async function loadAttachmentImages() {
   }));
 }
 
+function renderRequestImages(ticket) {
+  if (!dom.requestImages || !dom.requestImagesGrid) return;
+  const images = Array.isArray(ticket.repair?.requestImages) ? ticket.repair.requestImages : [];
+  dom.requestImages.hidden = images.length === 0;
+  dom.requestImagesGrid.innerHTML = images.map((image) => `
+    <img alt="${escapeHtml(image.filename || "수선 신청 사진")}" data-protected-image-path="${escapeHtml(image.streamPath)}">
+  `).join("");
+}
+
 function renderMessages(ticket) {
-  clearObjectUrls();
   const messages = Array.isArray(ticket.messages) ? ticket.messages : [];
   if (!messages.length) {
     dom.messages.innerHTML = '<div class="repair-ticket-empty">아직 등록된 메시지가 없습니다.</div>';
@@ -197,20 +208,22 @@ function renderMessages(ticket) {
         <time>${escapeHtml(formatDate(message.createdAt))}</time>
       </div>
       <p class="repair-ticket-message__body">${escapeHtml(message.body || "")}</p>
-      ${(message.attachments || []).length ? `<div class="repair-ticket-message__attachments">${message.attachments.map((attachment) => `<img alt="${escapeHtml(attachment.filename || "첨부 이미지")}" data-attachment-path="${escapeHtml(attachment.streamPath)}">`).join("")}</div>` : ""}
+      ${(message.attachments || []).length ? `<div class="repair-ticket-message__attachments">${message.attachments.map((attachment) => `<img alt="${escapeHtml(attachment.filename || "첨부 이미지")}" data-protected-image-path="${escapeHtml(attachment.streamPath)}">`).join("")}</div>` : ""}
     </article>
   `).join("");
-  void loadAttachmentImages();
 }
 
 function renderTicket() {
   const ticket = state.ticket;
   if (!ticket) return;
   const repair = ticket.repair || {};
+  clearObjectUrls();
   dom.number.textContent = formatTicketNumber(repair);
   dom.status.textContent = repair.statusLabel || repair.status || "";
   renderFacts(ticket);
+  renderRequestImages(ticket);
   renderMessages(ticket);
+  void loadProtectedImages();
   const closed = ticket.status === "closed";
   dom.closed.hidden = !closed;
   dom.form.hidden = closed;

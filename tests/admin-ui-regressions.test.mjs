@@ -40,6 +40,7 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.doesNotMatch(editorSource, /type="number"/);
   assert.doesNotMatch(editorSource, />Tx</);
   assert.match(editorSource, /resize:\s*\{[\s\S]*enabled:\s*true/);
+  assert.match(editorSource, /alwaysPreserveAspectRatio:\s*true/);
   assert.match(editorSource, /setImage\(\{ src: imageUrls\[0\]/);
   assert.match(stylesheet, /\.newsletter-admin-toolbar\s*\{[\s\S]*position:\s*sticky;[\s\S]*top:\s*calc\(var\(--gnb-height, 40px\) - 1px\);/);
   assert.match(stylesheet, /\.newsletter-admin-style-menu__popover/);

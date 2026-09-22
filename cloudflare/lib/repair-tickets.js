@@ -94,6 +94,18 @@ function formatAttachment(row) {
   };
 }
 
+function formatRequestImage(row, ticketId) {
+  return {
+    id: row.id,
+    filename: row.original_filename || "",
+    contentType: row.content_type || "",
+    byteSize: Number(row.byte_size || 0),
+    sortOrder: Number(row.sort_order || 0),
+    createdAt: row.created_at || "",
+    streamPath: `/api/repairs/ticket-request-images/${encodeURIComponent(row.id)}?ticket=${encodeURIComponent(ticketId)}`,
+  };
+}
+
 function formatMessage(row) {
   return {
     id: row.id,
@@ -134,6 +146,7 @@ function formatTicketHeader(row) {
       carrier: row.carrier || "",
       trackingNumber: row.tracking_number || "",
       trackingUrl: row.tracking_url || "",
+      requestImages: [],
       createdAt: row.repair_created_at || "",
       updatedAt: row.repair_updated_at || "",
     },
@@ -243,6 +256,13 @@ export async function readRepairTicketById(env, ticketId) {
   if (!row) throw Object.assign(new Error("Repair Ticket을 찾을 수 없습니다."), { status: 404 });
 
   const ticket = formatTicketHeader(row);
+  const requestImageResult = await database.prepare(`
+    SELECT id, original_filename, content_type, byte_size, sort_order, created_at
+    FROM repair_request_images
+    WHERE request_id = ?
+    ORDER BY sort_order ASC, created_at ASC
+  `).bind(ticket.repairId).all();
+  ticket.repair.requestImages = (requestImageResult?.results || []).map((image) => formatRequestImage(image, ticket.id));
   const messageResult = await database.prepare(`
     SELECT * FROM repair_ticket_messages
     WHERE ticket_id = ?

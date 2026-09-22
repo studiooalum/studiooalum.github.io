@@ -459,9 +459,10 @@ test("KR repair submissions normalize mobile numbers for storage and SMS deliver
     },
   ));
   assert.equal(validResponse.status, 201);
-  const storedRepair = database.prepare("SELECT phone, archive_consent_at FROM repair_requests LIMIT 1").first();
+  const storedRepair = database.prepare("SELECT phone, archive_consent_at, archive_consent_status FROM repair_requests LIMIT 1").first();
   assert.equal(storedRepair.phone, "01098765432");
   assert.ok(storedRepair.archive_consent_at);
+  assert.equal(storedRepair.archive_consent_status, "agreed");
 
   const invalidResponse = await submitRepairRequest(createRepairApiContext(
     env,
@@ -569,6 +570,37 @@ test("ticket lifecycle migration preserves the ledger through #004 and reclaims 
   assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 5);
 });
 
+test("repair consent and historical ticket ledger migration preserves #005 as the next number", () => {
+  const database = new DatabaseSync(":memory:");
+  try {
+    database.exec(`
+      CREATE TABLE repair_requests (
+        id TEXT PRIMARY KEY,
+        customer_name TEXT NOT NULL,
+        archive_consent_at TEXT,
+        bank_account TEXT NOT NULL DEFAULT '',
+        ticket_number INTEGER UNIQUE
+      );
+      CREATE TABLE repair_ticket_number_sequence (
+        id INTEGER PRIMARY KEY,
+        next_number INTEGER NOT NULL
+      );
+      INSERT INTO repair_requests VALUES
+        ('RPR_B6FF5E54CBE547B59F24B1421524A767', '서규하', '2026-09-01T00:00:00.000Z', '', 1),
+        ('RPR_5F82110FE64544B4BA050741757FECF4', '정영복', NULL, '', 2);
+      INSERT INTO repair_ticket_number_sequence VALUES (1, 5);
+    `);
+    database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0033_repair_consent_and_ticket_ledger.sql", import.meta.url), "utf8"));
+    const rows = database.prepare("SELECT customer_name, ticket_number, archive_consent_status, bank_account FROM repair_requests ORDER BY customer_name").all();
+    assert.deepEqual(rows.map((row) => Number(row.ticket_number)), [2, 4]);
+    assert.deepEqual(rows.map((row) => row.archive_consent_status), ["agreed", "unrecorded"]);
+    assert.ok(rows.every((row) => row.bank_account === "국민 한아름 218301-04-144506"));
+    assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").get().next_number, 5);
+  } finally {
+    database.close();
+  }
+});
+
 test("status transitions validate fields, avoid duplicate events, and lock closed cases", async (t) => {
   const { database, env } = createEnvironment();
   t.after(() => database.close());
@@ -587,7 +619,7 @@ test("status transitions validate fields, avoid duplicate events, and lock close
     /최종 금액/,
   );
   await assert.rejects(
-    updateRepairRequest(env, { id: "RPR_A", expectedVersion: 1, status: "payment_pending", finalAmount: 30000 }),
+    updateRepairRequest(env, { id: "RPR_A", expectedVersion: 1, status: "payment_pending", finalAmount: 30000, bankAccount: "" }),
     /입금 계좌 또는 결제 안내/,
   );
   const payment = await updateRepairRequest(env, {
@@ -730,8 +762,24 @@ test("Repair Ticket supports threaded messages, attachments, unread counts, and 
   const { database, env } = createEnvironment();
   t.after(() => database.close());
   await createInitialRepair(env);
+  database.prepare(`
+    INSERT INTO repair_request_images (
+      id, request_id, r2_key, original_filename, content_type, byte_size, sort_order, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    "RPI_APPLICATION",
+    "RPR_A",
+    "repair-requests/RPR_A/application.png",
+    "application.png",
+    "image/png",
+    2048,
+    0,
+    "2026-09-22T00:00:00.000Z",
+  ).run();
   const initial = await readRepairTicketForRepair(env, "RPR_A");
   assert.ok(initial?.ticket.id.startsWith("RPT_"));
+  assert.equal(initial.ticket.repair.requestImages.length, 1);
+  assert.match(initial.ticket.repair.requestImages[0].streamPath, /ticket-request-images\/RPI_APPLICATION\?ticket=RPT_/);
   assert.equal(initial.ticket.messages.length, 1);
   assert.equal(initial.ticket.messages[0].authorType, "system");
   const signedAccess = await createRepairTicketAccessToken(env, initial.ticket.id, { ttlMs: 60_000 });

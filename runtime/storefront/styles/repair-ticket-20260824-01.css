@@ -114,6 +114,33 @@
   border-bottom: 1px solid rgba(17, 17, 17, 0.3);
 }
 
+.repair-ticket-request-images {
+  display: grid;
+  gap: 10px;
+}
+
+.repair-ticket-request-images h2 {
+  margin: 0;
+  font-family: var(--font-kor-form);
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.repair-ticket-request-images__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.repair-ticket-request-images__grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #f3f3f1;
+}
+
 .repair-ticket-closed {
   margin: 0;
   border-left: 3px solid #111;

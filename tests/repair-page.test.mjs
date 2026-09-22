@@ -19,6 +19,8 @@ const accountAddressApiSource = await readFile(new URL("../functions/api/auth/ad
 const accountHtml = await readFile(new URL("../account.html", import.meta.url), "utf8");
 const repairAdminSource = await readFile(new URL("../runtime/storefront/scripts/repair-admin.js", import.meta.url), "utf8");
 const repairTicketSource = await readFile(new URL("../runtime/storefront/scripts/repair-ticket-20260824-01.js", import.meta.url), "utf8");
+const repairTicketHtml = await readFile(new URL("../repair-ticket.html", import.meta.url), "utf8");
+const repairAdminHtml = await readFile(new URL("../repair-admin.html", import.meta.url), "utf8");
 
 test("repair page keeps the Figma accordion content contract", () => {
   assert.match(repairHtml, /repair-20260915-01\.css\?v=20260921-05/);
@@ -154,10 +156,24 @@ test("country choices use Korean alphabetical order with a neutral direct-entry 
 });
 
 test("repair image publishing requires explicit optional consent", () => {
-  assert.match(repairHtml, /name="archiveConsent"/);
-  assert.match(repairHtml, /Archive와 SNS 작업 기록에 공개·활용하는 데 동의합니다/);
+  assert.match(repairHtml, /name="archiveConsentChoice" value="agreed" required/);
+  assert.match(repairHtml, /name="archiveConsentChoice" value="declined" required/);
+  assert.match(repairHtml, /Archive와 SNS에 작업 사례로 소개/);
+  assert.doesNotMatch(repairHtml, /수선 이용에 불이익/);
   assert.doesNotMatch(repairHtml, /원치 않으시면 기타 요청사항/);
-  assert.match(repairAdminSource, /archiveConsentAt \? "동의함" : "동의 확인 없음"/);
+  assert.match(repairAdminSource, /archiveConsentStatus === "declined" \? "공개하지 않음" : "동의 확인 없음"/);
+});
+
+test("Repair Admin defaults to the Studio OALUM payment account", () => {
+  assert.match(repairAdminHtml, /name="bankAccount"[^>]+value="국민 한아름 218301-04-144506"/);
+});
+
+test("Repair Ticket shows protected request images and hides lookup without a URL", () => {
+  assert.match(repairTicketHtml, /js-repair-ticket-request-images/);
+  assert.match(repairTicketSource, /repair\.requestImages/);
+  assert.match(repairTicketSource, /data-protected-image-path/);
+  assert.match(repairTicketSource, /trackingUrl \? `<div><dt>배송 조회<\/dt>/);
+  assert.doesNotMatch(repairTicketSource, /\["배송",[^\n]+\|\| "미발송"\]/);
 });
 
 test("guest repair lookup number is provided consistently", () => {

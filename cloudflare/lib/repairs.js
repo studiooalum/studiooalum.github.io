@@ -120,6 +120,9 @@ function formatRepairImage(row) {
 function formatRepairRequest(row) {
   const status = normalizeStatus(row.status);
   const archiveConsentAt = row.archive_consent_at || "";
+  const archiveConsentStatus = ["agreed", "declined"].includes(row.archive_consent_status)
+    ? row.archive_consent_status
+    : archiveConsentAt ? "agreed" : "unrecorded";
   const canDelete = ["received", "rejected", "cancelled"].includes(status)
     && !row.payment_confirmed_at
     && Math.max(0, Number(row.final_amount) || 0) === 0;
@@ -147,6 +150,7 @@ function formatRepairRequest(row) {
     marketingOptIn: Boolean(row.marketing_opt_in),
     privacyConsentAt: row.privacy_consent_at || row.terms_accepted_at || "",
     archiveConsentAt,
+    archiveConsentStatus,
     isArchiveCandidate: status === "closed" && Boolean(archiveConsentAt),
     status,
     statusLabel: REPAIR_STATUS_LABELS[status] || status,
@@ -260,6 +264,10 @@ export async function createRepairRequest(env, input, images = []) {
   const emailNormalized = normalizeEmail(email);
   const privacyConsentAt = cleanText(input.privacyConsentAt || input.termsAcceptedAt, 40) || nowIso();
   const archiveConsentAt = cleanText(input.archiveConsentAt, 40) || null;
+  const archiveConsentStatus = ["agreed", "declined"].includes(cleanText(input.archiveConsentStatus, 20))
+    ? cleanText(input.archiveConsentStatus, 20)
+    : archiveConsentAt ? "agreed" : "unrecorded";
+  const bankAccount = cleanText(input.bankAccount, 500) || "국민 한아름 218301-04-144506";
   const preferredContact = normalizePreferredContact(input.preferredContact || input.contactPreference);
   const material = cleanText(input.material || input.itemMaterial, 120);
   const issueDescription = cleanText(input.issueDescription || input.repairDetails, 4000);
@@ -321,15 +329,17 @@ export async function createRepairRequest(env, input, images = []) {
           terms_accepted_at,
           privacy_consent_at,
           archive_consent_at,
+          archive_consent_status,
           marketing_opt_in,
           status,
           admin_note,
           customer_message,
           quote_amount,
           version,
+          bank_account,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', '', '', NULL, 1, ?, ?, ?)
       `)
       .bind(
         requestId,
@@ -357,7 +367,9 @@ export async function createRepairRequest(env, input, images = []) {
         privacyConsentAt,
         privacyConsentAt,
         archiveConsentAt,
+        archiveConsentStatus,
         input.marketingOptIn ? 1 : 0,
+        bankAccount,
         now,
         now,
       ),

@@ -181,6 +181,7 @@ const NewsletterImage = Image.extend({
     directions: ["bottom-left", "bottom-right"],
     minWidth: 80,
     minHeight: 50,
+    // Tiptap must resize both dimensions together so uploaded images never stretch.
     alwaysPreserveAspectRatio: true,
   },
 });

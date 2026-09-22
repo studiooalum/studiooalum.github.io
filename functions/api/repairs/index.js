@@ -29,6 +29,7 @@ const repairRequestSchema = z.object({
   desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." }),
   budgetNote: z.string().trim().max(1000).default(""),
   archiveConsent: z.boolean().optional().default(false),
+  archiveConsentStatus: z.enum(["agreed", "declined", "unrecorded"]).optional().default("unrecorded"),
   privacyConsent: z.literal(true, { message: "개인정보 수집·이용에 동의해주세요." }),
 }).superRefine((value, context) => {
   if (value.countryCode === "KR" && !/^010\d{8}$/.test(value.phone)) {
@@ -120,6 +121,8 @@ function validateImages(files) {
 
 function buildRequestPayload(formData) {
   const countryCode = normalizeCountryCode(formData);
+  const archiveConsentChoice = asText(formData.get("archiveConsentChoice")).trim();
+  const legacyArchiveConsent = asBoolean(formData.get("archiveConsent"));
   return {
     customerName: asText(formData.get("customerName")),
     email: asText(formData.get("email")),
@@ -130,7 +133,10 @@ function buildRequestPayload(formData) {
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
     desiredResult: asText(formData.get("desiredResult")),
     budgetNote: asText(formData.get("budgetNote")),
-    archiveConsent: asBoolean(formData.get("archiveConsent")),
+    archiveConsent: archiveConsentChoice === "agreed" || legacyArchiveConsent,
+    archiveConsentStatus: ["agreed", "declined"].includes(archiveConsentChoice)
+      ? archiveConsentChoice
+      : legacyArchiveConsent ? "agreed" : "unrecorded",
     privacyConsent: asBoolean(formData.get("privacyConsent")) || asBoolean(formData.get("termsAccepted")),
   };
 }
@@ -172,6 +178,7 @@ async function createSubmissionFingerprint(data, files) {
     desiredResult: data.desiredResult,
     budgetNote: data.budgetNote,
     archiveConsent: data.archiveConsent,
+    archiveConsentStatus: data.archiveConsentStatus,
     files: fileFingerprints,
   } : {
     customerName: data.customerName,
@@ -183,6 +190,7 @@ async function createSubmissionFingerprint(data, files) {
     desiredResult: data.desiredResult,
     budgetNote: data.budgetNote,
     archiveConsent: data.archiveConsent,
+    archiveConsentStatus: data.archiveConsentStatus,
     files: fileFingerprints,
   });
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
@@ -320,6 +328,7 @@ export async function onRequestPost(context) {
       termsAcceptedAt: submittedAt,
       privacyConsentAt: submittedAt,
       archiveConsentAt: parsed.data.archiveConsent ? submittedAt : "",
+      archiveConsentStatus: parsed.data.archiveConsentStatus,
     }, uploadedImages);
 
     if (receipt.notificationIds.length && typeof context.waitUntil === "function") {

@@ -316,7 +316,9 @@ function renderRequestList() {
 function renderCustomerDetails(request) {
   if (!dom.customer) return;
   const privacyConsent = request.privacyConsentAt ? "동의함" : "동의 시각 없음";
-  const archiveConsent = request.archiveConsentAt ? "동의함" : "동의 확인 없음";
+  const archiveConsent = request.archiveConsentStatus === "agreed" || request.archiveConsentAt
+    ? "동의함"
+    : request.archiveConsentStatus === "declined" ? "공개하지 않음" : "동의 확인 없음";
   const email = String(request.email || "").trim();
   const legacyDetails = [
     request.material || request.itemMaterial ? `<div><dt>소재</dt><dd>${escapeHtml(request.material || request.itemMaterial)}</dd></div>` : "",

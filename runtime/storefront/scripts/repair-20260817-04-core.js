@@ -72,6 +72,7 @@ const FIELD_LABELS = {
   itemType: "제품 종류",
   issueDescription: "손상 부위",
   desiredResult: "수선 방향",
+  archiveConsentChoice: "작업 사진 기록",
   privacyConsent: "개인정보 수집·이용 동의",
 };
 
@@ -328,7 +329,7 @@ function getValidatableControls() {
 }
 
 function getValidationOwner(control) {
-  if (control.name === "desiredResult") return control.closest(".repair-choice-group");
+  if (["desiredResult", "archiveConsentChoice"].includes(control.name)) return control.closest(".repair-choice-group");
   if (control.name === "privacyConsent") return control.closest(".repair-checkbox");
   return control.closest(".repair-field");
 }
