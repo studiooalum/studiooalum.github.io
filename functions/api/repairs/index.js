@@ -30,6 +30,14 @@ const repairRequestSchema = z.object({
   budgetNote: z.string().trim().max(1000).default(""),
   archiveConsent: z.boolean().optional().default(false),
   privacyConsent: z.literal(true, { message: "개인정보 수집·이용에 동의해주세요." }),
+}).superRefine((value, context) => {
+  if (value.countryCode === "KR" && !/^010-\d{4}-\d{4}$/.test(value.phone)) {
+    context.addIssue({
+      code: "custom",
+      message: "전화번호를 010-0000-0000 형식으로 입력해주세요.",
+      path: ["phone"],
+    });
+  }
 }).refine((value) => value.shippingAddress
   ? value.shippingAddress.length >= 5
   : Boolean(value.countryCode), {
@@ -54,6 +62,15 @@ function normalizeCountryCode(formData) {
   return ["대한민국", "한국", "korea", "southkorea", "republicofkorea", "kr", "kor"].includes(country)
     ? "KR"
     : "OTHER";
+}
+
+function normalizeRepairPhone(value, countryCode) {
+  const raw = asText(value).trim();
+  if (countryCode !== "KR") return raw;
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("82")) digits = `0${digits.slice(2)}`;
+  if (!/^010\d{8}$/.test(digits)) return raw;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
 function buildShippingAddress(formData, countryCode) {
@@ -100,7 +117,7 @@ function buildRequestPayload(formData) {
   return {
     customerName: asText(formData.get("customerName")),
     email: asText(formData.get("email")),
-    phone: asText(formData.get("phone")),
+    phone: normalizeRepairPhone(formData.get("phone"), countryCode),
     shippingAddress: buildShippingAddress(formData, countryCode),
     countryCode,
     itemType: asText(formData.get("itemType")),

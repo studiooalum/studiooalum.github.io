@@ -7,6 +7,11 @@ const repairCss = await readFile(
   new URL("../runtime/storefront/styles/repair-20260915-01.css", import.meta.url),
   "utf8",
 );
+const repairRequestSource = await readFile(
+  new URL("../runtime/storefront/scripts/repair-20260817-04-core.js", import.meta.url),
+  "utf8",
+);
+const accountAddressApiSource = await readFile(new URL("../functions/api/auth/address.js", import.meta.url), "utf8");
 
 test("repair page keeps the Figma accordion content contract", () => {
   assert.match(repairHtml, /repair-20260915-01\.css\?v=20260921-05/);
@@ -99,7 +104,11 @@ test("repair request separates applicant and shipping fields without changing qu
     assert.ok(repairHtml.includes(field), `missing request field: ${field}`);
   }
 
-  assert.match(repairHtml, /name="country"[^>]+value="대한민국"[^>]+required/);
+  assert.match(repairHtml, /<select class="js-repair-country" name="country"[^>]+required>[\s\S]*?<option value="대한민국" selected>/);
+  assert.match(repairHtml, /js-repair-address-search[^>]*>주소 검색<\/button>/);
+  assert.match(repairHtml, /t1\.kakaocdn\.net\/mapjsapi\/bundle\/postcode\/prod\/postcode\.v2\.js/);
+  assert.match(repairHtml, /name="postalCode"[^>]+readonly required/);
+  assert.match(repairHtml, /name="addressLine1"[^>]+readonly required/);
   assert.doesNotMatch(repairHtml, /저장된 내 주소 없음|js-repair-use-account-address/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<(?:span|legend|h3)>([1-5]\. [^<]+)/g)].map((match) => match[1]),
@@ -111,6 +120,17 @@ test("repair request separates applicant and shipping fields without changing qu
       "5. 기타 요청사항 ",
     ],
   );
+});
+
+test("repair request supports postcode search, international entry, account autofill, and KR phone formatting", () => {
+  assert.match(repairRequestSource, /new window\.daum\.Postcode/);
+  assert.match(repairRequestSource, /dom\.postalCode\.readOnly = korean/);
+  assert.match(repairRequestSource, /dom\.addressLine1\.readOnly = korean/);
+  assert.match(repairRequestSource, /010-\[0-9\]\{4\}-\[0-9\]\{4\}/);
+  assert.match(repairRequestSource, /accountUser\.fullName/);
+  assert.match(repairRequestSource, /accountUser\.phone/);
+  assert.match(accountAddressApiSource, /fullName: user\.fullName/);
+  assert.match(accountAddressApiSource, /phone: user\.phone/);
 });
 
 test("repair request close button has no hover box outline", () => {

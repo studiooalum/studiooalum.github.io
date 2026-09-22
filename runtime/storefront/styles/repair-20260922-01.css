@@ -1,0 +1,39 @@
+.repair-address-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.repair-request-form .repair-address-search-button {
+  min-width: 92px;
+  border: 1px solid rgba(17, 17, 17, 0.24);
+  border-radius: 0;
+  padding: 11px 14px;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-kor-form);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-korean);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.repair-request-form .repair-address-search-button:hover,
+.repair-request-form .repair-address-search-button:focus-visible {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+  outline: 0;
+}
+
+.repair-request-form .repair-field input[readonly] {
+  background: #fff;
+  color: #111;
+  cursor: default;
+}
+
+@media (max-width: 479px) {
+  .repair-address-search-row { grid-template-columns: minmax(0, 1fr) 88px; }
+  .repair-request-form .repair-address-search-button { min-width: 0; padding-inline: 8px; }
+}

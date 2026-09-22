@@ -119,11 +119,11 @@ export function assertRepairStatusRequirements(statusValue, request) {
   }
   if (status === "payment_pending") {
     const finalAmount = getRepairValue(request, "finalAmount", "final_amount");
-    const bankAccount = cleanText(getRepairValue(request, "bankAccount", "bank_account"), 500);
-    const paymentInstructions = cleanText(getRepairValue(request, "paymentInstructions", "payment_instructions"), 2000);
-    if (finalAmount === null || finalAmount === undefined || finalAmount === "") {
+    if (!Number.isInteger(Number(finalAmount)) || Number(finalAmount) <= 0) {
       throw Object.assign(new Error("최종 금액을 입력해주세요."), { status: 400 });
     }
+    const bankAccount = cleanText(getRepairValue(request, "bankAccount", "bank_account"), 500);
+    const paymentInstructions = cleanText(getRepairValue(request, "paymentInstructions", "payment_instructions"), 2000);
     if (!bankAccount && !paymentInstructions) {
       throw Object.assign(new Error("입금 계좌 또는 결제 안내를 입력해주세요."), { status: 400 });
     }

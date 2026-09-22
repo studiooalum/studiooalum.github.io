@@ -297,7 +297,7 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
     product_name: value("itemType", "item_type"),
     repair_number: ticketNumber > 0
       ? `#${String(ticketNumber).padStart(3, "0")}`
-      : "수선 문의",
+      : "수선 접수",
     repair_request: value("issueDescription", "repair_details"),
     shipping_address: value("shippingAddress", "shipping_address"),
     quote_amount: formatAmount(value("quoteAmount", "quote_amount")),
@@ -385,7 +385,7 @@ export async function prepareInitialRepairTicketBundle(env, request, eventId, cr
         ticketId,
         sourceEventId: eventId,
         authorType: "system",
-        body: "수선 문의가 접수되었습니다. 제품을 보내주시면 도착 확인 후 이 페이지에서 수선 가능 여부와 진행 방향을 안내드립니다. 실제 수선을 시작할 때 티켓 번호가 발급됩니다.",
+        body: "수선 접수가 완료되었습니다. 제품을 보내주시면 도착 확인 후 이 페이지에서 수선 가능 여부와 진행 방향을 안내드립니다. 실제 수선을 시작할 때 티켓 번호가 발급됩니다.",
         createdAt,
       }),
       ...notifications.map((notification) => createNotificationOutboxStatement(database, notification)),

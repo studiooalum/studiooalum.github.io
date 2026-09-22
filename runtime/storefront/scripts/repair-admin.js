@@ -146,6 +146,12 @@ function updateStatusFields() {
     quoteInput.required = required;
     quoteInput.closest("label")?.classList.toggle("is-required", required);
   }
+  const finalInput = dom.form.elements.finalAmount;
+  if (finalInput) {
+    const required = status === "payment_pending";
+    finalInput.required = required;
+    finalInput.closest("label")?.classList.toggle("is-required", required);
+  }
   document.querySelectorAll("[data-repair-payment-field]").forEach((field) => {
     field.hidden = !["payment_pending", "shipping", "closed"].includes(status);
   });
@@ -503,6 +509,12 @@ async function saveRequest() {
   }
   if (requestPayload.finalAmount !== null && (!Number.isInteger(requestPayload.finalAmount) || requestPayload.finalAmount < 0)) {
     setStatus(dom.formStatus, "최종 가격을 다시 확인해주세요.", "error");
+    dom.form.elements.finalAmount.focus();
+    return;
+  }
+  if (requestPayload.status === "payment_pending"
+    && (!Number.isInteger(requestPayload.finalAmount) || requestPayload.finalAmount <= 0)) {
+    setStatus(dom.formStatus, "수선 완료 단계에서는 최종 가격을 입력해주세요.", "error");
     dom.form.elements.finalAmount.focus();
     return;
   }

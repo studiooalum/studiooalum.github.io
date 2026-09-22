@@ -64,7 +64,7 @@ function formatTicketNumber(repair) {
   if (Number.isInteger(ticketNumber) && ticketNumber > 0) {
     return `#${String(ticketNumber).padStart(3, "0")}`;
   }
-  return "수선 문의";
+  return "수선 접수";
 }
 
 function safeUrl(value) {

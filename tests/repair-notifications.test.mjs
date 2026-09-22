@@ -157,12 +157,19 @@ async function createInitialRepair(env, suffix = "A", overrides = {}) {
   });
 }
 
-function createRepairForm({ imageBody = "image-a", email = "customer@example.com" } = {}) {
+function createRepairForm({
+  imageBody = "image-a",
+  email = "customer@example.com",
+  phone = "010-1234-5678",
+  countryCode = "",
+  shippingAddress = "123 Main Street, Portland, OR, USA",
+} = {}) {
   const formData = new FormData();
   formData.set("customerName", "홍길동");
   formData.set("email", email);
-  formData.set("phone", "010-1234-5678");
-  formData.set("shippingAddress", "123 Main Street, Portland, OR, USA");
+  formData.set("phone", phone);
+  if (countryCode) formData.set("countryCode", countryCode);
+  formData.set("shippingAddress", shippingAddress);
   formData.set("itemType", "자켓");
   formData.set("issueDescription", "소매가 찢어졌습니다.");
   formData.set("desiredResult", "수선 흔적을 살리고 싶어요");
@@ -431,6 +438,39 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   assert.match((await shortAddressResponse.json()).error, /발송지 주소/);
 });
 
+test("KR repair submissions normalize mobile numbers for storage and SMS delivery", async (t) => {
+  const bucket = {
+    async put() {},
+    async delete() {},
+  };
+  const { database, env } = createFullEnvironment({ OALUM_R2: bucket });
+  t.after(() => database.close());
+
+  const validResponse = await submitRepairRequest(createRepairApiContext(
+    env,
+    "repair:66666666-6666-4666-8666-666666666666",
+    {
+      phone: "+82 10 9876 5432",
+      countryCode: "KR",
+      shippingAddress: "[02412] 서울특별시 동대문구 이문로42길 5 2층 201호",
+    },
+  ));
+  assert.equal(validResponse.status, 201);
+  assert.equal(database.prepare("SELECT phone FROM repair_requests LIMIT 1").first().phone, "010-9876-5432");
+
+  const invalidResponse = await submitRepairRequest(createRepairApiContext(
+    env,
+    "repair:77777777-7777-4777-8777-777777777777",
+    {
+      phone: "02-123-4567",
+      countryCode: "KR",
+      shippingAddress: "[02412] 서울특별시 동대문구 이문로42길 5 2층 201호",
+    },
+  ));
+  assert.equal(invalidResponse.status, 400);
+  assert.match((await invalidResponse.json()).error, /010-0000-0000/);
+});
+
 test("submission stores request, event, and rendered outbox atomically", async (t) => {
   const { database, env } = createEnvironment();
   t.after(() => database.close());
@@ -451,6 +491,22 @@ test("submission stores request, event, and rendered outbox atomically", async (
   assert.equal(existing.requestNumber, "REP-20260823-A");
   assert.equal(existing.submissionFingerprint, "fingerprint-A");
   assert.equal(existing.notificationIds.length, 2);
+});
+
+test("repair application copy migration uses reassuring receipt language", (t) => {
+  const { database } = createFullEnvironment();
+  t.after(() => database.close());
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0031_repair_application_copy.sql", import.meta.url), "utf8"));
+
+  const customerTemplate = database.prepare(`
+    SELECT name, trigger_label, active_subject, active_body
+    FROM notification_templates
+    WHERE template_key = 'repair.application_submitted' AND channel = 'email'
+  `).first();
+  assert.equal(customerTemplate.name, "수선 접수 완료");
+  assert.equal(customerTemplate.trigger_label, "접수 완료");
+  assert.match(customerTemplate.active_subject, /수선 접수가 완료되었습니다/);
+  assert.doesNotMatch(customerTemplate.active_body, /수선 문의/);
 });
 
 test("Repair inquiries receive a ticket number only when work starts and require an estimate on receipt", async (t) => {

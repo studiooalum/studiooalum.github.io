@@ -14,6 +14,8 @@ export async function onRequestGet(context) {
       authenticated: true,
       user: {
         email: user.email || "",
+        fullName: user.fullName || "",
+        phone: user.phone || "",
         zipcode: user.zipcode || "",
         address1: user.address1 || "",
         address2: user.address2 || "",

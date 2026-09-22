@@ -18,6 +18,7 @@ const dom = {
   backdrop: document.querySelector("#repairRequestBackdrop"),
   close: document.querySelector("#repairRequestClose"),
   form: document.querySelector(".js-repair-form"),
+  nameInput: document.querySelector("[name='customerName']"),
   emailField: document.querySelector(".js-repair-email-field"),
   emailInput: document.querySelector(".js-repair-email-input"),
   phoneInput: document.querySelector(".js-repair-phone-input"),
@@ -25,6 +26,7 @@ const dom = {
   postalCode: document.querySelector(".js-repair-postal-code"),
   addressLine1: document.querySelector(".js-repair-address-line1"),
   addressLine2: document.querySelector(".js-repair-address-line2"),
+  addressSearch: document.querySelector(".js-repair-address-search"),
   imageInput: document.querySelector(".js-repair-image-input"),
   imageList: document.querySelector(".js-repair-image-preview-list"),
   imageHelp: document.querySelector(".js-repair-image-help"),
@@ -203,6 +205,57 @@ function clearAccountAutofill() {
   state.accountEmail = "";
 }
 
+function normalizeKoreanPhone(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("82")) digits = `0${digits.slice(2)}`;
+  digits = digits.slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
+function isKoreanAddress() {
+  return !dom.country || dom.country.value === "대한민국";
+}
+
+function syncAddressMode() {
+  const korean = isKoreanAddress();
+  if (dom.postalCode) {
+    dom.postalCode.readOnly = korean;
+    dom.postalCode.inputMode = korean ? "numeric" : "text";
+  }
+  if (dom.addressLine1) dom.addressLine1.readOnly = korean;
+  if (dom.addressSearch) dom.addressSearch.hidden = !korean;
+  if (dom.phoneInput) {
+    dom.phoneInput.placeholder = korean ? "010-0000-0000" : "+1 000 000 0000";
+    dom.phoneInput.pattern = korean ? "010-[0-9]{4}-[0-9]{4}" : "";
+    if (korean) dom.phoneInput.value = normalizeKoreanPhone(dom.phoneInput.value);
+  }
+}
+
+function openKoreanAddressSearch() {
+  if (!isKoreanAddress()) return;
+  if (typeof window.daum?.Postcode !== "function") {
+    if (dom.postalCode) dom.postalCode.readOnly = false;
+    if (dom.addressLine1) dom.addressLine1.readOnly = false;
+    setStatus("주소 검색을 불러오지 못했습니다. 우편번호와 주소를 직접 입력해주세요.", "error");
+    dom.postalCode?.focus();
+    return;
+  }
+
+  new window.daum.Postcode({
+    oncomplete(data) {
+      const address = data.userSelectedType === "J"
+        ? String(data.jibunAddress || data.autoJibunAddress || "")
+        : String(data.roadAddress || data.autoRoadAddress || "");
+      if (dom.postalCode) dom.postalCode.value = String(data.zonecode || "");
+      if (dom.addressLine1) dom.addressLine1.value = address;
+      dom.addressLine2?.focus();
+      updateValidationFeedback();
+    },
+  }).open();
+}
+
 async function syncApplicantAccount() {
   if (!dom.emailField || !dom.emailInput) return;
 
@@ -226,11 +279,14 @@ async function syncApplicantAccount() {
   dom.emailInput.required = true;
   if (state.accountEmail && !dom.emailInput.value) dom.emailInput.value = state.accountEmail;
   if (accountUser) {
+    if (dom.nameInput && !dom.nameInput.value) dom.nameInput.value = String(accountUser.fullName || "").trim();
+    if (dom.phoneInput && !dom.phoneInput.value) dom.phoneInput.value = normalizeKoreanPhone(accountUser.phone || "");
     if (dom.country && !dom.country.value) dom.country.value = "대한민국";
     if (dom.postalCode && !dom.postalCode.value) dom.postalCode.value = String(accountUser.zipcode || "").trim();
     if (dom.addressLine1 && !dom.addressLine1.value) dom.addressLine1.value = String(accountUser.address1 || "").trim();
     if (dom.addressLine2 && !dom.addressLine2.value) dom.addressLine2.value = String(accountUser.address2 || "").trim();
   }
+  syncAddressMode();
 }
 
 function formatFileSize(value) {
@@ -474,6 +530,8 @@ function resetForm() {
   if (dom.successTicket) dom.successTicket.hidden = true;
   if (dom.form) dom.form.hidden = false;
   dom.imageInput && (dom.imageInput.value = "");
+  syncAddressMode();
+  void syncApplicantAccount();
 }
 
 async function submitRepairRequest() {
@@ -503,7 +561,7 @@ async function submitRepairRequest() {
     if (dom.successCopy) {
       dom.successCopy.textContent = Number.isInteger(ticketNumber) && ticketNumber > 0
         ? `수선 티켓 #${String(ticketNumber).padStart(3, "0")}이 생성되었습니다.`
-        : "수선 문의가 접수되었습니다. 제품 도착 후 수선 가능 여부와 예상 가격을 안내드리며, 실제 수선을 시작할 때 티켓 번호가 발급됩니다.";
+        : "수선 접수가 완료되었습니다. 제품 도착 후 수선 가능 여부와 예상 가격을 안내드리며, 실제 수선을 시작할 때 티켓 번호가 발급됩니다.";
     }
     if (dom.successTicket) {
       const ticketUrl = String(payload.ticketUrl || "").trim();
@@ -552,6 +610,11 @@ export function initRepairRequest() {
   });
 
   dom.emailInput?.addEventListener("input", sanitizeEmailInput);
+  dom.phoneInput?.addEventListener("input", () => {
+    if (isKoreanAddress()) dom.phoneInput.value = normalizeKoreanPhone(dom.phoneInput.value);
+  });
+  dom.country?.addEventListener("change", syncAddressMode);
+  dom.addressSearch?.addEventListener("click", openKoreanAddressSearch);
   dom.form.addEventListener("input", updateValidationFeedback);
   dom.form.addEventListener("change", updateValidationFeedback);
 
@@ -571,4 +634,5 @@ export function initRepairRequest() {
     void syncApplicantAccount();
   });
   refreshImageList();
+  syncAddressMode();
 }
