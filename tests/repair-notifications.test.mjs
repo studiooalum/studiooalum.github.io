@@ -586,11 +586,12 @@ test("repair consent and historical ticket ledger migration preserves #005 as th
         next_number INTEGER NOT NULL
       );
       INSERT INTO repair_requests VALUES
-        ('RPR_B6FF5E54CBE547B59F24B1421524A767', '서규하', '2026-09-01T00:00:00.000Z', '', 1),
+        ('RPR_B6FF5E54CBE547B59F24B1421524A767', '서규하', '2026-09-01T00:00:00.000Z', '국민 218301-04-144506', 1),
         ('RPR_5F82110FE64544B4BA050741757FECF4', '정영복', NULL, '', 2);
       INSERT INTO repair_ticket_number_sequence VALUES (1, 5);
     `);
     database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0033_repair_consent_and_ticket_ledger.sql", import.meta.url), "utf8"));
+    database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0034_repair_bank_account_label.sql", import.meta.url), "utf8"));
     const rows = database.prepare("SELECT customer_name, ticket_number, archive_consent_status, bank_account FROM repair_requests ORDER BY customer_name").all();
     assert.deepEqual(rows.map((row) => Number(row.ticket_number)), [2, 4]);
     assert.deepEqual(rows.map((row) => row.archive_consent_status), ["agreed", "unrecorded"]);
