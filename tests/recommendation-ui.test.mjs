@@ -43,7 +43,8 @@ test("edition sidebar sticky stop uses media-relative image position", () => {
 });
 
 test("archive recommendations match the edition card grid", () => {
-  assert.match(archiveScript, /relatedHeading\.textContent = "함께 보기"/);
+  assert.match(archiveScript, /relatedHeading\.textContent = "you may also like"/);
+  assert.match(archiveCss, /\.archive-related h2\s*\{[\s\S]*?font-size:\s*16px/);
   assert.match(archiveCss, /\.archive-related \.archive-card__media\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1;/);
   assert.match(archiveCss, /@media \(min-width:\s*960px\)[\s\S]*?\.archive-related__grid\s*\{[\s\S]*?repeat\(4,/);
   assert.match(archiveCss, /object-position:\s*center center;/);
@@ -53,6 +54,7 @@ test("newsletter detail recommendations use columns one and two", () => {
   assert.match(newsletterScript, /heading\.textContent = "you may also like"/);
   assert.match(newsletterScript, /post\.slug !== currentSlug/);
   assert.match(newsletterCss, /\.newsletter-entry-mode \.newsletter-recommendation\s*\{[\s\S]*?grid-column:\s*1 \/ span 2;/);
+  assert.match(newsletterCss, /\.newsletter-recommendation__title\s*\{[\s\S]*?font-size:\s*16px/);
   assert.match(newsletterCss, /\.newsletter-recommend-card__thumb\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1;/);
   assert.match(newsletterCss, /\.newsletter-recommend-card__thumb > \.progressive-image\s*\{[\s\S]*?height:\s*100%;/);
   assert.match(newsletterCss, /@media \(min-width:\s*960px\)[\s\S]*?\.newsletter-recommendation__grid\s*\{[\s\S]*?repeat\(4,/);

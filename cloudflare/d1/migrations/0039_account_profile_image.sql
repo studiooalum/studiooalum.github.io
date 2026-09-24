@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN profile_image_r2_key TEXT NOT NULL DEFAULT '';

@@ -1,0 +1,156 @@
+body :is(
+  .account-btn,
+  .account-overview__link,
+  .fulfillment-btn,
+  .edition-btn,
+  .checkout-btn--outline:not(.checkout-btn--outline-small),
+  .checkout-submit-btn,
+  .newsletter-form__button,
+  .payment-submit-btn,
+  .payment-btn--outline,
+  .payment-btn--secondary,
+  .repair-apply-btn,
+  .repair-submit,
+  .repair-success__reset,
+  .repair-address-search-button,
+  .repair-ticket-submit,
+  .repair-ticket-file-button,
+  .workshop-apply-btn,
+  .workshop-booking-form__submit,
+  .workshop-booking-form__cancel,
+  .workshop-inquiry-form button[type="submit"]
+) {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  height: auto !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px !important;
+  border: 1px solid #111 !important;
+  border-radius: 0 !important;
+  background: #111 !important;
+  color: #fff !important;
+  font-family: var(--font-kor-button) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+body :is(
+  .account-btn--secondary,
+  .account-btn--signup,
+  .fulfillment-btn--secondary,
+  .edition-btn--secondary,
+  .payment-btn--outline,
+  .workshop-booking-form__cancel
+) {
+  background: #fff !important;
+  color: #111 !important;
+}
+
+body :is(
+  .account-btn,
+  .account-overview__link,
+  .fulfillment-btn,
+  .edition-btn,
+  .checkout-btn--outline:not(.checkout-btn--outline-small),
+  .checkout-submit-btn,
+  .newsletter-form__button,
+  .payment-submit-btn,
+  .payment-btn--outline,
+  .payment-btn--secondary,
+  .repair-apply-btn,
+  .repair-submit,
+  .repair-success__reset,
+  .repair-address-search-button,
+  .repair-ticket-submit,
+  .repair-ticket-file-button,
+  .workshop-apply-btn,
+  .workshop-booking-form__submit,
+  .workshop-booking-form__cancel
+):hover,
+body :is(
+  .account-btn,
+  .account-overview__link,
+  .fulfillment-btn,
+  .edition-btn,
+  .checkout-btn--outline:not(.checkout-btn--outline-small),
+  .checkout-submit-btn,
+  .newsletter-form__button,
+  .payment-submit-btn,
+  .payment-btn--outline,
+  .payment-btn--secondary,
+  .repair-apply-btn,
+  .repair-submit,
+  .repair-success__reset,
+  .repair-address-search-button,
+  .repair-ticket-submit,
+  .repair-ticket-file-button,
+  .workshop-apply-btn,
+  .workshop-booking-form__submit,
+  .workshop-booking-form__cancel
+):focus-visible {
+  border-color: #111 !important;
+  background: #fff !important;
+  color: #111 !important;
+  outline: 1px solid #111;
+  outline-offset: 2px;
+}
+
+body :is(
+  .account-panel-actions,
+  .fulfillment-actions,
+  .edition-actions,
+  .payment-result__actions,
+  .repair-ticket-composer__submit,
+  .workshop-admin-action-bar
+) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+body :is(.account-panel-actions, .fulfillment-actions, .edition-actions, .payment-result__actions, .workshop-admin-action-bar) > * {
+  width: 100% !important;
+  flex: none !important;
+}
+
+.repair-page .repair-hero-copy h1 {
+  margin: 0 !important;
+  font-family: var(--font-book) !important;
+  font-size: var(--type-page-title, 34px) !important;
+  font-weight: 400 !important;
+  line-height: 1.18 !important;
+}
+
+.repair-page .repair-body-copy,
+.repair-page .repair-body-copy p {
+  max-width: none !important;
+  font-family: var(--font-kor-body) !important;
+  font-size: var(--type-body, 16px) !important;
+  line-height: var(--type-body-leading, 1.8) !important;
+  color: #222 !important;
+  word-break: keep-all;
+}
+
+.repair-page .repair-body-copy p:last-child {
+  font-size: var(--type-label, 14px) !important;
+  line-height: 1.7 !important;
+}
+
+.repair-page .repair-stage__rail .repair-accordion > summary {
+  font-size: var(--type-section-title, 20px) !important;
+  line-height: 1.35 !important;
+}
+
+.repair-page .repair-stage__rail :is(.repair-basic-table, .repair-method-matrix, .repair-process-list li, .repair-accordion--shipping p) {
+  font-size: var(--type-label, 14px) !important;
+  line-height: 1.6 !important;
+}

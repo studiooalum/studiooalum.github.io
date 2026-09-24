@@ -230,6 +230,7 @@ CREATE TABLE IF NOT EXISTS users (
   zipcode TEXT NOT NULL DEFAULT '',
   address1 TEXT NOT NULL DEFAULT '',
   address2 TEXT NOT NULL DEFAULT '',
+  profile_image_r2_key TEXT NOT NULL DEFAULT '',
   password_hash TEXT NOT NULL DEFAULT '',
   password_salt TEXT NOT NULL DEFAULT '',
   privacy_policy_accepted_at TEXT,

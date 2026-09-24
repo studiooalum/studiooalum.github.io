@@ -1064,7 +1064,6 @@ function openBookingRail() {
   document.body.classList.add("workshop-booking-open");
   dom.rail?.setAttribute("aria-hidden", "false");
   dom.rail.inert = false;
-  lockBodyScroll("workshop-booking");
 
   if (!state.selectedDate) {
     state.selectedDate = findFirstAvailableDate();
@@ -1084,7 +1083,6 @@ function closeBookingRail() {
   document.body.classList.remove("workshop-booking-open");
   dom.rail?.setAttribute("aria-hidden", "true");
   dom.rail.inert = true;
-  unlockBodyScroll("workshop-booking");
 }
 
 async function loadWorkshop() {

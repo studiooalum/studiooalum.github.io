@@ -221,6 +221,8 @@ function mapUser(row) {
     zipcode: row.zipcode || "",
     address1: row.address1 || "",
     address2: row.address2 || "",
+    hasProfileImage: Boolean(row.profile_image_r2_key),
+    profileImageUrl: row.profile_image_r2_key ? "/api/auth/profile-image" : "",
     marketingOptIn: normalizeBoolean(row.marketing_opt_in),
     pointsBalance: Number(row.points_balance) || 0,
     createdAt: row.created_at || null,
@@ -1502,6 +1504,20 @@ export async function readAccountAddress(env, userId) {
     address1: userRow.address1 || latestOrderProfile?.address1 || "",
     address2: userRow.address2 || latestOrderProfile?.address2 || "",
   };
+}
+
+export async function readUserProfileImageKey(env, userId) {
+  const row = await requireDb(env).prepare(`SELECT profile_image_r2_key FROM users WHERE id = ? LIMIT 1`).bind(userId).first();
+  if (!row) throw Object.assign(new Error("회원 정보를 찾을 수 없습니다."), { status: 404 });
+  return row.profile_image_r2_key || "";
+}
+
+export async function updateUserProfileImageKey(env, userId, profileImageR2Key) {
+  const database = requireDb(env);
+  const existing = await readUserProfileImageKey(env, userId);
+  await database.prepare(`UPDATE users SET profile_image_r2_key = ?, updated_at = ? WHERE id = ?`)
+    .bind(cleanText(profileImageR2Key, 500), nowIso(), userId).run();
+  return existing;
 }
 
 export async function updateAccount(env, userId, input) {

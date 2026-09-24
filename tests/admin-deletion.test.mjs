@@ -4,9 +4,11 @@ import test from "node:test";
 import { DatabaseSync } from "node:sqlite";
 import { createWorkshopInquiry, readWorkshopInquiries } from "../cloudflare/lib/workshop-inquiries.js";
 import { onRequestPost as confirmShopPayment } from "../functions/api/payments/confirm.js";
-import { signupWithPassword } from "../cloudflare/lib/auth.js";
+import { createSessionCookie, readAccount, readUserProfileImageKey, requestLoginCode, signupWithPassword, updateUserProfileImageKey } from "../cloudflare/lib/auth.js";
 import { createAdminSession, requireAdminAccess } from "../cloudflare/lib/admin.js";
 import { enforceRateLimit } from "../cloudflare/lib/request-security.js";
+import { isPrivateR2Key } from "../cloudflare/lib/r2.js";
+import { onRequestGet as getProfileImage, onRequestPost as uploadProfileImage } from "../functions/api/auth/profile-image.js";
 
 import { deleteCoupon, upsertCoupon } from "../cloudflare/lib/coupons.js";
 import { deleteUnpaidOrder, persistOrder } from "../cloudflare/lib/d1.js";
@@ -90,6 +92,58 @@ test("administrator sessions expire and public mutation limits cannot be exceede
   await assert.rejects(requireAdminAccess({ env, request }), { status: 401 });
   await enforceRateLimit(env, request, { scope: "test", limit: 1 });
   await assert.rejects(enforceRateLimit(env, request, { scope: "test", limit: 1 }), { status: 429 });
+});
+
+test("account profile images remain private and appear in the account contract", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  const now = new Date().toISOString();
+  database.prepare(`INSERT INTO users (id, email, email_normalized, full_name, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)`)
+    .bind("USER_PROFILE", "profile@example.com", "profile@example.com", "Profile", now, now).run();
+  assert.equal(await updateUserProfileImageKey(env, "USER_PROFILE", "profile-images/user-profile/avatar.webp"), "");
+  assert.equal(await readUserProfileImageKey(env, "USER_PROFILE"), "profile-images/user-profile/avatar.webp");
+  const account = await readAccount(env, "USER_PROFILE");
+  assert.equal(account.user.hasProfileImage, true);
+  assert.equal(account.user.profileImageUrl, "/api/auth/profile-image");
+  assert.doesNotMatch(JSON.stringify(account), /profile-images\/user-profile/);
+});
+
+test("authenticated users can upload and privately retrieve a profile image", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  const objects = new Map();
+  env.AUTH_SECRET = "profile-test-secret";
+  env.AUTH_DEBUG = "true";
+  env.OALUM_R2 = {
+    async put(key, body, options) { objects.set(key, { bytes: await new Response(body).arrayBuffer(), httpMetadata: options.httpMetadata }); },
+    async get(key) {
+      const object = objects.get(key);
+      return object ? { body: new Blob([object.bytes]).stream(), httpMetadata: object.httpMetadata } : null;
+    },
+    async delete(key) { objects.delete(key); },
+  };
+  const email = "profile-upload@example.com";
+  const code = (await requestLoginCode(env, { email, mode: "signup", fullName: "Profile Upload" })).debugCode;
+  const request = new Request("https://studiooalum.test/signup");
+  const signup = await signupWithPassword(env, {
+    email, code, fullName: "Profile Upload", password: "fixture-password", privacyConsent: true, termsConsent: true,
+  }, request);
+  const cookie = createSessionCookie(request, env, signup.session.token);
+  const formData = new FormData();
+  formData.set("image", new File(["profile-image"], "avatar.webp", { type: "image/webp" }));
+  const uploadResponse = await uploadProfileImage({ env, request: new Request("https://studiooalum.test/api/auth/profile-image", {
+    method: "POST", headers: { Cookie: cookie }, body: formData,
+  }) });
+  assert.equal(uploadResponse.status, 200);
+  const key = await readUserProfileImageKey(env, signup.user.id);
+  assert.equal(isPrivateR2Key(key), true);
+  const imageResponse = await getProfileImage({ env, request: new Request("https://studiooalum.test/api/auth/profile-image", { headers: { Cookie: cookie } }) });
+  assert.equal(imageResponse.status, 200);
+  assert.equal(imageResponse.headers.get("Cache-Control"), "private, no-store");
+  assert.equal(await imageResponse.text(), "profile-image");
+  const unauthorized = await getProfileImage({ env, request: new Request("https://studiooalum.test/api/auth/profile-image") });
+  assert.equal(unauthorized.status, 401);
 });
 
 test("custom workshop inquiries persist once with customer and administrator email notifications", async (context) => {

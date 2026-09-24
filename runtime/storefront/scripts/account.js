@@ -322,9 +322,14 @@ export function initAccountPage() {
   const repairsEl = document.querySelector(".js-account-repairs");
   const pointsEl = document.querySelector(".js-account-points");
   const avatarEl = document.querySelector(".js-account-avatar");
+  const avatarButton = document.querySelector(".js-account-avatar-button");
+  const avatarImage = document.querySelector(".js-account-avatar-image");
+  const avatarInput = document.querySelector(".js-account-avatar-input");
   const greetingEl = document.querySelector(".js-account-greeting");
   const overviewNameEl = document.querySelector(".js-account-overview-name");
   const overviewEmailEl = document.querySelector(".js-account-overview-email");
+  const overviewAddressEl = document.querySelector(".js-account-overview-address");
+  const overviewPhoneEl = document.querySelector(".js-account-overview-phone");
   const overviewJoinedEl = document.querySelector(".js-account-overview-joined");
   const dashboardRepairsEl = document.querySelector(".js-account-dashboard-repairs");
   const dashboardOrdersEl = document.querySelector(".js-account-dashboard-orders");
@@ -348,8 +353,9 @@ export function initAccountPage() {
 
   const urlMessage = readStatusFromUrl();
   const initialReference = String(new URLSearchParams(window.location.search).get("reference") || "").trim();
+  const accountViews = new Set(["dashboard", "profile", "repairs", "orders", "classes", "points"]);
   const requestedView = String(new URLSearchParams(window.location.search).get("view") || "").trim().toLowerCase();
-  const initialAccountView = new Set(["profile", "orders", "classes", "points"]).has(requestedView)
+  const initialAccountView = accountViews.has(requestedView)
     ? requestedView
     : "dashboard";
   memberLayout.dataset.accountView = initialAccountView;
@@ -369,6 +375,18 @@ export function initAccountPage() {
     guestAccessToken: "",
     orderImagesBySlug: {},
   };
+
+  function setAccountView(view, { push = false } = {}) {
+    const nextView = accountViews.has(view) ? view : "dashboard";
+    memberLayout.dataset.accountView = nextView;
+    if (push) {
+      const url = new URL(window.location.href);
+      if (nextView === "dashboard") url.searchParams.delete("view");
+      else url.searchParams.set("view", nextView);
+      window.history.pushState({ accountView: nextView }, "", `${url.pathname}${url.search}`);
+    }
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
 
   function getOrderItems(order) {
     return Array.isArray(order?.items) ? order.items : [];
@@ -869,9 +887,17 @@ export function initAccountPage() {
     profileForm.elements.address1.value = user.address1 || "";
     profileForm.elements.address2.value = user.address2 || "";
     if (avatarEl) avatarEl.textContent = initials;
+    if (avatarImage) {
+      avatarImage.hidden = !user.profileImageUrl;
+      avatarImage.removeAttribute("src");
+      if (user.profileImageUrl) avatarImage.src = `${user.profileImageUrl}?v=${encodeURIComponent(user.updatedAt || Date.now())}`;
+    }
+    if (avatarEl) avatarEl.hidden = Boolean(user.profileImageUrl);
     if (greetingEl) greetingEl.textContent = fullName ? `안녕하세요, ${fullName}님.` : "안녕하세요.";
     if (overviewNameEl) overviewNameEl.textContent = fullName || "-";
     if (overviewEmailEl) overviewEmailEl.textContent = user.email || "-";
+    if (overviewAddressEl) overviewAddressEl.textContent = [user.zipcode, user.address1, user.address2].filter(Boolean).join(" ") || "-";
+    if (overviewPhoneEl) overviewPhoneEl.textContent = user.phone || "-";
     if (overviewJoinedEl) overviewJoinedEl.textContent = formatDate(user.createdAt) || "-";
     if (dashboardRepairsEl) dashboardRepairsEl.textContent = activeRepairs.toLocaleString("ko-KR");
     if (dashboardOrdersEl) dashboardOrdersEl.textContent = orders.length.toLocaleString("ko-KR");
@@ -902,6 +928,43 @@ export function initAccountPage() {
 
   addressSearchButton?.addEventListener("click", () => {
     openAddressSearch();
+  });
+
+  avatarButton?.addEventListener("click", () => avatarInput?.click());
+  avatarInput?.addEventListener("change", async () => {
+    const file = avatarInput.files?.[0];
+    if (!file) return;
+    const body = new FormData();
+    body.set("image", file);
+    avatarButton.disabled = true;
+    setStatus(memberStatusEl, "프로필 사진을 저장하는 중입니다.");
+    try {
+      const response = await fetch("./api/auth/profile-image", { method: "POST", body, credentials: "same-origin" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || "프로필 사진을 저장하지 못했습니다.");
+      if (avatarImage) {
+        avatarImage.src = payload.profileImageUrl;
+        avatarImage.hidden = false;
+      }
+      if (avatarEl) avatarEl.hidden = true;
+      setStatus(memberStatusEl, "프로필 사진을 저장했습니다.", "success");
+    } catch (error) {
+      setStatus(memberStatusEl, error.message || "프로필 사진을 저장하지 못했습니다.", "error");
+    } finally {
+      avatarButton.disabled = false;
+      avatarInput.value = "";
+    }
+  });
+
+  memberLayout.addEventListener("click", (event) => {
+    const link = event.target.closest("[data-account-view-link]");
+    if (!link) return;
+    event.preventDefault();
+    setAccountView(link.dataset.accountViewLink, { push: true });
+  });
+  window.addEventListener("popstate", () => {
+    const view = new URLSearchParams(window.location.search).get("view") || "dashboard";
+    setAccountView(view);
   });
 
   async function loadAccount({ silent = false } = {}) {

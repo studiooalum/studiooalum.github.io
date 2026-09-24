@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260922-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20260924-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260915-02">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
 </head>
@@ -92,9 +92,11 @@
 
     <section class="account-layout js-account-member-layout" data-account-protected data-account-view="dashboard" hidden>
       <aside class="account-overview">
-        <p class="account-overview__kicker">ACCOUNT</p>
-        <h1 class="account-overview__title">MY OALUM</h1>
-        <div class="account-overview__avatar js-account-avatar" aria-hidden="true">O</div>
+        <button type="button" class="account-overview__avatar js-account-avatar-button" aria-label="프로필 사진 추가 또는 변경">
+          <img class="js-account-avatar-image" alt="내 프로필 사진" hidden>
+          <span class="js-account-avatar">O</span>
+        </button>
+        <input class="js-account-avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" hidden>
         <div class="account-overview__welcome">
           <p class="js-account-greeting">안녕하세요.</p>
           <p>오알룸과 함께한 기록을 확인해보세요.</p>
@@ -102,6 +104,8 @@
         <dl class="account-overview__facts">
           <div><dt>NAME</dt><dd class="js-account-overview-name">-</dd></div>
           <div><dt>EMAIL</dt><dd class="js-account-overview-email">-</dd></div>
+          <div><dt>ADDRESS</dt><dd class="js-account-overview-address">-</dd></div>
+          <div><dt>PHONE</dt><dd class="js-account-overview-phone">-</dd></div>
           <div><dt>JOINED</dt><dd class="js-account-overview-joined">-</dd></div>
         </dl>
         <div class="account-overview__actions">
@@ -112,7 +116,7 @@
       </aside>
 
       <section class="account-dashboard" aria-label="My Oalum 메뉴">
-        <a class="account-dashboard-card account-dashboard-card--repairs" href="./my-repairs.html">
+        <a class="account-dashboard-card account-dashboard-card--repairs" href="./account.html?view=repairs" data-account-view-link="repairs">
           <span class="account-dashboard-card__index">01</span>
           <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
           <div class="account-dashboard-card__body">
@@ -122,7 +126,7 @@
             <span class="account-dashboard-card__copy">맡기신 제품의 현재 상태와 Repair Ticket을 확인해보세요.</span>
           </div>
         </a>
-        <a class="account-dashboard-card account-dashboard-card--orders" href="./account.html?view=orders">
+        <a class="account-dashboard-card account-dashboard-card--orders" href="./account.html?view=orders" data-account-view-link="orders">
           <span class="account-dashboard-card__index">02</span>
           <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
           <div class="account-dashboard-card__body">
@@ -132,7 +136,7 @@
             <span class="account-dashboard-card__copy">주문하신 제품과 배송 진행 상황을 확인해보세요.</span>
           </div>
         </a>
-        <a class="account-dashboard-card account-dashboard-card--classes" href="./account.html?view=classes">
+        <a class="account-dashboard-card account-dashboard-card--classes" href="./account.html?view=classes" data-account-view-link="classes">
           <span class="account-dashboard-card__index">03</span>
           <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
           <div class="account-dashboard-card__body">
@@ -142,7 +146,7 @@
             <span class="account-dashboard-card__copy">예정된 클래스 일정과 지난 참여 기록을 확인해보세요.</span>
           </div>
         </a>
-        <a class="account-dashboard-card account-dashboard-card--points" href="./account.html?view=points">
+        <a class="account-dashboard-card account-dashboard-card--points" href="./account.html?view=points" data-account-view-link="points">
           <span class="account-dashboard-card__index">04</span>
           <span class="account-dashboard-card__arrow" aria-hidden="true">→</span>
           <div class="account-dashboard-card__body">
@@ -155,7 +159,7 @@
       </section>
 
       <section class="account-detail-shell">
-        <a class="account-detail-back" href="./account.html"><span aria-hidden="true">←</span> MY OALUM</a>
+        <a class="account-detail-back" href="./account.html" data-account-view-link="dashboard" aria-label="계정 메인으로 돌아가기">←</a>
 
         <section class="account-panel account-panel--profile" data-account-detail="profile">
           <h2 class="account-heading">회원정보 수정</h2>
@@ -204,6 +208,13 @@
           </div>
         </section>
 
+        <section class="account-panel account-panel--repairs" data-account-detail="repairs">
+          <h2 class="account-heading">REPAIRS</h2>
+          <div class="account-orders js-account-repairs">
+            <div class="account-empty">등록된 수선 신청 내역이 없습니다.</div>
+          </div>
+        </section>
+
         <section class="account-panel account-panel--workshops" data-account-detail="classes">
           <h2 class="account-heading">CLASSES</h2>
           <div class="account-orders js-account-workshops">
@@ -218,9 +229,6 @@
         </section>
       </section>
 
-      <div class="account-data-cache" hidden>
-        <div class="js-account-repairs"><div class="account-empty">등록된 수선 신청 내역이 없습니다.</div></div>
-      </div>
     </section>
   </main>
 
@@ -228,7 +236,7 @@
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260918-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260922-01";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260924-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
 
     initSiteChrome();

@@ -22,7 +22,7 @@ await build({
 
 await build({
   entryPoints: {
-    "layout-20260924": "runtime/storefront/styles/layout.css",
+    "layout-20260924": "runtime/storefront/styles/layout-entry-20260924.css",
     "repair-ticket-20260924": "runtime/storefront/styles/repair-ticket-20260824-01.css",
   },
   outdir: "runtime/storefront/styles",

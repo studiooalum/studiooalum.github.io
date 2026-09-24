@@ -101,8 +101,8 @@
 .shop-card__title {
   margin: 0;
   font-family: var(--font-book);
-  font-size: 15px;
-  line-height: 1.3;
+  font-size: var(--type-body, 16px);
+  line-height: 1.45;
 }
 
 .shop-card__meta {
@@ -112,7 +112,8 @@
   align-items: baseline;
   gap: 8px 12px;
   font-family: var(--font-book);
-  font-size: 14px;
+  font-size: var(--type-body, 16px);
+  line-height: 1.45;
   color: rgba(17, 17, 17, 0.82);
 }
 
@@ -133,7 +134,7 @@
 
 .shop-card__edition-count {
   font-size: inherit;
-  line-height: 1.2;
+  line-height: inherit;
 }
 
 .shop-state {
@@ -153,9 +154,6 @@
     padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
   }
 
-  .shop-card__edition-count {
-    font-size: calc(var(--gnb-font-size) + 1px);
-  }
 }
 
 @media (min-width: 800px) {

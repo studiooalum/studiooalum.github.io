@@ -4,6 +4,7 @@ import { errorResponse } from "../cloudflare/lib/http.js";
 const LIMITED_PATHS = new Map([
   ["/api/auth/login", 15], ["/api/auth/signup", 8], ["/api/auth/request", 5],
   ["/api/auth/verify", 15], ["/api/auth/password-reset/request", 5], ["/api/auth/password-reset/confirm", 10],
+  ["/api/auth/profile-image", 12],
   ["/api/orders/admin-session", 10], ["/api/workshops/inquiries", 5], ["/api/workshops/reservations", 12],
   ["/api/repairs", 6], ["/api/orders", 15], ["/api/orders/quote", 60], ["/api/sanity/query", 100],
   ["/api/payments/confirm", 30], ["/api/repairs/payment", 30], ["/api/workshops/payment-confirm", 30],

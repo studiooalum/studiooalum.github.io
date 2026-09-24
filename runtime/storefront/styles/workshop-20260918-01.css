@@ -394,12 +394,13 @@ body.workshop-page .workshop-summary-card__action .workshop-apply-btn:focus-visi
 
 @media (min-width: 960px) {
   .workshop-rail__panel {
-    left: auto;
-    right: var(--page-gutter);
-    width: var(--page-column-width);
-    max-width: calc(100vw - (var(--page-gutter) * 2));
+    left: var(--page-third-start);
+    right: 0;
+    width: auto;
+    max-width: none;
+    padding-right: 24px;
     grid-template-columns: 1fr;
-    transform: translateX(calc(100% + var(--page-gutter)));
+    transform: translateX(100%);
   }
 
   .workshop-rail__header,

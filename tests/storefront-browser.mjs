@@ -73,8 +73,30 @@ try {
 
     await page.goto(`${base}/workshop?slug=browser-daily`);
     await page.locator("#workshopTitle").filter({ hasText: daily.title }).waitFor();
+    const viewportWidthBeforeBooking = await page.evaluate(() => ({ clientWidth: document.documentElement.clientWidth, bodyWidth: document.body.getBoundingClientRect().width }));
     await page.locator("#workshopApplyBtn").click();
     await page.locator(".workshop-slot-btn").first().waitFor();
+    await page.waitForTimeout(400);
+    const bookingPanelLayout = await page.evaluate(() => {
+      const panel = document.getElementById("workshopRailPanel").getBoundingClientRect();
+      const probe = document.createElement("div");
+      probe.style.cssText = "position:fixed;left:var(--page-third-start);width:1px;height:1px;visibility:hidden";
+      document.body.appendChild(probe);
+      const thirdStart = probe.getBoundingClientRect().left;
+      probe.remove();
+      return {
+        clientWidth: document.documentElement.clientWidth,
+        bodyWidth: document.body.getBoundingClientRect().width,
+        panelLeft: panel.left,
+        panelRight: panel.right,
+        thirdStart,
+      };
+    });
+    assert.deepEqual({ clientWidth: bookingPanelLayout.clientWidth, bodyWidth: bookingPanelLayout.bodyWidth }, viewportWidthBeforeBooking);
+    if (label === "desktop") {
+      assert.ok(Math.abs(bookingPanelLayout.panelLeft - bookingPanelLayout.thirdStart) <= 2, "booking panel must start at column three");
+      assert.ok(bookingPanelLayout.panelRight <= viewport.width && viewport.width - bookingPanelLayout.panelRight <= 20, "booking panel must meet the browser scrollbar");
+    }
     assert.equal(await page.locator("#bookingAllowAdditionalAttendees").count(), 0);
     await page.locator(".workshop-slot-btn").last().click();
     await page.locator("#bookingAttendeeCount").selectOption("2");

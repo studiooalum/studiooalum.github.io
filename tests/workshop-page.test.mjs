@@ -114,7 +114,7 @@ test("workshop details mirror the edition columns and the application panel stay
   assert.match(workshopCss, /\.workshop-summary-card\s*\{[\s\S]*?border:\s*0/);
   assert.match(workshopCss, /\.workshop-summary-card__action\s*\{[\s\S]*?padding:\s*0/);
   assert.match(workshopCss, /\.workshop-apply-btn\s*\{[\s\S]*?width:\s*100%/);
-  assert.match(workshopCss, /\.workshop-rail__panel\s*\{[\s\S]*?left:\s*auto;[\s\S]*?right:\s*var\(--page-gutter\);[\s\S]*?width:\s*var\(--page-column-width\)/);
+  assert.match(workshopCss, /\.workshop-rail__panel\s*\{[\s\S]*?left:\s*var\(--page-third-start\);[\s\S]*?right:\s*0;[\s\S]*?width:\s*auto/);
   assert.match(workshopCss, /\.workshop-calendar__day,[\s\S]*?\.workshop-calendar__blank\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1/);
   assert.match(workshopCss, /\.workshop-stage__summary\s*\{[\s\S]*?gap:\s*24px/);
   assert.match(workshopCss, /\.workshop-facts\s*\{[\s\S]*?gap:\s*24px/);

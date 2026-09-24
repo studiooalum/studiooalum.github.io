@@ -30,7 +30,12 @@ export function isPrivateR2Key(key) {
   return normalizedKey.startsWith("repairs/")
     || normalizedKey.startsWith("repair-requests/")
     || normalizedKey.startsWith("repair-tickets/")
+    || normalizedKey.startsWith("profile-images/")
     || normalizedKey.startsWith("public-content-snapshots/");
+}
+
+export function buildProfileImageKey({ userId = "user", fileType = "" } = {}) {
+  return `profile-images/${sanitizeSegment(userId, "user")}/${crypto.randomUUID()}${extensionFromType(fileType)}`;
 }
 
 function buildPublicImageUrl(key, { averageRgb = "" } = {}) {

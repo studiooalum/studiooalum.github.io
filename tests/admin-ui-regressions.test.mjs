@@ -67,6 +67,12 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
   assert.match(stylesheet, /\.newsletter-lightbox\.is-open/);
 });
 
+test("Newsletter main keeps the previous layout and title", async () => {
+  const html = await read("newsletter.html");
+  assert.match(html, /styles\/layout\.css\?v=20260520-02/);
+  assert.match(html, /<span class="gnb__title">OALUM Newsletter<\/span>/);
+});
+
 test("Archive category navigation remains on the list and hides on details", async () => {
   const [html, controller, stylesheet] = await Promise.all([
     read("archive.html"),
@@ -110,7 +116,14 @@ test("My Oalum keeps logout in the account page and removes it from the GNB", as
   assert.doesNotMatch(html, /회원정보 수정\s*<span[^>]*>→<\/span>/);
   assert.match(html, /class="account-overview__link js-account-logout">로그아웃<\/button>/);
   assert.match(stylesheet, /\.account-overview__actions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*8px/);
-  assert.match(stylesheet, /\.account-overview__link\s*\{[\s\S]*?text-decoration:\s*underline/);
-  assert.match(stylesheet, /\.account-dashboard-card--repairs\s*\{[\s\S]*?border:\s*0/);
+  assert.match(stylesheet, /\.account-overview__link\s*\{[\s\S]*?width:\s*100%/);
+  assert.match(stylesheet, /\.account-dashboard-card\s*\{[\s\S]*?border-top:\s*1px solid #111/);
+  assert.doesNotMatch(html, /account-overview__kicker|account-overview__title/);
+  assert.match(html, /data-account-view-link="repairs"/);
+  assert.match(html, /data-account-detail="repairs"/);
+  assert.match(html, /js-account-avatar-input/);
+  assert.match(html, /js-account-overview-address/);
+  assert.match(html, /js-account-overview-phone/);
+  assert.match(stylesheet, /@media \(max-width:\s*959px\)[\s\S]*?data-account-view="dashboard"[\s\S]*?\.account-overview\s*\{[\s\S]*?display:\s*none !important/);
   assert.match(siteChrome, /document\.querySelectorAll\("\.gnb \[data-auth-toggle='logout'\]"\)/);
 });

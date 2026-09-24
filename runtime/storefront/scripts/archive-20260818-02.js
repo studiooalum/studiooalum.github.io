@@ -31,5 +31,5 @@ export async function initArchiveBoard() {
   linkifyDetailTags();
 
   const relatedHeading = document.querySelector(".archive-related h2");
-  if (relatedHeading) relatedHeading.textContent = "함께 보기";
+  if (relatedHeading) relatedHeading.textContent = "you may also like";
 }
