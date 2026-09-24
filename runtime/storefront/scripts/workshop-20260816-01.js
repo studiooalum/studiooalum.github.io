@@ -55,7 +55,6 @@ const dom = {
   bookingPhone: document.getElementById("bookingPhone"),
   bookingNote: document.getElementById("bookingNote"),
   submit: document.getElementById("workshopBookingSubmit"),
-  cancel: document.getElementById("workshopBookingCancel"),
   feedback: document.getElementById("workshopBookingFeedback"),
 };
 
@@ -1122,7 +1121,6 @@ function attachEvents() {
     renderCalendar();
   });
 
-  dom.cancel?.addEventListener("click", closeBookingRail);
   dom.attendeeCount?.addEventListener("change", updateBookingPrice);
   document.addEventListener("keydown", (event) => {
     if (state.bookingOpen && event.key === "Escape") {

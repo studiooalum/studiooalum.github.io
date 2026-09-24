@@ -863,6 +863,9 @@ test("Repair Ticket supports threaded messages, attachments, unread counts, and 
   assert.equal(admin.notificationIds.length, 1);
   assert.equal((await readRepairTicketForRepair(env, "RPR_A")).ticket.unreadCustomerCount, 2);
 
+  const chronologicalBeforeStatus = await readRepairTicketForRepair(env, "RPR_A");
+  assert.equal(chronologicalBeforeStatus.ticket.messages.at(-1).authorType, "admin");
+
   await updateRepairRequest(env, { id: "RPR_A", expectedVersion: 1, status: "in_progress" });
   const afterStatus = await readRepairTicketForRepair(env, "RPR_A");
   assert.equal(afterStatus.ticket.messages.at(-1).authorType, "system");

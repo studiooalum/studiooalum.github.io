@@ -272,7 +272,7 @@ export async function readRepairTicketById(env, ticketId) {
   const messageResult = await database.prepare(`
     SELECT * FROM repair_ticket_messages
     WHERE ticket_id = ?
-    ORDER BY created_at ASC, id ASC
+    ORDER BY created_at ASC, rowid ASC
   `).bind(id).all();
   const messages = (messageResult?.results || []).map(formatMessage);
   const byId = new Map(messages.map((message) => [message.id, message]));

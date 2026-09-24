@@ -99,6 +99,8 @@ test("workshop detail retains responsive reading and booking layouts", () => {
   assert.match(workshopCss, /\.workshop-facts\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
   assert.match(workshopHtml, /class="workshop-stage__rail" id="workshopRail"/);
   assert.match(workshopHtml, /id="workshopBookingForm"/);
+  assert.doesNotMatch(workshopHtml, /workshopBookingCancel|취소하기/);
+  assert.doesNotMatch(workshopJs, /workshopBookingCancel|dom\.cancel/);
 });
 
 test("workshop imagery preserves the poster ratio and opens in the edition lightbox", () => {

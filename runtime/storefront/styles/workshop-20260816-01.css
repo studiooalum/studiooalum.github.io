@@ -500,17 +500,6 @@ body.workshop-booking-open .workshop-rail__panel {
 }
 
 .workshop-schedule-reminder,
-.workshop-booking-form__price {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid rgba(17, 17, 17, 0.14);
-  background: rgba(255, 235, 83, 0.2);
-  font-family: var(--font-kor-body);
-  font-size: 12px;
-  line-height: 1.55;
-  letter-spacing: var(--tracking-korean);
-}
-
 .workshop-slots__list {
   display: grid;
   gap: 8px;
