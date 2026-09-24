@@ -1,6 +1,5 @@
 body :is(
   .account-btn,
-  .fulfillment-btn,
   .edition-btn,
   .checkout-btn--outline:not(.checkout-btn--outline-small),
   .checkout-submit-btn,
@@ -44,7 +43,6 @@ body :is(
 body :is(
   .account-btn--secondary,
   .account-btn--signup,
-  .fulfillment-btn--secondary,
   .edition-btn--secondary,
   .payment-btn--outline,
   .workshop-booking-form__cancel
@@ -55,7 +53,6 @@ body :is(
 
 body :is(
   .account-btn,
-  .fulfillment-btn,
   .edition-btn,
   .checkout-btn--outline:not(.checkout-btn--outline-small),
   .checkout-submit-btn,
@@ -75,7 +72,6 @@ body :is(
 ):hover,
 body :is(
   .account-btn,
-  .fulfillment-btn,
   .edition-btn,
   .checkout-btn--outline:not(.checkout-btn--outline-small),
   .checkout-submit-btn,
@@ -101,11 +97,9 @@ body :is(
 
 body :is(
   .account-panel-actions,
-  .fulfillment-actions,
   .edition-actions,
   .payment-result__actions,
-  .repair-ticket-composer__submit,
-  .workshop-admin-action-bar
+  .repair-ticket-composer__submit
 ) {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
@@ -113,7 +107,7 @@ body :is(
   width: 100% !important;
 }
 
-body :is(.account-panel-actions, .fulfillment-actions, .edition-actions, .payment-result__actions, .workshop-admin-action-bar) > * {
+body :is(.account-panel-actions, .edition-actions, .payment-result__actions) > * {
   width: 100% !important;
   flex: none !important;
 }

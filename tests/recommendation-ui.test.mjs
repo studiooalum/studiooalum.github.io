@@ -81,3 +81,12 @@ test("shared command buttons do not add a hover outline", () => {
   assert.doesNotMatch(actionsCss, /outline:\s*1px solid #111/);
   assert.doesNotMatch(actionsCss.slice(0, actionsCss.indexOf(") {")), /\.account-overview__link/);
 });
+
+test("admin action controls retain their compact fulfillment sizing", async () => {
+  const fulfillmentCss = await read("../runtime/storefront/styles/fulfillment.css");
+  const workshopAdminCss = await read("../runtime/storefront/styles/workshop-admin-20260809-02.css");
+  assert.match(fulfillmentCss, /\.fulfillment-btn\s*\{[\s\S]*?min-width:\s*108px;[\s\S]*?height:\s*38px/);
+  assert.match(fulfillmentCss, /\.fulfillment-actions\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap/);
+  assert.match(workshopAdminCss, /\.workshop-admin-action-bar\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap/);
+  assert.doesNotMatch(actionsCss, /\.fulfillment-btn|\.fulfillment-actions|\.workshop-admin-action-bar/);
+});
