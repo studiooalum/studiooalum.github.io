@@ -1,4 +1,6 @@
-const ADMIN_SESSION_TTL_MS = null;
+import { constantTimeEqual } from "./request-security.js";
+
+const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const ADMIN_SESSION_SCOPE = "order-admin";
 const ADMIN_SESSION_TOKEN_PREFIX = "oaadm_";
 
@@ -10,16 +12,6 @@ function getAdminSecret(env) {
   return normalizeSecret(env?.ORDER_ADMIN_SECRET);
 }
 
-function getAdminSigningSecret(env) {
-  const adminSecret = getAdminSecret(env);
-  if (!adminSecret) {
-    return "";
-  }
-
-  const authSecret = normalizeSecret(env?.AUTH_SECRET);
-  return authSecret ? `${authSecret}:${adminSecret}` : adminSecret;
-}
-
 function createAdminError(message, status) {
   return Object.assign(new Error(message), { status });
 }
@@ -28,45 +20,6 @@ function randomHex(byteLength = 12) {
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-function bytesToBase64Url(bytes) {
-  let binary = "";
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
-function stringToBase64Url(value) {
-  return bytesToBase64Url(new TextEncoder().encode(String(value)));
-}
-
-function base64UrlToString(value) {
-  const normalized = String(value || "")
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
-  const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
-  const binary = atob(padded);
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
-
-async function hmacBase64Url(secret, value) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const buffer = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(String(value)));
-  return bytesToBase64Url(new Uint8Array(buffer));
 }
 
 async function hashAdminToken(value) {
@@ -86,7 +39,8 @@ async function readAdminTokenPayload(env, token) {
     WHERE token_hash = ? AND revoked_at IS NULL
     LIMIT 1
   `).bind(await hashAdminToken(raw)).first();
-  return row ? { scope: ADMIN_SESSION_SCOPE, issuedAt: row.created_at } : null;
+  const expiresAt = row ? Date.parse(row.created_at) + ADMIN_SESSION_TTL_MS : 0;
+  return row && expiresAt > Date.now() ? { scope: ADMIN_SESSION_SCOPE, issuedAt: row.created_at, expiresAt: new Date(expiresAt).toISOString() } : null;
 }
 
 function getRequestCredential(request) {
@@ -113,7 +67,7 @@ export async function createAdminSession(env, submittedSecret) {
 
   const adminSecret = getAdminSecret(env);
   const candidate = normalizeSecret(submittedSecret);
-  if (!candidate || candidate !== adminSecret) {
+  if (!candidate || !await constantTimeEqual(candidate, adminSecret)) {
     throw createAdminError("관리자 키를 다시 확인해주세요.", 401);
   }
 
@@ -130,7 +84,7 @@ export async function createAdminSession(env, submittedSecret) {
   return {
     token,
     issuedAt,
-    expiresAt: null,
+    expiresAt: new Date(Date.parse(issuedAt) + ADMIN_SESSION_TTL_MS).toISOString(),
     ttlMs: ADMIN_SESSION_TTL_MS,
   };
 }
@@ -160,12 +114,12 @@ export async function requireAdminAccess(context, { allowSecret = false } = {}) 
       authenticated: true,
       method: "session",
       issuedAt: session.issuedAt || null,
-      expiresAt: null,
+      expiresAt: session.expiresAt,
       ttlMs: ADMIN_SESSION_TTL_MS,
     };
   }
 
-  if (allowSecret && credential === getAdminSecret(context.env)) {
+  if (allowSecret && await constantTimeEqual(credential, getAdminSecret(context.env))) {
     return {
       authenticated: true,
       method: "secret",

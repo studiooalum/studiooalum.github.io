@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DatabaseSync } from "node:sqlite";
+import { createWorkshopInquiry, readWorkshopInquiries } from "../cloudflare/lib/workshop-inquiries.js";
+import { onRequestPost as confirmShopPayment } from "../functions/api/payments/confirm.js";
+import { signupWithPassword } from "../cloudflare/lib/auth.js";
+import { createAdminSession, requireAdminAccess } from "../cloudflare/lib/admin.js";
+import { enforceRateLimit } from "../cloudflare/lib/request-security.js";
 
 import { deleteCoupon, upsertCoupon } from "../cloudflare/lib/coupons.js";
 import { deleteUnpaidOrder, persistOrder } from "../cloudflare/lib/d1.js";
@@ -10,6 +15,8 @@ import {
   archiveWorkshopContent,
   deleteWorkshopContent,
   deleteWorkshopReservation,
+  createWorkshopReservation,
+  readWorkshopAvailability,
   upsertWorkshopContent,
 } from "../cloudflare/lib/workshops.js";
 
@@ -40,6 +47,7 @@ class D1Database {
     this.database = new DatabaseSync(":memory:");
     this.database.exec("PRAGMA foreign_keys = ON");
     this.database.exec(readFileSync(new URL("../cloudflare/d1/schema.sql", import.meta.url), "utf8"));
+    this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0035_workshop_operations.sql", import.meta.url), "utf8"));
   }
 
   prepare(sql) { return new D1Statement(this.database, sql); }
@@ -62,6 +70,42 @@ function environment() {
   return { database, env: { OALUM_DB: database } };
 }
 
+test("signup requires email ownership before creating an account", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  const input = { email: "unverified@example.com", fullName: "Unverified", password: "fixture-password", privacyConsent: true, termsConsent: true };
+  await assert.rejects(signupWithPassword(env, input, new Request("https://studiooalum.test")), { status: 400 });
+  await assert.rejects(signupWithPassword(env, { ...input, code: "000000" }, new Request("https://studiooalum.test")), { status: 400 });
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM users").first().count, 0);
+});
+
+test("administrator sessions expire and public mutation limits cannot be exceeded", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  env.ORDER_ADMIN_SECRET = "fixture-admin-secret";
+  const session = await createAdminSession(env, env.ORDER_ADMIN_SECRET);
+  const request = new Request("https://studiooalum.test", { headers: { Authorization: `Bearer ${session.token}` } });
+  assert.equal((await requireAdminAccess({ env, request })).method, "session");
+  database.prepare("UPDATE admin_sessions SET created_at = '2020-01-01T00:00:00Z'").run();
+  await assert.rejects(requireAdminAccess({ env, request }), { status: 401 });
+  await enforceRateLimit(env, request, { scope: "test", limit: 1 });
+  await assert.rejects(enforceRateLimit(env, request, { scope: "test", limit: 1 }), { status: 429 });
+});
+
+test("custom workshop inquiries persist once with customer and administrator email notifications", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  const input = { requestId: crypto.randomUUID(), fullName: "Applicant", email: "custom@example.com", phone: "01012345678",
+    attendeeCount: 12, preferredSchedule: "2026-12-01 14:00", locationType: "studio", classContent: "Basic sewing", question: "", privacyConsent: true };
+  const first = await createWorkshopInquiry(env, input);
+  assert.deepEqual(await createWorkshopInquiry(env, input), first);
+  assert.equal((await readWorkshopInquiries(env)).length, 1);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_outbox WHERE entity_type = 'workshop_inquiry' AND channel = 'email'").first().count, 2);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_outbox WHERE channel = 'sms'").first().count, 0);
+  await assert.rejects(createWorkshopInquiry(env, { ...input, privacyConsent: false }), { status: 400 });
+  await assert.rejects(createWorkshopInquiry(env, { ...input, locationType: "other", locationDetail: "" }), { status: 400 });
+});
+
 function orderInput(orderId, overrides = {}) {
   return {
     orderId,
@@ -82,6 +126,17 @@ function orderInput(orderId, overrides = {}) {
     ...overrides,
   };
 }
+
+test("shop confirmation rejects client amount tampering before contacting Toss", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  await persistOrder(env, orderInput("ORDER_AMOUNT_GUARD"));
+  const response = await confirmShopPayment({ env, request: new Request("https://studiooalum.test/api/payments/confirm", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: "ORDER_AMOUNT_GUARD", paymentKey: "forged-payment", amount: 1 }),
+  }) });
+  assert.equal(response.status, 409);
+  assert.equal(database.prepare("SELECT status FROM orders WHERE id = 'ORDER_AMOUNT_GUARD'").first().status, "created");
+});
 
 test("only unpaid orders without benefit or shipping history can be deleted", async (t) => {
   const { database, env } = environment();
@@ -188,6 +243,41 @@ function workshopInput(slug, status = "draft") {
     },
   };
 }
+
+test("one-day applications charge the entire party at the chosen time and ignore legacy joining", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  const input = workshopInput("private-class", "published");
+  input.bookingConfig.dailyTimeSlots = [{ startTime: "10:00", endTime: "13:00" }, { startTime: "14:00", endTime: "17:00" }];
+  await upsertWorkshopContent(env, input);
+  const workshop = await readWorkshopAvailability(env, input.slug);
+  const slot = workshop.scheduleSlots[1];
+  const reservationInput = { slug: input.slug, slotKey: slot.key, requestedDate: slot.date, attendeeCount: 2, fullName: "Applicant", email: "applicant@example.com", phone: "01012345678", allowAdditionalAttendees: true };
+  const result = await createWorkshopReservation(env, reservationInput);
+  assert.equal(result.reservation.joinPolicy, "private");
+  assert.equal(result.reservation.slotStartTime, "14:00");
+  assert.equal(result.reservation.amountDue, 18000);
+  assert.equal(result.reservation.groupId, null);
+  await assert.rejects(createWorkshopReservation(env, { ...reservationInput, email: "another@example.com" }), { status: 409 });
+  const updated = await readWorkshopAvailability(env, input.slug);
+  assert.equal(updated.scheduleSlots[0].status, "open");
+  assert.equal(updated.scheduleSlots[1].status, "blocked");
+});
+
+test("OALUM workshops reserve every session and charge the full course per attendee", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  await upsertWorkshopContent(env, {
+    slug: "course", title: "Course", status: "published", price: 90000, maxCapacity: 6,
+    bookingConfig: { workshopType: "event", fixedPrice: 90000, minParticipants: 2, maxParticipants: 6 },
+    scheduleSlots: [{ date: "2099-01-01", startTime: "10:00", endTime: "12:00", capacity: 6 }, { date: "2099-01-08", startTime: "10:00", endTime: "12:00", capacity: 6 }],
+  });
+  const result = await createWorkshopReservation(env, { slug: "course", attendeeCount: 2, fullName: "Applicant", email: "course@example.com", phone: "01012345678" });
+  assert.equal(result.reservation.amountDue, 180000);
+  assert.equal(result.reservation.slotSnapshot.slots.length, 2);
+  assert.equal(result.reservation.slotKey, "course:series");
+  assert.equal(result.workshop.scheduleSlots[1].remainingCapacity, 4);
+});
 
 test("workshop content and reservations follow safe deletion rules", async (t) => {
   const { database, env } = environment();

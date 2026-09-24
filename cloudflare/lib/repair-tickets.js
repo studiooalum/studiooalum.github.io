@@ -12,6 +12,8 @@ const MESSAGE_RATE_WINDOW_MS = 60 * 1000;
 const MESSAGE_RATE_LIMIT = 10;
 const DUPLICATE_WINDOW_MS = 30 * 1000;
 
+import { getTossConfig } from "./toss.js";
+
 function cleanText(value, maxLength = MESSAGE_LIMIT) {
   return String(value ?? "").trim().slice(0, maxLength);
 }
@@ -256,6 +258,10 @@ export async function readRepairTicketById(env, ticketId) {
   if (!row) throw Object.assign(new Error("Repair Ticket을 찾을 수 없습니다."), { status: 404 });
 
   const ticket = formatTicketHeader(row);
+  const payment = await database.prepare("SELECT status, amount, approved_at FROM repair_payment_orders WHERE repair_id = ? ORDER BY created_at DESC LIMIT 1").bind(ticket.repairId).first();
+  ticket.repair.paymentStatus = payment?.status || (row.payment_confirmed_at ? "paid" : "unpaid");
+  ticket.repair.onlinePaymentAvailable = getTossConfig(env).isClientReady && row.repair_status === "payment_pending"
+    && Number(row.final_amount) > 0 && !row.payment_confirmed_at;
   const requestImageResult = await database.prepare(`
     SELECT id, original_filename, content_type, byte_size, sort_order, created_at
     FROM repair_request_images

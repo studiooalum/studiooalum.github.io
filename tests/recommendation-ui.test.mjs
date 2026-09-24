@@ -43,7 +43,7 @@ test("edition sidebar sticky stop uses media-relative image position", () => {
 });
 
 test("archive recommendations match the edition card grid", () => {
-  assert.match(archiveScript, /relatedHeading\.textContent = "you may also like"/);
+  assert.match(archiveScript, /relatedHeading\.textContent = "함께 보기"/);
   assert.match(archiveCss, /\.archive-related \.archive-card__media\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1;/);
   assert.match(archiveCss, /@media \(min-width:\s*960px\)[\s\S]*?\.archive-related__grid\s*\{[\s\S]*?repeat\(4,/);
   assert.match(archiveCss, /object-position:\s*center center;/);

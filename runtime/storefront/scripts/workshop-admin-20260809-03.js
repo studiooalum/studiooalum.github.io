@@ -1,9 +1,10 @@
 import { readAverageRgbFromFile } from "./utils/image-colors-20260818-01.js";
+import { getWorkshopBookingConfig } from "./utils/workshops.js";
 
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
 const DEFAULT_BOOKING_NOTICE = "예약일 3일 전까지 100% 환불 가능합니다. 이후 환불은 불가하며, 양도는 가능합니다.";
-const ADMIN_MODES = ["workshops", "reservations", "groups", "blocked-dates"];
+const ADMIN_MODES = ["workshops", "reservations", "inquiries", "groups", "blocked-dates"];
 
 const dom = {
   authForm: document.querySelector(".js-workshop-admin-auth-form"),
@@ -267,63 +268,26 @@ function normalizeWorkshopType(value, fallback = "event") {
   const normalized = String(value || "").trim().toLowerCase();
   if (["daily", "one_day_open"].includes(normalized)) return "daily";
   if (["event", "one_day_fixed"].includes(normalized)) return "event";
-  if (["multisession", "multi_session"].includes(normalized)) return "multiSession";
+  if (["multisession", "multi_session"].includes(normalized)) return "event";
   return fallback;
 }
 
 function getBookingConfig(workshop = {}) {
-  const raw = workshop.bookingConfig && typeof workshop.bookingConfig === "object" ? workshop.bookingConfig : {};
-  const hasScheduledSlots = Array.isArray(workshop.scheduleSlots) && workshop.scheduleSlots.length > 0;
-  const type = normalizeWorkshopType(
-    raw.workshopType || raw.type,
-    raw.mode === "daily" || !hasScheduledSlots ? "daily" : "event",
-  );
-  const prices = raw.priceTiers && typeof raw.priceTiers === "object"
-    ? raw.priceTiers
-    : raw.attendeePrices && typeof raw.attendeePrices === "object"
-      ? raw.attendeePrices
-      : {};
-  const maxParticipants = Math.max(1, Number(raw.maxParticipants || raw.dailyCapacity || workshop.maxCapacity) || 4);
-  return {
-    workshopType: type,
-    mode: type === "daily" ? "daily" : "scheduled",
-    dailyStartTime: /^\d{2}:\d{2}$/.test(String(raw.dailyStartTime || "")) ? raw.dailyStartTime : "10:00",
-    dailyEndTime: /^\d{2}:\d{2}$/.test(String(raw.dailyEndTime || "")) ? raw.dailyEndTime : "13:00",
-    dailyCapacity: Math.max(1, Math.min(4, Number(raw.dailyCapacity) || maxParticipants)),
-    maxBookingMonths: Math.max(1, Math.min(6, Number(raw.maxBookingMonths) || 6)),
-    attendeePrices: {
-      1: Math.max(0, Number(prices[1]) || 120000),
-      2: Math.max(0, Number(prices[2]) || 200000),
-      3: Math.max(0, Number(prices[3]) || 270000),
-      4: Math.max(0, Number(prices[4]) || 300000),
-    },
-    priceTiers: {
-      1: Math.max(0, Number(prices[1]) || 120000),
-      2: Math.max(0, Number(prices[2]) || 200000),
-      3: Math.max(0, Number(prices[3]) || 270000),
-      4: Math.max(0, Number(prices[4]) || 300000),
-    },
-    fixedPrice: Math.max(0, Number(raw.fixedPrice) || Number(workshop.price) || 0),
-    minParticipants: Math.min(maxParticipants, Math.max(1, Number(raw.minParticipants) || 1)),
-    maxParticipants,
-    paymentDeadlineHours: Math.max(1, Number(raw.paymentDeadlineHours) || 48),
-  };
+  const config = getWorkshopBookingConfig(workshop);
+  return { ...config, workshopType: normalizeWorkshopType(config.workshopType) };
 }
 
 function applyBookingModeUi(type = "event") {
   const workshopType = normalizeWorkshopType(type);
   const isDaily = workshopType === "daily";
-  const isEvent = workshopType === "event";
   for (const element of dom.dailyConfig) element.hidden = !isDaily;
   for (const element of dom.scheduledConfig) element.hidden = isDaily;
-  if (dom.slotSummary) dom.slotSummary.textContent = isEvent ? "확정 일정" : "다회차 일정";
-  if (dom.slotTitle) dom.slotTitle.textContent = isEvent ? "단일 회차" : "회차 목록";
+  if (dom.slotSummary) dom.slotSummary.textContent = "전체 회차 일정";
+  if (dom.slotTitle) dom.slotTitle.textContent = "회차 목록";
   if (dom.slotCopy) {
-    dom.slotCopy.textContent = isEvent
-      ? "일일 워크샵 이벤트의 날짜, 시간, 정원을 설정하세요."
-      : "세션 추가를 눌러 날짜, 시간, 정원을 직접 등록하세요. 공개된 일정은 일일 클래스 달력에서 자동으로 차단됩니다.";
+    dom.slotCopy.textContent = "";
   }
-  if (dom.slotAddButton) dom.slotAddButton.hidden = workshopType !== "multiSession";
+  if (dom.slotAddButton) dom.slotAddButton.hidden = isDaily;
 }
 
 function setDirtyState(isDirty) {
@@ -406,6 +370,8 @@ function applySnapshotPayload(payload) {
   state.blocks = Array.isArray(payload?.blocks) ? payload.blocks : [];
   state.workshops = Array.isArray(payload?.workshops) ? payload.workshops : [];
   state.contentItems = Array.isArray(payload?.contentItems) ? payload.contentItems : [];
+  state.inquiries = payload.inquiries || [];
+  state.customWorkshop = payload.customWorkshop || {};
 
   syncSelectedReservation();
   syncSelectedContent();
@@ -863,11 +829,7 @@ function renderGalleryRows(items = []) {
 function renderSlotRows(items = []) {
   if (!dom.slotList) return;
   const workshopType = normalizeWorkshopType(dom.bookingModeSelect?.value);
-  const rows = workshopType === "event"
-    ? (items.length ? [items[0]] : [{}])
-    : workshopType === "multiSession"
-      ? items
-      : [];
+  const rows = workshopType !== "daily" ? (items.length ? items : [{}]) : [];
 
   if (!rows.length) {
     dom.slotList.innerHTML = '<div class="fulfillment-empty">등록된 세션이 없습니다. 세션 추가를 눌러 일정을 등록하세요.</div>';
@@ -879,8 +841,8 @@ function renderSlotRows(items = []) {
       <input type="hidden" name="slotKey" value="${escapeHtml(item._key || item.key || "")}">
       <div class="workshop-admin-thumb-card__body workshop-admin-thumb-card__body--stacked">
         <div class="workshop-admin-repeater-head">
-          <strong>${workshopType === "event" ? "단일 회차" : `세션 ${index + 1}`}</strong>
-          ${workshopType === "multiSession" ? `<div class="workshop-admin-repeater-head__actions">
+          <strong>${index + 1}회차</strong>
+          ${workshopType !== "daily" ? `<div class="workshop-admin-repeater-head__actions">
             <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-slot-remove="${index}">삭제</button>
           </div>` : ""}
         </div>
@@ -940,6 +902,7 @@ function resetContentForm(seed = {}) {
   dom.bookingModeSelect.value = bookingConfig.workshopType;
   dom.contentForm.elements.dailyStartTime.value = bookingConfig.dailyStartTime;
   dom.contentForm.elements.dailyEndTime.value = bookingConfig.dailyEndTime;
+  renderDailyTimeRows(bookingConfig.dailyTimeSlots.slice(1));
   dom.contentForm.elements.dailyCapacity.value = String(bookingConfig.dailyCapacity);
   dom.contentForm.elements.maxBookingMonths.value = String(bookingConfig.maxBookingMonths);
   dom.contentForm.elements.priceOne.value = String(bookingConfig.attendeePrices[1]);
@@ -1016,7 +979,24 @@ function collectSlotItems() {
     isBlocked: String(row.querySelector('[name="slotStatus"]')?.value || "open") === "blocked",
     status: String(row.querySelector('[name="slotStatus"]')?.value || "open") === "blocked" ? "blocked" : "open",
     reason: "",
-  })).filter((item) => item.date && item.startTime);
+  }));
+}
+
+function renderDailyTimeRows(times = []) {
+  const list = document.getElementById("workshopDailyTimes");
+  if (!list) return;
+  list.innerHTML = times.map((time, index) => `<div class="workshop-admin-grid workshop-admin-grid--two" data-daily-time>
+    <label class="fulfillment-field"><span>추가 시작 시간 ${index + 1}</span><input type="time" name="extraStartTime" value="${escapeHtml(time.startTime || "")}"></label>
+    <label class="fulfillment-field"><span>추가 종료 시간 ${index + 1}</span><input type="time" name="extraEndTime" value="${escapeHtml(time.endTime || "")}"></label>
+    <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-remove-daily-time="${index}" aria-label="시간대 삭제">×</button>
+  </div>`).join("");
+}
+
+function collectDailyTimes() {
+  return Array.from(document.querySelectorAll("[data-daily-time]")).map((row) => ({
+    startTime: row.querySelector('[name="extraStartTime"]').value,
+    endTime: row.querySelector('[name="extraEndTime"]').value,
+  }));
 }
 
 function collectWorkshopPayload(statusOverride) {
@@ -1045,20 +1025,21 @@ function collectWorkshopPayload(statusOverride) {
   const workshopType = normalizeWorkshopType(dom.bookingModeSelect?.value);
   const bookingMode = workshopType === "daily" ? "daily" : "scheduled";
   const attendeePrices = {
-    1: Math.max(0, Number(form.elements.priceOne.value || 120000)),
-    2: Math.max(0, Number(form.elements.priceTwo.value || 200000)),
-    3: Math.max(0, Number(form.elements.priceThree.value || 270000)),
-    4: Math.max(0, Number(form.elements.priceFour.value || 300000)),
+    1: Math.max(0, Number(form.elements.priceOne.value || 0)),
+    2: Math.max(0, Number(form.elements.priceTwo.value || Number(form.elements.priceOne.value) * 2)),
+    3: Math.max(0, Number(form.elements.priceThree.value || Number(form.elements.priceOne.value) * 3)),
+    4: Math.max(0, Number(form.elements.priceFour.value || Number(form.elements.priceOne.value) * 4)),
   };
-  const dailyCapacity = Math.max(1, Math.min(4, Number(form.elements.dailyCapacity.value || 4)));
-  const maxParticipants = Math.max(1, Number(form.elements.maxParticipants.value || 4));
+  const dailyCapacity = Math.max(1, Math.min(100, Number(form.elements.dailyCapacity.value || 4)));
+  const maxParticipants = workshopType === "daily" ? dailyCapacity : Math.max(1, Number(form.elements.maxParticipants.value || 4));
   const minParticipants = Math.min(maxParticipants, Math.max(1, Number(form.elements.minParticipants.value || 1)));
-  const fixedPrice = Math.max(0, Number(form.elements.fixedPrice.value || 0));
+  const fixedPrice = workshopType === "daily" ? attendeePrices[1] : Math.max(0, Number(form.elements.fixedPrice.value || 0));
   const bookingConfig = {
     workshopType,
     mode: bookingMode,
     dailyStartTime: String(form.elements.dailyStartTime.value || "10:00").trim(),
     dailyEndTime: String(form.elements.dailyEndTime.value || "13:00").trim(),
+    dailyTimeSlots: [{ startTime: form.elements.dailyStartTime.value, endTime: form.elements.dailyEndTime.value }, ...collectDailyTimes()],
     dailyCapacity,
     maxBookingMonths: Math.max(1, Math.min(6, Number(form.elements.maxBookingMonths.value || 6))),
     attendeePrices,
@@ -1078,7 +1059,7 @@ function collectWorkshopPayload(statusOverride) {
     levelLabel: difficulty,
     audienceLabel: "",
     price: workshopType === "daily" ? attendeePrices[1] : fixedPrice,
-    maxCapacity: workshopType === "daily" ? bookingConfig.dailyCapacity : maxCapacity,
+    maxCapacity: maxParticipants,
     capacityLabel: (workshopType === "daily" ? bookingConfig.dailyCapacity : maxCapacity) > 0
       ? `최대 ${workshopType === "daily" ? bookingConfig.dailyCapacity : maxCapacity}명`
       : "",
@@ -1095,7 +1076,7 @@ function collectWorkshopPayload(statusOverride) {
     posterImageR2Key: primaryImage.r2Key,
     posterImageAlt: primaryImage.caption || title,
     galleryImages,
-    scheduleSlots: workshopType === "daily" ? [] : scheduleSlots,
+    scheduleSlots: workshopType === "daily" ? [] : scheduleSlots.map((slot) => ({ ...slot, capacity: maxParticipants })),
     bookingConfig,
     status: statusOverride || current?.status || "draft",
     sourceMode: String(form.elements.sourceMode.value || "d1-r2-ready").trim() || "d1-r2-ready",
@@ -1113,6 +1094,7 @@ function reorderItems(items, fromIndex, toIndex) {
 }
 
 function renderAll() {
+  renderInquiries();
   renderWorkshopOptions();
   syncSelectedReservation();
   renderReservations();
@@ -1127,6 +1109,28 @@ function renderAll() {
   } else if (!dom.contentForm.elements.title.value) {
     resetContentForm();
   }
+}
+
+function renderInquiries() {
+  const preview = document.getElementById("customWorkshopImagePreview");
+  if (preview) {
+    preview.hidden = !state.customWorkshop?.imageUrl;
+    if (state.customWorkshop?.imageUrl) preview.src = state.customWorkshop.imageUrl;
+  }
+  const legacyTab = document.querySelector('[data-mode="groups"]');
+  if (legacyTab) legacyTab.hidden = !state.groups.some((group) => !["cancelled", "completed"].includes(group.status));
+  const list = document.getElementById("workshopInquiryList");
+  if (!list) return;
+  list.innerHTML = (state.inquiries || []).map((inquiry) => `<article class="workshop-inquiry-row" data-inquiry-id="${escapeHtml(inquiry.id)}">
+    <h3>${escapeHtml(inquiry.full_name)} <span>${inquiry.attendee_count}명</span></h3>
+    <p><a href="mailto:${encodeURIComponent(inquiry.email)}">${escapeHtml(inquiry.email)}</a> · ${escapeHtml(inquiry.phone)}</p>
+    <dl><dt>희망 일시</dt><dd>${escapeHtml(inquiry.preferred_schedule)}</dd><dt>장소</dt><dd>${escapeHtml(inquiry.location_type === "studio" ? "오알룸 작업실" : inquiry.location_detail)}</dd>
+    <dt>수업 내용</dt><dd>${escapeHtml(inquiry.class_content)}</dd><dt>문의사항</dt><dd>${escapeHtml(inquiry.question || "없음")}</dd></dl>
+    <label class="fulfillment-field"><span>처리 상태</span><select name="inquiryStatus">${[["received", "접수"], ["contacted", "연락 완료"], ["closed", "종료"]].map(([value, label]) => `<option value="${value}" ${inquiry.status === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>
+    <label class="fulfillment-field"><span>관리자 메모</span><textarea name="inquiryAdminNote" maxlength="2000">${escapeHtml(inquiry.admin_note)}</textarea></label>
+    <button type="button" class="fulfillment-btn" data-save-inquiry>저장</button>
+    <p class="fulfillment-status" role="status"></p>
+  </article>`).join("") || '<p class="fulfillment-empty">접수된 맞춤 워크샵 문의가 없습니다.</p>';
 }
 
 function resetUi() {
@@ -1241,12 +1245,8 @@ async function saveWorkshopContent(nextStatus, button) {
   }
 
   if (nextStatus === "published") {
-    if (workshop.bookingConfig.workshopType === "event" && workshop.scheduleSlots.length !== 1) {
-      focusWorkshopField(dom.slotList?.querySelector('[name="slotDate"]'), "일일 워크샵 이벤트는 날짜와 시작 시간이 있는 세션을 정확히 1개 입력해주세요.");
-      return null;
-    }
-    if (workshop.bookingConfig.workshopType === "multiSession" && workshop.scheduleSlots.length < 2) {
-      focusWorkshopField(dom.slotList?.querySelector('[name="slotDate"]'), "다회차 워크샵은 날짜와 시작 시간이 있는 세션을 2개 이상 입력해주세요.");
+    if (workshop.bookingConfig.workshopType !== "daily" && (!workshop.scheduleSlots.length || workshop.scheduleSlots.some((slot) => !slot.date || !slot.startTime || !slot.endTime))) {
+      focusWorkshopField(dom.slotList?.querySelector('[name="slotDate"]'), "모든 회차의 날짜와 시작·종료 시간을 입력해주세요.");
       return null;
     }
     if (workshop.bookingConfig.workshopType === "daily" && workshop.bookingConfig.dailyStartTime >= workshop.bookingConfig.dailyEndTime) {
@@ -1434,6 +1434,40 @@ function setupDropzone(dropzone, input, target = "gallery") {
 }
 
 function attachEvents() {
+  document.getElementById("customWorkshopImageInput")?.addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const status = document.getElementById("customWorkshopImageStatus");
+    try {
+      const body = new FormData();
+      body.set("action", "uploadWorkshopImage");
+      body.set("slug", "custom-workshop");
+      body.set("target", "poster");
+      body.set("file", file);
+      setStatus(status, "업로드 중...");
+      const payload = await requestAdmin("./api/workshops/admin", { method: "POST", body });
+      await submitAdminAction({ action: "saveCustomWorkshopImage", imageUrl: payload.image.url, imageAlt: "맞춤 워크샵" }, { successTarget: status });
+    } catch (error) { setStatus(status, error.message, "error"); }
+    finally { event.target.value = ""; }
+  });
+  document.getElementById("workshopInquiryList")?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-save-inquiry]");
+    if (!button) return;
+    const row = button.closest("[data-inquiry-id]");
+    await submitAdminAction({ action: "updateWorkshopInquiry", inquiryId: row.dataset.inquiryId,
+      status: row.querySelector('[name="inquiryStatus"]').value, adminNote: row.querySelector('[name="inquiryAdminNote"]').value },
+    { successTarget: row.querySelector('[role="status"]'), loadingButton: button });
+  });
+  document.getElementById("workshopAddDailyTime")?.addEventListener("click", () => {
+    renderDailyTimeRows([...collectDailyTimes(), { startTime: "14:00", endTime: "17:00" }]);
+    setDirtyState(true);
+  });
+  document.getElementById("workshopDailyTimes")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-remove-daily-time]");
+    if (!button) return;
+    renderDailyTimeRows(collectDailyTimes().filter((time, index) => index !== Number(button.dataset.removeDailyTime)));
+    setDirtyState(true);
+  });
   dom.authForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const submitButton = dom.authForm.querySelector('button[type="submit"]');
@@ -1803,7 +1837,7 @@ function attachEvents() {
   setupDropzone(dom.galleryDropzone, dom.galleryUploadInput, "gallery");
 
   dom.slotAddButton?.addEventListener("click", () => {
-    if (normalizeWorkshopType(dom.bookingModeSelect?.value) !== "multiSession") return;
+    if (normalizeWorkshopType(dom.bookingModeSelect?.value) === "daily") return;
     const current = collectSlotItems();
     const base = current[current.length - 1] || current[0] || {};
     renderSlotRows([...current, {
@@ -1820,7 +1854,7 @@ function attachEvents() {
   dom.slotList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-slot-remove]");
     if (!button) return;
-    if (normalizeWorkshopType(dom.bookingModeSelect?.value) !== "multiSession") return;
+    if (normalizeWorkshopType(dom.bookingModeSelect?.value) === "daily") return;
     const index = Number(button.dataset.slotRemove);
     const items = collectSlotItems();
     items.splice(index, 1);

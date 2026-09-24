@@ -7,7 +7,6 @@ import { formatPrice } from "./utils/catalog.js";
 import { ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
 // ---- Constants ----
-const DEFAULT_CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
 
 /* =========================
    READ ORDER DATA
@@ -24,9 +23,11 @@ function generateOrderId() {
   return `OALUM-${ts}-${rand}`;
 }
 
-function getClientKey() {
-  const metaValue = document.querySelector('meta[name="oalum-toss-client-key"]')?.content?.trim();
-  return metaValue || DEFAULT_CLIENT_KEY;
+async function getPaymentConfig() {
+  const response = await fetch("./api/payments/config", { headers: { Accept: "application/json" } });
+  const config = await response.json();
+  if (!response.ok || !config.ok) throw new Error(config.error || "결제 설정이 준비되지 않았습니다.");
+  return config;
 }
 
 /* =========================
@@ -98,9 +99,10 @@ async function initPayment() {
     return;
   }
 
-  const clientKey = getClientKey();
-  const tossPayments = TossPayments(clientKey);
-  const paymentOrderId = order.orderId || generateOrderId();
+  const config = await getPaymentConfig();
+  const tossPayments = TossPayments(config.clientKey);
+  const paymentOrderId = order.orderId;
+  if (!paymentOrderId || !order.persisted) throw new Error("주문서에서 주문을 다시 확인해주세요.");
 
   writeStoredJson(ORDER_KEY, {
     ...order,
@@ -123,11 +125,11 @@ async function initPayment() {
   await Promise.all([
     widgets.renderPaymentMethods({
       selector: "#payment-method",
-      variantKey: "DEFAULT",
+      variantKey: config.paymentVariantKey,
     }),
     widgets.renderAgreement({
       selector: "#agreement",
-      variantKey: "AGREEMENT",
+      variantKey: config.agreementVariantKey,
     }),
   ]);
 
@@ -148,7 +150,7 @@ async function initPayment() {
         failUrl: buildPageUrl("fail.html"),
         customerEmail:       order.shipping.email,
         customerName:        order.shipping.name,
-        customerMobilePhone: order.shipping.phone.replace(/-/g, ""),
+        ...(/^01\d{8,9}$/.test(order.shipping.phone.replace(/\D/g, "")) ? { customerMobilePhone: order.shipping.phone.replace(/\D/g, "") } : {}),
       });
     } catch (err) {
       // User cancelled or SDK error
@@ -159,4 +161,10 @@ async function initPayment() {
   });
 }
 
-initPayment();
+initPayment().catch((error) => {
+  const layout = document.querySelector(".payment-layout");
+  const message = document.createElement("p");
+  message.className = "payment-empty";
+  message.textContent = error.message || "결제를 준비하지 못했습니다.";
+  layout.replaceChildren(message);
+});

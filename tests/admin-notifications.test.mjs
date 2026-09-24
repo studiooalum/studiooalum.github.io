@@ -10,6 +10,9 @@ import {
 } from "../cloudflare/lib/notifications.js";
 import {
   readWorkshopAvailability,
+  maintainWorkshopOperations,
+  createWorkshopCheckout,
+  confirmWorkshopPayment,
   upsertWorkshopContent,
 } from "../cloudflare/lib/workshops.js";
 import { onRequestPost as confirmPayment } from "../functions/api/payments/confirm.js";
@@ -42,6 +45,9 @@ class D1Database {
     this.database = new DatabaseSync(":memory:");
     this.database.exec("PRAGMA foreign_keys = ON");
     this.database.exec(readFileSync(new URL("../cloudflare/d1/schema.sql", import.meta.url), "utf8"));
+    this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0037_operational_notifications.sql", import.meta.url), "utf8"));
+    this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0035_workshop_operations.sql", import.meta.url), "utf8"));
+    this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0038_payment_reservation_guards.sql", import.meta.url), "utf8"));
   }
 
   prepare(sql) { return new D1Statement(this.database, sql); }
@@ -151,7 +157,10 @@ test("administrator notification helpers resolve recipients and remain idempoten
 });
 
 test("payment confirmation queues the paid-order administrator alert", async (t) => {
-  const { database, env } = createEnvironment();
+  const { database, env } = createEnvironment({ TOSS_CLIENT_KEY: "test_gck_fixture", TOSS_SECRET_KEY: "test_gsk_fixture" });
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => Response.json({ paymentKey: "fixture-payment", orderId: "ORD-PAID-ADMIN", totalAmount: 42000, currency: "KRW", status: "DONE", approvedAt: new Date().toISOString() });
   t.after(() => database.close());
   await persistOrder(env, createOrder("ORD-PAID-ADMIN"));
 
@@ -159,6 +168,7 @@ test("payment confirmation queues the paid-order administrator alert", async (t)
     orderId: "ORD-PAID-ADMIN",
     orderName: "테스트 주문",
     amount: 42000,
+    paymentKey: "fixture-payment",
   });
   const response = await confirmPayment(context);
   assert.equal(response.status, 200);
@@ -167,10 +177,31 @@ test("payment confirmation queues the paid-order administrator alert", async (t)
   const [notification] = readAdminOutbox(database, "shop.order_completed_admin");
   assert.equal(notification.recipient, "admin@example.com");
   assert.equal(JSON.parse(notification.payload_json).order_number, "ORD-PAID-ADMIN");
+  assert.equal(readAdminOutbox(database, "shop.order_completed").length, 1);
 });
 
-test("workshop reservation queues the administrator alert", async (t) => {
-  const { database, env } = createEnvironment();
+test("competing payment keys cannot approve the same shop order twice", async (context) => {
+  const { database, env } = createEnvironment({ TOSS_CLIENT_KEY: "test_gck_fixture", TOSS_SECRET_KEY: "test_gsk_fixture" });
+  context.after(() => database.close());
+  await persistOrder(env, createOrder("ORDER_CONCURRENT"));
+  const originalFetch = globalThis.fetch;
+  context.after(() => { globalThis.fetch = originalFetch; });
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls += 1;
+    const body = JSON.parse(options.body);
+    return Response.json({ ...body, totalAmount: 42000, currency: "KRW", status: "DONE", approvedAt: new Date().toISOString() });
+  };
+  const first = createContext(env, "/api/payments/confirm", { orderId: "ORDER_CONCURRENT", paymentKey: "first-key", amount: 42000 });
+  const second = createContext(env, "/api/payments/confirm", { orderId: "ORDER_CONCURRENT", paymentKey: "second-key", amount: 42000 });
+  const responses = await Promise.all([confirmPayment(first.context), confirmPayment(second.context)]);
+  await Promise.all([first.flush(), second.flush()]);
+  assert.deepEqual(responses.map((response) => response.status).sort(), [200, 409]);
+  assert.equal(calls, 1);
+});
+
+test("workshop reservation and payment queue both audiences without duplicate alerts", async (t) => {
+  const { database, env } = createEnvironment({ TOSS_CLIENT_KEY: "test_gck_fixture", TOSS_SECRET_KEY: "test_gsk_fixture" });
   t.after(() => database.close());
   await upsertWorkshopContent(env, {
     slug: "admin-alert-workshop",
@@ -215,6 +246,20 @@ test("workshop reservation queues the administrator alert", async (t) => {
   const [notification] = readAdminOutbox(database, "workshop.reservation_submitted_admin");
   assert.equal(notification.recipient, "admin@example.com");
   assert.equal(JSON.parse(notification.payload_json).reservation_number, payload.reservation.reservationNumber);
+  assert.equal(readAdminOutbox(database, "workshop.reservation_received").length, 1);
+  const checkout = await createWorkshopCheckout(env, { checkoutId: payload.checkoutId });
+  assert.equal((await createWorkshopCheckout(env, { checkoutId: payload.checkoutId })).order.orderId, checkout.order.orderId);
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => Response.json({ paymentKey: "workshop-payment", orderId: checkout.order.orderId, totalAmount: 50000, currency: "KRW", status: "DONE", approvedAt: new Date().toISOString() });
+  const confirmation = { checkoutId: payload.checkoutId, paymentKey: "workshop-payment", orderId: checkout.order.orderId, amount: 50000 };
+  await confirmWorkshopPayment(env, confirmation);
+  await confirmWorkshopPayment(env, confirmation);
+  assert.equal(readAdminOutbox(database, "workshop.payment_completed").length, 1);
+  assert.equal(readAdminOutbox(database, "workshop.payment_completed_admin").length, 1);
+  await maintainWorkshopOperations(env, { now: new Date("2099-09-30T04:00:00Z") });
+  await maintainWorkshopOperations(env, { now: new Date("2099-09-30T04:00:00Z") });
+  assert.equal(readAdminOutbox(database, "workshop.reminder").length, 1);
 });
 
 test("notification admin page exposes customer and administrator views", () => {

@@ -1,3 +1,5 @@
+import { constantTimeEqual } from "./request-security.js";
+
 const SESSION_COOKIE_NAME = "oalum_session";
 const LOGIN_CODE_TTL_MS = 10 * 60 * 1000;
 const LOGIN_RESEND_WINDOW_MS = 60 * 1000;
@@ -65,7 +67,9 @@ function randomHex(byteLength = 24) {
 }
 
 function generateLoginCode() {
-  return String(Math.floor(Math.random() * 900000) + 100000);
+  const values = new Uint32Array(1);
+  do { crypto.getRandomValues(values); } while (values[0] >= 4294800000);
+  return String((values[0] % 900000) + 100000);
 }
 
 function shouldUseSecureCookie(request, env) {
@@ -183,7 +187,7 @@ async function verifyPasswordCredentials(env, password, row) {
   }
 
   const candidateHash = await derivePasswordHash(env, password, row.password_salt);
-  return candidateHash === String(row.password_hash || "");
+  return constantTimeEqual(candidateHash, row.password_hash);
 }
 
 function parseCookies(request) {
@@ -200,7 +204,7 @@ function parseCookies(request) {
 
       const key = chunk.slice(0, separatorIndex).trim();
       const value = chunk.slice(separatorIndex + 1).trim();
-      cookies[key] = decodeURIComponent(value);
+      try { cookies[key] = decodeURIComponent(value); } catch {}
       return cookies;
     }, {});
 }
@@ -1200,6 +1204,7 @@ export async function loginWithPassword(env, { email, password }, request) {
 
 export async function signupWithPassword(env, {
   email,
+  code,
   fullName,
   password,
   privacyConsent,
@@ -1219,6 +1224,8 @@ export async function signupWithPassword(env, {
   }
 
   const database = requireDb(env);
+  if (!/^\d{6}$/.test(String(code || ""))) throw Object.assign(new Error("이메일 인증번호를 입력해주세요."), { status: 400 });
+  const verified = await verifyLoginCode(env, { email, code, fullName, mode: "signup" }, request);
   const user = await createOrUpdatePasswordUser(database, env, {
     email,
     fullName,
@@ -1234,12 +1241,7 @@ export async function signupWithPassword(env, {
     providerUserId: user.emailNormalized,
     providerEmail: user.email,
   });
-  const session = await createSession(database, env, user.id, request);
-
-  return {
-    user,
-    session,
-  };
+  return { user, session: verified.session };
 }
 
 export function createSessionCookie(request, env, token) {

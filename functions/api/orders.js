@@ -3,14 +3,13 @@ import {
   computeOrderAmount,
   createOrderSchema,
   generateOrderId,
-  normalizeOrderItems,
+  resolveOrderItems,
 } from "../../cloudflare/lib/commerce.js";
 import { prepareCouponPricing } from "../../cloudflare/lib/coupons.js";
 import { readSession, updateAccount } from "../../cloudflare/lib/auth.js";
 import { hasD1, persistOrder, prepareOrderPricing, readOrderSyncSnapshot } from "../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../cloudflare/lib/http.js";
 import { dispatchOrderSync } from "../../cloudflare/lib/order-sync.js";
-import { shouldRequirePersistence } from "../../cloudflare/lib/toss.js";
 
 export function onRequestOptions(context) {
   return noContent(context.env);
@@ -20,7 +19,7 @@ export async function onRequestPost(context) {
   try {
     const payload = await readJson(context.request);
     const parsed = createOrderSchema.safeParse(payload);
-    const strictPersistence = shouldRequirePersistence(context.env);
+    const strictPersistence = true;
     const session = await readSession(context.env, context.request, { touch: false });
 
     if (!parsed.success) {
@@ -33,7 +32,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const items = normalizeOrderItems(parsed.data.items);
+    const items = await resolveOrderItems(context.env, parsed.data.items);
     const subtotal = computeOrderAmount(items);
     const coupon = await prepareCouponPricing(context.env, {
       userId: session?.user?.id || null,
@@ -68,7 +67,7 @@ export async function onRequestPost(context) {
       pointsReservationExpiresAt: pricing.pointsReservationExpiresAt,
       items,
       shipping: parsed.data.shipping,
-      createdAt: parsed.data.createdAt || new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       status: "created",
       paymentStatus: "pending",
     };

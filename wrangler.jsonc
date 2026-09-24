@@ -6,7 +6,8 @@
 	"vars": {
 		"SMS_ENABLED": "true",
 		"SMS_DRY_RUN": "false",
-		"SMS_COUNTRY_ALLOWLIST": "KR"
+		"SMS_COUNTRY_ALLOWLIST": "KR",
+		"ADDITIONAL_SMS_ENABLED": "false"
 	},
 	"d1_databases": [
 		{

@@ -1,6 +1,32 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { getWorkshopBookingConfig, getWorkshopScheduleSlots } from "../runtime/storefront/scripts/utils/workshops.js";
+
+test("workshop prices use administrator pricing for the entire party without invented defaults", () => {
+  const config = getWorkshopBookingConfig({ price: 50000, bookingConfig: { type: "daily", maxParticipants: 8 } });
+  assert.equal(config.attendeePrices[1], 50000);
+  assert.equal(config.attendeePrices[8], 400000);
+  assert.equal(getWorkshopBookingConfig({ bookingConfig: { type: "daily" } }).attendeePrices[1], 0);
+  assert.equal(getWorkshopBookingConfig({ price: 50000, bookingConfig: { type: "daily", priceTiers: { 2: 90000 } } }).attendeePrices[2], 90000);
+});
+
+test("one-day calendar exposes valid administrator time slots and stable keys", () => {
+  const workshop = { slug: "class", price: 50000, bookingConfig: { type: "daily", maxBookingMonths: 1, dailyTimeSlots: [
+    { startTime: "14:00", endTime: "17:00" },
+    { startTime: "10:00", endTime: "13:00" },
+    { startTime: "29:00", endTime: "30:00" },
+    { startTime: "10:00", endTime: "13:00" },
+  ] } };
+  const slots = getWorkshopScheduleSlots(workshop);
+  assert.ok(slots.length >= 2);
+  assert.equal(slots[0].startTime, "10:00");
+  assert.equal(slots[1].startTime, "14:00");
+  assert.equal(slots[0].date, slots[1].date);
+  assert.equal(new Set(slots.map((slot) => slot.key)).size, slots.length);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+  assert.ok(slots.every((slot) => slot.date > today));
+});
 
 const workshopHtml = await readFile(new URL("../workshop.html", import.meta.url), "utf8");
 const workshopCss = await readFile(
@@ -12,6 +38,14 @@ const workshopJs = await readFile(
   "utf8",
 );
 const workshopAdminHtml = await readFile(new URL("../workshop-admin.html", import.meta.url), "utf8");
+const typography = await readFile(new URL("../runtime/storefront/styles/typography-20260924.css", import.meta.url), "utf8");
+test("storefront detail typography matches newsletter reading size without viewport font scaling", () => {
+  assert.match(typography, /--type-body:\s*16px/);
+  assert.match(typography, /\.edition-page \.edition-desc/);
+  assert.match(typography, /\.product-page \.product-intro/);
+  assert.match(typography, /letter-spacing:\s*0/);
+  assert.doesNotMatch(typography, /font-size:.*vw/);
+});
 
 test("workshop detail keeps the information-first page structure", () => {
   assert.match(workshopHtml, /workshop-20260918-01\.css/);
@@ -100,6 +134,7 @@ test("workshop information uses category-only labeling and clear empty material 
 });
 
 test("workshop admin keeps material fields with detail content and limits advanced settings", () => {
+  assert.equal((workshopAdminHtml.match(/name="slug"/g) || []).length, 1);
   const detailSection = workshopAdminHtml.match(/<summary>상세 설명과 이미지<\/summary>[\s\S]*?<\/details>/)?.[0] || "";
   const advancedSection = workshopAdminHtml.match(/<summary>고급 설정<\/summary>[\s\S]*?<\/details>/)?.[0] || "";
   assert.match(detailSection, /name="materials"/);

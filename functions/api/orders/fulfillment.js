@@ -8,6 +8,7 @@ import {
   searchDeliveryTrackerCarriers,
 } from "../../../cloudflare/lib/delivery-tracker.js";
 import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
+import { enqueueShopNotification } from "../../../cloudflare/lib/notifications.js";
 import { deleteUnpaidOrder, readFulfillmentOrders, readOrderSyncSnapshot, updateShipment } from "../../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
 
@@ -191,6 +192,9 @@ export async function onRequestPost(context) {
     }
 
     const order = await readOrderSyncSnapshot(context.env, parsed.data.orderId);
+    if (order && ["shipped", "delivered"].includes(data.status)) {
+      await enqueueShopNotification(context.env, order, data.status === "shipped" ? "shipping_started" : "delivered");
+    }
 
     return json(context.env, {
       ok: true,

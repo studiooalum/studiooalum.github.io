@@ -3,7 +3,7 @@ import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818
 function linkifyDetailTags() {
   document.querySelectorAll(".archive-detail-meta__more p").forEach((row) => {
     const label = row.querySelector(":scope > span");
-    if (label?.textContent.trim() !== "Tags") return;
+    if (label?.textContent.trim() !== "태그") return;
 
     const rawTags = Array.from(row.childNodes)
       .filter((node) => node !== label)
@@ -31,5 +31,5 @@ export async function initArchiveBoard() {
   linkifyDetailTags();
 
   const relatedHeading = document.querySelector(".archive-related h2");
-  if (relatedHeading) relatedHeading.textContent = "you may also like";
+  if (relatedHeading) relatedHeading.textContent = "함께 보기";
 }

@@ -9,9 +9,9 @@
 
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-ticket-20260824-01.css?v=20260922-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-ticket-20260924.css">
 </head>
 <body class="repair-ticket-page">
   <nav class="gnb gnb--account">
@@ -30,6 +30,12 @@
           <h1 class="js-repair-ticket-number"></h1>
           <p class="repair-ticket-status js-repair-ticket-status"></p>
         </header>
+        <section id="repairTicketPayment" class="repair-ticket-payment" hidden>
+          <h2>결제</h2>
+          <p id="repairTicketPaymentAmount"></p>
+          <button id="repairTicketPayButton" type="button" class="repair-ticket-submit">카드·간편결제</button>
+          <p id="repairTicketPaymentStatus" role="status" aria-live="polite"></p>
+        </section>
         <dl class="repair-ticket-facts js-repair-ticket-facts"></dl>
         <section class="repair-ticket-request-images js-repair-ticket-request-images" hidden>
           <h2>신청 사진</h2>
@@ -71,7 +77,15 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/repair-ticket-20260824-01.js?v=20260922-02"></script>
+  <dialog id="repairPaymentDialog" class="repair-payment-dialog" aria-labelledby="repairPaymentTitle">
+    <header><h2 id="repairPaymentTitle">수선 결제</h2><button id="repairPaymentClose" type="button" aria-label="결제창 닫기">×</button></header>
+    <div id="repair-payment-method"></div>
+    <div id="repair-payment-agreement"></div>
+    <button id="repairPaymentConfirm" type="button" class="repair-ticket-submit" disabled>결제하기</button>
+    <p id="repairPaymentDialogStatus" role="status"></p>
+  </dialog>
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <script type="module" src="./runtime/storefront/scripts/repair-ticket-20260924.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260918-01";
     initSiteChrome();

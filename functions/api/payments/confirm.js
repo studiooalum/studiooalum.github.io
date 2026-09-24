@@ -1,9 +1,9 @@
-import { buildPreviewPayment, paymentConfirmSchema } from "../../../cloudflare/lib/commerce.js";
-import { hasD1, persistPayment, readOrderSyncSnapshot } from "../../../cloudflare/lib/d1.js";
+import { paymentConfirmSchema } from "../../../cloudflare/lib/commerce.js";
+import { assertStoredOrderPayment, hasD1, persistPayment, readOrderSyncSnapshot } from "../../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
-import { enqueueOrderCompletedAdminNotification } from "../../../cloudflare/lib/notifications.js";
+import { enqueueOrderCompletedAdminNotification, enqueueShopNotification } from "../../../cloudflare/lib/notifications.js";
 import { dispatchOrderSync, getOrderSyncEventType, shouldEmailForOrderSyncEvent } from "../../../cloudflare/lib/order-sync.js";
-import { canConfirmWithToss, confirmTossPayment, shouldRequirePersistence } from "../../../cloudflare/lib/toss.js";
+import { confirmTossPayment, getTossConfig } from "../../../cloudflare/lib/toss.js";
 
 export function onRequestOptions(context) {
   return noContent(context.env);
@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
   try {
     const payload = await readJson(context.request);
     const parsed = paymentConfirmSchema.safeParse(payload);
-    const strictPersistence = shouldRequirePersistence(context.env);
+    const strictPersistence = true;
 
     if (!parsed.success) {
       return validationError(context.env, parsed.error);
@@ -33,11 +33,14 @@ export async function onRequestPost(context) {
       });
     }
 
-    const payment = strictPersistence
-      ? await confirmTossPayment(context.env, data)
-      : canConfirmWithToss(context.env, data.paymentKey)
-        ? await confirmTossPayment(context.env, data)
-        : buildPreviewPayment(data);
+    await assertStoredOrderPayment(context.env, data);
+    if (!getTossConfig(context.env).isServerReady) throw Object.assign(new Error("결제 설정이 준비되지 않았습니다."), { status: 503 });
+    const claim = await context.env.OALUM_DB.prepare(`UPDATE orders SET active_payment_key = ?, updated_at = ?,
+      status = CASE WHEN status = 'paid' THEN status ELSE 'payment_pending' END
+      WHERE id = ? AND status NOT IN ('cancelled','refunded') AND (active_payment_key IS NULL OR active_payment_key = ?)`)
+      .bind(data.paymentKey, new Date().toISOString(), data.orderId, data.paymentKey).run();
+    if (!Number(claim.meta?.changes)) throw Object.assign(new Error("다른 결제 요청이 처리 중입니다. 주문 내역을 확인해주세요."), { status: 409 });
+    const payment = await confirmTossPayment(context.env, data);
 
     const warnings = [];
     let persisted = false;
@@ -92,6 +95,7 @@ export async function onRequestPost(context) {
       }
 
       if (orderSnapshot && eventType === "payment.confirmed") {
+        await enqueueShopNotification(context.env, orderSnapshot, "order_completed");
         context.waitUntil(enqueueOrderCompletedAdminNotification(context.env, orderSnapshot).catch((error) => {
           console.error("Failed to queue paid order administrator notification.", {
             orderId: payment.orderId,
@@ -103,11 +107,8 @@ export async function onRequestPost(context) {
 
     return json(context.env, {
       ok: true,
-      payment: {
-        ...payment,
-        persisted,
-      },
-      order: orderSnapshot,
+      payment: { orderId: payment.orderId, orderName: payment.orderName, amount: payment.amount, status: payment.status, approvedAt: payment.approvedAt, persisted },
+      order: orderSnapshot ? { orderId: orderSnapshot.orderId, totalAmount: orderSnapshot.totalAmount, status: orderSnapshot.status } : null,
       syncTriggered,
       warnings,
     });

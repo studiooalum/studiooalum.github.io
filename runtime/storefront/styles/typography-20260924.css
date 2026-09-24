@@ -1,0 +1,70 @@
+:root {
+  --type-page-title: 34px;
+  --type-section-title: 20px;
+  --type-body: 16px;
+  --type-label: 14px;
+  --type-meta: 12px;
+  --type-body-leading: 1.8;
+}
+
+body :is(h1, h2, h3, h4, p, label, dt, dd, button, input, textarea, select) {
+  letter-spacing: 0;
+}
+
+:is(.edition-page, .product-page, .workshop-page, .archive-page, .newsletter-page) :is(.edition-title, .product-title, .workshop-title, .archive-detail-title, .newsletter-entry__title) {
+  font-size: var(--type-page-title);
+  font-weight: 400;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.edition-page .edition-desc,
+.product-page .product-intro,
+.archive-page .archive-detail-description,
+.workshop-page #workshopDescription,
+.workshop-page #workshopDescription p {
+  font-family: var(--font-kor-body);
+  font-size: var(--type-body);
+  line-height: var(--type-body-leading);
+  color: #222;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.edition-page :is(.edition-section-title, .edition-info-title),
+.workshop-page .workshop-information h2,
+.archive-page .archive-detail-meta span {
+  font-family: var(--font-kor-button);
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.shop-page .shop-card__title,
+.workshops-page .workshops-card__title {
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+body :is(.fulfillment-heading, .account-title, .repair-title) {
+  font-size: var(--type-page-title);
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+body :is(.fulfillment-subheading, .account-section-title) {
+  font-size: var(--type-section-title);
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+body .fulfillment-field > span { font-size: var(--type-label); line-height: 1.5; }
+body .fulfillment-field :is(input, textarea, select) { font-size: 16px; line-height: 1.5; }
+body .fulfillment-copy { font-size: 14px; line-height: 1.7; }
+body .fulfillment-status { font-size: 13px; line-height: 1.6; }
+
+@media (max-width: 559px) {
+  :root { --type-page-title: 28px; }
+}

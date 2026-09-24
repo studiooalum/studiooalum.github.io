@@ -83,11 +83,29 @@ export function initSignupPage() {
     return;
   }
 
+  document.getElementById("signupSendCode")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const email = form.elements.email.value.trim();
+    const fullName = form.elements.fullName.value.trim();
+    if (!isValidEmail(email) || !fullName) {
+      setStatus(statusEl, "이름과 이메일 주소를 먼저 입력해주세요.", "error");
+      return;
+    }
+    setButtonLoading(button, true, "발송 중...");
+    try {
+      await requestJson("./api/auth/request", { method: "POST", body: { email, fullName, mode: "signup" } });
+      setStatus(statusEl, "이메일로 인증번호를 보냈습니다.", "success");
+      form.elements.code.focus();
+    } catch (error) { setStatus(statusEl, error.message, "error"); }
+    finally { setButtonLoading(button, false); }
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const submitButton = form.querySelector("button[type='submit']");
     const fullName = String(form.elements.fullName.value || "").trim();
     const email = String(form.elements.email.value || "").trim();
+    const code = String(form.elements.code.value || "").trim();
     const password = String(form.elements.password.value || "");
     const passwordConfirm = String(form.elements.passwordConfirm.value || "");
     const privacyConsent = form.elements.privacyConsent.checked === true;
@@ -111,6 +129,11 @@ export function initSignupPage() {
       form.elements.password.focus();
       return;
     }
+    if (!/^\d{6}$/.test(code)) {
+      setStatus(statusEl, "이메일로 받은 6자리 인증번호를 입력해주세요.", "error");
+      form.elements.code.focus();
+      return;
+    }
 
     if (password !== passwordConfirm) {
       setStatus(statusEl, "비밀번호와 비밀번호 확인이 일치하지 않습니다.", "error");
@@ -131,6 +154,7 @@ export function initSignupPage() {
         body: {
           fullName,
           email,
+          code,
           password,
           privacyConsent,
           termsConsent,

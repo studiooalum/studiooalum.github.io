@@ -221,6 +221,7 @@ function renderTicket() {
   dom.number.textContent = formatTicketNumber(repair);
   dom.status.textContent = repair.statusLabel || repair.status || "";
   renderFacts(ticket);
+  renderPayment(repair);
   renderRequestImages(ticket);
   renderMessages(ticket);
   void loadProtectedImages();
@@ -230,6 +231,62 @@ function renderTicket() {
   if (adminMode) dom.back.href = "./repair-admin.html";
   dom.shell.hidden = false;
   dom.loading.hidden = true;
+}
+
+function renderPayment(repair) {
+  const section = document.getElementById("repairTicketPayment");
+  const button = document.getElementById("repairTicketPayButton");
+  const status = document.getElementById("repairTicketPaymentStatus");
+  const paid = Boolean(repair.paymentConfirmedAt);
+  section.hidden = !repair.onlinePaymentAvailable && !paid;
+  document.getElementById("repairTicketPaymentAmount").textContent = formatPrice(repair.finalAmount);
+  button.hidden = !repair.onlinePaymentAvailable || adminMode;
+  button.disabled = repair.paymentStatus === "processing";
+  status.textContent = paid ? `결제 완료 · ${formatDate(repair.paymentConfirmedAt)}` : repair.paymentStatus === "processing" ? "결제 확인 중입니다. 잠시 후 새로고침해주세요." : "";
+}
+
+async function requestRepairPayment(action, values = {}) {
+  const response = await fetch("/api/repairs/payment", {
+    method: "POST", headers: { ...authHeaders(), "Content-Type": "application/json" },
+    credentials: "same-origin", body: JSON.stringify({ action, ticketId, ...values }),
+  });
+  const result = await response.json();
+  if (!response.ok || !result.ok) throw new Error(result.error || "결제 요청을 처리하지 못했습니다.");
+  return result;
+}
+
+let repairWidgets = null;
+let repairCheckout = null;
+
+async function openRepairPayment() {
+  const dialog = document.getElementById("repairPaymentDialog");
+  const button = document.getElementById("repairTicketPayButton");
+  button.disabled = true;
+  try {
+    const result = await requestRepairPayment("checkout");
+    repairCheckout = result.checkout;
+    if (!window.TossPayments) throw new Error("결제 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.");
+    dialog.showModal();
+    if (!repairWidgets) {
+      repairWidgets = window.TossPayments(repairCheckout.clientKey).widgets({ customerKey: window.TossPayments.ANONYMOUS });
+      await repairWidgets.setAmount({ currency: repairCheckout.currency, value: repairCheckout.amount });
+      await Promise.all([
+        repairWidgets.renderPaymentMethods({ selector: "#repair-payment-method", variantKey: repairCheckout.paymentVariantKey }),
+        repairWidgets.renderAgreement({ selector: "#repair-payment-agreement", variantKey: repairCheckout.agreementVariantKey }),
+      ]);
+    } else await repairWidgets.setAmount({ currency: repairCheckout.currency, value: repairCheckout.amount });
+    document.getElementById("repairPaymentConfirm").disabled = false;
+  } catch (error) { document.getElementById("repairTicketPaymentStatus").textContent = error.message; }
+  finally { button.disabled = false; }
+}
+
+async function confirmReturnedRepairPayment() {
+  if (params.get("paymentKey")) {
+    await requestRepairPayment("confirm", { paymentKey: params.get("paymentKey"), orderId: params.get("orderId"), amount: Number(params.get("amount")) });
+    window.history.replaceState({}, "", `${window.location.pathname}?ticket=${encodeURIComponent(ticketId)}`);
+  } else if (params.get("code")) {
+    document.getElementById("repairPaymentDialogStatus").textContent = params.get("message") || "결제가 완료되지 않았습니다.";
+  }
 }
 
 function renderFileList() {
@@ -287,6 +344,7 @@ async function load() {
     return;
   }
   try {
+    await confirmReturnedRepairPayment();
     await fetchTicket();
     renderTicket();
   } catch (error) {
@@ -312,5 +370,20 @@ dom.form?.elements.attachments?.addEventListener("change", () => {
 });
 
 dom.refresh?.addEventListener("click", () => void load());
+document.getElementById("repairTicketPayButton")?.addEventListener("click", () => void openRepairPayment());
+document.getElementById("repairPaymentClose")?.addEventListener("click", () => document.getElementById("repairPaymentDialog").close());
+document.getElementById("repairPaymentConfirm")?.addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const returnUrl = new URL("./repair-ticket", window.location.href);
+    returnUrl.searchParams.set("ticket", ticketId);
+    await repairWidgets.requestPayment({ orderId: repairCheckout.orderId, orderName: repairCheckout.orderName,
+      successUrl: returnUrl.href, failUrl: returnUrl.href, customerEmail: repairCheckout.customer.email, customerName: repairCheckout.customer.name });
+  } catch (error) {
+    document.getElementById("repairPaymentDialogStatus").textContent = error.message || "결제가 완료되지 않았습니다.";
+    button.disabled = false;
+  }
+});
 window.addEventListener("pagehide", clearObjectUrls);
 void load();

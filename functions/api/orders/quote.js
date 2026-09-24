@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { readSession } from "../../../cloudflare/lib/auth.js";
-import { computeOrderAmount, normalizeOrderItems } from "../../../cloudflare/lib/commerce.js";
+import { computeOrderAmount, resolveOrderItems } from "../../../cloudflare/lib/commerce.js";
 import { prepareOrderPricing } from "../../../cloudflare/lib/d1.js";
 import { prepareCouponPricing } from "../../../cloudflare/lib/coupons.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
@@ -27,7 +27,7 @@ export async function onRequestPost(context) {
     }
 
     const session = await readSession(context.env, context.request, { touch: false });
-    const items = normalizeOrderItems(parsed.data.items);
+    const items = await resolveOrderItems(context.env, parsed.data.items);
     const subtotal = computeOrderAmount(items);
     const coupon = parsed.data.couponCode
       ? await prepareCouponPricing(context.env, {

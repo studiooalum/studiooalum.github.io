@@ -429,6 +429,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_requests_ticket_number
   ON repair_requests(ticket_number)
   WHERE ticket_number IS NOT NULL;
 
+CREATE TABLE IF NOT EXISTS repair_payment_orders (
+  id TEXT PRIMARY KEY, repair_id TEXT NOT NULL REFERENCES repair_requests(id),
+  amount INTEGER NOT NULL CHECK(amount > 0),
+  currency TEXT NOT NULL DEFAULT 'KRW' CHECK(currency = 'KRW'),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','paid','cancelled','refunded')),
+  payment_key TEXT UNIQUE, expires_at TEXT NOT NULL, approved_at TEXT, cancelled_at TEXT,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_payment_active ON repair_payment_orders(repair_id) WHERE status IN ('pending','processing','paid');
+CREATE INDEX IF NOT EXISTS idx_repair_payment_status ON repair_payment_orders(status, updated_at);
+CREATE TRIGGER IF NOT EXISTS trg_repair_payment_quote_lock
+BEFORE UPDATE OF final_amount, status, payment_confirmed_at ON repair_requests
+WHEN EXISTS (SELECT 1 FROM repair_payment_orders WHERE repair_id = OLD.id AND (
+  (status IN ('processing', 'paid') AND NEW.final_amount IS NOT OLD.final_amount)
+  OR (status = 'processing' AND (NEW.status IS NOT OLD.status OR NEW.payment_confirmed_at IS NOT OLD.payment_confirmed_at))
+))
+BEGIN
+  SELECT RAISE(ABORT, 'repair_payment_in_progress');
+END;
+
 CREATE TABLE IF NOT EXISTS repair_ticket_number_sequence (
   id INTEGER PRIMARY KEY CHECK(id = 1),
   next_number INTEGER NOT NULL CHECK(next_number > 0)
@@ -1067,3 +1087,129 @@ BEGIN
     THEN RAISE(ABORT, 'workshop_capacity_exceeded')
   END;
 END;
+
+CREATE TABLE IF NOT EXISTS workshop_custom_content (
+  id TEXT PRIMARY KEY CHECK(id = 'default'),
+  image_url TEXT NOT NULL DEFAULT '',
+  image_alt TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS workshop_inquiries (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL UNIQUE,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  attendee_count INTEGER NOT NULL CHECK(attendee_count BETWEEN 1 AND 1000),
+  preferred_schedule TEXT NOT NULL,
+  location_type TEXT NOT NULL CHECK(location_type IN ('studio', 'other')),
+  location_detail TEXT NOT NULL DEFAULT '',
+  class_content TEXT NOT NULL,
+  question TEXT NOT NULL DEFAULT '',
+  privacy_consent_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'received' CHECK(status IN ('received', 'contacted', 'closed')),
+  admin_note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_workshop_inquiries_status ON workshop_inquiries(status, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS api_rate_limits (
+  scope TEXT NOT NULL,
+  subject_hash TEXT NOT NULL,
+  bucket INTEGER NOT NULL,
+  hits INTEGER NOT NULL DEFAULT 1,
+  expires_at INTEGER NOT NULL,
+  PRIMARY KEY(scope, subject_hash, bucket)
+);
+CREATE INDEX IF NOT EXISTS idx_api_rate_limits_expiry ON api_rate_limits(expires_at);
+
+CREATE TRIGGER IF NOT EXISTS trg_workshop_private_slot_insert
+BEFORE INSERT ON workshop_reservations
+WHEN NEW.booking_type = 'daily' AND NEW.status IN ('waiting_for_payment', 'confirmed')
+BEGIN
+  SELECT CASE WHEN EXISTS (
+    SELECT 1 FROM workshop_reservations WHERE slot_key = NEW.slot_key
+    AND status IN ('waiting_for_group', 'waiting_for_payment', 'confirmed')
+  ) THEN RAISE(ABORT, 'workshop_slot_taken') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_workshop_private_slot_update
+BEFORE UPDATE OF slot_key, status ON workshop_reservations
+WHEN NEW.booking_type = 'daily' AND NEW.join_policy = 'private'
+  AND NEW.status IN ('waiting_for_payment', 'confirmed')
+BEGIN
+  SELECT CASE WHEN EXISTS (
+    SELECT 1 FROM workshop_reservations WHERE slot_key = NEW.slot_key AND id <> OLD.id
+    AND status IN ('waiting_for_group', 'waiting_for_payment', 'confirmed')
+  ) THEN RAISE(ABORT, 'workshop_slot_taken') END;
+END;
+
+WITH seed(template_key, name, subject, body) AS (VALUES
+  ('workshop.inquiry_received', '맞춤 워크샵 문의 접수', '[Studio OALUM] 맞춤 워크샵 문의가 접수되었습니다', '{{customer_name}}님, 맞춤 워크샵 문의가 접수되었습니다. 희망 일정: {{schedule_label}}, 인원: {{attendee_count}}명. 담당자가 확인 후 연락드리겠습니다. 이 문의는 예약 또는 결제 확정이 아닙니다.'),
+  ('workshop.inquiry_received_admin', '맞춤 워크샵 신규 문의', '[Studio OALUM] 맞춤 워크샵 신규 문의', '{{customer_name}} / {{customer_email}} / {{customer_phone}}
+희망 일정: {{schedule_label}}
+인원: {{attendee_count}}명
+{{inquiry_details}}
+{{workshop_url}}')
+), channels(channel) AS (VALUES ('email'), ('sms'))
+INSERT OR IGNORE INTO notification_templates (
+  template_key, channel, area, name, trigger_label, active_subject, active_body,
+  draft_subject, draft_body, default_subject, default_body,
+  allowed_variables_json, required_variables_json, max_length, is_enabled, activated_at, created_at, updated_at
+)
+SELECT template_key, channel, 'workshop', name, '맞춤 문의 접수', subject, body, subject, body, subject, body,
+  '["customer_name","customer_email","customer_phone","schedule_label","attendee_count","inquiry_details","workshop_url"]',
+  '["customer_name","schedule_label"]', CASE WHEN channel = 'sms' THEN 2000 ELSE 0 END,
+  CASE WHEN channel = 'email' THEN 1 ELSE 0 END, '2026-09-24T00:00:00.000Z', '2026-09-24T00:00:00.000Z', '2026-09-24T00:00:00.000Z'
+FROM seed CROSS JOIN channels;
+WITH seed(template_key, area, name, body) AS (VALUES
+  ('shop.order_completed','shop','주문 결제 완료','{{customer_name}}님, 주문 {{order_number}}의 결제가 완료되었습니다. 결제 금액: {{final_amount}}. 주문 내역: {{order_url}}'),
+  ('shop.shipping_started','shop','상품 배송 시작','{{customer_name}}님, 주문 {{order_number}}을 발송했습니다. 운송장: {{tracking_number}}. 배송 조회: {{tracking_url}}'),
+  ('shop.delivered','shop','상품 배송 완료','{{customer_name}}님, 주문 {{order_number}}의 배송이 완료되었습니다. {{order_url}}'),
+  ('shop.order_cancelled','shop','주문 취소','{{customer_name}}님, 주문 {{order_number}}이 취소되었습니다. {{order_url}}'),
+  ('shop.refund_completed','shop','주문 환불 완료','{{customer_name}}님, 주문 {{order_number}}의 {{final_amount}} 환불 처리가 완료되었습니다. 결제 수단에 반영되기까지 카드사 영업일이 소요될 수 있습니다. {{order_url}}'),
+  ('shop.refund_completed_admin','shop','주문 환불 완료 · 관리자','주문 {{order_number}} / {{customer_name}} / {{final_amount}} 환불 완료. {{order_url}}'),
+  ('workshop.reservation_received','workshop','워크샵 신청 접수','{{customer_name}}님, {{workshop_name}} 신청을 접수했습니다. 예약번호: {{reservation_number}}. 인원: {{attendee_count}}명. 전체 일정: {{schedule_label}}. 결제 예정 금액: {{final_amount}}. 결제가 완료되어야 예약이 확정됩니다. {{workshop_url}}'),
+  ('workshop.payment_completed','workshop','워크샵 결제 및 예약 확정','{{customer_name}}님, {{workshop_name}} 결제와 예약이 확정되었습니다. 예약번호: {{reservation_number}}. 인원: {{attendee_count}}명. 전체 일정: {{schedule_label}}. 결제 금액: {{final_amount}}. {{workshop_url}}'),
+  ('workshop.payment_completed_admin','workshop','워크샵 결제 완료 · 관리자','{{workshop_name}} / {{reservation_number}} / {{customer_name}} / {{attendee_count}}명 / {{final_amount}} 결제 완료. 일정: {{schedule_label}}. {{workshop_url}}'),
+  ('workshop.cancelled','workshop','워크샵 예약 취소','{{customer_name}}님, {{workshop_name}} 예약 {{reservation_number}}이 취소되었습니다. {{workshop_url}}'),
+  ('workshop.refund_completed','workshop','워크샵 환불 완료','{{customer_name}}님, {{workshop_name}} 예약 {{reservation_number}}의 {{final_amount}} 환불 처리가 완료되었습니다. 카드사 영업일에 따라 반영 시간이 다를 수 있습니다. {{workshop_url}}'),
+  ('workshop.refund_completed_admin','workshop','워크샵 환불 완료 · 관리자','{{workshop_name}} / {{reservation_number}} / {{customer_name}} / {{final_amount}} 환불 완료. {{workshop_url}}'),
+  ('workshop.payment_expired','workshop','워크샵 결제 기한 만료','{{customer_name}}님, {{workshop_name}} 신청 {{reservation_number}}의 결제 기한이 지나 예약이 해제되었습니다. {{workshop_url}}'),
+  ('workshop.reminder','workshop','워크샵 일정 안내','{{customer_name}}님, {{workshop_name}} 예정 일정을 안내드립니다. {{schedule_label}}. 장소: {{workshop_location}}. 인원: {{attendee_count}}명. {{workshop_url}}'),
+  ('workshop.minimum_not_met_admin','workshop','워크샵 최소 인원 확인 · 관리자','{{workshop_name}}의 확정 인원이 최소 인원에 미달했습니다. {{schedule_label}}. 확정 {{attendee_count}}명 / 최소 {{minimum_count}}명. 진행 여부와 고객 안내를 확인해주세요. {{workshop_url}}'),
+  ('repair.payment_confirmed','repair','수선 결제 완료','{{customer_name}}님, 수선 {{repair_number}}의 {{final_amount}} 결제가 완료되었습니다. 발송을 준비합니다. {{repair_ticket_url}}'),
+  ('repair.payment_confirmed_admin','repair','수선 결제 완료 · 관리자','수선 {{repair_number}} / {{customer_name}} / {{final_amount}} 결제 완료. 발송 준비를 확인해주세요. {{repair_admin_url}}'),
+  ('repair.refund_completed','repair','수선 환불 완료','{{customer_name}}님, 수선 {{repair_number}}의 {{final_amount}} 환불 처리가 완료되었습니다. {{repair_ticket_url}}'),
+  ('repair.refund_completed_admin','repair','수선 환불 완료 · 관리자','수선 {{repair_number}} / {{customer_name}} / {{final_amount}} 환불 완료. {{repair_admin_url}}')
+), channels(channel) AS (VALUES ('email'), ('sms'))
+INSERT INTO notification_templates (
+  template_key, channel, area, name, trigger_label, active_subject, active_body, draft_subject, draft_body,
+  default_subject, default_body, allowed_variables_json, required_variables_json, max_length, is_enabled, activated_at, created_at, updated_at
+)
+SELECT template_key, channel, area, name, name, '[Studio OALUM] ' || name, body, '[Studio OALUM] ' || name, body, '[Studio OALUM] ' || name, body,
+  '["customer_name","customer_email","customer_phone","order_number","order_url","final_amount","tracking_number","tracking_url","workshop_name","reservation_number","attendee_count","schedule_label","workshop_url","workshop_location","minimum_count","repair_number","repair_ticket_url","repair_admin_url"]',
+  '[]', CASE WHEN channel = 'sms' THEN 2000 ELSE 0 END, CASE WHEN channel = 'email' THEN 1 ELSE 0 END,
+  '2026-09-24T00:00:00.000Z', '2026-09-24T00:00:00.000Z', '2026-09-24T00:00:00.000Z'
+FROM seed CROSS JOIN channels WHERE true
+ON CONFLICT(template_key, channel) DO UPDATE SET
+  active_subject = CASE WHEN notification_templates.active_subject = notification_templates.default_subject THEN excluded.active_subject ELSE notification_templates.active_subject END,
+  active_body = CASE WHEN notification_templates.active_body = notification_templates.default_body THEN excluded.active_body ELSE notification_templates.active_body END,
+  default_subject = excluded.default_subject, default_body = excluded.default_body,
+  allowed_variables_json = excluded.allowed_variables_json,
+  is_enabled = CASE WHEN excluded.channel = 'email' THEN 1 ELSE 0 END,
+  updated_at = excluded.updated_at;
+
+UPDATE notification_templates SET is_enabled = 0 WHERE template_key IN ('workshop.reservation_completed','workshop.schedule_changed');
+CREATE TRIGGER IF NOT EXISTS trg_workshop_payment_lock
+BEFORE UPDATE OF status, amount_due ON workshop_reservations
+WHEN EXISTS (SELECT 1 FROM workshop_payment_orders WHERE reservation_id = OLD.id AND status = 'processing')
+  AND (NEW.status IS NOT OLD.status OR NEW.amount_due IS NOT OLD.amount_due)
+BEGIN
+  SELECT RAISE(ABORT, 'workshop_payment_in_progress');
+END;
+
+CREATE INDEX IF NOT EXISTS idx_workshop_reservation_expiry ON workshop_reservations(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_workshop_reservation_schedule ON workshop_reservations(status, slot_date);

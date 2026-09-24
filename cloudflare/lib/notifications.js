@@ -29,6 +29,10 @@ export const NOTIFICATION_VARIABLES = Object.freeze({
   reservation_number: { label: "워크숍 예약번호", sample: "WKS-WRS_SAMPLE" },
   workshop_url: { label: "워크숍 링크", sample: "https://studiooalum.com/workshops.html" },
   schedule_label: { label: "일정", sample: "2026. 09. 01. 14:00" },
+  attendee_count: { label: "참여 인원", sample: "4" },
+  inquiry_details: { label: "맞춤 문의 내용", sample: "장소: 오알룸 작업실 / 기초 바느질" },
+  workshop_location: { label: "워크샵 장소", sample: "오알룸 작업실" },
+  minimum_count: { label: "최소 인원", sample: "4" },
 });
 
 function cleanText(value, maxLength = 4000) {
@@ -378,9 +382,7 @@ export async function activateNotificationDraft(env, input, actorId = "") {
   const database = requireDb(env);
   const template = await readNotificationTemplate(env, input.templateKey, input.channel);
   if (!template) throw Object.assign(new Error("알림 템플릿을 찾을 수 없습니다."), { status: 404 });
-  if (["shop", "workshop"].includes(template.area) && !template.template_key.endsWith("_admin")) {
-    throw Object.assign(new Error("Shop과 Workshop은 기존 발송 경로를 유지하는 전환 준비 템플릿입니다. 현재는 초안과 테스트만 사용할 수 있습니다."), { status: 409 });
-  }
+  assertNotificationActivation(env, template);
   const validation = validateNotificationTemplate(template, { channel: template.channel, subject: template.draft_subject, body: template.draft_body });
   if (!validation.valid) throw Object.assign(new Error(validation.errors.join("\n")), { status: 400, details: { errors: validation.errors } });
   const now = nowIso();
@@ -416,9 +418,7 @@ export async function setNotificationTemplateEnabled(env, input, actorId = "") {
   const database = requireDb(env);
   const template = await readNotificationTemplate(env, input.templateKey, input.channel);
   if (!template) throw Object.assign(new Error("알림 템플릿을 찾을 수 없습니다."), { status: 404 });
-  if (input.enabled && ["shop", "workshop"].includes(template.area) && !template.template_key.endsWith("_admin")) {
-    throw Object.assign(new Error("Shop과 Workshop은 기존 발송 경로를 유지하는 전환 준비 템플릿입니다. 활성화할 수 없습니다."), { status: 409 });
-  }
+  if (input.enabled) assertNotificationActivation(env, template);
   const now = nowIso();
   await database.batch([
     database.prepare(`
@@ -449,6 +449,7 @@ export async function previewNotificationTemplate(env, input) {
 export async function prepareNotification(env, input) {
   const template = await readNotificationTemplate(env, input.templateKey, input.channel);
   if (!template || !template.is_enabled) return null;
+  if (template.channel === "sms" && !isSmsTemplateAllowed(env, template.template_key)) return null;
   const rendered = renderNotification(template, input.payload || {}, "active");
   const now = nowIso();
   return {
@@ -505,6 +506,53 @@ export async function enqueueNotification(env, input) {
   if (!notification) return null;
   const result = await createNotificationOutboxStatement(requireDb(env), notification, { ignoreDuplicate: true }).run();
   return readChanges(result) === 1 ? notification : null;
+}
+
+function isSmsTemplateAllowed(env, key) {
+  return ["repair.application_submitted", "repair.received", "repair.repair_completed_quote_ready", "repair.payment_confirmed_shipping_started"].includes(key)
+    || String(env.ADDITIONAL_SMS_ENABLED || "false") === "true";
+}
+
+function assertNotificationActivation(env, template) {
+  if (["workshop.reservation_completed", "workshop.schedule_changed"].includes(template.template_key)) {
+    throw Object.assign(new Error("현재 사용하지 않는 이전 워크샵 알림입니다."), { status: 409 });
+  }
+  if (template.channel === "sms" && !isSmsTemplateAllowed(env, template.template_key)) {
+    throw Object.assign(new Error("추가 문자 알림은 비활성화되어 있습니다. 운영 설정을 먼저 확인해주세요."), { status: 409 });
+  }
+}
+
+export async function enqueueShopNotification(env, order, event, { admin = false } = {}) {
+  if (!order?.orderId) return null;
+  return enqueueNotification(env, {
+    eventKey: `shop:${order.orderId}:${event}:${admin ? "admin" : "customer"}`,
+    entityType: "order", entityId: order.orderId, channel: "email",
+    templateKey: `shop.${event}${admin ? "_admin" : ""}`,
+    recipient: admin ? resolveNotificationAdminRecipient(env) : order.customer?.email,
+    payload: {
+      customer_name: order.customer?.name || "", order_number: order.orderId, final_amount: formatKrw(order.totalAmount),
+      order_url: getSiteUrl(env, admin ? "/admin" : "/account"),
+      tracking_number: order.shipment?.trackingNumber || "", tracking_url: order.shipment?.trackingUrl || "",
+    },
+  });
+}
+
+export async function enqueueWorkshopNotification(env, reservation, event, { admin = false, scheduleLabel = "", eventSuffix = "" } = {}) {
+  if (!reservation?.reservationId) return null;
+  const slots = reservation.slotSnapshot?.slots;
+  const schedule = scheduleLabel || (Array.isArray(slots) ? slots.map((slot) => `${slot.date} ${slot.startTime}~${slot.endTime || ""}`).join(" / ")
+    : `${reservation.slotDate || ""} ${reservation.slotStartTime || ""}~${reservation.slotEndTime || ""}`);
+  return enqueueNotification(env, {
+    eventKey: `workshop:${reservation.reservationId}:${reservation.checkoutId || "free"}:${event}:${admin ? "admin" : "customer"}:${eventSuffix}`,
+    entityType: "workshop", entityId: reservation.reservationId, channel: "email",
+    templateKey: `workshop.${event}${admin ? "_admin" : ""}`, recipient: admin ? resolveNotificationAdminRecipient(env) : reservation.email,
+    payload: { customer_name: reservation.fullName, customer_email: reservation.email, customer_phone: reservation.phone,
+      reservation_number: reservation.reservationNumber, workshop_name: reservation.workshopTitle, schedule_label: schedule,
+      attendee_count: reservation.attendeeCount, final_amount: formatKrw(reservation.finalAmount ?? reservation.amountDue),
+      workshop_location: reservation.workshopLocation,
+      workshop_url: getSiteUrl(env, admin ? "/workshop-admin" : event === "reservation_received" && reservation.checkoutId
+        ? `/workshop-payment?checkoutId=${encodeURIComponent(reservation.checkoutId)}` : "/account") },
+  });
 }
 
 export async function enqueueOrderCompletedAdminNotification(env, order) {

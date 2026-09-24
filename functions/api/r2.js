@@ -5,6 +5,8 @@ import { isPrivateR2Key } from "../../cloudflare/lib/r2.js";
 function buildImageHeaders(object) {
   const headers = new Headers();
   headers.set("Content-Type", object.httpMetadata?.contentType || "application/octet-stream");
+  headers.set("Content-Security-Policy", "default-src 'none'; sandbox");
+  headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Cache-Control", object.httpMetadata?.cacheControl || "public, max-age=31536000, immutable");
   if (object.httpEtag) {
     headers.set("ETag", object.httpEtag);
@@ -31,7 +33,7 @@ function assertPublicKey(key) {
   if (!key) {
     throw Object.assign(new Error("이미지 key가 필요합니다."), { status: 400 });
   }
-  if (isPrivateR2Key(key)) {
+  if (isPrivateR2Key(key) || !/^(workshops|newsletters|repair-gallery)\//.test(key) || key.length > 1000) {
     throw Object.assign(new Error("이미지를 찾을 수 없습니다."), { status: 404 });
   }
 }

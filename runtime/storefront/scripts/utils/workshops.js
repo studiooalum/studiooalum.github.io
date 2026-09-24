@@ -1,5 +1,4 @@
 const WEEKDAY_LABELS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-const DEFAULT_DAILY_PRICES = { 1: 120000, 2: 200000, 3: 270000, 4: 300000 };
 
 export const WORKSHOP_TYPES = Object.freeze({
   DAILY: "daily",
@@ -22,12 +21,12 @@ function padNumber(value) {
 }
 
 function toIsoDate(date) {
-  return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`;
+  return `${date.getUTCFullYear()}-${padNumber(date.getUTCMonth() + 1)}-${padNumber(date.getUTCDate())}`;
 }
 
 function addDays(date, amount) {
   const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + amount);
+  nextDate.setUTCDate(nextDate.getUTCDate() + amount);
   return nextDate;
 }
 
@@ -44,11 +43,11 @@ function createSlotKey(slug, date, startTime) {
 
 function normalizeTime(value, fallback) {
   const normalized = String(value || "").trim();
-  return /^\d{2}:\d{2}$/.test(normalized) ? normalized : fallback;
+  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalized) ? normalized : fallback;
 }
 
 function addMonths(date, amount) {
-  return new Date(date.getFullYear(), date.getMonth() + amount, date.getDate());
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1));
 }
 
 function normalizeAmount(value, fallback = 0) {
@@ -96,11 +95,6 @@ export function getWorkshopBookingConfig(workshop = {}) {
       ? raw.attendeePrices
       : {};
   const attendeePrices = {};
-
-  for (const count of [1, 2, 3, 4]) {
-    attendeePrices[count] = normalizeAmount(rawPrices[count], DEFAULT_DAILY_PRICES[count]);
-  }
-
   const maxParticipants = normalizeParticipantLimit(
     raw.maxParticipants ?? raw.dailyCapacity ?? workshop?.maxCapacity,
     4,
@@ -110,19 +104,30 @@ export function getWorkshopBookingConfig(workshop = {}) {
     maxParticipants,
     normalizeParticipantLimit(raw.minParticipants, 1, { min: 1, max: maxParticipants }),
   );
+  const fixedPrice = normalizeAmount(raw.fixedPrice, normalizeAmount(workshop?.price, 0));
+  for (let count = 1; count <= maxParticipants; count += 1) {
+    attendeePrices[count] = normalizeAmount(rawPrices[count], fixedPrice * count);
+  }
+  const dailyStartTime = normalizeTime(raw.dailyStartTime, "10:00");
+  const dailyEndTime = normalizeTime(raw.dailyEndTime, "13:00");
+  const dailyTimeSlots = (Array.isArray(raw.dailyTimeSlots) ? raw.dailyTimeSlots : [])
+    .map((slot) => ({ startTime: normalizeTime(slot?.startTime, ""), endTime: normalizeTime(slot?.endTime, "") }))
+    .filter((slot, index, slots) => slot.startTime && slot.endTime > slot.startTime && slots.findIndex((other) => other.startTime === slot.startTime) === index)
+    .sort((left, right) => left.startTime.localeCompare(right.startTime));
 
   return {
     workshopType,
     type: workshopType,
     mode,
     hasExplicitConfig,
-    dailyStartTime: normalizeTime(raw.dailyStartTime, "10:00"),
-    dailyEndTime: normalizeTime(raw.dailyEndTime, "13:00"),
+    dailyStartTime,
+    dailyEndTime,
+    dailyTimeSlots: dailyTimeSlots.length ? dailyTimeSlots : [{ startTime: dailyStartTime, endTime: dailyEndTime }],
     dailyCapacity: Math.max(1, Math.min(100, normalizeParticipantLimit(raw.dailyCapacity, maxParticipants))),
     maxBookingMonths: Math.max(1, Math.min(6, Number(raw.maxBookingMonths) || 6)),
     attendeePrices,
     priceTiers: attendeePrices,
-    fixedPrice: normalizeAmount(raw.fixedPrice, normalizeAmount(workshop?.price, 0)),
+    fixedPrice,
     minParticipants,
     maxParticipants,
     paymentDeadlineHours: normalizeParticipantLimit(raw.paymentDeadlineHours, 48, { min: 1, max: 720 }),
@@ -132,23 +137,26 @@ export function getWorkshopBookingConfig(workshop = {}) {
 function createDailyClassSlots(workshop) {
   const slug = getWorkshopSlug(workshop);
   const config = getWorkshopBookingConfig(workshop);
-  const startDate = addDays(new Date(), 1);
-  const limitDate = addMonths(startDate, config.maxBookingMonths - 1);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const startDate = addDays(new Date(`${today}T00:00:00Z`), 1);
+  const limitDate = addMonths(startDate, config.maxBookingMonths);
   const slots = [];
 
-  for (let date = startDate; date <= limitDate; date = addDays(date, 1)) {
+  for (let date = startDate; date < limitDate; date = addDays(date, 1)) {
     const isoDate = toIsoDate(date);
-    slots.push({
-      _key: createSlotKey(slug, isoDate, config.dailyStartTime),
-      label: `${isoDate} ${config.dailyStartTime}`,
-      date: isoDate,
-      startTime: config.dailyStartTime,
-      endTime: config.dailyEndTime,
-      capacity: config.dailyCapacity,
-      isBlocked: false,
-      status: "open",
-      reason: "",
-    });
+    for (const time of config.dailyTimeSlots) {
+      slots.push({
+        _key: createSlotKey(slug, isoDate, time.startTime),
+        label: `${isoDate} ${time.startTime}`,
+        date: isoDate,
+        startTime: time.startTime,
+        endTime: time.endTime,
+        capacity: config.dailyCapacity,
+        isBlocked: false,
+        status: "open",
+        reason: "",
+      });
+    }
   }
 
   return slots;
@@ -293,7 +301,7 @@ export function normalizeWorkshopSlot(slot, workshop) {
   if (!date || !startTime) return null;
 
   return {
-    key: String(slot?._key || createSlotKey(slug, date, startTime)).trim(),
+    key: String(slot?._key || slot?.key || createSlotKey(slug, date, startTime)).trim(),
     label: String(slot?.label || `${date} ${startTime}`).trim(),
     date,
     startTime,

@@ -15,7 +15,9 @@ import {
   upsertWorkshopContent as upsertWorkshopContentRecord,
   writePublicWorkshopSnapshot,
 } from "./workshop-content.js";
-import { cancelTossPayment, confirmTossPayment, getTossConfig } from "./toss.js";
+import { cancelTossPayment, confirmTossPayment, getTossConfig, readTossPayment } from "./toss.js";
+import { enqueueWorkshopNotification, enqueueWorkshopReservationAdminNotification, enqueueNotification, resolveNotificationAdminRecipient } from "./notifications.js";
+import { readCustomWorkshopContent, readWorkshopInquiries } from "./workshop-inquiries.js";
 
 const WORKSHOP_TIME_ZONE = "Asia/Seoul";
 const GLOBAL_WORKSHOP_BLOCK_SLUG = "*";
@@ -85,7 +87,7 @@ function normalizeDateText(value) {
 }
 
 function createId(prefix) {
-  return `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`.toUpperCase();
+  return `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().replace(/-/g, "")}`.toUpperCase();
 }
 
 function encodeJson(value, fallback = {}) {
@@ -124,7 +126,7 @@ function normalizePriceTiers(value) {
   const source = value && typeof value === "object" ? value : {};
   const tiers = {};
 
-  for (const count of [1, 2, 3, 4]) {
+  for (let count = 1; count <= 100; count += 1) {
     const amount = Number(source[count]);
     if (Number.isFinite(amount) && amount >= 0) {
       tiers[count] = Math.round(amount);
@@ -235,7 +237,7 @@ async function readDailyPrivateReservationDates(database, workshopSlug, dates = 
     const placeholders = batch.map(() => "?").join(", ");
     const result = await database
       .prepare(`
-        SELECT DISTINCT slot_date
+        SELECT DISTINCT slot_key
         FROM workshop_reservations
         WHERE workshop_slug = ?
           AND join_policy = 'private'
@@ -246,8 +248,7 @@ async function readDailyPrivateReservationDates(database, workshopSlug, dates = 
       .all();
 
     for (const row of result?.results || []) {
-      const date = normalizeDateText(row.slot_date);
-      if (date) privateDates.add(date);
+      if (row.slot_key) privateDates.add(row.slot_key);
     }
   }
 
@@ -411,8 +412,7 @@ function enrichWorkshopSlots(
   const todayIso = getTodayIsoInTimeZone();
   const bookingConfig = workshop.bookingConfig || {};
   const isDailyClass = bookingConfig.mode === "daily";
-  const isMultiSession = bookingConfig.workshopType === WORKSHOP_TYPES.MULTI_SESSION
-    || bookingConfig.type === WORKSHOP_TYPES.MULTI_SESSION;
+  const isMultiSession = !isDailyClass && workshop.scheduleSlots.length > 1;
   const seriesKey = isMultiSession ? `${workshop.slug}:series` : "";
   const sharedCapacity = isMultiSession
     ? Math.max(1, Number(bookingConfig.maxParticipants) || Number(workshop.maxCapacity) || 1)
@@ -427,7 +427,7 @@ function enrichWorkshopSlots(
       const pastOrToday = String(slot.date || "") <= todayIso;
       const manualBlock = scheduleBlocks.get(String(slot.date || "")) || null;
       const scheduledBlockReason = scheduledDateBlocks.get(String(slot.date || "")) || "";
-      const hasPrivateDailyReservation = isDailyClass && privateDailyDates.has(String(slot.date || ""));
+      const hasPrivateDailyReservation = isDailyClass && (privateDailyDates.has(slot.key) || reservedCount > 0);
       const isBlocked = slot.status === "blocked" || Boolean(manualBlock) || Boolean(scheduledBlockReason) || remainingCapacity <= 0 || pastOrToday || hasPrivateDailyReservation;
 
       return {
@@ -444,7 +444,7 @@ function enrichWorkshopSlots(
           : pastOrToday
             ? "당일 및 지난 날짜는 온라인 예약이 마감되었습니다."
           : hasPrivateDailyReservation
-            ? "이미 private 신청이 있는 일일 클래스 날짜입니다."
+            ? "이미 예약된 시간입니다."
           : remainingCapacity <= 0
             ? "예약 마감"
             : "",
@@ -474,8 +474,7 @@ async function enrichWorkshopAvailability(env, workshop) {
   }
 
   const isDailyClass = workshop.bookingConfig?.mode === "daily";
-  const isMultiSession = workshop.bookingConfig?.workshopType === WORKSHOP_TYPES.MULTI_SESSION
-    || workshop.bookingConfig?.type === WORKSHOP_TYPES.MULTI_SESSION;
+  const isMultiSession = !isDailyClass && workshop.scheduleSlots.length > 1;
   const reservationSlotKeys = workshop.scheduleSlots.map((slot) => slot.key);
   if (isMultiSession) {
     reservationSlotKeys.push(`${workshop.slug}:series`);
@@ -667,11 +666,13 @@ export async function readWorkshopAdminSnapshot(env, {
   limit = 40,
 } = {}) {
   const database = requireDb(env);
-  const [reservations, blocks, catalog, groups] = await Promise.all([
+  const [reservations, blocks, catalog, groups, customWorkshop, inquiries] = await Promise.all([
     readWorkshopReservationsForAdmin(database, { query, status, limit }),
     readWorkshopDateBlocks(database),
     readWorkshopAdminCatalog(env),
     readWorkshopGroupsForAdmin(database),
+    readCustomWorkshopContent(env),
+    readWorkshopInquiries(env),
   ]);
 
   return {
@@ -680,6 +681,8 @@ export async function readWorkshopAdminSnapshot(env, {
     workshops: catalog.workshopOptions,
     contentItems: catalog.contentItems,
     groups,
+    customWorkshop,
+    inquiries,
   };
 }
 
@@ -706,6 +709,8 @@ export async function updateWorkshopReservationStatus(env, { reservationId, stat
 
   const now = nowIso();
   if (normalizedStatus === "cancelled") {
+    const processing = await database.prepare("SELECT id FROM workshop_payment_orders WHERE reservation_id = ? AND status = 'processing' LIMIT 1").bind(row.id).first();
+    if (processing) throw Object.assign(new Error("결제 승인 중에는 예약을 취소할 수 없습니다."), { status: 409 });
     if (row.payment_status === "paid") {
       throw Object.assign(new Error("결제 완료 신청은 환불 처리 후 취소해주세요."), {
         status: 409,
@@ -767,6 +772,7 @@ export async function updateWorkshopReservationStatus(env, { reservationId, stat
       .bind(now, normalizedId)
       .run();
   } else {
+    if (row.payment_status === "refunded") throw Object.assign(new Error("환불된 예약은 새로 신청해주세요."), { status: 409 });
     const requiresPayment = Math.max(0, Number(row.amount_due) || 0) > 0;
     await database
       .prepare(`
@@ -792,6 +798,7 @@ export async function updateWorkshopReservationStatus(env, { reservationId, stat
     .bind(normalizedId)
     .first();
 
+  if (normalizedStatus === "cancelled") await enqueueWorkshopNotification(env, formatReservation(updated), "cancelled");
   return formatReservation(updated);
 }
 
@@ -1258,6 +1265,9 @@ async function insertOrReopenWorkshopReservation(database, values) {
   try {
     return await writeWorkshopReservation(database, values);
   } catch (error) {
+    if (String(error?.message || error).includes("workshop_slot_taken")) {
+      throw Object.assign(new Error("이미 예약된 시간입니다. 다른 시간을 선택해주세요."), { status: 409 });
+    }
     if (String(error?.message || error).includes("workshop_capacity_exceeded")) {
       throw Object.assign(new Error("남은 정원보다 많은 인원을 신청할 수 없습니다."), { status: 409 });
     }
@@ -1292,36 +1302,6 @@ async function assertOpenGroupDateAvailable(database, workshop, requestedDate) {
   }
 
   return date;
-}
-
-async function assertDailyJoinPolicyAvailable(database, workshop, requestedDate, joinPolicy, attendeeCount) {
-  const result = await database
-    .prepare(`
-      SELECT join_policy, attendee_count
-      FROM workshop_reservations
-      WHERE workshop_slug = ?
-        AND slot_date = ?
-        AND status IN ('waiting_for_group', 'waiting_for_payment', 'confirmed')
-    `)
-    .bind(workshop.slug, requestedDate)
-    .all();
-  const reservations = result?.results || [];
-
-  if (reservations.length === 0) return;
-
-  const hasPrivateReservation = reservations.some((reservation) => normalizeJoinPolicy(reservation.join_policy) === "private");
-  if (joinPolicy === "private" || hasPrivateReservation) {
-    throw Object.assign(new Error("private 신청과 추가 모집 신청은 같은 날짜에 함께 받을 수 없습니다."), { status: 409 });
-  }
-
-  const currentAttendees = reservations.reduce(
-    (total, reservation) => total + Math.max(0, Number(reservation.attendee_count) || 0),
-    0,
-  );
-  const capacity = Math.max(1, Math.min(4, Number(workshop.bookingConfig?.dailyCapacity) || 4));
-  if (currentAttendees + attendeeCount > capacity) {
-    throw Object.assign(new Error("남은 정원보다 많은 인원을 신청할 수 없습니다."), { status: 409 });
-  }
 }
 
 function didUpdateRow(result) {
@@ -1436,7 +1416,7 @@ async function readActiveParticipantCount(database, slotKey) {
 function buildMultiSessionSlot(workshop) {
   const slots = workshop.scheduleSlots || [];
   const slot = slots[0];
-  if (!slot || slots.length < 2) {
+  if (!slot) {
     throw Object.assign(new Error("결제할 전체 회차 일정이 아직 등록되지 않았습니다."), { status: 409 });
   }
   const unavailableSlot = slots.find((item) => item.status === "blocked");
@@ -1446,8 +1426,8 @@ function buildMultiSessionSlot(workshop) {
 
   return {
     ...slot,
-    key: `${workshop.slug}:series`,
-    label: "전체 회차",
+    key: slots.length > 1 ? `${workshop.slug}:series` : slot.key,
+    label: `전체 ${slots.length}회차`,
     snapshot: {
       type: "multiSession",
       capacity: Math.max(1, Number(workshop.bookingConfig?.maxParticipants) || Number(workshop.maxCapacity) || 1),
@@ -1504,133 +1484,23 @@ export async function createDailyWorkshopReservation(env, input, identity = {}) 
   const database = requireDb(env);
   const workshop = await readWorkshopAvailability(env, input.slug);
   const bookingConfig = getWorkshopBookingConfig(workshop);
-  const maximum = Math.max(1, Math.min(4, Number(bookingConfig.dailyCapacity || bookingConfig.maxParticipants) || 4));
+  const maximum = Math.max(1, Math.min(100, Number(bookingConfig.dailyCapacity || bookingConfig.maxParticipants) || 4));
   const attendeeCount = getAttendeeCount(input.attendeeCount, maximum);
   const applicant = getApplicant(input, identity);
   const requestedDate = await assertOpenGroupDateAvailable(database, workshop, input.requestedDate);
-  const joinPolicy = input.allowAdditionalAttendees === true
-    ? "open"
-    : normalizeJoinPolicy(input.joinPolicy || input.groupMode);
-  const slot = (workshop.scheduleSlots || []).find((item) => item.date === requestedDate && item.status !== "blocked");
+  const slot = (workshop.scheduleSlots || []).find((item) => item.date === requestedDate && item.key === input.slotKey && item.status !== "blocked");
   if (!slot) {
-    throw Object.assign(new Error("선택한 날짜에 예약 가능한 일일 워크샵이 없습니다."), { status: 409 });
+    throw Object.assign(new Error("선택한 날짜와 시간에 예약 가능한 원데이클래스가 없습니다."), { status: 409 });
   }
 
-  await assertDailyJoinPolicyAvailable(database, workshop, requestedDate, joinPolicy, attendeeCount);
-
-  if (joinPolicy === "private") {
-    const amountDue = getTierAmount(bookingConfig, attendeeCount);
-    return createPaymentRequiredReservation(env, database, workshop, {
-      slot,
-      attendeeCount,
-      applicant,
-      bookingType: WORKSHOP_TYPES.DAILY,
-      amountDue,
-      joinPolicy,
-      priceSnapshot: {
-        attendeePrices: normalizePriceTiers(bookingConfig.attendeePrices),
-        requestedDate,
-      },
-    });
-  }
-
-  const groupResult = await findOrCreateWorkshopGroup(database, {
-    workshopSlug: workshop.slug,
-    requestedDate,
-    groupMode: "open",
-    attendeeCount,
-    maxParticipants: maximum,
-    priceTiers: bookingConfig.attendeePrices,
-  });
-  const group = groupResult.group;
-  let reservation = null;
-
-  try {
-    reservation = await insertOrReopenWorkshopReservation(database, buildReservationValues({
-      workshop,
-      slot: {
-        ...slot,
-        label: `${requestedDate} 그룹 모집`,
-      },
-      applicant,
-      attendeeCount,
-      status: "waiting_for_group",
-      bookingType: WORKSHOP_TYPES.DAILY,
-      joinPolicy,
-      paymentStatus: "pending_final_price",
-      requestedAmount: 0,
-      finalAmount: null,
-      pricePending: true,
-      groupId: group.id,
-      priceSnapshot: {
-        joinPolicy,
-        requestedDate,
-        attendeePrices: normalizePriceTiers(bookingConfig.attendeePrices),
-      },
-    }));
-
-    if (Number(group.current_participants) >= maximum) {
-      const finalized = await finalizeWorkshopGroup(env, { groupId: group.id });
-      const finalizedReservation = finalized.reservations.find((item) => item.reservationId === reservation.id) || formatReservation(reservation);
-      return {
-        reservation: finalizedReservation,
-        workshop: await readWorkshopAvailability(env, workshop.slug),
-        group: finalized.group,
-        requiresPayment: Boolean(finalizedReservation.checkoutId),
-        checkoutId: finalizedReservation.checkoutId || null,
-      };
-    }
-
-    return {
-      reservation: formatReservation(reservation),
-      workshop: await readWorkshopAvailability(env, workshop.slug),
-      group: {
-        groupId: group.id,
-        requestedDate,
-        joinPolicy,
-        currentParticipants: Number(group.current_participants) || attendeeCount,
-        maxParticipants: Number(group.max_participants) || maximum,
-        status: group.status || "open",
-      },
-      requiresPayment: false,
-    };
-  } catch (error) {
-    if (reservation?.id) {
-      await database.prepare(`DELETE FROM workshop_reservations WHERE id = ?`).bind(reservation.id).run();
-    }
-    await releaseWorkshopGroupParticipants(database, group.id, attendeeCount, groupResult.created);
-    throw error;
-  }
-}
-
-export async function createOpenGroupApplication(env, input, identity = {}) {
-  return createDailyWorkshopReservation(env, input, identity);
-}
-
-export async function createFixedWorkshopCheckout(env, input, identity = {}) {
-  const database = requireDb(env);
-  const workshop = await readWorkshopAvailability(env, input.slug);
-  const bookingConfig = getWorkshopBookingConfig(workshop);
-  const slotKey = cleanText(input.slotKey, 160);
-  const slot = slotKey
-    ? (workshop.scheduleSlots || []).find((item) => item.key === slotKey)
-    : (workshop.scheduleSlots || []).find((item) => item.status !== "blocked");
-
-  if (!slot) {
-    throw Object.assign(new Error("선택한 예약 회차를 찾을 수 없습니다."), { status: 404 });
-  }
-  if (slot.status === "blocked") {
-    throw Object.assign(new Error(slot.blockedReason || "선택한 일정은 예약할 수 없습니다."), { status: 409 });
-  }
-
-  const maximum = Math.max(1, Math.min(Number(slot.remainingCapacity || slot.capacity) || 1, bookingConfig.maxParticipants || 100));
-  const attendeeCount = getAttendeeCount(input.attendeeCount, maximum);
   return createPaymentRequiredReservation(env, database, workshop, {
     slot,
     attendeeCount,
-    applicant: getApplicant(input, identity),
-    bookingType: WORKSHOP_TYPES.EVENT,
-    amountDue: getFixedAmount(workshop, bookingConfig),
+    applicant,
+    bookingType: WORKSHOP_TYPES.DAILY,
+    amountDue: getTierAmount(bookingConfig, attendeeCount),
+    joinPolicy: "private",
+    priceSnapshot: { attendeePrices: normalizePriceTiers(bookingConfig.attendeePrices), requestedDate },
   });
 }
 
@@ -1652,7 +1522,8 @@ export async function createMultiSessionCheckout(env, input, identity = {}) {
     attendeeCount,
     applicant: getApplicant(input, identity),
     bookingType: WORKSHOP_TYPES.MULTI_SESSION,
-    amountDue: getFixedAmount(workshop, bookingConfig),
+    amountDue: getFixedAmount(workshop, bookingConfig) * attendeeCount,
+    priceSnapshot: { unitPrice: getFixedAmount(workshop, bookingConfig), sessionCount: workshop.scheduleSlots.length },
   });
 }
 
@@ -1663,10 +1534,7 @@ export async function createWorkshopReservation(env, input, identity = {}) {
   if (bookingType === WORKSHOP_TYPES.DAILY) {
     return createDailyWorkshopReservation(env, input, identity);
   }
-  if (bookingType === WORKSHOP_TYPES.MULTI_SESSION) {
-    return createMultiSessionCheckout(env, input, identity);
-  }
-  return createFixedWorkshopCheckout(env, input, identity);
+  return createMultiSessionCheckout(env, input, identity);
 }
 
 function formatWorkshopPaymentOrder(row) {
@@ -1870,6 +1738,7 @@ export async function cancelPendingWorkshopPayment(env, { checkoutId, orderId = 
   const paymentOrder = reservation.payment_order_id
     ? await database.prepare(`SELECT * FROM workshop_payment_orders WHERE id = ? LIMIT 1`).bind(reservation.payment_order_id).first()
     : null;
+  if (paymentOrder?.status === "processing") throw Object.assign(new Error("결제 확인 중인 예약은 취소할 수 없습니다."), { status: 409 });
   if (normalizedOrderId && paymentOrder?.order_id !== normalizedOrderId) {
     throw Object.assign(new Error("결제 주문 정보를 확인할 수 없습니다."), { status: 409 });
   }
@@ -2211,13 +2080,14 @@ export async function createWorkshopCheckout(env, { checkoutId }) {
       FROM workshop_payment_orders
       WHERE id = ?
         AND reservation_id = ?
-        AND status = 'pending'
+        AND status IN ('pending', 'processing')
       LIMIT 1
     `)
     .bind(reservation.payment_order_id || "", reservation.id)
     .first();
 
   if (existingOrder && !isExpired(existingOrder.checkout_expires_at)) {
+    if (existingOrder.status === "processing") throw Object.assign(new Error("결제 확인 중입니다. 잠시 후 다시 확인해주세요."), { status: 409 });
     return buildCheckoutResponse(reservation, existingOrder, workshop, tossConfig.clientKey);
   }
   if (existingOrder) {
@@ -2226,12 +2096,12 @@ export async function createWorkshopCheckout(env, { checkoutId }) {
   }
 
   const now = nowIso();
-  const paymentOrderId = createId("WPO");
-  const orderId = createId("WSP");
+  const paymentOrderId = `WPO_${normalizedCheckoutId}`;
+  const orderId = `WSP_${normalizedCheckoutId}`;
   const amount = Math.max(0, Math.round(Number(reservation.amount_due) || 0));
   await database
     .prepare(`
-      INSERT INTO workshop_payment_orders (
+      INSERT OR IGNORE INTO workshop_payment_orders (
         id, reservation_id, workshop_slug, order_id, amount, currency,
         status, provider, checkout_expires_at, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, 'KRW', 'pending', 'toss', ?, ?, ?)
@@ -2272,16 +2142,17 @@ export async function confirmWorkshopPayment(env, { checkoutId, paymentKey, orde
   if (paymentOrder.order_id !== normalizedOrderId || Number(paymentOrder.amount) !== expectedAmount) {
     throw Object.assign(new Error("결제 금액 또는 주문 정보가 일치하지 않습니다."), { status: 409 });
   }
+  if (paymentOrder.payment_key && paymentOrder.payment_key !== paymentKey) throw Object.assign(new Error("다른 결제 요청이 이미 처리 중입니다."), { status: 409 });
   if (paymentOrder.status === "paid" && reservation.payment_status === "paid") {
     return {
       payment: formatWorkshopPaymentOrder(paymentOrder),
       reservation: formatReservation(reservation),
     };
   }
-  if (paymentOrder.status !== "pending" || reservation.status !== "waiting_for_payment") {
+  if (!["pending", "processing"].includes(paymentOrder.status) || reservation.status !== "waiting_for_payment") {
     throw Object.assign(new Error("현재 승인할 수 없는 결제 요청입니다."), { status: 409 });
   }
-  if (isExpired(paymentOrder.checkout_expires_at)) {
+  if (paymentOrder.status === "pending" && isExpired(paymentOrder.checkout_expires_at)) {
     await markReservationExpired(database, reservation.id, paymentOrder.id);
     throw Object.assign(new Error("결제 기한이 지나 신청이 만료되었습니다."), { status: 409 });
   }
@@ -2289,11 +2160,26 @@ export async function confirmWorkshopPayment(env, { checkoutId, paymentKey, orde
     throw Object.assign(new Error("결제 승인 정보를 찾을 수 없습니다."), { status: 400 });
   }
 
+  const claim = await database.prepare(`UPDATE workshop_payment_orders SET status = 'processing', payment_key = ?, updated_at = ?
+    WHERE id = ? AND status IN ('pending','processing') AND (payment_key IS NULL OR payment_key = ?)
+      AND EXISTS (SELECT 1 FROM workshop_reservations WHERE id = ? AND status = 'waiting_for_payment' AND amount_due = ?)`)
+    .bind(paymentKey, nowIso(), paymentOrder.id, paymentKey, reservation.id, expectedAmount).run();
+  if (!didUpdateRow(claim)) throw Object.assign(new Error("예약 결제 상태가 변경되었습니다."), { status: 409 });
+
   const payment = await confirmTossPayment(env, {
     paymentKey: String(paymentKey).trim(),
     orderId: normalizedOrderId,
     amount: expectedAmount,
   });
+  return settleWorkshopPayment(env, payment);
+}
+
+export async function settleWorkshopPayment(env, payment) {
+  const database = requireDb(env);
+  const paymentOrder = await database.prepare("SELECT * FROM workshop_payment_orders WHERE order_id = ?").bind(payment.orderId).first();
+  const reservation = paymentOrder && await database.prepare("SELECT * FROM workshop_reservations WHERE id = ?").bind(paymentOrder.reservation_id).first();
+  if (!reservation || !["pending", "processing", "paid"].includes(paymentOrder.status)
+    || (paymentOrder.payment_key && paymentOrder.payment_key !== payment.paymentKey)) throw Object.assign(new Error("유효하지 않은 워크샵 결제입니다."), { status: 409 });
   if (payment.orderId !== paymentOrder.order_id || Number(payment.amount) !== Number(paymentOrder.amount)) {
     throw Object.assign(new Error("Toss 결제 승인 결과가 주문 정보와 일치하지 않습니다."), { status: 502 });
   }
@@ -2302,8 +2188,8 @@ export async function confirmWorkshopPayment(env, { checkoutId, paymentKey, orde
   }
 
   const now = nowIso();
-  await database
-    .prepare(`
+  await database.batch([
+    database.prepare(`
       UPDATE workshop_payment_orders
       SET status = 'paid',
           payment_key = ?,
@@ -2312,12 +2198,10 @@ export async function confirmWorkshopPayment(env, { checkoutId, paymentKey, orde
           raw_response = ?,
           updated_at = ?
       WHERE id = ?
-        AND status = 'pending'
+        AND status IN ('pending','processing')
     `)
-    .bind(payment.paymentKey, payment.status, payment.approvedAt || now, encodeJson(payment.rawResponse, {}), now, paymentOrder.id)
-    .run();
-  await database
-    .prepare(`
+    .bind(payment.paymentKey, payment.status, payment.approvedAt || now, encodeJson(payment.rawResponse, {}), now, paymentOrder.id),
+    database.prepare(`
       UPDATE workshop_reservations
       SET status = 'confirmed',
           payment_status = 'paid',
@@ -2328,11 +2212,15 @@ export async function confirmWorkshopPayment(env, { checkoutId, paymentKey, orde
       WHERE id = ?
         AND status = 'waiting_for_payment'
     `)
-    .bind(paymentOrder.amount, paymentOrder.amount, payment.approvedAt || now, now, reservation.id)
-    .run();
+    .bind(paymentOrder.amount, paymentOrder.amount, payment.approvedAt || now, now, reservation.id),
+  ]);
 
   const updatedOrder = await database.prepare(`SELECT * FROM workshop_payment_orders WHERE id = ? LIMIT 1`).bind(paymentOrder.id).first();
   const updatedReservation = await database.prepare(`SELECT * FROM workshop_reservations WHERE id = ? LIMIT 1`).bind(reservation.id).first();
+  await Promise.all([
+    enqueueWorkshopNotification(env, formatReservation(updatedReservation), "payment_completed"),
+    enqueueWorkshopNotification(env, formatReservation(updatedReservation), "payment_completed", { admin: true }),
+  ]);
   return {
     payment: formatWorkshopPaymentOrder(updatedOrder),
     reservation: formatReservation(updatedReservation),
@@ -2368,8 +2256,8 @@ export async function refundWorkshopPayment(env, { reservationId, cancelReason =
     cancelReason: cleanText(cancelReason, 200) || "관리자 요청으로 워크숍 결제를 취소했습니다.",
   });
   const now = nowIso();
-  await database
-    .prepare(`
+  await database.batch([
+    database.prepare(`
       UPDATE workshop_payment_orders
       SET status = 'refunded',
           provider_status = ?,
@@ -2378,19 +2266,21 @@ export async function refundWorkshopPayment(env, { reservationId, cancelReason =
           updated_at = ?
       WHERE id = ?
     `)
-    .bind(cancellation.status, cancellation.cancelledAt || now, encodeJson(cancellation.rawResponse, {}), now, paymentOrder.id)
-    .run();
-  await database
-    .prepare(`
+    .bind(cancellation.status, cancellation.cancelledAt || now, encodeJson(cancellation.rawResponse, {}), now, paymentOrder.id),
+    database.prepare(`
       UPDATE workshop_reservations
       SET status = 'cancelled', payment_status = 'refunded', cancelled_at = ?, updated_at = ?
       WHERE id = ?
     `)
-    .bind(now, now, reservation.id)
-    .run();
+    .bind(now, now, reservation.id),
+  ]);
 
   const updatedOrder = await database.prepare(`SELECT * FROM workshop_payment_orders WHERE id = ? LIMIT 1`).bind(paymentOrder.id).first();
   const updatedReservation = await database.prepare(`SELECT * FROM workshop_reservations WHERE id = ? LIMIT 1`).bind(reservation.id).first();
+  await Promise.all([
+    enqueueWorkshopNotification(env, formatReservation(updatedReservation), "refund_completed"),
+    enqueueWorkshopNotification(env, formatReservation(updatedReservation), "refund_completed", { admin: true }),
+  ]);
   return {
     payment: formatWorkshopPaymentOrder(updatedOrder),
     reservation: formatReservation(updatedReservation),
@@ -2480,6 +2370,67 @@ export async function deleteWorkshopContent(env, { slug }) {
   ]);
   await syncPublicWorkshopSnapshots(env, { slug: normalizedSlug, status: "deleted" });
   return { slug: normalizedSlug, r2Keys: [...r2Keys] };
+}
+
+export async function maintainWorkshopOperations(env, { now = new Date() } = {}) {
+  const database = requireDb(env);
+  const nowText = now.toISOString();
+  const processing = await database.prepare("SELECT * FROM workshop_payment_orders WHERE status = 'processing' ORDER BY updated_at LIMIT 15").all();
+  for (const order of processing.results || []) {
+    try {
+      const payment = await readTossPayment(env, order.payment_key);
+      if (payment.status === "DONE" && payment.currency === "KRW") await settleWorkshopPayment(env, { ...payment, amount: payment.totalAmount });
+      else if (["ABORTED", "EXPIRED"].includes(payment.status)) {
+        await database.prepare("UPDATE workshop_payment_orders SET status = 'pending', updated_at = ? WHERE id = ? AND status = 'processing'").bind(nowText, order.id).run();
+      }
+    } catch (error) { console.error("Workshop payment reconciliation pending", { orderId: order.order_id, status: error.status }); }
+  }
+  const expired = await database.prepare(`SELECT r.* FROM workshop_reservations r
+    LEFT JOIN workshop_booking_configs c ON c.workshop_slug = r.workshop_slug
+    WHERE r.status = 'waiting_for_payment' AND r.group_id IS NULL
+      AND julianday(r.created_at) + COALESCE(c.payment_deadline_hours, 48) / 24.0 <= julianday(?)
+      AND NOT EXISTS (SELECT 1 FROM workshop_payment_orders p WHERE p.reservation_id = r.id AND p.status IN ('processing', 'paid'))
+    ORDER BY r.created_at LIMIT 60`).bind(nowText).all();
+  for (const row of expired.results || []) {
+    await markReservationExpired(database, row.id, row.payment_order_id);
+    await enqueueWorkshopNotification(env, formatReservation(row), "payment_expired");
+  }
+  const recent = await database.prepare(`SELECT * FROM workshop_reservations WHERE created_at >= '2026-09-24T00:00:00.000Z'
+    AND julianday(updated_at) >= julianday(?) - 7 ORDER BY updated_at DESC LIMIT 100`).bind(nowText).all();
+  for (const row of recent.results || []) {
+    const reservation = formatReservation(row);
+    if (row.status === "waiting_for_payment") {
+      await enqueueWorkshopReservationAdminNotification(env, reservation);
+      await enqueueWorkshopNotification(env, reservation, "reservation_received");
+    } else if (row.payment_status === "paid") {
+      await enqueueWorkshopNotification(env, reservation, "payment_completed");
+      await enqueueWorkshopNotification(env, reservation, "payment_completed", { admin: true });
+    } else if (row.payment_status === "refunded") {
+      await enqueueWorkshopNotification(env, reservation, "refund_completed");
+      await enqueueWorkshopNotification(env, reservation, "refund_completed", { admin: true });
+    } else if (row.status === "cancelled") await enqueueWorkshopNotification(env, reservation, "cancelled");
+  }
+  const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: WORKSHOP_TIME_ZONE }).format(new Date(now.getTime() + 86400000));
+  const confirmed = await database.prepare("SELECT * FROM workshop_reservations WHERE status = 'confirmed' ORDER BY slot_date DESC LIMIT 500").all();
+  for (const row of confirmed.results || []) {
+    const reservation = formatReservation(row);
+    const sessions = reservation.slotSnapshot?.slots || [{ date: row.slot_date, startTime: row.slot_start_time, endTime: row.slot_end_time }];
+    for (const session of sessions.filter((slot) => slot.date === tomorrow)) {
+      await enqueueWorkshopNotification(env, reservation, "reminder", { scheduleLabel: `${session.date} ${session.startTime}~${session.endTime || ""}`, eventSuffix: `${session.date}:${session.startTime}` });
+    }
+  }
+  const catalog = await readPublicWorkshopCatalog(env);
+  for (const workshop of catalog.filter((item) => item.bookingConfig.mode !== "daily")) {
+    const first = workshop.scheduleSlots[0];
+    if (!first || first.date !== tomorrow) continue;
+    const row = await database.prepare("SELECT COALESCE(SUM(attendee_count), 0) AS count FROM workshop_reservations WHERE workshop_slug = ? AND status = 'confirmed'").bind(workshop.slug).first();
+    if (Number(row.count) >= workshop.bookingConfig.minParticipants) continue;
+    await enqueueNotification(env, { eventKey: `workshop:${workshop.slug}:minimum:${tomorrow}`, entityType: "workshop", entityId: workshop.slug,
+      channel: "email", recipient: resolveNotificationAdminRecipient(env), templateKey: "workshop.minimum_not_met_admin",
+      payload: { workshop_name: workshop.title, schedule_label: `${first.date} ${first.startTime}`, attendee_count: row.count,
+        minimum_count: workshop.bookingConfig.minParticipants, workshop_url: new URL("/workshop-admin", env.PUBLIC_SITE_URL || "https://studiooalum.com").href } });
+  }
+  return { reconciled: (processing.results || []).length, expired: (expired.results || []).length };
 }
 
 export { WORKSHOP_TYPES, readPublicWorkshopCatalog, readStoredWorkshopCatalog };

@@ -31,6 +31,7 @@ import { onRequestPost as submitRepairRequest } from "../functions/api/repairs/i
 import { onRequestPost as postRepairTicketMessage } from "../functions/api/repairs/tickets/[id].js";
 import { onRequestGet as openRepairTicketShortLink } from "../functions/t/[code].js";
 import { inferRepairCountryCode } from "../cloudflare/lib/repair-address.js";
+import { createRepairCheckout, confirmRepairPayment } from "../cloudflare/lib/repair-payments.js";
 
 class D1BoundStatement {
   constructor(statement, values) {
@@ -121,6 +122,7 @@ function createEnvironment(overrides = {}) {
 function createFullEnvironment(overrides = {}) {
   const database = new D1Database();
   database.exec(readFileSync(new URL("../cloudflare/d1/schema.sql", import.meta.url), "utf8"));
+  database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0037_operational_notifications.sql", import.meta.url), "utf8"));
   return {
     database,
     env: {
@@ -156,6 +158,28 @@ async function createInitialRepair(env, suffix = "A", overrides = {}) {
     ...overrides,
   });
 }
+
+test("Repair Ticket payment uses the final quote and records payment once", async (context) => {
+  const { database, env } = createFullEnvironment({ TOSS_CLIENT_KEY: "test_gck_fixture", TOSS_SECRET_KEY: "test_gsk_fixture" });
+  context.after(() => database.close());
+  await createInitialRepair(env, "PAYMENT");
+  await updateRepairRequest(env, { id: "RPR_PAYMENT", expectedVersion: 1, status: "payment_pending", finalAmount: 55000 });
+  const checkout = await createRepairCheckout(env, "RPR_PAYMENT");
+  assert.equal(checkout.amount, 55000);
+  assert.equal((await createRepairCheckout(env, "RPR_PAYMENT")).orderId, checkout.orderId);
+  await assert.rejects(confirmRepairPayment(env, "RPR_PAYMENT", { orderId: checkout.orderId, paymentKey: "fixture-payment", amount: 1 }), { status: 409 });
+  const originalFetch = globalThis.fetch;
+  context.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => Response.json({ paymentKey: "fixture-payment", orderId: checkout.orderId, totalAmount: 55000, currency: "KRW", status: "DONE", approvedAt: "2026-09-24T12:00:00+09:00" });
+  const input = { orderId: checkout.orderId, paymentKey: "fixture-payment", amount: 55000 };
+  assert.equal((await confirmRepairPayment(env, "RPR_PAYMENT", input)).status, "paid");
+  assert.equal((await confirmRepairPayment(env, "RPR_PAYMENT", input)).status, "paid");
+  const ticket = await readRepairTicketForRepair(env, "RPR_PAYMENT");
+  assert.equal(ticket.ticket.repair.paymentStatus, "paid");
+  assert.equal(ticket.ticket.messages.filter((message) => /토스 결제/.test(message.body)).length, 1);
+  assert.equal(ticket.ticket.repair.onlinePaymentAvailable, false);
+  await assert.rejects(createRepairCheckout(env, "RPR_PAYMENT"), { status: 409 });
+});
 
 function createRepairForm({
   imageBody = "image-a",
@@ -948,11 +972,9 @@ test("Notification templates enforce variables and support draft activation and 
   const restored = database.prepare(`SELECT draft_subject, default_subject FROM notification_templates WHERE template_key = 'repair.received' AND channel = 'email'`).first();
   assert.equal(restored.draft_subject, restored.default_subject);
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_template_revisions").first().count, 3);
-  assert.equal(database.prepare("SELECT is_enabled FROM notification_templates WHERE template_key = 'shop.order_completed' AND channel = 'email'").first().is_enabled, 0);
-  await assert.rejects(
-    activateNotificationDraft(env, { templateKey: "shop.order_completed", channel: "email" }, "test-admin"),
-    /전환 준비 템플릿/,
-  );
+  assert.equal(database.prepare("SELECT is_enabled FROM notification_templates WHERE template_key = 'shop.order_completed' AND channel = 'email'").first().is_enabled, 1);
+  await activateNotificationDraft(env, { templateKey: "shop.order_completed", channel: "email" }, "test-admin");
+  await assert.rejects(activateNotificationDraft(env, { templateKey: "shop.order_completed", channel: "sms" }, "test-admin"), /추가 문자 알림/);
 });
 
 test("customer notification copy is readable, branded, and remains within LMS limits", async (t) => {

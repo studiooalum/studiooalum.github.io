@@ -51,8 +51,9 @@
 
     <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
-    <link rel="stylesheet" href="./runtime/storefront/styles/layout.css?v=20260520-02">
+    <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/workshops-page-20260816-05.css">
+    <link rel="stylesheet" href="./runtime/storefront/styles/workshop-operations-20260924.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260915-02">
     <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
 </head>
@@ -104,7 +105,24 @@ studio.oalum@gmail.com</p>
         </footer>
     </main>
 
-    <script type="module" src="./runtime/storefront/scripts/workshops-20260816-03.js?v=20260818-01"></script>
+    <dialog id="customWorkshopDialog" class="workshop-inquiry-dialog" aria-labelledby="customWorkshopTitle">
+        <header><h2 id="customWorkshopTitle">맞춤 워크샵 문의</h2><button type="button" id="customWorkshopClose" aria-label="닫기">×</button></header>
+        <form id="customWorkshopForm" class="workshop-inquiry-form">
+            <label>이름<input name="fullName" autocomplete="name" maxlength="120" required></label>
+            <label>연락처<input type="tel" name="phone" autocomplete="tel" maxlength="40" required></label>
+            <label>이메일<input type="email" name="email" autocomplete="email" maxlength="200" required></label>
+            <label>인원 수<input type="number" name="attendeeCount" min="1" max="1000" step="1" required></label>
+            <label>희망 일시<input name="preferredSchedule" maxlength="200" placeholder="원하는 날짜와 시간대" required></label>
+            <label>장소<select name="locationType"><option value="studio">오알룸 작업실</option><option value="other">원하는 장소</option></select></label>
+            <label id="customWorkshopLocationDetail" hidden>희망 장소<input name="locationDetail" maxlength="300"></label>
+            <label>수업 내용<textarea name="classContent" rows="3" maxlength="1000" placeholder="기초 바느질 등" required></textarea></label>
+            <label>궁금한 점<textarea name="question" rows="3" maxlength="2000" placeholder="추가 문의사항을 간단하게 작성해주세요."></textarea></label>
+            <label class="workshop-inquiry-consent"><input type="checkbox" name="privacyConsent" required><span>문의 답변을 위한 이름·연락처·이메일 수집 및 이용에 동의합니다. 문의 종료 후 1년간 보관됩니다.</span></label>
+            <button type="submit">문의 접수</button>
+            <p id="customWorkshopFeedback" role="status" aria-live="polite"></p>
+        </form>
+    </dialog>
+    <script type="module" src="./runtime/storefront/scripts/workshops-20260924.js"></script>
     <script type="module">
         import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260918-01";
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";

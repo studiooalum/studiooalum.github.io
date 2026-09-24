@@ -1198,6 +1198,10 @@ export async function deleteUnpaidOrder(env, orderId) {
 }
 
 function shouldApplyOrderLifecycle({ currentStatus, activePaymentKey, paymentKey, lifecycle }) {
+  if (["cancelled", "refunded"].includes(currentStatus) && ["paid", "payment_pending"].includes(lifecycle?.orderStatus)) return false;
+  if (currentStatus === "paid" && lifecycle?.orderStatus !== "cancelled" && lifecycle?.paymentStatus !== "refunded") {
+    return activePaymentKey === paymentKey && lifecycle?.orderStatus === "paid";
+  }
   if (!paymentKey || !lifecycle) {
     return true;
   }
@@ -1605,9 +1609,25 @@ export async function persistOrder(env, order) {
   return true;
 }
 
+export async function assertStoredOrderPayment(env, { orderId, paymentKey, amount }, { cancellation = false } = {}) {
+  const database = getDb(env);
+  if (!database) throw Object.assign(new Error("결제 저장소가 준비되지 않았습니다."), { status: 503 });
+  const order = await database.prepare("SELECT id, total_amount, currency, status, payment_status, active_payment_key FROM orders WHERE id = ? LIMIT 1").bind(orderId).first();
+  if (!order) throw Object.assign(new Error("결제 주문을 찾을 수 없습니다."), { status: 404 });
+  if (!Number.isSafeInteger(amount) || amount <= 0 || amount !== Number(order.total_amount) || order.currency !== "KRW") {
+    throw Object.assign(new Error("주문 금액이 일치하지 않습니다."), { status: 409 });
+  }
+  if (!cancellation && ["cancelled", "refunded"].includes(order.status)) throw Object.assign(new Error("취소된 주문입니다."), { status: 409 });
+  if (order.active_payment_key && order.active_payment_key !== paymentKey) {
+    throw Object.assign(new Error("이미 처리된 결제 주문입니다."), { status: 409 });
+  }
+  return order;
+}
+
 export async function persistPayment(env, payment) {
   const database = getDb(env);
   if (!database) return false;
+  await assertStoredOrderPayment(env, payment, { cancellation: ["CANCELED", "PARTIAL_CANCELED"].includes(payment.status) });
 
   const now = new Date().toISOString();
   const lifecycle = getPaymentLifecycle(payment.status, { defaultToPending: true });

@@ -48,7 +48,7 @@
 .repair-ticket-kicker {
   margin: 0;
   font-family: var(--font-english-ui);
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
 }
 
@@ -56,28 +56,29 @@
 .repair-ticket-thread h2 {
   margin: 0;
   font-family: var(--font-kor-heading);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0;
 }
 
 .repair-ticket-summary h1 {
-  font-size: clamp(42px, 5vw, 72px);
-  line-height: 1;
-  color: #e34234;
+  font-size: var(--type-page-title, 34px);
+  line-height: 1.18;
+  color: #111;
   overflow-wrap: anywhere;
 }
 
 .repair-ticket-thread h2 {
-  font-size: 18px;
+  font-size: var(--type-section-title, 20px);
 }
 
 .repair-ticket-status {
   width: fit-content;
   margin: 4px 0 0;
-  border: 1px solid #111;
-  padding: 5px 8px;
+  border: 0;
+  padding: 4px 0;
   font-family: var(--font-kor-meta);
-  font-size: 11px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .repair-ticket-facts {
@@ -88,21 +89,22 @@
 
 .repair-ticket-facts > div {
   display: grid;
-  gap: 5px;
-  border-top: 1px solid rgba(17, 17, 17, 0.14);
-  padding-top: 10px;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 12px;
+  padding-top: 4px;
 }
 
 .repair-ticket-facts dt {
   font-family: var(--font-kor-form);
-  font-size: 10px;
+  font-size: 13px;
+  line-height: 1.6;
   font-weight: 500;
   color: rgba(17, 17, 17, 0.58);
 }
 
 .repair-ticket-facts dd {
   margin: 0;
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.6;
   overflow-wrap: anywhere;
   white-space: pre-line;
@@ -122,7 +124,7 @@
 .repair-ticket-request-images h2 {
   margin: 0;
   font-family: var(--font-kor-form);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 500;
   color: rgba(17, 17, 17, 0.58);
 }
@@ -192,7 +194,7 @@
 .repair-ticket-message {
   display: grid;
   gap: 8px;
-  width: min(82%, 680px);
+  width: min(90%, 760px);
 }
 
 .repair-ticket-message--customer {
@@ -208,7 +210,8 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 10px;
+  font-size: 12px;
+  flex-wrap: wrap;
   color: rgba(17, 17, 17, 0.58);
 }
 
@@ -219,19 +222,20 @@
 
 .repair-ticket-message__body {
   margin: 0;
-  border: 1px solid rgba(17, 17, 17, 0.18);
-  padding: 12px 14px;
+  border: 0;
+  border-top: 1px solid #d4d4d4;
+  padding: 14px 0;
   background: #fff;
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.8;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
 .repair-ticket-message--customer .repair-ticket-message__body {
   border-color: #111;
-  background: #111;
-  color: #fff;
+  background: #fff;
+  color: #111;
 }
 
 .repair-ticket-message--system {
@@ -239,9 +243,11 @@
 }
 
 .repair-ticket-message--system .repair-ticket-message__body {
-  border-width: 0 0 0 3px;
-  background: #f3f3f1;
-  font-size: 12px;
+  border-width: 0 0 0 2px;
+  border-color: #e34234;
+  padding: 6px 16px;
+  background: #fff;
+  font-size: 14px;
 }
 
 .repair-ticket-message__attachments {
@@ -282,7 +288,7 @@
   border: 1px solid #111;
   padding: 12px;
   font-family: var(--font-kor-body);
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.6;
   resize: vertical;
 }
@@ -298,7 +304,7 @@
 .repair-ticket-file-button,
 .repair-ticket-submit {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   border: 1px solid #111;
@@ -306,7 +312,7 @@
   background: #fff;
   color: #111;
   font-family: var(--font-kor-button);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -357,13 +363,44 @@
 
 @media (min-width: 960px) {
   .repair-ticket-shell {
-    grid-template-columns: minmax(240px, 0.8fr) minmax(0, 2.2fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--grid-gap);
   }
 
   .repair-ticket-summary {
-    position: sticky;
-    top: 24px;
+    grid-column: 1;
+    padding-right: 24px;
   }
+  .repair-ticket-thread { grid-column: 2 / span 2; }
+}
+
+.repair-ticket-payment {
+  display: grid;
+  gap: 12px;
+  padding: 20px 0;
+  border-block: 1px solid #111;
+}
+.repair-ticket-payment h2 { font-size: 14px; font-weight: 500; }
+#repairTicketPaymentAmount { font-size: 26px; font-family: var(--font-book); }
+#repairTicketPaymentStatus { font-size: 13px; line-height: 1.6; }
+.repair-payment-dialog {
+  margin: auto;
+  width: min(600px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  border: 1px solid #111;
+  padding: 24px;
+  background: #fff;
+}
+.repair-payment-dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.repair-payment-dialog header { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.repair-payment-dialog h2 { font-size: 22px; font-weight: 500; }
+#repairPaymentClose { width: 40px; height: 40px; border: 0; background: transparent; font-size: 28px; cursor: pointer; }
+#repairPaymentConfirm { width: 100%; }
+#repairPaymentDialogStatus { margin-top: 14px; font-size: 14px; line-height: 1.6; }
+@media (prefers-reduced-motion: no-preference) {
+  .repair-ticket-shell { animation: ticket-reveal .25s ease-out; }
+  @keyframes ticket-reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 }
 
 @media (max-width: 959px) {

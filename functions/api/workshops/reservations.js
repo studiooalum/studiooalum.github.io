@@ -2,16 +2,13 @@ import { z } from "zod";
 
 import { readSession } from "../../../cloudflare/lib/auth.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
-import { enqueueWorkshopReservationAdminNotification } from "../../../cloudflare/lib/notifications.js";
+import { enqueueWorkshopReservationAdminNotification, enqueueWorkshopNotification } from "../../../cloudflare/lib/notifications.js";
 import { createWorkshopReservation } from "../../../cloudflare/lib/workshops.js";
 
 const reservationSchema = z.object({
   slug: z.string().trim().min(1).max(120),
   slotKey: z.string().trim().max(160).optional().default(""),
   requestedDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().default(""),
-  joinPolicy: z.enum(["open", "private"]).optional().default("private"),
-  allowAdditionalAttendees: z.boolean().optional().default(false),
-  groupMode: z.enum(["open", "private"]).optional(),
   fullName: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(1).max(40),
@@ -39,12 +36,10 @@ export async function onRequestPost(context) {
       accountFullName: session?.user?.fullName || "",
       accountPhone: session?.user?.phone || "",
     });
-    context.waitUntil(enqueueWorkshopReservationAdminNotification(context.env, result.reservation).catch((error) => {
-      console.error("Failed to queue workshop reservation administrator notification.", {
-        reservationId: result.reservation?.reservationId || null,
-        message: error?.message || String(error),
-      });
-    }));
+    await Promise.all([
+      enqueueWorkshopReservationAdminNotification(context.env, result.reservation),
+      enqueueWorkshopNotification(context.env, result.reservation, result.requiresPayment ? "reservation_received" : "payment_completed"),
+    ]);
 
     return json(context.env, {
       ok: true,

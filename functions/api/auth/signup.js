@@ -6,6 +6,7 @@ import { errorResponse, json, noContent, readJson, validationError } from "../..
 const signupSchema = z.object({
   fullName: z.string().trim().min(1).max(120),
   email: z.string().trim().email(),
+  code: z.string().trim().regex(/^\d{6}$/),
   password: z.string().min(8).max(200),
   privacyConsent: z.literal(true),
   termsConsent: z.literal(true),

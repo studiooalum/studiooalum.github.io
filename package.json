@@ -5,8 +5,9 @@
     "deps:install": "npm install --ignore-scripts --no-audit --no-fund --no-progress",
     "verify": "node --test tests/*.test.mjs && npm run cf:build",
     "build:newsletter-editor": "esbuild runtime/storefront/scripts/newsletter-admin.js --bundle --minify --format=esm --target=es2020 --jsx=automatic --outfile=runtime/storefront/scripts/newsletter-admin-20260910-04.js",
+    "build:storefront": "node scripts/build-storefront.mjs",
     "site:serve": "python3 -m http.server 4173",
-    "cf:build": "npm run build:newsletter-editor && node ./scripts/build-pages.mjs",
+    "cf:build": "npm run build:newsletter-editor && npm run build:storefront && node ./scripts/build-pages.mjs",
     "cf:pages:dev": "npm run cf:build && npx wrangler pages dev dist",
     "cf:pages:deploy": "npm run cf:build && npx wrangler pages deploy dist --project-name studiooalum",
     "cf:repair-notifications:deploy": "npx wrangler deploy --config wrangler.repair-notifications.jsonc",
@@ -33,7 +34,7 @@
     "@tiptap/starter-kit": "3.31.3",
     "clsx": "^2.1.1",
     "gsap": "^3.14.2",
-    "next": "^16.1.1",
+    "next": "^16.3.6",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "zod": "^4.3.4"
@@ -41,7 +42,7 @@
   "devDependencies": {
     "autoprefixer": "^10.4.23",
     "esbuild": "^0.28.2",
-    "postcss": "^8.5.6",
+    "postcss": "^8.5.28",
     "sanity": "^5.1.0",
     "tailwindcss": "^4.1.18"
   }

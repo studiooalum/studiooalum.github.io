@@ -16,6 +16,8 @@ import { normalizeImageRgb } from "./image-colors.js";
 import { inferRepairCountryCode, normalizeRepairShippingAddress } from "./repair-address.js";
 import { buildRepairGalleryUrl } from "./r2.js";
 
+import { getTossConfig } from "./toss.js";
+
 function getDb(env) {
   return env?.OALUM_DB || null;
 }
@@ -930,7 +932,11 @@ export async function updateRepairRequest(env, input) {
   const quoteAmount = hasOwn(input, "quoteAmount") ? normalizeAmount(input.quoteAmount) : existing.quote_amount;
   const finalAmount = hasOwn(input, "finalAmount") ? normalizeAmount(input.finalAmount) : existing.final_amount;
   const bankAccount = hasOwn(input, "bankAccount") ? cleanText(input.bankAccount, 500) : existing.bank_account;
-  const paymentInstructions = hasOwn(input, "paymentInstructions") ? cleanText(input.paymentInstructions, 2000) : existing.payment_instructions;
+  const paymentInstructions = (hasOwn(input, "paymentInstructions") ? cleanText(input.paymentInstructions, 2000) : existing.payment_instructions)
+    || (getTossConfig(env).isClientReady ? "Repair Ticket에서 카드·간편결제로 결제할 수 있습니다." : "");
+  if (existing.payment_confirmed_at && finalAmount !== existing.final_amount) {
+    throw Object.assign(new Error("결제 완료된 수선의 최종 금액은 변경할 수 없습니다."), { status: 409 });
+  }
   const paymentConfirmedAt = hasOwn(input, "paymentConfirmedAt")
     ? cleanText(input.paymentConfirmedAt, 40) || null
     : existing.payment_confirmed_at;
@@ -1080,6 +1086,9 @@ export async function updateRepairRequest(env, input) {
       ...(ticketBundle?.statements || []),
     ]);
   } catch (error) {
+    if (String(error.message).includes("repair_payment_in_progress")) {
+      throw Object.assign(new Error("결제 승인 중에는 금액과 상태를 변경할 수 없습니다."), { status: 409 });
+    }
     const latest = await database.prepare(`SELECT version FROM repair_requests WHERE id = ? LIMIT 1`).bind(requestId).first();
     if (Number(latest?.version || 0) !== currentVersion) {
       throw Object.assign(new Error("다른 관리자 화면에서 먼저 수정했습니다. 최신 내용을 다시 불러와주세요."), { status: 409 });

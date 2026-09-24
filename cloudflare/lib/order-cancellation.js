@@ -1,4 +1,5 @@
 import { persistPayment, readOrderSyncSnapshot, updateShipment } from "./d1.js";
+import { enqueueShopNotification } from "./notifications.js";
 import { dispatchOrderSync, getOrderSyncEventType, shouldEmailForOrderSyncEvent } from "./order-sync.js";
 import { cancelTossPayment } from "./toss.js";
 
@@ -579,6 +580,10 @@ export async function processOrderCancellation(context, {
   }
 
   const updatedOrder = await readOrderSyncSnapshot(context.env, order.orderId);
+  await Promise.all([
+    enqueueShopNotification(context.env, updatedOrder, "refund_completed"),
+    enqueueShopNotification(context.env, updatedOrder, "refund_completed", { admin: true }),
+  ]);
   const eventType = getOrderSyncEventType(payment.status);
   const syncTriggered = updatedOrder
     ? await dispatchOrderSync(context, {

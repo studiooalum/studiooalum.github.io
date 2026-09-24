@@ -2,6 +2,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+  Strict-Transport-Security: max-age=31536000
   Permissions-Policy: accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(self), usb=()
 
 /
@@ -45,6 +47,20 @@
 /repair-ticket.html
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer
+
+/repair-ticket
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer
+
+/workshop-payment
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
+
+/workshop-payment.html
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
 
 /signup
   Cache-Control: no-store

@@ -1,0 +1,40 @@
+.workshop-inquiry-dialog {
+  width: min(620px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 28px;
+  border: 1px solid #111;
+  background: #fff;
+  color: #111;
+  overflow-y: auto;
+  font-family: var(--font-kor-body);
+  letter-spacing: 0;
+}
+.workshop-inquiry-dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.workshop-inquiry-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.workshop-inquiry-dialog h2 { font-size: 22px; font-weight: 500; }
+#customWorkshopClose { width: 40px; height: 40px; flex: 0 0 40px; border: 0; background: none; font-size: 28px; cursor: pointer; }
+.workshop-inquiry-form { display: grid; gap: 20px; }
+.workshop-inquiry-form label { display: grid; gap: 8px; font-size: 15px; line-height: 1.5; }
+.workshop-inquiry-form input, .workshop-inquiry-form textarea, .workshop-inquiry-form select { width: 100%; min-width: 0; padding: 11px; border: 1px solid #b8b8b8; border-radius: 0; font: inherit; font-size: 16px; background: #fff; }
+.workshop-inquiry-form textarea { resize: vertical; }
+.workshop-inquiry-form .workshop-inquiry-consent { grid-template-columns: 20px minmax(0, 1fr); align-items: start; font-size: 13px; }
+.workshop-inquiry-consent input { width: 18px; height: 18px; margin-top: 2px; }
+.workshop-inquiry-form button[type="submit"] { min-height: 48px; background: #111; color: #fff; border: 0; font: inherit; cursor: pointer; }
+.workshop-inquiry-form button:disabled { opacity: .5; cursor: wait; }
+.workshop-inquiry-form [hidden] { display: none; }
+.workshop-custom-preview { width: 240px; max-width: 100%; height: auto; margin: 20px 0; }
+.workshop-inquiry-row { padding: 28px 0; border-top: 1px solid #d4d4d4; display: grid; gap: 16px; }
+.workshop-inquiry-row h3 { font-size: 18px; }
+.workshop-inquiry-row dl { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 12px; }
+.workshop-inquiry-row dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.workshop-inquiry-row p { overflow-wrap: anywhere; }
+.workshop-admin-thumb-card--slot,
+.workshop-admin-thumb-card__body,
+.workshop-admin-repeater-grid > .fulfillment-field { min-width: 0; }
+.workshop-admin-repeater-grid.workshop-admin-repeater-grid--wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.workshop-admin-thumb-card--slot .workshop-admin-repeater-head { flex-wrap: wrap; }
+@media (max-width: 559px) {
+  .workshop-admin-repeater-grid.workshop-admin-repeater-grid--wide { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 559px) { .workshop-inquiry-dialog { padding: 20px; } }

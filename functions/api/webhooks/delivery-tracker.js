@@ -8,6 +8,7 @@ import {
 } from "../../../cloudflare/lib/delivery-tracker.js";
 import { readOrderSyncSnapshot, updateShipmentByTrackingReference } from "../../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson } from "../../../cloudflare/lib/http.js";
+import { enqueueShopNotification } from "../../../cloudflare/lib/notifications.js";
 
 const deliveryTrackerWebhookSchema = z.object({
   carrierId: z.string().trim().min(1),
@@ -69,6 +70,7 @@ export async function onRequestPost(context) {
     }
 
     const order = await readOrderSyncSnapshot(context.env, result.orderId);
+    if (order) await enqueueShopNotification(context.env, order, "delivered");
 
     return json(context.env, {
       ok: true,

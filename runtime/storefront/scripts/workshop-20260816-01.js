@@ -1,8 +1,9 @@
 import {
   getWorkshopShortDescription,
   getWorkshopSlug,
+  getWorkshopBookingConfig,
   normalizeWorkshop,
-} from "./utils/workshops-20260816-01.js";
+} from "./utils/workshops.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo-20260816-01.js";
 
@@ -47,8 +48,6 @@ const dom = {
   slotsTitle: document.querySelector("#workshopSlotsSection .workshop-slots__title"),
   slotList: document.getElementById("workshopSlotList"),
   form: document.getElementById("workshopBookingForm"),
-  joinPolicyField: document.getElementById("bookingJoinPolicyField"),
-  allowAdditionalAttendees: document.getElementById("bookingAllowAdditionalAttendees"),
   attendeeCount: document.getElementById("bookingAttendeeCount"),
   bookingPrice: document.getElementById("workshopBookingPrice"),
   bookingName: document.getElementById("bookingName"),
@@ -377,33 +376,7 @@ function deriveMonthKeys(slots) {
 }
 
 function getBookingConfig() {
-  const raw = state.workshop?.bookingConfig && typeof state.workshop.bookingConfig === "object"
-    ? state.workshop.bookingConfig
-    : {};
-  const rawType = String(raw.workshopType || raw.type || "").trim();
-  const type = {
-    daily: "daily",
-    event: "event",
-    multiSession: "multiSession",
-    one_day_open: "daily",
-    one_day_fixed: "event",
-    multi_session: "multiSession",
-  }[rawType] || (raw.mode === "daily" ? "daily" : "event");
-  const priceTiers = raw.priceTiers && typeof raw.priceTiers === "object"
-    ? raw.priceTiers
-    : raw.attendeePrices && typeof raw.attendeePrices === "object"
-      ? raw.attendeePrices
-      : {};
-  return {
-    workshopType: type,
-    type,
-    mode: type === "daily" ? "daily" : "scheduled",
-    attendeePrices: priceTiers,
-    priceTiers,
-    fixedPrice: Math.max(0, Number(raw.fixedPrice) || Number(state.workshop?.price) || 0),
-    minParticipants: Math.max(1, Number(raw.minParticipants) || 1),
-    maxParticipants: Math.max(1, Number(raw.maxParticipants || raw.dailyCapacity) || 4),
-  };
+  return getWorkshopBookingConfig(state.workshop);
 }
 
 function findFirstAvailableDate() {
@@ -440,7 +413,7 @@ function getDateAvailability(dateKey) {
 }
 
 function syncSelectedSlot() {
-  if (getBookingConfig().type !== "event") {
+  if (getBookingConfig().type !== "daily") {
     state.selectedSlotKey = "";
     return;
   }
@@ -614,12 +587,23 @@ function renderGallery(workshop) {
   }
 
   dom.gallerySection.hidden = false;
-  dom.galleryList.innerHTML = items.map((item) => `
-    <figure class="workshop-gallery__item">
-      <img src="${item.src}" alt="${item.alt}" loading="lazy" decoding="async">
-      ${item.caption ? `<figcaption>${item.caption}</figcaption>` : ""}
-    </figure>
-  `).join("");
+  dom.galleryList.replaceChildren();
+  for (const item of items) {
+    const figure = document.createElement("figure");
+    figure.className = "workshop-gallery__item";
+    const image = document.createElement("img");
+    image.src = item.src;
+    image.alt = item.alt;
+    image.loading = "lazy";
+    image.decoding = "async";
+    figure.appendChild(image);
+    if (item.caption) {
+      const caption = document.createElement("figcaption");
+      caption.textContent = item.caption;
+      figure.appendChild(caption);
+    }
+    dom.galleryList.appendChild(figure);
+  }
 }
 
 function syncWorkshopStickyStop() {
@@ -772,7 +756,10 @@ function renderWorkshopDetails(workshop) {
   }
 
   if (dom.price) {
-    dom.price.textContent = formatCurrency(workshop.price);
+    const config = getBookingConfig();
+    dom.price.textContent = config.type === "daily"
+      ? `${formatCurrency(config.attendeePrices[1])} / 1인`
+      : `${formatCurrency(config.fixedPrice)} / 1인 · 전체 ${workshop.scheduleSlots.length}회`;
   }
 
   if (dom.description) {
@@ -797,7 +784,8 @@ function renderWorkshopDetails(workshop) {
   }
 
   if (dom.capacity) {
-    dom.capacity.textContent = `${workshop.maxCapacity || 0}명 정원`;
+    const config = getBookingConfig();
+    dom.capacity.textContent = `${config.minParticipants}~${config.maxParticipants}명`;
   }
 
   if (dom.location) {
@@ -810,7 +798,7 @@ function renderWorkshopDetails(workshop) {
   if (dom.notice) {
     dom.notice.textContent = workshop.availabilityStale
       ? "예약 상태를 확인하는 동안 신청을 잠시 멈췄습니다. 잠시 후 다시 시도해주세요."
-      : workshop.bookingNotice || "노란색 날짜는 예약이 막힌 일정입니다. 가능한 날짜를 선택해 신청해 주세요.";
+      : workshop.bookingNotice || "";
   }
 
   if (dom.apply) {
@@ -826,7 +814,7 @@ function renderWorkshopDetails(workshop) {
 }
 
 function createWeekdayRow() {
-  const weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
   const row = document.createElement("div");
   row.className = "workshop-calendar__weekdays";
 
@@ -865,6 +853,8 @@ function createMonthGrid(monthKey) {
     button.type = "button";
     button.className = "workshop-calendar__day";
     button.textContent = String(day);
+    button.setAttribute("aria-label", `${formatReadableDate(date)}${availability.selectable ? "" : " 예약 불가"}`);
+    button.setAttribute("aria-pressed", String(state.selectedDate === date));
 
     if (availability.pastOrToday) {
       button.classList.add("is-past");
@@ -883,7 +873,7 @@ function createMonthGrid(monthKey) {
     if (availability.selectable) {
       button.addEventListener("click", () => {
         state.selectedDate = date;
-        if (getBookingConfig().type === "event") {
+        if (getBookingConfig().type === "daily") {
           const firstOpenSlot = availability.openSlots[0];
           state.selectedSlotKey = firstOpenSlot?.key || "";
         } else {
@@ -918,6 +908,8 @@ function renderCalendar() {
   if (dom.calendarToolbar) {
     dom.calendarToolbar.hidden = state.monthKeys.length <= 1;
   }
+  dom.calendarPrev.disabled = state.activeMonthIndex === 0;
+  dom.calendarNext.disabled = state.activeMonthIndex >= state.monthKeys.length - 1;
   dom.calendar.append(createWeekdayRow(), createMonthGrid(monthKey));
 }
 
@@ -926,43 +918,17 @@ function renderSlots() {
 
   const bookingConfig = getBookingConfig();
   if (dom.slotsSection) {
-    dom.slotsSection.hidden = bookingConfig.type === "daily";
+    dom.slotsSection.hidden = false;
   }
   if (dom.slotsTitle) {
-    dom.slotsTitle.textContent = bookingConfig.type === "multiSession"
-      ? "전체 회차 일정"
-      : bookingConfig.type === "event"
-        ? "확정 일정"
-        : "시간 선택";
+    dom.slotsTitle.textContent = bookingConfig.type === "daily" ? "시간 선택" : "전체 회차 일정";
   }
 
-  if (bookingConfig.type === "daily") {
-    dom.slotList.innerHTML = "";
-    dom.selectedDate.textContent = formatReadableDate(state.selectedDate);
-    return;
-  }
-
-  if (bookingConfig.type === "multiSession") {
+  if (bookingConfig.type !== "daily") {
     dom.slotList.innerHTML = "";
     dom.selectedDate.textContent = "전체 회차 일정";
-    const slots = (state.workshop?.scheduleSlots || []).filter((slot) => slot.status !== "blocked");
+    const slots = state.workshop?.scheduleSlots || [];
     for (const slot of slots) {
-      const item = document.createElement("p");
-      item.className = "workshop-schedule-item";
-      item.textContent = `${formatReadableDate(slot.date)} · ${formatSlotTime(slot) || slot.label}`;
-      dom.slotList.appendChild(item);
-    }
-    return;
-  }
-
-  if (bookingConfig.type === "event") {
-    const slot = (state.workshop?.scheduleSlots || []).find((item) => item.status !== "blocked") || null;
-    dom.slotList.innerHTML = "";
-    dom.selectedDate.textContent = slot
-      ? `${formatReadableDate(slot.date)} · ${formatSlotTime(slot) || slot.label}`
-      : "예약 가능한 일정이 없습니다.";
-
-    if (slot) {
       const item = document.createElement("p");
       item.className = "workshop-schedule-item";
       item.textContent = `${formatReadableDate(slot.date)} · ${formatSlotTime(slot) || slot.label}`;
@@ -987,6 +953,7 @@ function renderSlots() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "workshop-slot-btn";
+    button.setAttribute("aria-pressed", String(slot.key === state.selectedSlotKey));
 
     if (slot.key === state.selectedSlotKey) {
       button.classList.add("is-active");
@@ -1010,10 +977,8 @@ function renderAttendeeOptions() {
   if (!dom.attendeeCount) return;
 
   const bookingConfig = getBookingConfig();
-  const selectedSlot = getSelectedSlot() || getOpenSlotsForDate(state.selectedDate)[0] || null;
-  const maxCount = bookingConfig.type === "daily" || bookingConfig.type === "event"
-    ? Math.max(1, Math.min(bookingConfig.maxParticipants, Number(selectedSlot?.remainingCapacity || selectedSlot?.capacity || bookingConfig.dailyCapacity || 1)))
-    : Math.max(1, Math.min(bookingConfig.maxParticipants, 100));
+  const selectedSlot = bookingConfig.type === "daily" ? getSelectedSlot() : state.workshop?.scheduleSlots?.[0];
+  const maxCount = Math.max(1, Math.min(bookingConfig.maxParticipants, Number(selectedSlot?.remainingCapacity ?? selectedSlot?.capacity ?? 1)));
   const previousValue = Number(dom.attendeeCount.value || 1);
   dom.attendeeCount.innerHTML = "";
 
@@ -1025,7 +990,7 @@ function renderAttendeeOptions() {
   }
 
   dom.attendeeCount.value = String(Math.min(previousValue, maxCount));
-  dom.attendeeCount.disabled = (bookingConfig.type === "daily" || bookingConfig.type === "event") && !selectedSlot;
+  dom.attendeeCount.disabled = !selectedSlot || selectedSlot.status === "blocked";
   updateBookingPrice();
 }
 
@@ -1036,12 +1001,9 @@ function updateBookingPrice() {
 
   if (bookingConfig.type === "daily") {
     const selectedPrice = Number(bookingConfig.attendeePrices[count] || 0);
-    const isOpen = dom.allowAdditionalAttendees?.checked === true;
     dom.bookingPrice.hidden = selectedPrice <= 0;
     dom.bookingPrice.textContent = selectedPrice > 0
-      ? isOpen
-        ? `최종 인원이 확정된 뒤 참가비를 안내합니다. 현재 ${count}인 기준 총액은 ${formatCurrency(selectedPrice)}입니다.`
-        : `${count}인 기준 ${formatCurrency(selectedPrice)}`
+      ? `${count}인 총액 ${formatCurrency(selectedPrice)}`
       : "";
     return;
   }
@@ -1049,7 +1011,7 @@ function updateBookingPrice() {
   const price = Number(bookingConfig.fixedPrice || state.workshop?.price || 0);
   if (bookingConfig.type === "event" || bookingConfig.type === "multiSession") {
     dom.bookingPrice.hidden = price <= 0;
-    dom.bookingPrice.textContent = price > 0 ? `참가비 ${formatCurrency(price)}` : "";
+    dom.bookingPrice.textContent = price > 0 ? `${count}인 · 전체 ${state.workshop.scheduleSlots.length}회 · ${formatCurrency(price * count)}` : "";
     return;
   }
 }
@@ -1061,11 +1023,10 @@ function updateSubmitState() {
     return;
   }
   const bookingType = getBookingConfig().type;
-  dom.submit.disabled = bookingType === "event"
-    ? !(state.workshop?.scheduleSlots || []).some((slot) => slot.status !== "blocked")
-    : bookingType === "daily"
-      ? !state.selectedDate
-      : !(state.workshop?.scheduleSlots || []).some((slot) => slot.status !== "blocked");
+  const slots = state.workshop?.scheduleSlots || [];
+  dom.submit.disabled = bookingType === "daily"
+    ? !getSelectedSlot() || getSelectedSlot().status === "blocked"
+    : !slots.length || slots.some((slot) => slot.status === "blocked");
 }
 
 function applyViewer(viewer) {
@@ -1089,20 +1050,11 @@ function renderBookingRail() {
   renderCalendar();
   renderSlots();
   renderAttendeeOptions();
-  if (dom.joinPolicyField) {
-    dom.joinPolicyField.hidden = bookingConfig.type !== "daily";
-  }
   if (dom.calendarShell) {
     dom.calendarShell.hidden = bookingConfig.type !== "daily";
   }
   if (dom.submit) {
-    dom.submit.textContent = bookingConfig.type === "daily"
-      ? dom.allowAdditionalAttendees?.checked
-        ? "추가 모집 신청하기"
-        : "결제하기"
-      : bookingConfig.type === "multiSession"
-        ? "과정 결제하기"
-        : "결제하기";
+    dom.submit.textContent = bookingConfig.type === "daily" ? "결제하기" : "전체 회차 결제하기";
   }
   updateSubmitState();
 }
@@ -1111,6 +1063,8 @@ function openBookingRail() {
   state.bookingOpen = true;
   document.body.classList.add("workshop-booking-open");
   dom.rail?.setAttribute("aria-hidden", "false");
+  dom.rail.inert = false;
+  lockBodyScroll("workshop-booking");
 
   if (!state.selectedDate) {
     state.selectedDate = findFirstAvailableDate();
@@ -1122,12 +1076,15 @@ function openBookingRail() {
   }
 
   renderBookingRail();
+  dom.railClose?.focus();
 }
 
 function closeBookingRail() {
   state.bookingOpen = false;
   document.body.classList.remove("workshop-booking-open");
   dom.rail?.setAttribute("aria-hidden", "true");
+  dom.rail.inert = true;
+  unlockBodyScroll("workshop-booking");
 }
 
 async function loadWorkshop() {
@@ -1169,13 +1126,18 @@ function attachEvents() {
 
   dom.cancel?.addEventListener("click", closeBookingRail);
   dom.attendeeCount?.addEventListener("change", updateBookingPrice);
-  dom.allowAdditionalAttendees?.addEventListener("change", renderBookingRail);
+  document.addEventListener("keydown", (event) => {
+    if (state.bookingOpen && event.key === "Escape") {
+      closeBookingRail();
+      dom.apply?.focus();
+    }
+  });
 
   dom.form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const bookingConfig = getBookingConfig();
-    if (bookingConfig.type === "daily" && !state.selectedDate) {
-      setFeedback("희망 날짜를 선택해 주세요.", "error");
+    if (bookingConfig.type === "daily" && !getSelectedSlot()) {
+      setFeedback("희망 날짜와 시간을 선택해 주세요.", "error");
       return;
     }
 
@@ -1192,8 +1154,7 @@ function attachEvents() {
       };
       if (bookingConfig.type === "daily") {
         body.requestedDate = state.selectedDate;
-        body.allowAdditionalAttendees = dom.allowAdditionalAttendees?.checked === true;
-        body.joinPolicy = body.allowAdditionalAttendees ? "open" : "private";
+        body.slotKey = state.selectedSlotKey;
       }
 
       const payload = await requestJson("./api/workshops/reservations", {
@@ -1217,11 +1178,7 @@ function attachEvents() {
 
       renderBookingRail();
       setFeedback(
-        bookingConfig.type === "daily" && dom.allowAdditionalAttendees?.checked
-          ? "추가 모집 신청이 완료되었습니다. 최종 인원 확정 후 결제 안내를 보내드립니다."
-          : payload?.linkedToAccount
-            ? "예약이 완료되었습니다. account 페이지에서 바로 확인할 수 있습니다."
-            : "예약이 완료되었습니다. 같은 이메일로 로그인하면 account 페이지에서 확인할 수 있습니다.",
+        "예약이 완료되었습니다. My Oalum에서 확인할 수 있습니다.",
         "success",
       );
     } catch (error) {
@@ -1241,7 +1198,7 @@ async function init() {
     state.workshop = workshop;
     state.monthKeys = deriveMonthKeys(workshop.scheduleSlots || []);
     state.selectedDate = findFirstAvailableDate();
-    state.selectedSlotKey = getBookingConfig().type === "event"
+    state.selectedSlotKey = getBookingConfig().type === "daily"
       ? getOpenSlotsForDate(state.selectedDate)[0]?.key || ""
       : "";
     renderWorkshopDetails(workshop);

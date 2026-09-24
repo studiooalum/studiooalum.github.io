@@ -10,10 +10,11 @@
 
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/layout.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
   <link rel="stylesheet" href="./runtime/storefront/styles/workshop-admin-20260816-01.css">
+  <link rel="stylesheet" href="./runtime/storefront/styles/workshop-operations-20260924.css">
   <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-02"></script>
 </head>
 <body class="fulfillment-page workshop-admin-page">
@@ -56,7 +57,8 @@
           <nav class="workshop-admin-mode-tabs" role="tablist" aria-label="워크숍 관리 모드">
             <button type="button" class="workshop-admin-mode-tab is-active js-workshop-admin-mode-btn" data-mode="workshops" role="tab" aria-selected="true">워크숍 구성</button>
             <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="reservations" role="tab" aria-selected="false">예약 관리</button>
-            <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="groups" role="tab" aria-selected="false">그룹 모집</button>
+            <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="inquiries" role="tab" aria-selected="false">맞춤 워크샵</button>
+            <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="groups" role="tab" aria-selected="false" hidden>기존 그룹 내역</button>
             <button type="button" class="workshop-admin-mode-tab js-workshop-admin-mode-btn" data-mode="blocked-dates" role="tab" aria-selected="false">차단 일정</button>
           </nav>
         </section>
@@ -83,7 +85,6 @@
               <h2 class="fulfillment-subheading">워크숍 편집</h2>
               <form class="fulfillment-form js-workshop-admin-content-form" id="workshopEditorForm">
                 <input type="hidden" name="id">
-                <input type="hidden" name="slug">
                 <input type="hidden" name="publishedAt">
                 <input type="hidden" name="sourceMode" value="d1-r2-ready">
 
@@ -143,9 +144,8 @@
                     <label class="fulfillment-field workshop-admin-booking-mode-field">
                       <span>워크숍 유형</span>
                       <select name="workshopType" class="js-workshop-admin-booking-mode">
-                        <option value="daily">일일 워크샵</option>
-                        <option value="event">일일 워크샵 이벤트</option>
-                        <option value="multiSession">다회차 워크샵</option>
+                        <option value="daily">원데이클래스</option>
+                        <option value="event">오알룸 워크샵</option>
                       </select>
                     </label>
                     <div class="workshop-admin-booking-config js-workshop-admin-daily-config">
@@ -159,8 +159,8 @@
                           <input type="time" name="dailyEndTime" value="13:00">
                         </label>
                         <label class="fulfillment-field">
-                          <span>날짜별 최대 인원</span>
-                          <input type="number" name="dailyCapacity" min="1" max="4" step="1" value="4">
+                          <span>팀별 최대 인원</span>
+                          <input type="number" name="dailyCapacity" min="1" max="100" step="1" value="4">
                         </label>
                         <label class="fulfillment-field">
                           <span>예약 가능 개월 수</span>
@@ -168,21 +168,21 @@
                         </label>
                       </div>
                       <div class="workshop-admin-grid workshop-admin-grid--four">
-                        <label class="fulfillment-field"><span>1인 가격</span><input type="number" name="priceOne" min="0" step="1000" value="120000"></label>
-                        <label class="fulfillment-field"><span>2인 가격</span><input type="number" name="priceTwo" min="0" step="1000" value="200000"></label>
-                        <label class="fulfillment-field"><span>3인 가격</span><input type="number" name="priceThree" min="0" step="1000" value="270000"></label>
-                        <label class="fulfillment-field"><span>4인 가격</span><input type="number" name="priceFour" min="0" step="1000" value="300000"></label>
+                        <label class="fulfillment-field"><span>1인 기본 가격</span><input type="number" name="priceOne" min="0" step="1000"></label>
+                        <label class="fulfillment-field"><span>2인 총액</span><input type="number" name="priceTwo" min="0" step="1000"></label>
+                        <label class="fulfillment-field"><span>3인 총액</span><input type="number" name="priceThree" min="0" step="1000"></label>
+                        <label class="fulfillment-field"><span>4인 총액</span><input type="number" name="priceFour" min="0" step="1000"></label>
                       </div>
-                      <p class="fulfillment-copy">일일 워크샵은 신청자가 private 또는 추가 모집을 직접 선택합니다. 추가 모집의 최종 금액은 정원이 차거나 관리자가 마감한 뒤 확정됩니다.</p>
+                      <div id="workshopDailyTimes"></div>
+                      <button type="button" id="workshopAddDailyTime" class="fulfillment-btn fulfillment-btn--secondary">시간대 추가</button>
                     </div>
                     <div class="workshop-admin-booking-config js-workshop-admin-scheduled-config">
                       <div class="workshop-admin-grid workshop-admin-grid--four">
-                        <label class="fulfillment-field"><span>고정 가격</span><input type="number" name="fixedPrice" min="0" step="1000" value="0"></label>
+                        <label class="fulfillment-field"><span>1인 전체 과정 가격</span><input type="number" name="fixedPrice" min="0" step="1000" value="0"></label>
                         <label class="fulfillment-field"><span>최소 모집 인원</span><input type="number" name="minParticipants" min="1" max="100" step="1" value="1"></label>
                         <label class="fulfillment-field"><span>최대 모집 인원</span><input type="number" name="maxParticipants" min="1" max="100" step="1" value="4"></label>
                         <label class="fulfillment-field"><span>결제 기한 (시간)</span><input type="number" name="paymentDeadlineHours" min="1" max="720" step="1" value="48"></label>
                       </div>
-                      <p class="fulfillment-copy">고정형과 다회차는 고정 가격으로 결제하며, 날짜 신청형은 그룹 총액 티어를 사용합니다.</p>
                     </div>
                   </div>
                 </details>
@@ -196,14 +196,8 @@
                         <p class="fulfillment-copy js-workshop-admin-slot-copy">일일 워크샵 이벤트의 날짜, 시간, 정원을 설정하세요.</p>
                       </div>
                       <div class="workshop-admin-section-actions">
-                        <label class="fulfillment-field">
-                          <span>기본 정원</span>
-                          <input type="number" name="maxCapacity" min="1" max="100" step="1" value="4">
-                        </label>
-                        <label class="fulfillment-field">
-                          <span>게시 가격</span>
-                          <input type="number" name="price" min="0" step="1000" value="0">
-                        </label>
+                        <input type="hidden" name="maxCapacity" value="4">
+                        <input type="hidden" name="price" value="0">
                         <button type="button" class="fulfillment-btn fulfillment-btn--secondary js-workshop-admin-slot-add-btn" hidden>세션 추가</button>
                       </div>
                     </div>
@@ -372,6 +366,15 @@
           </section>
         </section>
 
+        <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden data-workshop-admin-mode="inquiries">
+          <h2 class="fulfillment-subheading">맞춤 워크샵</h2>
+          <img id="customWorkshopImagePreview" class="workshop-custom-preview" alt="맞춤 워크샵 대표 이미지" hidden>
+          <label class="fulfillment-field"><span>대표 이미지</span><input id="customWorkshopImageInput" type="file" accept="image/jpeg,image/png,image/webp,image/avif"></label>
+          <p id="customWorkshopImageStatus" class="fulfillment-status" role="status"></p>
+          <h2 class="fulfillment-subheading">문의 접수함</h2>
+          <div id="workshopInquiryList"></div>
+        </section>
+
         <section class="fulfillment-panel" data-workshop-admin-auth-guard hidden data-workshop-admin-mode="groups">
           <div class="workshop-admin-section-head">
             <div>
@@ -411,7 +414,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/workshop-admin-20260816-03.js?v=20260818-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/workshop-admin-20260924.js"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260918-01";
 
