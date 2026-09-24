@@ -115,9 +115,13 @@ test("My Oalum keeps logout in the account page and removes it from the GNB", as
   assert.match(html, />회원정보 수정<\/a>/);
   assert.doesNotMatch(html, /회원정보 수정\s*<span[^>]*>→<\/span>/);
   assert.match(html, /class="account-overview__link js-account-logout">로그아웃<\/button>/);
-  assert.match(stylesheet, /\.account-overview__actions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*8px/);
-  assert.match(stylesheet, /\.account-overview__link\s*\{[\s\S]*?width:\s*100%/);
-  assert.match(stylesheet, /\.account-dashboard-card\s*\{[\s\S]*?border-top:\s*1px solid #111/);
+  assert.match(stylesheet, /\.account-overview__actions\s*\{[^}]*display:\s*grid;[^}]*justify-items:\s*start/);
+  assert.match(stylesheet, /\.account-overview__link\s*\{[^}]*text-decoration:\s*underline/);
+  assert.match(stylesheet, /\.account-overview__avatar > span\s*\{[^}]*place-items:\s*center/);
+  assert.match(stylesheet, /\.account-dashboard-card\s*\{[^}]*aspect-ratio:\s*1\s*\/\s*1/);
+  assert.match(stylesheet, /\.account-dashboard-card--orders\s*\{[^}]*background:\s*#e34234/);
+  assert.match(stylesheet, /\.account-dashboard-card--classes\s*\{[^}]*background:\s*#ffe74d/);
+  assert.match(stylesheet, /\.account-dashboard-card--points\s*\{[^}]*background:\s*#c9d3d6/);
   assert.doesNotMatch(html, /account-overview__kicker|account-overview__title/);
   assert.match(html, /data-account-view-link="repairs"/);
   assert.match(html, /data-account-detail="repairs"/);

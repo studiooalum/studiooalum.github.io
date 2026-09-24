@@ -18,7 +18,7 @@ const cartPagePaths = [
   "workshop.html",
   "workshops.html",
 ];
-const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss] = await Promise.all([
+const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, productCss, actionsCss] = await Promise.all([
   read("../edition.html"),
   read("../runtime/storefront/scripts/edition-20260706-06.js"),
   read("../runtime/storefront/styles/edition.css"),
@@ -27,6 +27,8 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
   read("../runtime/storefront/scripts/newsletter-20260818-02.js"),
   read("../runtime/storefront/styles/newsletter-20260818-03.css"),
   read("../runtime/storefront/styles/cart-20260818-02.css"),
+  read("../runtime/storefront/styles/product.css"),
+  read("../runtime/storefront/styles/actions-20260924.css"),
 ]);
 const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}`)));
 
@@ -67,4 +69,15 @@ test("cart quantity controls share one vertical center", () => {
   cartPages.forEach((html, index) => {
     assert.match(html, /cart-20260818-02\.css\?v=20260915-02/, `stale cart stylesheet in ${cartPagePaths[index]}`);
   });
+});
+
+test("product overview copy stays stacked in the first desktop column", () => {
+  assert.match(productCss, /@media \(min-width:\s*900px\)[\s\S]*?\.product-title,\s*\.product-intro,\s*\.product-meta\s*\{\s*grid-column:\s*1;/);
+  assert.doesNotMatch(productCss, /\.product-intro\s*\{\s*grid-column:\s*2/);
+  assert.doesNotMatch(productCss, /\.product-meta\s*\{\s*grid-column:\s*3/);
+});
+
+test("shared command buttons do not add a hover outline", () => {
+  assert.doesNotMatch(actionsCss, /outline:\s*1px solid #111/);
+  assert.doesNotMatch(actionsCss.slice(0, actionsCss.indexOf(") {")), /\.account-overview__link/);
 });

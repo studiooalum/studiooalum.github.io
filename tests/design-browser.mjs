@@ -57,10 +57,14 @@ try {
       const selectors = ["#productTitle", "#productIntro", "#productMeta"];
       return selectors.map((selector) => {
         const rect = document.querySelector(selector).getBoundingClientRect();
-        return { left: rect.left, top: rect.top, fontSize: getComputedStyle(document.querySelector(selector)).fontSize };
+        return { left: rect.left, top: rect.top, width: rect.width, fontSize: getComputedStyle(document.querySelector(selector)).fontSize };
       });
     });
-    if (label === "desktop") assert.ok(productLayout[0].left < productLayout[1].left && productLayout[1].left < productLayout[2].left, "product copy must occupy columns 1, 2, 3");
+    if (label === "desktop") {
+      assert.ok(productLayout.every((item) => Math.abs(item.left - productLayout[0].left) <= 1), "product copy must share column one");
+      assert.ok(productLayout.every((item) => Math.abs(item.width - productLayout[0].width) <= 1), "product copy must match the first-column width");
+      assert.ok(productLayout[0].top < productLayout[1].top && productLayout[1].top < productLayout[2].top, "product copy must remain vertically stacked");
+    }
     await shot("product-grid");
 
     await page.goto(`${base}/shop`);
@@ -82,6 +86,12 @@ try {
     assert.ok(actionButtons.every((button) => button.height >= 46));
     assert.ok(actionButtons[1].top >= actionButtons[0].top + actionButtons[0].height, "two command buttons must stack vertically");
     assert.ok(Math.abs(actionButtons[0].width - actionButtons[1].width) <= 1);
+    await page.locator(".edition-actions .edition-btn").first().hover();
+    const actionHoverOutline = await page.locator(".edition-actions .edition-btn").first().evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { style: style.outlineStyle, width: style.outlineWidth };
+    });
+    assert.deepEqual(actionHoverOutline, { style: "none", width: "0px" });
     assert.equal(await page.locator(".edition-recommendation__title").innerText(), "you may also like");
     assert.equal(await page.locator(".edition-recommendation__title").evaluate((element) => getComputedStyle(element).fontSize), "16px");
     await shot("edition-actions");
@@ -97,12 +107,45 @@ try {
     assert.equal(repairType.body, "16px");
     assert.ok(repairType.buttonHeight >= 46);
     await shot("repair-studio");
+    await page.locator("#repairApplyBtn").click();
+    const requestNote = page.locator('textarea[name="budgetNote"]');
+    await requestNote.waitFor();
+    assert.equal(await requestNote.getAttribute("placeholder"), "의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다. 원치 않으시면 기타 요청사항에 미리 말씀해 주세요.");
+    assert.equal(await page.locator('[name="archiveConsentChoice"]').count(), 0);
+    await shot("repair-request");
 
     await page.goto(`${base}/account`);
     await page.locator(".js-account-member-layout:not([hidden])").waitFor();
     assert.equal(await page.locator(".account-overview__title, .account-overview__kicker").count(), 0);
     assert.equal(await page.locator(".js-account-overview-phone").innerText(), "-");
     assert.equal(await page.locator(".js-account-overview-address").innerText(), "-");
+    const accountPresentation = await page.evaluate(() => {
+      const avatar = document.querySelector(".account-overview__avatar").getBoundingClientRect();
+      const avatarVisual = document.querySelector(".js-account-avatar-image:not([hidden]), .js-account-avatar:not([hidden])").getBoundingClientRect();
+      const links = [...document.querySelectorAll(".account-overview__link")].map((element) => {
+        const style = getComputedStyle(element);
+        return { decoration: style.textDecorationLine, background: style.backgroundColor, border: style.borderTopWidth };
+      });
+      const cardColor = (selector) => getComputedStyle(document.querySelector(selector)).backgroundColor;
+      return {
+        avatarCenter: { x: avatar.left + avatar.width / 2, y: avatar.top + avatar.height / 2 },
+        visualCenter: { x: avatarVisual.left + avatarVisual.width / 2, y: avatarVisual.top + avatarVisual.height / 2 },
+        links,
+        colors: {
+          orders: cardColor(".account-dashboard-card--orders"),
+          classes: cardColor(".account-dashboard-card--classes"),
+          points: cardColor(".account-dashboard-card--points"),
+        },
+      };
+    });
+    assert.ok(Math.abs(accountPresentation.avatarCenter.x - accountPresentation.visualCenter.x) <= 1);
+    assert.ok(Math.abs(accountPresentation.avatarCenter.y - accountPresentation.visualCenter.y) <= 1);
+    assert.ok(accountPresentation.links.every((link) => link.decoration.includes("underline") && link.background === "rgba(0, 0, 0, 0)" && link.border === "0px"));
+    assert.deepEqual(accountPresentation.colors, {
+      orders: "rgb(227, 66, 52)",
+      classes: "rgb(255, 231, 77)",
+      points: "rgb(201, 211, 214)",
+    });
     await page.locator(".js-account-avatar-button").click();
     await page.locator(".js-account-avatar-input").setInputFiles({ name: "profile.webp", mimeType: "image/webp", buffer: Buffer.from("profile-browser-image") });
     await page.locator(".js-account-avatar-image:not([hidden])").waitFor();

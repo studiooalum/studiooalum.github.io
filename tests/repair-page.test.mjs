@@ -155,12 +155,11 @@ test("country choices use Korean alphabetical order with a neutral direct-entry 
   assert.match(repairFormCss, /\.repair-request-form \.repair-field\[hidden\]\s*\{[^}]*display:\s*none/);
 });
 
-test("repair image publishing requires explicit optional consent", () => {
-  assert.match(repairHtml, /name="archiveConsentChoice" value="agreed" required/);
-  assert.match(repairHtml, /name="archiveConsentChoice" value="declined" required/);
-  assert.match(repairHtml, /Archive와 SNS에 작업 사례로 소개/);
-  assert.doesNotMatch(repairHtml, /수선 이용에 불이익/);
-  assert.doesNotMatch(repairHtml, /원치 않으시면 기타 요청사항/);
+test("repair photo-use notice appears in the optional request placeholder", () => {
+  assert.match(repairHtml, /name="budgetNote"[^>]+placeholder="의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다\. 원치 않으시면 기타 요청사항에 미리 말씀해 주세요\."/);
+  assert.doesNotMatch(repairHtml, /name="archiveConsentChoice"/);
+  assert.doesNotMatch(repairHtml, /작업 사진 기록/);
+  assert.match(repairHtml, /name="privacyConsent" required/);
   assert.match(repairAdminSource, /archiveConsentStatus === "declined" \? "공개하지 않음" : "동의 확인 없음"/);
 });
 
