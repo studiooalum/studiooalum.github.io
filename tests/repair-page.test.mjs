@@ -51,6 +51,7 @@ test("repair page keeps the Figma accordion content contract", () => {
   }
   assert.doesNotMatch(repairHtml, /\((?:소|중|대)\)\d/);
   assert.doesNotMatch(repairHtml, /사시코<br>비저블멘딩/);
+  assert.ok(repairHtml.indexOf("사시코") < repairHtml.indexOf("보로</span>"), "사시코 should appear before 보로");
 
   for (const step of [
     "<li><span>1.</span>신청폼 작성</li>",
