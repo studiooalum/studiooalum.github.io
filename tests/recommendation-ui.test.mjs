@@ -67,7 +67,7 @@ test("cart quantity controls share one vertical center", () => {
   assert.match(cartCss, /\.cart-item__qty > span\s*\{[\s\S]*?height:\s*22px;[\s\S]*?align-items:\s*center;[\s\S]*?transform:\s*translateY\(1px\);/);
   assert.match(cartCss, /\.cart-item__qty-btn\s*\{[\s\S]*?padding:\s*0;[\s\S]*?font-size:\s*11px;[\s\S]*?line-height:\s*1;/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260915-02/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260925-03/, `stale cart stylesheet in ${cartPagePaths[index]}`);
   });
 });
 

@@ -1,0 +1,17 @@
+body.account-page :is(
+  .account-panel--login .account-panel-actions--auth > .account-btn,
+  .account-panel--guest .account-form > .account-btn
+),
+body.workshop-page .workshop-summary-card__action .workshop-apply-btn,
+body.edition-page .edition-actions > .edition-btn,
+body.checkout-page .checkout-submit-btn {
+  width: 50% !important;
+  inline-size: 50% !important;
+  max-width: 50% !important;
+  max-inline-size: 50% !important;
+  justify-self: start;
+}
+
+body.checkout-page .checkout-submit-btn {
+  font-weight: 400 !important;
+}

@@ -37,8 +37,12 @@ const workshopDetailCss = await readFile(
   new URL("../runtime/storefront/styles/workshop-20260925-01.css", import.meta.url),
   "utf8",
 );
-const formControlsCss = await readFile(
-  new URL("../runtime/storefront/styles/form-controls-20260925-01.css", import.meta.url),
+const storefrontActionsCss = await readFile(
+  new URL("../runtime/storefront/styles/storefront-actions-20260925-02.css", import.meta.url),
+  "utf8",
+);
+const cartCss = await readFile(
+  new URL("../runtime/storefront/styles/cart-20260818-02.css", import.meta.url),
   "utf8",
 );
 const workshopJs = await readFile(
@@ -74,7 +78,6 @@ test("workshop detail keeps the information-first page structure", () => {
     "workshopDescription",
     "workshopMaterials",
     "workshopLocation",
-    "workshopBring",
     "workshopPrice",
     "workshopDuration",
     "workshopLevel",
@@ -133,10 +136,12 @@ test("workshop details mirror the edition columns and the application panel stay
 });
 
 test("workshop information removes the category kicker and uses one archive-like hierarchy", () => {
-  for (const label of ["소개", "제공하는 재료", "장소", "준비물", "커리큘럼", "안내"]) {
+  for (const label of ["소개", "제공하는 재료", "장소", "커리큘럼", "안내"]) {
     assert.match(workshopHtml, new RegExp(`>${label}<\\/h2>`));
   }
-  assert.match(workshopHtml, />금액<\/span>[\s\S]*?id="workshopPrice"/);
+  assert.doesNotMatch(workshopHtml, />준비물<\/h2>|id="workshopBring"/);
+  assert.doesNotMatch(workshopHtml, />금액<\/span>/);
+  assert.match(workshopHtml, /id="workshopPrice"/);
   assert.doesNotMatch(workshopHtml, /id="workshopKicker"/);
   assert.match(workshopCss, /\.workshop-schedule-overview\[hidden\]\s*\{\s*display:\s*none/);
   assert.match(workshopJs, /제공되는 재료가 없습니다\./);
@@ -146,16 +151,17 @@ test("workshop information removes the category kicker and uses one archive-like
   assert.match(workshopDetailCss, /font-size:\s*16px;[\s\S]*?line-height:\s*1\.45;[\s\S]*?text-decoration:\s*none;[\s\S]*?color:\s*#111/);
   assert.match(workshopJs, /function formatWon\(amount\)/);
   assert.match(workshopJs, /\? formatWon\(config\.attendeePrices\[1\]\)/);
+  assert.match(workshopDetailCss, /#workshopDescription p\s*\{[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(workshopDetailCss, /\.workshop-summary-card__details > div\s*\{[^}]*grid-template-columns:\s*76px minmax\(0, 1fr\);[^}]*gap:\s*0/);
 });
 
-test("customer-facing checkboxes use the compact shared control and body copy", () => {
-  assert.match(formControlsCss, /font-size:\s*13px/);
-  assert.match(formControlsCss, /line-height:\s*1\.55/);
-  assert.match(formControlsCss, /width:\s*8px/);
-  assert.match(formControlsCss, /height:\s*8px/);
-  assert.match(formControlsCss, /\.account-checkbox/);
-  assert.match(formControlsCss, /\.workshop-inquiry-consent/);
-  assert.match(formControlsCss, /\.checkout-agree__item/);
+test("storefront action boxes use half width while the cart keeps full width and repair height", () => {
+  assert.match(storefrontActionsCss, /\.account-panel--login/);
+  assert.match(storefrontActionsCss, /\.workshop-summary-card__action \.workshop-apply-btn/);
+  assert.match(storefrontActionsCss, /\.edition-actions > \.edition-btn/);
+  assert.match(storefrontActionsCss, /\.checkout-submit-btn/);
+  assert.match(storefrontActionsCss, /width:\s*50% !important/);
+  assert.match(cartCss, /\.cart-panel__checkout-btn\s*\{[^}]*height:\s*46px !important;[^}]*min-height:\s*46px !important;[^}]*font-weight:\s*400 !important/);
 });
 
 test("workshop admin keeps material fields with detail content and limits advanced settings", () => {

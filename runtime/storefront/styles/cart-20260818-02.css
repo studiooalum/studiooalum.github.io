@@ -50,7 +50,9 @@
 
 .cart-panel__checkout-btn {
   font-family: var(--font-kor-button);
-  font-weight: 600;
+  height: 46px !important;
+  min-height: 46px !important;
+  font-weight: 400 !important;
 }
 
 @media (max-width: 480px) {
