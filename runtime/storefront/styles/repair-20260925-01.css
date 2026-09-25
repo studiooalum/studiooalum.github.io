@@ -140,7 +140,7 @@ body.repair-page .repair-stage__rail .repair-basic-price-list {
 }
 
 body.repair-page .repair-stage__rail .repair-method-price-list {
-  gap: 24.8px;
+  gap: 12.4px;
 }
 
 body.repair-page .repair-stage__rail :is(.repair-basic-price-list, .repair-method-price-list) > li {

@@ -84,6 +84,7 @@ test("Basic and repair-method prices use the body type and one aligned compact g
   assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\)\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\) > li\s*\{[^}]*grid-template-columns:\s*96px 120px/);
   assert.match(repairDetailCss, /\.repair-basic-price-list > li > span:last-child,[\s\S]*?text-align:\s*right;[^}]*white-space:\s*nowrap/);
+  assert.match(repairDetailCss, /\.repair-method-price-list\s*\{[^}]*gap:\s*12\.4px;/);
   assert.doesNotMatch(repairHtml, /repair-basic-table|repair-method-matrix/);
 });
 
@@ -212,7 +213,7 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-11/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-12/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
