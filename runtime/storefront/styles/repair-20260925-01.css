@@ -383,7 +383,7 @@ body.repair-page .repair-request-form .repair-field--notes textarea {
 
 body.repair-page .repair-request-form .repair-choice-group--line > div {
   display: grid;
-  gap: 0;
+  gap: 4px;
   margin-top: 16px;
 }
 
