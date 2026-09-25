@@ -1,0 +1,35 @@
+.repair-stage__content {
+  padding-top: 0;
+}
+
+body.repair-page .repair-body-copy p,
+body.repair-page .repair-body-copy .repair-body-copy__lead,
+body.repair-page .repair-body-copy p:last-child {
+  color: #111 !important;
+  font-family: var(--font-kor-body) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  letter-spacing: var(--tracking-korean) !important;
+  line-height: 1.8 !important;
+}
+
+body.repair-page .repair-stage__content .repair-apply-btn {
+  width: 50% !important;
+  min-width: 0 !important;
+  justify-self: start;
+}
+
+body.repair-page .repair-stage__rail .repair-accordion:not([open]) > summary {
+  color: #111 !important;
+  font-family: var(--font-kor-body) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  letter-spacing: var(--tracking-korean) !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 768px) {
+  .repair-body-copy {
+    margin-top: 0;
+  }
+}

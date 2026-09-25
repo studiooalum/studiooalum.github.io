@@ -214,8 +214,8 @@ function renderDetail(shell, item) {
       <div class="archive-detail-meta__more">
         ${item.material ? `<p class="archive-detail-spec"><span>소재</span>${escapeHtml(item.material)}</p>` : ""}
         ${item.size ? `<p class="archive-detail-spec"><span>사이즈</span>${escapeHtml(item.size)}</p>` : ""}
-        <p class="archive-detail-tags">${tags.map(escapeHtml).join(" · ")}</p>
         ${item.description ? `<p class="archive-detail-description">${escapeHtml(item.description)}</p>` : ""}
+        <p class="archive-detail-tags">${tags.map(escapeHtml).join(" · ")}</p>
       </div>
     </div>
   `;

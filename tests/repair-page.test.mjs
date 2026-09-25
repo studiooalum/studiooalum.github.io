@@ -11,6 +11,10 @@ const repairFormCss = await readFile(
   new URL("../runtime/storefront/styles/repair-20260922-01.css", import.meta.url),
   "utf8",
 );
+const repairDetailCss = await readFile(
+  new URL("../runtime/storefront/styles/repair-20260925-01.css", import.meta.url),
+  "utf8",
+);
 const repairRequestSource = await readFile(
   new URL("../runtime/storefront/scripts/repair-20260817-04-core.js", import.meta.url),
   "utf8",
@@ -192,4 +196,14 @@ test("collapsed desktop accordion titles use compact spacing without changing op
     /@media \(min-width:\s*960px\)[\s\S]*?\.repair-stage__rail \.repair-accordion:not\(\[open\]\) > summary\s*\{[^}]*min-height:\s*42px;[^}]*padding:\s*9px 0;/,
   );
   assert.match(repairCss, /\.repair-stage__rail \.repair-accordion > div\s*\{[^}]*padding:\s*0 0 24px;/);
+});
+
+test("repair introduction and collapsed accordion follow the archive body typography", () => {
+  assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
+  assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-01/);
+  assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
+  assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*1\.8 !important;/);
+  assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
+  assert.match(repairDetailCss, /\.repair-accordion:not\(\[open\]\) > summary\s*\{[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.45 !important;/);
 });

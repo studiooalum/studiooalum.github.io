@@ -89,6 +89,10 @@ test("Archive category navigation remains on the list and hides on details", asy
   assert.match(controller, /class="archive-detail-spec"><span>사이즈<\/span>/);
   assert.match(controller, /class="archive-detail-tags">/);
   assert.doesNotMatch(controller, /<span>Tags<\/span>/);
+  assert.ok(
+    controller.indexOf('class="archive-detail-description"') < controller.indexOf('class="archive-detail-tags"'),
+    "archive description should appear before its tag link",
+  );
   assert.match(stylesheet, /\.archive-detail-mode \.archive-tags[\s\S]*display:\s*none/);
   assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec[\s\S]*grid-template-columns:\s*76px minmax\(0, 1fr\)/);
   assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec[\s\S]*font-size:\s*16px/);
