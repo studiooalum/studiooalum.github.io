@@ -58,6 +58,10 @@ body.repair-page .repair-stage__rail .repair-process-list span {
   line-height: var(--type-body-leading, 1.55) !important;
 }
 
+body.repair-page .repair-stage__rail .repair-process-list {
+  gap: 0;
+}
+
 body.repair-page .repair-stage__rail .repair-process-note {
   margin-top: 24.8px;
   color: #111 !important;
