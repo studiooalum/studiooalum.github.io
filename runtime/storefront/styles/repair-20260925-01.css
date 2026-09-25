@@ -384,7 +384,7 @@ body.repair-page .repair-request-form .repair-field--notes textarea {
 body.repair-page .repair-request-form .repair-choice-group--line > div {
   display: grid;
   gap: 0;
-  margin-top: 0;
+  margin-top: 16px;
 }
 
 body.repair-page .repair-request-form .repair-choice-group--line label {
@@ -411,7 +411,7 @@ body.repair-page .repair-request-form .repair-choice-group--line input[type="rad
 
 body.repair-page .repair-request-form__section--images {
   display: grid;
-  gap: 0;
+  gap: 16px;
   border-bottom: 0;
   padding: 0;
 }
@@ -452,14 +452,14 @@ body.repair-page .repair-request-form .repair-choice-group--line {
 }
 
 body.repair-page .repair-request-form {
-  gap: 0;
+  gap: 16px;
 }
 
 body.repair-page .repair-request-form__consent {
   display: grid;
   gap: 4px;
   border: 0;
-  padding: 0 0 16px;
+  padding: 0;
 }
 
 body.repair-page .repair-request-form .repair-checkbox {

@@ -126,8 +126,8 @@ test("repair request follows the compact line-form reference", () => {
     assert.match(repairHtml, new RegExp(`<span>${field} <span class="repair-required-mark"`));
   }
 
-  assert.match(repairHtml, /<select class="js-repair-country" name="country"[^>]+required>[\s\S]*?<option value="대한민국" selected>/);
-  assert.match(repairHtml, /js-repair-address-search[^>]*>주소 검색<\/button>/);
+  assert.match(repairHtml, /<input class="js-repair-country" type="text" name="country"[^>]+value="대한민국" readonly required>/);
+  assert.match(repairHtml, /js-repair-address-search[^>]*>주소검색<\/button>/);
   assert.match(repairHtml, /t1\.kakaocdn\.net\/mapjsapi\/bundle\/postcode\/prod\/postcode\.v2\.js/);
   assert.match(repairHtml, /name="postalCode"[^>]+readonly required/);
   assert.doesNotMatch(repairHtml, /name="postalCode"[^>]+placeholder=/);
@@ -148,7 +148,6 @@ test("repair request follows the compact line-form reference", () => {
     ["customerName", "이름"],
     ["phone", "전화번호"],
     ["email", "이메일"],
-    ["countryCustom", "국가명"],
     ["addressLine1", "주소"],
     ["addressLine2", "상세 주소"],
   ]) {
@@ -156,7 +155,7 @@ test("repair request follows the compact line-form reference", () => {
   }
 });
 
-test("repair request supports postcode search, international entry, account autofill, and KR phone formatting", () => {
+test("repair request supports postcode search, account autofill, and KR phone formatting", () => {
   assert.match(repairRequestSource, /new window\.daum\.Postcode/);
   assert.match(repairRequestSource, /dom\.postalCode\.readOnly = korean/);
   assert.match(repairRequestSource, /dom\.addressLine1\.readOnly = korean/);
@@ -168,16 +167,9 @@ test("repair request supports postcode search, international entry, account auto
   assert.match(accountAddressApiSource, /phone: user\.phone/);
 });
 
-test("country choices use Korean alphabetical order with a neutral direct-entry fallback", () => {
-  const countrySelect = repairHtml.match(/<select class="js-repair-country"[\s\S]*?<\/select>/)?.[0] || "";
-  const labels = [...countrySelect.matchAll(/<option value="(?!__direct__)[^"]+"(?: selected)?>([^<]+)<\/option>/g)].map((match) => match[1]);
-  const sorted = [...labels].sort(new Intl.Collator("ko-KR").compare);
-  assert.deepEqual(labels, sorted);
-  assert.doesNotMatch(countrySelect, /기타 국가/);
-  assert.match(countrySelect, /목록에 없는 국가 직접 입력/);
-  assert.match(repairHtml, /name="countryCustom"/);
-  assert.match(repairRequestSource, /countryCustom\.required = customCountry/);
-  assert.match(repairFormCss, /\.repair-request-form \.repair-field\[hidden\]\s*\{[^}]*display:\s*none/);
+test("repair request keeps Korea as plain fixed text", () => {
+  assert.match(repairHtml, /class="js-repair-country"[^>]+value="대한민국" readonly required/);
+  assert.doesNotMatch(repairHtml, /<select class="js-repair-country"|name="countryCustom"|목록에 없는 국가 직접 입력/);
 });
 
 test("repair request uses separate address and photo consent boxes", () => {
@@ -225,7 +217,7 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260926-03/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260926-04/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);

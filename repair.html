@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260909-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260921-05">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260922-03">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260926-03">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260926-04">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -139,28 +139,13 @@
               </label>
               <label class="repair-field repair-field--line">
                 <span>국가 <span class="repair-required-mark" aria-hidden="true">*</span></span>
-                <select class="js-repair-country" name="country" autocomplete="country-name" required>
-                  <option value="네덜란드">네덜란드</option><option value="노르웨이">노르웨이</option><option value="뉴질랜드">뉴질랜드</option>
-                  <option value="대만">대만</option><option value="대한민국" selected>대한민국</option><option value="덴마크">덴마크</option>
-                  <option value="독일">독일</option><option value="말레이시아">말레이시아</option><option value="미국">미국</option>
-                  <option value="베트남">베트남</option><option value="스웨덴">스웨덴</option><option value="스위스">스위스</option>
-                  <option value="스페인">스페인</option><option value="싱가포르">싱가포르</option><option value="영국">영국</option>
-                  <option value="이탈리아">이탈리아</option><option value="인도">인도</option><option value="인도네시아">인도네시아</option>
-                  <option value="일본">일본</option><option value="중국">중국</option><option value="캐나다">캐나다</option>
-                  <option value="태국">태국</option><option value="프랑스">프랑스</option><option value="핀란드">핀란드</option>
-                  <option value="필리핀">필리핀</option><option value="호주">호주</option><option value="홍콩">홍콩</option>
-                  <option value="__direct__">목록에 없는 국가 직접 입력</option>
-                </select>
-              </label>
-              <label class="repair-field repair-field--line js-repair-country-custom-field" hidden>
-                <span>국가명 <span class="repair-required-mark" aria-hidden="true">*</span></span>
-                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120" placeholder="국가명">
+                <input class="js-repair-country" type="text" name="country" autocomplete="country-name" value="대한민국" readonly required>
               </label>
               <label class="repair-field repair-field--line">
                 <span>우편번호 <span class="repair-required-mark" aria-hidden="true">*</span></span>
                 <div class="repair-address-search-row">
                   <input class="js-repair-postal-code" type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" maxlength="20" readonly required>
-                  <button class="repair-address-search-button js-repair-address-search" type="button">주소 검색</button>
+                  <button class="repair-address-search-button js-repair-address-search" type="button">주소검색</button>
                 </div>
               </label>
               <label class="repair-field repair-field--line">
