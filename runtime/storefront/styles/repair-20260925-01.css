@@ -193,6 +193,117 @@ body.repair-page .repair-stage__rail .repair-price-notes p {
   letter-spacing: inherit;
 }
 
+body.repair-page .repair-request-rail__header {
+  min-height: 52px;
+  justify-content: flex-end;
+  padding: 14px 18px 0;
+}
+
+body.repair-page .repair-request-rail__notice {
+  margin: 0 0 32px;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-request-form__section--identity .repair-request-form__grid {
+  gap: 0;
+}
+
+body.repair-page .repair-request-form .repair-field--line {
+  display: grid;
+  grid-template-columns: minmax(120px, 24%) minmax(0, 1fr);
+  min-height: 49px;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #111;
+}
+
+body.repair-page .repair-request-form .repair-field--line[hidden] {
+  display: none;
+}
+
+body.repair-page .repair-request-form .repair-field--line > span,
+body.repair-page .repair-request-form .repair-field--line input,
+body.repair-page .repair-request-form .repair-field--line select,
+body.repair-page .repair-request-form .repair-address-search-button {
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-request-form .repair-field--line input,
+body.repair-page .repair-request-form .repair-field--line select {
+  min-height: 48px;
+  border: 0;
+  padding: 10px 0;
+  background: transparent;
+  outline: 0;
+}
+
+body.repair-page .repair-request-form .repair-field--line input::placeholder {
+  color: rgba(17, 17, 17, 0.3);
+  opacity: 1;
+}
+
+body.repair-page .repair-request-form .repair-field--line input:focus,
+body.repair-page .repair-request-form .repair-field--line select:focus {
+  border: 0;
+  outline: 0;
+}
+
+body.repair-page .repair-request-form .repair-field--line:focus-within {
+  border-bottom-color: #111;
+  box-shadow: 0 1px 0 #111;
+}
+
+body.repair-page .repair-request-form .repair-address-search-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+body.repair-page .repair-request-form .repair-address-search-button,
+body.repair-page .repair-request-form .repair-address-search-button:hover,
+body.repair-page .repair-request-form .repair-address-search-button:focus-visible {
+  width: auto !important;
+  min-width: 0;
+  min-height: 0 !important;
+  border: 0 !important;
+  padding: 10px 0 !important;
+  background: transparent !important;
+  color: #111 !important;
+  font-family: var(--font-kor-body) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  outline: 0;
+}
+
+body.repair-page .repair-request-form__section--identity :is(
+  .repair-field:not(.repair-field--line),
+  .repair-choice-group
+) {
+  margin-top: 14px;
+}
+
+body.repair-page .repair-request-form__section--identity .repair-field--line + .repair-field:not(.repair-field--line) {
+  margin-top: 32px;
+}
+
+@media (max-width: 560px) {
+  body.repair-page .repair-request-form .repair-field--line {
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
 @media (min-width: 960px) {
   .repair-stage__sticky {
     display: grid;

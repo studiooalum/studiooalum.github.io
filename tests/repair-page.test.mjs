@@ -118,13 +118,13 @@ test("repair accordion omits section divider lines at every viewport", () => {
 
 test("repair request separates applicant and shipping fields without changing questions 1–5", () => {
   for (const field of [
-    '<span>이름</span>',
-    '<span>전화번호</span>',
-    '<span>이메일 주소</span>',
-    '<span>국가</span>',
-    '<span>우편번호</span>',
-    '<span>주소</span>',
-    '<span>상세주소</span>',
+    '<span>이름 *</span>',
+    '<span>전화번호 *</span>',
+    '<span>이메일 주소 *</span>',
+    '<span>국가 *</span>',
+    '<span>우편번호 *</span>',
+    '<span>주소 *</span>',
+    '<span>상세주소 *</span>',
   ]) {
     assert.ok(repairHtml.includes(field), `missing request field: ${field}`);
   }
@@ -135,6 +135,11 @@ test("repair request separates applicant and shipping fields without changing qu
   assert.match(repairHtml, /name="postalCode"[^>]+readonly required/);
   assert.match(repairHtml, /name="addressLine1"[^>]+readonly required/);
   assert.doesNotMatch(repairHtml, /저장된 내 주소 없음|js-repair-use-account-address/);
+  assert.doesNotMatch(repairHtml, /<p class="repair-kicker">Request<\/p>|id="repairRequestTitle">수선 신청<\/h2>/);
+  assert.match(repairHtml, /role="dialog" aria-modal="true" aria-label="수선 신청"/);
+  assert.match(repairHtml, /접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다\./);
+  assert.doesNotMatch(repairHtml, /접수 후 물건을 보내주시면 상태를 확인하고/);
+  assert.match(repairHtml, /name="addressLine2"[^>]+required/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<(?:span|legend|h3)>([1-5]\. [^<]+)/g)].map((match) => match[1]),
     [
@@ -213,7 +218,7 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-14/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-15/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
@@ -228,6 +233,11 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /\.repair-accordion > summary::before,[\s\S]*?\.repair-accordion\[open\] > summary::before\s*\{[^}]*display:\s*none;[^}]*content:\s*none;/);
   assert.match(repairDetailCss, /\.repair-process-note\s*\{[^}]*color:\s*#111 !important;[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /\.repair-accordion--shipping > div\s*\{[^}]*gap:\s*0;/);
+  assert.match(repairDetailCss, /\.repair-request-rail__notice\s*\{[^}]*color:\s*#111;[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-size:\s*16px;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(repairDetailCss, /\.repair-field--line\s*\{[^}]*grid-template-columns:\s*minmax\(120px, 24%\) minmax\(0, 1fr\);[^}]*border-bottom:\s*1px solid #111;/);
+  assert.match(repairDetailCss, /\.repair-field--line input,[\s\S]*?\.repair-field--line select\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/);
+  assert.match(repairDetailCss, /\.repair-field--line\[hidden\]\s*\{[^}]*display:\s*none;/);
+  assert.match(repairDetailCss, /\.repair-address-search-button:focus-visible\s*\{[^}]*width:\s*auto !important;[^}]*border:\s*0 !important;[^}]*background:\s*transparent !important;/);
 });
 
 test("repair content and accordion share one desktop sticky frame", () => {

@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260909-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260921-05">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260922-03">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260925-14">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260925-15">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -107,40 +107,35 @@
 
   <aside class="repair-request-rail" id="repairRequestRail" aria-hidden="true" inert>
     <button class="repair-request-rail__backdrop" id="repairRequestBackdrop" type="button" aria-label="신청 패널 닫기"></button>
-    <div class="repair-request-rail__panel" role="dialog" aria-modal="true" aria-labelledby="repairRequestTitle">
+    <div class="repair-request-rail__panel" role="dialog" aria-modal="true" aria-label="수선 신청">
       <header class="repair-request-rail__header">
-        <div>
-          <p class="repair-kicker">Request</p>
-          <h2 id="repairRequestTitle">수선 신청</h2>
-        </div>
         <button type="button" class="repair-request-rail__close" id="repairRequestClose" aria-label="신청 패널 닫기">×</button>
       </header>
 
       <div class="repair-request-rail__body">
-        <p class="repair-request-rail__notice">접수 후 물건을 보내주시면 상태를 확인하고 수선 방향과 예상 가격을 안내드립니다.</p>
+        <p class="repair-request-rail__notice">접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다.</p>
 
         <form class="repair-request-form js-repair-form" id="repairRequestForm" enctype="multipart/form-data" novalidate>
           <div class="repair-honeypot" aria-hidden="true">
             <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
           </div>
 
-          <section class="repair-request-form__section">
-            <h3>신청 정보</h3>
+          <section class="repair-request-form__section repair-request-form__section--identity">
             <div class="repair-request-form__grid">
-              <label class="repair-field">
-                <span>이름</span>
-                <input type="text" name="customerName" autocomplete="name" maxlength="120" required>
+              <label class="repair-field repair-field--line">
+                <span>이름 *</span>
+                <input type="text" name="customerName" autocomplete="name" maxlength="120" placeholder="이름" required>
               </label>
-              <label class="repair-field">
-                <span>전화번호</span>
+              <label class="repair-field repair-field--line">
+                <span>전화번호 *</span>
                 <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="010[0-9]{8}" placeholder="01000000000" required>
               </label>
-              <label class="repair-field js-repair-email-field">
-                <span>이메일 주소</span>
-                <input class="js-repair-email-input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="320" required>
+              <label class="repair-field repair-field--line js-repair-email-field">
+                <span>이메일 주소 *</span>
+                <input class="js-repair-email-input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="320" placeholder="이메일 주소" required>
               </label>
-              <label class="repair-field">
-                <span>국가</span>
+              <label class="repair-field repair-field--line">
+                <span>국가 *</span>
                 <select class="js-repair-country" name="country" autocomplete="country-name" required>
                   <option value="네덜란드">네덜란드</option><option value="노르웨이">노르웨이</option><option value="뉴질랜드">뉴질랜드</option>
                   <option value="대만">대만</option><option value="대한민국" selected>대한민국</option><option value="덴마크">덴마크</option>
@@ -154,24 +149,24 @@
                   <option value="__direct__">목록에 없는 국가 직접 입력</option>
                 </select>
               </label>
-              <label class="repair-field js-repair-country-custom-field" hidden>
-                <span>국가명</span>
-                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120">
+              <label class="repair-field repair-field--line js-repair-country-custom-field" hidden>
+                <span>국가명 *</span>
+                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120" placeholder="국가명">
               </label>
-              <label class="repair-field">
-                <span>우편번호</span>
+              <label class="repair-field repair-field--line">
+                <span>우편번호 *</span>
                 <div class="repair-address-search-row">
-                  <input class="js-repair-postal-code" type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" maxlength="20" readonly required>
+                  <input class="js-repair-postal-code" type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" maxlength="20" placeholder="우편번호" readonly required>
                   <button class="repair-address-search-button js-repair-address-search" type="button">주소 검색</button>
                 </div>
               </label>
-              <label class="repair-field">
-                <span>주소</span>
-                <input class="js-repair-address-line1" type="text" name="addressLine1" autocomplete="address-line1" maxlength="300" readonly required>
+              <label class="repair-field repair-field--line">
+                <span>주소 *</span>
+                <input class="js-repair-address-line1" type="text" name="addressLine1" autocomplete="address-line1" maxlength="300" placeholder="도로명 및 번지" readonly required>
               </label>
-              <label class="repair-field">
-                <span>상세주소</span>
-                <input class="js-repair-address-line2" type="text" name="addressLine2" autocomplete="address-line2" maxlength="180">
+              <label class="repair-field repair-field--line">
+                <span>상세주소 *</span>
+                <input class="js-repair-address-line2" type="text" name="addressLine2" autocomplete="address-line2" maxlength="180" placeholder="상세주소" required>
               </label>
               <label class="repair-field">
                 <span>1. 어떤 제품인가요?</span>
