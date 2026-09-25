@@ -50,7 +50,15 @@ test("repair page keeps the Figma accordion content contract", () => {
     assert.ok(repairHtml.includes(text), `missing accordion copy: ${text}`);
   }
 
-  assert.equal((repairHtml.match(/<li><span>0[1-5]<\/span>/g) || []).length, 5);
+  for (const step of [
+    "<li><span>1.</span>신청폼 작성</li>",
+    "<li><span>2.</span>OALUM으로 택배 배송</li>",
+    "<li><span>3.</span>수선 방향 논의 및 예상가격 안내</li>",
+    "<li><span>4.</span>작업 진행</li>",
+    "<li><span>5.</span>작업완료 및 최종가격 안내</li>",
+  ]) {
+    assert.ok(repairHtml.includes(step), `missing repair process step: ${step}`);
+  }
 });
 
 test("repair accordion uses the three-column rail and Figma typography", () => {
@@ -204,7 +212,7 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-10/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-11/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
@@ -213,6 +221,9 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /\.repair-basic-table tbody td,[\s\S]*?\.repair-method-matrix tbody th,[\s\S]*?\.repair-method-matrix tbody td,[\s\S]*?\.repair-process-list li,[\s\S]*?\.repair-accordion--shipping p[\s\S]*?color:\s*#111 !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important/);
   assert.doesNotMatch(repairDetailCss, /:is\([^)]*(?:thead th|repair-price-notes|repair-process-note)/);
   assert.match(repairDetailCss, /\.repair-process-list span\s*\{[^}]*color:\s*#111 !important;[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
+  assert.match(repairDetailCss, /\.repair-accordion > summary\s*\{[^}]*display:\s*block;/);
+  assert.match(repairDetailCss, /\.repair-accordion > summary::before,[\s\S]*?\.repair-accordion\[open\] > summary::before\s*\{[^}]*display:\s*none;[^}]*content:\s*none;/);
+  assert.match(repairDetailCss, /\.repair-process-note\s*\{[^}]*color:\s*#111 !important;[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /\.repair-accordion--shipping > div\s*\{[^}]*gap:\s*0;/);
 });
 
