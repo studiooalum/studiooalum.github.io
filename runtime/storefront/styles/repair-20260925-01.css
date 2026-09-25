@@ -35,18 +35,20 @@ body.repair-page .repair-stage__rail :is(
   .repair-process-list li,
   .repair-accordion--shipping p
 ) {
+  color: #111 !important;
   font-family: var(--font-kor-body) !important;
-  font-size: 13px !important;
+  font-size: 16px !important;
   font-weight: 400 !important;
-  line-height: 1.45 !important;
+  line-height: var(--type-body-leading, 1.55) !important;
 }
 
 body.repair-page .repair-stage__rail .repair-process-list span {
+  color: #111 !important;
   font-family: var(--font-kor-body) !important;
-  font-size: 13px !important;
+  font-size: 16px !important;
   font-weight: 500 !important;
   letter-spacing: var(--tracking-korean) !important;
-  line-height: 1.45 !important;
+  line-height: var(--type-body-leading, 1.55) !important;
 }
 
 @media (min-width: 960px) {

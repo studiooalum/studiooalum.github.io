@@ -56,7 +56,11 @@
 }
 
 .workshop-page #workshopDescription p {
-  line-height: var(--type-body-leading, 1.55);
+  line-height: 1.45;
+}
+
+.workshop-information {
+  gap: 0;
 }
 
 .workshop-body-copy,
@@ -99,8 +103,26 @@
   gap: 0;
 }
 
+.workshop-summary-card__details dd {
+  justify-self: start;
+  text-align: left;
+}
+
 .workshop-summary-card__action {
   margin-top: 0;
+}
+
+@media (min-width: 960px) {
+  .workshop-stage__sidebar-track {
+    position: relative;
+    align-self: stretch;
+  }
+
+  .workshop-stage__sidebar {
+    position: sticky;
+    top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+    align-self: start;
+  }
 }
 
 @media (max-width: 959px) {

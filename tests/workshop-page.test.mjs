@@ -151,8 +151,12 @@ test("workshop information removes the category kicker and uses one archive-like
   assert.match(workshopDetailCss, /font-size:\s*16px;[\s\S]*?line-height:\s*1\.45;[\s\S]*?text-decoration:\s*none;[\s\S]*?color:\s*#111/);
   assert.match(workshopJs, /function formatWon\(amount\)/);
   assert.match(workshopJs, /\? formatWon\(config\.attendeePrices\[1\]\)/);
-  assert.match(workshopDetailCss, /#workshopDescription p\s*\{[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(workshopDetailCss, /#workshopDescription p\s*\{[^}]*line-height:\s*1\.45/);
+  assert.match(workshopDetailCss, /\.workshop-information\s*\{[^}]*gap:\s*0/);
   assert.match(workshopDetailCss, /\.workshop-summary-card__details > div\s*\{[^}]*grid-template-columns:\s*76px minmax\(0, 1fr\);[^}]*gap:\s*0/);
+  assert.match(workshopDetailCss, /\.workshop-summary-card__details dd\s*\{[^}]*justify-self:\s*start;[^}]*text-align:\s*left/);
+  assert.match(workshopDetailCss, /@media \(min-width:\s*960px\)\s*\{[^}]*\.workshop-stage__sidebar-track\s*\{[^}]*position:\s*relative;[^}]*align-self:\s*stretch/);
+  assert.match(workshopDetailCss, /\.workshop-stage__sidebar\s*\{[^}]*position:\s*sticky;[^}]*top:\s*calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\);[^}]*align-self:\s*start/);
 });
 
 test("storefront action boxes use half width while the cart keeps full width and repair height", () => {
