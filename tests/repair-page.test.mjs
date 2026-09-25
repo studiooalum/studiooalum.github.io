@@ -201,14 +201,15 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-06/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-07/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
-  assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*1\.8 !important;/);
+  assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
   assert.match(repairDetailCss, /\.repair-accordion > summary\s*\{[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.45 !important;/);
   assert.match(repairDetailCss, /@media \(min-width:\s*960px\)[\s\S]*?\.repair-accordion > summary\s*\{[^}]*min-height:\s*42px;[^}]*padding:\s*9px 0;/);
   assert.match(repairDetailCss, /\.repair-basic-table tbody td,[\s\S]*?\.repair-method-matrix tbody th,[\s\S]*?\.repair-method-matrix tbody td,[\s\S]*?\.repair-process-list li,[\s\S]*?\.repair-accordion--shipping p[\s\S]*?font-size:\s*13px !important;[\s\S]*?line-height:\s*1\.45 !important/);
-  assert.doesNotMatch(repairDetailCss, /:is\([^)]*(?:thead th|repair-price-notes|repair-process-note|repair-process-list span)/);
+  assert.doesNotMatch(repairDetailCss, /:is\([^)]*(?:thead th|repair-price-notes|repair-process-note)/);
+  assert.match(repairDetailCss, /\.repair-process-list span\s*\{[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*13px !important;[^}]*font-weight:\s*500 !important;/);
 });
 
 test("repair content and accordion share one desktop sticky frame", () => {

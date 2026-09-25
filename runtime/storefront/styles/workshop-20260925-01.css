@@ -1,0 +1,100 @@
+.workshop-title {
+  margin-top: 0;
+}
+
+.workshop-stage__summary {
+  gap: 28px;
+}
+
+.workshop-information,
+.workshop-fact,
+.workshop-fact:last-child,
+.workshop-schedule-overview,
+.workshop-notes,
+.workshop-summary-card__details > div,
+.workshop-summary-card__price {
+  display: grid;
+  gap: 4px;
+}
+
+.workshop-facts,
+.workshop-summary-card,
+.workshop-summary-card__details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.workshop-page .workshop-information h2,
+.workshop-section-title,
+.workshop-fact__title,
+.workshop-summary-card__label,
+.workshop-summary-card__details dt,
+.workshop-summary-card__details dd,
+.workshop-page #workshopDescription p,
+.workshop-body-copy p,
+.workshop-fact__list,
+.workshop-fact__text,
+.workshop-schedule-item,
+.workshop-notes .workshop-note,
+.workshop-summary-card__price strong {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: var(--tracking-korean);
+  text-decoration: none;
+  text-transform: none;
+  color: #111;
+}
+
+.workshop-body-copy,
+.workshop-fact__list {
+  display: grid;
+  gap: 0;
+}
+
+.workshop-fact,
+.workshop-fact:last-child {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+}
+
+.workshop-schedule-overview__list {
+  gap: 0;
+}
+
+.workshop-schedule-item {
+  padding: 0;
+  border: 0;
+}
+
+.workshop-notes .workshop-note {
+  background: transparent;
+}
+
+.workshop-summary-card__price {
+  justify-items: start;
+  min-height: 0;
+}
+
+.workshop-summary-card__action {
+  margin-top: 0;
+}
+
+@media (max-width: 959px) {
+  .workshop-stage__summary,
+  .workshop-facts,
+  .workshop-summary-card,
+  .workshop-summary-card__details {
+    gap: 24px;
+  }
+}

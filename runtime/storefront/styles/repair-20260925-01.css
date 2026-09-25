@@ -10,7 +10,7 @@ body.repair-page .repair-body-copy p:last-child {
   font-size: 16px !important;
   font-weight: 400 !important;
   letter-spacing: var(--tracking-korean) !important;
-  line-height: 1.8 !important;
+  line-height: var(--type-body-leading, 1.55) !important;
 }
 
 body.repair-page .repair-stage__content .repair-apply-btn {
@@ -38,6 +38,14 @@ body.repair-page .repair-stage__rail :is(
   font-family: var(--font-kor-body) !important;
   font-size: 13px !important;
   font-weight: 400 !important;
+  line-height: 1.45 !important;
+}
+
+body.repair-page .repair-stage__rail .repair-process-list span {
+  font-family: var(--font-kor-body) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: var(--tracking-korean) !important;
   line-height: 1.45 !important;
 }
 

@@ -312,6 +312,15 @@ function formatCurrency(amount) {
   }).format(value);
 }
 
+function formatWon(amount) {
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0) {
+    return "상담 후 확정";
+  }
+
+  return `${new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 0 }).format(value)}원`;
+}
+
 function formatReadableDate(dateText) {
   const value = parseDateKey(dateText);
   if (Number.isNaN(value.getTime())) {
@@ -757,8 +766,8 @@ function renderWorkshopDetails(workshop) {
   if (dom.price) {
     const config = getBookingConfig();
     dom.price.textContent = config.type === "daily"
-      ? `${formatCurrency(config.attendeePrices[1])} / 1인`
-      : `${formatCurrency(config.fixedPrice)} / 1인 · 전체 ${workshop.scheduleSlots.length}회`;
+      ? formatWon(config.attendeePrices[1])
+      : formatWon(config.fixedPrice);
   }
 
   if (dom.description) {

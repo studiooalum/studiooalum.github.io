@@ -1,0 +1,56 @@
+:is(
+  .account-checkbox,
+  .workshop-inquiry-consent,
+  .checkout-save-address label,
+  .checkout-agree__item
+) {
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: #111;
+}
+
+:is(
+  .account-checkbox,
+  .workshop-inquiry-consent,
+  .checkout-save-address label,
+  .checkout-agree__item
+) input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  margin: 6px 0 0;
+  border: 1px solid #111;
+  border-radius: 0;
+  background: #fff;
+  cursor: pointer;
+}
+
+:is(
+  .account-checkbox,
+  .workshop-inquiry-consent,
+  .checkout-save-address label,
+  .checkout-agree__item
+) input[type="checkbox"]:checked {
+  background: #111;
+}
+
+:is(
+  .account-checkbox,
+  .workshop-inquiry-consent,
+  .checkout-save-address label,
+  .checkout-agree__item
+) input[type="checkbox"]:focus-visible {
+  outline: 1px solid #111;
+  outline-offset: 3px;
+}
+
+body .account-checkbox,
+body .workshop-inquiry-form .workshop-inquiry-consent {
+  grid-template-columns: 8px minmax(0, 1fr);
+}

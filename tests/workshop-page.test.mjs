@@ -33,6 +33,14 @@ const workshopCss = await readFile(
   new URL("../runtime/storefront/styles/workshop-20260918-01.css", import.meta.url),
   "utf8",
 );
+const workshopDetailCss = await readFile(
+  new URL("../runtime/storefront/styles/workshop-20260925-01.css", import.meta.url),
+  "utf8",
+);
+const formControlsCss = await readFile(
+  new URL("../runtime/storefront/styles/form-controls-20260925-01.css", import.meta.url),
+  "utf8",
+);
 const workshopJs = await readFile(
   new URL("../runtime/storefront/scripts/workshop-20260816-01.js", import.meta.url),
   "utf8",
@@ -41,6 +49,7 @@ const workshopAdminHtml = await readFile(new URL("../workshop-admin.html", impor
 const typography = await readFile(new URL("../runtime/storefront/styles/typography-20260924.css", import.meta.url), "utf8");
 test("storefront detail typography matches newsletter reading size without viewport font scaling", () => {
   assert.match(typography, /--type-body:\s*16px/);
+  assert.match(typography, /--type-body-leading:\s*1\.55/);
   assert.match(typography, /\.edition-page \.edition-desc/);
   assert.match(typography, /\.product-page \.product-intro/);
   assert.match(typography, /letter-spacing:\s*0/);
@@ -49,6 +58,7 @@ test("storefront detail typography matches newsletter reading size without viewp
 
 test("workshop detail keeps the information-first page structure", () => {
   assert.match(workshopHtml, /workshop-20260918-01\.css/);
+  assert.match(workshopHtml, /workshop-20260925-01\.css/);
   assert.match(workshopHtml, /class="workshop-stage__media"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar-track"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar"/);
@@ -122,17 +132,30 @@ test("workshop details mirror the edition columns and the application panel stay
   assert.match(workshopCss, /\.workshop-facts\s*\{[\s\S]*?gap:\s*24px/);
 });
 
-test("workshop information uses category-only labeling and clear empty material copy", () => {
+test("workshop information removes the category kicker and uses one archive-like hierarchy", () => {
   for (const label of ["소개", "제공하는 재료", "장소", "준비물", "커리큘럼", "안내"]) {
     assert.match(workshopHtml, new RegExp(`>${label}<\\/h2>`));
   }
+  assert.match(workshopHtml, />금액<\/span>[\s\S]*?id="workshopPrice"/);
+  assert.doesNotMatch(workshopHtml, /id="workshopKicker"/);
   assert.match(workshopCss, /\.workshop-schedule-overview\[hidden\]\s*\{\s*display:\s*none/);
-  assert.doesNotMatch(workshopJs, /workshop \/ \$\{workshop\.category/);
-  assert.match(workshopJs, /dom\.kicker\.textContent = category/);
   assert.match(workshopJs, /제공되는 재료가 없습니다\./);
   assert.match(workshopJs, /dom\.bringSection\.hidden = thingsToBring\.length === 0/);
   assert.doesNotMatch(workshopJs, /별도로 준비할 재료가 없습니다\./);
   assert.match(workshopCss, /\.workshop-fact__list li::before\s*\{\s*content:\s*none/);
+  assert.match(workshopDetailCss, /font-size:\s*16px;[\s\S]*?line-height:\s*1\.45;[\s\S]*?text-decoration:\s*none;[\s\S]*?color:\s*#111/);
+  assert.match(workshopJs, /function formatWon\(amount\)/);
+  assert.match(workshopJs, /\? formatWon\(config\.attendeePrices\[1\]\)/);
+});
+
+test("customer-facing checkboxes use the compact shared control and body copy", () => {
+  assert.match(formControlsCss, /font-size:\s*13px/);
+  assert.match(formControlsCss, /line-height:\s*1\.55/);
+  assert.match(formControlsCss, /width:\s*8px/);
+  assert.match(formControlsCss, /height:\s*8px/);
+  assert.match(formControlsCss, /\.account-checkbox/);
+  assert.match(formControlsCss, /\.workshop-inquiry-consent/);
+  assert.match(formControlsCss, /\.checkout-agree__item/);
 });
 
 test("workshop admin keeps material fields with detail content and limits advanced settings", () => {
