@@ -62,6 +62,15 @@ body.repair-page .repair-stage__rail .repair-process-list {
   gap: 0;
 }
 
+body.repair-page .repair-stage__rail .repair-process-list li {
+  display: flex;
+  gap: 4px;
+}
+
+body.repair-page .repair-stage__rail .repair-process-list li > span {
+  flex: 0 0 auto;
+}
+
 body.repair-page .repair-stage__rail .repair-process-note {
   margin-top: 24.8px;
   color: #111 !important;
