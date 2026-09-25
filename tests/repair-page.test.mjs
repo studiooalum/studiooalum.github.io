@@ -201,7 +201,7 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-05/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-06/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*1\.8 !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
@@ -209,4 +209,20 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /@media \(min-width:\s*960px\)[\s\S]*?\.repair-accordion > summary\s*\{[^}]*min-height:\s*42px;[^}]*padding:\s*9px 0;/);
   assert.match(repairDetailCss, /\.repair-basic-table tbody td,[\s\S]*?\.repair-method-matrix tbody th,[\s\S]*?\.repair-method-matrix tbody td,[\s\S]*?\.repair-process-list li,[\s\S]*?\.repair-accordion--shipping p[\s\S]*?font-size:\s*13px !important;[\s\S]*?line-height:\s*1\.45 !important/);
   assert.doesNotMatch(repairDetailCss, /:is\([^)]*(?:thead th|repair-price-notes|repair-process-note|repair-process-list span)/);
+});
+
+test("repair content and accordion share one desktop sticky frame", () => {
+  assert.match(
+    repairHtml,
+    /<div class="repair-stage__sticky">[\s\S]*?<section class="repair-stage__content">[\s\S]*?<aside class="repair-stage__rail"/,
+  );
+  assert.match(
+    repairDetailCss,
+    /@media \(min-width:\s*960px\)[\s\S]*?\.repair-stage__sticky\s*\{[^}]*display:\s*grid;[^}]*grid-column:\s*2 \/ -1;[^}]*grid-row:\s*2;[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*position:\s*sticky;[^}]*top:\s*calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\)/,
+  );
+  assert.match(
+    repairDetailCss,
+    /\.repair-stage__sticky > \.repair-stage__content,[\s\S]*?\.repair-stage__sticky > \.repair-stage__rail\s*\{[^}]*grid-column:\s*auto;[^}]*grid-row:\s*auto;[^}]*position:\s*static;/,
+  );
+  assert.match(repairDetailCss, /@media \(max-width:\s*959px\)[\s\S]*?\.repair-stage__sticky\s*\{[^}]*display:\s*contents;/);
 });

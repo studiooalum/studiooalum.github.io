@@ -42,9 +42,36 @@ body.repair-page .repair-stage__rail :is(
 }
 
 @media (min-width: 960px) {
+  .repair-stage__sticky {
+    display: grid;
+    grid-column: 2 / -1;
+    grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gap);
+    position: sticky;
+    top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+    align-self: start;
+    min-width: 0;
+  }
+
+  .repair-stage__sticky > .repair-stage__content,
+  .repair-stage__sticky > .repair-stage__rail {
+    grid-column: auto;
+    grid-row: auto;
+    position: static;
+    top: auto;
+    align-self: start;
+  }
+
   body.repair-page .repair-stage__rail .repair-accordion > summary {
     min-height: 42px;
     padding: 9px 0;
+  }
+}
+
+@media (max-width: 959px) {
+  .repair-stage__sticky {
+    display: contents;
   }
 }
 
