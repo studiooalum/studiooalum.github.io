@@ -37,8 +37,9 @@ test("repair page keeps the Figma accordion content contract", () => {
     "베이직",
     "수선기법",
     "<li><span>자켓</span><span>25,000원</span></li>",
-    "<li><span>가죽</span><span>30,000원</span></li>",
-    "<li><span>특수소재</span><span>50,000원</span></li>",
+    "<li><span>가죽</span><span>50,000원</span></li>",
+    "<li><span>특수소재</span><span>30,000원</span></li>",
+    '<span class="repair-method-price-list__amounts"><span>70,000원</span><span>100,000원</span><span>150,000원</span></span>',
     '<span class="repair-method-price-list__name">사시코</span>',
     "수선 기법은 작업 면적에 따라 S/M/L 로 구분되며, 가격은 크기 순으로 표기되어 있습니다.",
     "하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.",
@@ -223,13 +224,14 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260926-01/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260926-02/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
   assert.match(repairDetailCss, /\.repair-choice-group--line input\[type="radio"\][\s\S]*?width:\s*16px;[\s\S]*?height:\s*16px;/);
   assert.match(repairDetailCss, /\.repair-image-picker,[\s\S]*?width:\s*50%;[\s\S]*?background:\s*#fff;[\s\S]*?color:\s*#111;/);
-  assert.match(repairDetailCss, /\.repair-image-picker:hover\s*\{[^}]*background:\s*#111;[^}]*color:\s*#fff;/);
+  assert.match(repairDetailCss, /\.repair-image-picker:hover\s*\{[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
+  assert.match(repairDetailCss, /\.repair-address-search-button:focus-visible\s*\{[^}]*text-decoration:\s*none;/);
   assert.match(repairDetailCss, /\.repair-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);

@@ -96,28 +96,6 @@ body :is(
 }
 
 body :is(
-  .account-btn--secondary,
-  .account-btn--signup,
-  .edition-btn--secondary,
-  .checkout-btn--outline:not(.checkout-btn--outline-small),
-  .payment-btn--outline,
-  .repair-ticket-file-button
-):hover,
-body :is(
-  .account-btn--secondary,
-  .account-btn--signup,
-  .edition-btn--secondary,
-  .checkout-btn--outline:not(.checkout-btn--outline-small),
-  .payment-btn--outline,
-  .repair-ticket-file-button
-):focus-visible {
-  border-color: #111 !important;
-  background: #111 !important;
-  color: #fff !important;
-  outline: 0;
-}
-
-body :is(
   .account-panel-actions,
   .edition-actions,
   .payment-result__actions,
