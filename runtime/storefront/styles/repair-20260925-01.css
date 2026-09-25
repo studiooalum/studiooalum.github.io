@@ -166,7 +166,7 @@ body.repair-page .repair-stage__rail :is(.repair-basic-price-list, .repair-metho
 body.repair-page .repair-stage__rail .repair-basic-price-list > li > span:last-child,
 body.repair-page .repair-stage__rail .repair-method-price-list__amounts > span {
   display: block;
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
 }
 
@@ -239,7 +239,8 @@ body.repair-page .repair-request-form .repair-address-search-button {
 }
 
 body.repair-page .repair-request-form .repair-field--line input,
-body.repair-page .repair-request-form .repair-field--line select {
+body.repair-page .repair-request-form .repair-field--line select,
+body.repair-page .repair-request-form .repair-field--line textarea {
   min-height: 48px;
   border: 0;
   padding: 10px 0;
@@ -247,20 +248,35 @@ body.repair-page .repair-request-form .repair-field--line select {
   outline: 0;
 }
 
-body.repair-page .repair-request-form .repair-field--line input::placeholder {
-  color: transparent;
-  opacity: 0;
+body.repair-page .repair-request-form .repair-field--line :is(input, textarea)::placeholder {
+  color: rgba(17, 17, 17, 0.3);
+  opacity: 1;
 }
 
 body.repair-page .repair-request-form .repair-field--line input:focus,
-body.repair-page .repair-request-form .repair-field--line select:focus {
+body.repair-page .repair-request-form .repair-field--line select:focus,
+body.repair-page .repair-request-form .repair-field--line textarea:focus {
   border: 0;
   outline: 0;
 }
 
 body.repair-page .repair-request-form .repair-field--line:focus-within {
   border-bottom-color: #111;
-  box-shadow: 0 1px 0 #111;
+  box-shadow: none;
+}
+
+body.repair-page .repair-request-form .repair-required-mark {
+  display: inline;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  vertical-align: 0.08em;
+}
+
+body.repair-page .repair-request-form .repair-field--memo textarea {
+  min-height: 48px;
+  resize: vertical;
 }
 
 body.repair-page .repair-request-form .repair-address-search-row {
@@ -375,12 +391,21 @@ body.repair-page .repair-request-form .repair-choice-group--line input[type="rad
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: #111;
+  appearance: none;
+  border: 1px solid #111;
+  border-radius: 50%;
+  background: #fff;
+}
+
+body.repair-page .repair-request-form .repair-choice-group--line input[type="radio"]:checked {
+  background: #111;
+  box-shadow: inset 0 0 0 4px #fff;
 }
 
 body.repair-page .repair-request-form__section--images {
   display: grid;
   gap: 12px;
+  border-bottom: 0;
 }
 
 body.repair-page .repair-request-form .repair-image-upload__title-row h3 {
@@ -388,21 +413,80 @@ body.repair-page .repair-request-form .repair-image-upload__title-row h3 {
 }
 
 body.repair-page .repair-request-form .repair-image-picker,
-body.repair-page .repair-request-form .repair-image-picker:hover,
 body.repair-page .repair-request-form .repair-image-picker:focus-within {
+  width: 50%;
   min-height: 48px;
   border: 1px solid #111;
-  background: #111;
-  color: #fff;
+  background: #fff;
+  color: #111;
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
   letter-spacing: var(--tracking-korean);
   line-height: var(--type-body-leading, 1.55);
+  outline: 0;
+}
+
+body.repair-page .repair-request-form .repair-image-picker:hover {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+  outline: 0;
 }
 
 body.repair-page .repair-request-form__section--notes {
   gap: 0;
+}
+
+body.repair-page .repair-request-form .repair-choice-group--line {
+  border-bottom: 0;
+  padding: 32px 0 16px;
+}
+
+body.repair-page .repair-request-form__consent {
+  display: grid;
+  gap: 4px;
+  border: 0;
+  padding: 16px 0 22px;
+}
+
+body.repair-page .repair-request-form .repair-checkbox {
+  align-items: center;
+  gap: 6px;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-request-form .repair-checkbox input {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  appearance: none;
+  border: 1px solid #111;
+  border-radius: 2px;
+  background: #fff;
+}
+
+body.repair-page .repair-request-form .repair-checkbox input:checked {
+  background-color: #111;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.2 6.7 11.3 12.7 4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+body.repair-page .repair-request-form__submit {
+  padding: 0 0 22px;
+  background: transparent;
+}
+
+body.repair-page .repair-request-form .repair-submit {
+  width: 50% !important;
+}
+
+body.repair-page .repair-stage__rail .repair-price-notes--methods {
+  margin-top: 24.8px;
 }
 
 @media (max-width: 560px) {

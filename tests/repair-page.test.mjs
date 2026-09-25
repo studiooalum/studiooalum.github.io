@@ -39,9 +39,8 @@ test("repair page keeps the Figma accordion content contract", () => {
     "<li><span>자켓</span><span>25,000원</span></li>",
     "<li><span>가죽</span><span>30,000원</span></li>",
     "<li><span>특수소재</span><span>50,000원</span></li>",
-    "(소)30,000원",
-    "(중)100,000원",
-    "(대)140,000원",
+    '<span class="repair-method-price-list__name">사시코</span>',
+    "수선 기법은 작업 면적에 따라 S/M/L 로 구분되며, 가격은 크기 순으로 표기되어 있습니다.",
     "하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.",
     "신청폼 접수 후 답변은 1~2 영업일 정도 소요되고 있으니 양해 부탁드립니다.",
     "왕복 배송비는 고객 부담입니다.",
@@ -49,6 +48,8 @@ test("repair page keeps the Figma accordion content contract", () => {
   ]) {
     assert.ok(repairHtml.includes(text), `missing accordion copy: ${text}`);
   }
+  assert.doesNotMatch(repairHtml, /\((?:소|중|대)\)\d/);
+  assert.doesNotMatch(repairHtml, /사시코<br>비저블멘딩/);
 
   for (const step of [
     "<li><span>1.</span>신청폼 작성</li>",
@@ -83,14 +84,16 @@ test("Basic and repair-method prices use the body type and one aligned compact g
   assert.match(repairDetailCss, /\.repair-price-tabs button,[\s\S]*?font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\);[^}]*text-decoration:\s*underline/);
   assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\)\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\) > li\s*\{[^}]*grid-template-columns:\s*96px 120px/);
-  assert.match(repairDetailCss, /\.repair-basic-price-list > li > span:last-child,[\s\S]*?text-align:\s*right;[^}]*white-space:\s*nowrap/);
+  assert.match(repairDetailCss, /\.repair-basic-price-list > li > span:last-child,[\s\S]*?text-align:\s*left;[^}]*white-space:\s*nowrap/);
   assert.match(repairDetailCss, /\.repair-method-price-list\s*\{[^}]*gap:\s*12\.4px;/);
   assert.doesNotMatch(repairHtml, /repair-basic-table|repair-method-matrix/);
 });
 
 test("pricing notes use the same black body typography without gray metadata", () => {
   assert.match(repairDetailCss, /\.repair-price-notes\s*\{[^}]*gap:\s*0;[^}]*color:\s*#111;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
-  assert.equal((repairHtml.match(/class="repair-price-notes"/g) || []).length, 1);
+  assert.equal((repairHtml.match(/class="repair-price-notes(?: repair-price-notes--methods)?"/g) || []).length, 2);
+  assert.match(repairHtml, /data-repair-price-panel="basic"[\s\S]*?위 가격은 모두 시작 가격이며/);
+  assert.match(repairHtml, /data-repair-price-panel="methods"[\s\S]*?수선 기법은 작업 면적에 따라 S\/M\/L 로 구분되며/);
 });
 
 test("repair accordion omits section divider lines at every viewport", () => {
@@ -116,23 +119,16 @@ test("repair accordion omits section divider lines at every viewport", () => {
   assert.match(repairCss, /@media \(max-width:\s*768px\)[\s\S]*?\.repair-stage__rail[\s\S]*?border:\s*0;/);
 });
 
-test("repair request separates applicant and shipping fields and uses unnumbered required questions", () => {
-  for (const field of [
-    '<span>이름 *</span>',
-    '<span>전화번호 *</span>',
-    '<span>이메일 주소 *</span>',
-    '<span>국가 *</span>',
-    '<span>우편번호 *</span>',
-    '<span>주소 *</span>',
-    '<span>상세주소 *</span>',
-  ]) {
-    assert.ok(repairHtml.includes(field), `missing request field: ${field}`);
+test("repair request follows the compact line-form reference", () => {
+  for (const field of ["이름", "전화번호", "이메일", "국가", "우편번호", "주소", "상세 주소", "메모"]) {
+    assert.match(repairHtml, new RegExp(`<span>${field} <span class="repair-required-mark"`));
   }
 
   assert.match(repairHtml, /<select class="js-repair-country" name="country"[^>]+required>[\s\S]*?<option value="대한민국" selected>/);
   assert.match(repairHtml, /js-repair-address-search[^>]*>주소 검색<\/button>/);
   assert.match(repairHtml, /t1\.kakaocdn\.net\/mapjsapi\/bundle\/postcode\/prod\/postcode\.v2\.js/);
   assert.match(repairHtml, /name="postalCode"[^>]+readonly required/);
+  assert.doesNotMatch(repairHtml, /name="postalCode"[^>]+placeholder=/);
   assert.match(repairHtml, /name="addressLine1"[^>]+readonly required/);
   assert.doesNotMatch(repairHtml, /저장된 내 주소 없음|js-repair-use-account-address/);
   assert.doesNotMatch(repairHtml, /<p class="repair-kicker">Request<\/p>|id="repairRequestTitle">수선 신청<\/h2>/);
@@ -140,17 +136,22 @@ test("repair request separates applicant and shipping fields and uses unnumbered
   assert.match(repairHtml, /접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다\./);
   assert.doesNotMatch(repairHtml, /접수 후 물건을 보내주시면 상태를 확인하고/);
   assert.match(repairHtml, /name="addressLine2"[^>]+required/);
-  for (const label of [
-    "<span>* 어떤 제품인가요?</span>",
-    "<span>* 어떤 부분이 손상되었나요?</span>",
-    "<legend>* 원하시는 방향이 있나요?</legend>",
-    "<h3>* 제품 사진을 올려주세요.</h3>",
-    "<span>기타 요청사항</span>",
+  assert.match(repairHtml, /type="hidden" name="itemType" value="수선 의뢰"/);
+  assert.match(repairHtml, /name="issueDescription"[^>]+placeholder="어떤 제품의, 어떤 부분이 손상되었나요\?"[^>]+required/);
+  assert.match(repairHtml, /<legend>원하시는 방향이 있나요\? <span class="repair-required-mark"/);
+  assert.match(repairHtml, /<h3>제품 사진을 올려주세요 <span class="repair-required-mark"/);
+  assert.match(repairHtml, />사진 선택하기<\/span>/);
+  assert.doesNotMatch(repairHtml, /어떤 제품인가요\?|어떤 부분이 손상되었나요\?<\/span>|기타 요청사항/);
+  for (const [name, placeholder] of [
+    ["customerName", "이름"],
+    ["phone", "전화번호"],
+    ["email", "이메일"],
+    ["countryCustom", "국가명"],
+    ["addressLine1", "주소"],
+    ["addressLine2", "상세 주소"],
   ]) {
-    assert.ok(repairHtml.includes(label), `missing request label: ${label}`);
+    assert.match(repairHtml, new RegExp(`name="${name}"[^>]*placeholder="${placeholder}"`));
   }
-  assert.doesNotMatch(repairHtml, />(?:[1-5])\. (?:어떤|원하시는|제품 사진|기타 요청사항)/);
-  assert.doesNotMatch(repairHtml, /name="(?:customerName|phone|email|countryCustom|postalCode|addressLine1|addressLine2)"[^>]*placeholder=/);
 });
 
 test("repair request supports postcode search, international entry, account autofill, and KR phone formatting", () => {
@@ -177,10 +178,11 @@ test("country choices use Korean alphabetical order with a neutral direct-entry 
   assert.match(repairFormCss, /\.repair-request-form \.repair-field\[hidden\]\s*\{[^}]*display:\s*none/);
 });
 
-test("repair optional request stays blank without gray placeholder copy", () => {
-  assert.match(repairHtml, /name="budgetNote"/);
-  assert.doesNotMatch(repairHtml, /name="budgetNote"[^>]+placeholder=/);
-  assert.doesNotMatch(repairHtml, /의뢰하신 의류의 수선 전후 이미지를/);
+test("repair request uses separate address and photo consent boxes", () => {
+  assert.doesNotMatch(repairHtml, /name="budgetNote"/);
+  assert.match(repairHtml, /name="addressConsent" required/);
+  assert.match(repairHtml, /개인정보 보호 방침에 따라 주소 정보를 사용하는 데 동의/);
+  assert.match(repairHtml, /사진을 수집·이용하는 것에 동의/);
   assert.doesNotMatch(repairHtml, /name="archiveConsentChoice"/);
   assert.doesNotMatch(repairHtml, /작업 사진 기록/);
   assert.match(repairHtml, /name="privacyConsent" required/);
@@ -221,11 +223,14 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-17/);
-  assert.match(repairDetailCss, /\.repair-field--line input::placeholder\s*\{[^}]*color:\s*transparent;[^}]*opacity:\s*0;/);
-  assert.match(repairDetailCss, /\.repair-field--question,[\s\S]*?border-bottom:\s*1px solid #111;/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260926-01/);
+  assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
+  assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
+  assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
   assert.match(repairDetailCss, /\.repair-choice-group--line input\[type="radio"\][\s\S]*?width:\s*16px;[\s\S]*?height:\s*16px;/);
-  assert.match(repairDetailCss, /\.repair-image-picker,[\s\S]*?background:\s*#111;[\s\S]*?color:\s*#fff;/);
+  assert.match(repairDetailCss, /\.repair-image-picker,[\s\S]*?width:\s*50%;[\s\S]*?background:\s*#fff;[\s\S]*?color:\s*#111;/);
+  assert.match(repairDetailCss, /\.repair-image-picker:hover\s*\{[^}]*background:\s*#111;[^}]*color:\s*#fff;/);
+  assert.match(repairDetailCss, /\.repair-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
@@ -242,7 +247,7 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /\.repair-accordion--shipping > div\s*\{[^}]*gap:\s*0;/);
   assert.match(repairDetailCss, /\.repair-request-rail__notice\s*\{[^}]*color:\s*#111;[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-size:\s*16px;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.match(repairDetailCss, /\.repair-field--line\s*\{[^}]*grid-template-columns:\s*minmax\(120px, 24%\) minmax\(0, 1fr\);[^}]*border-bottom:\s*1px solid #111;/);
-  assert.match(repairDetailCss, /\.repair-field--line input,[\s\S]*?\.repair-field--line select\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/);
+  assert.match(repairDetailCss, /\.repair-field--line input,[\s\S]*?\.repair-field--line select,[\s\S]*?\.repair-field--line textarea\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/);
   assert.match(repairDetailCss, /\.repair-field--line\[hidden\]\s*\{[^}]*display:\s*none;/);
   assert.match(repairDetailCss, /\.repair-address-search-button:focus-visible\s*\{[^}]*width:\s*auto !important;[^}]*border:\s*0 !important;[^}]*background:\s*transparent !important;/);
 });

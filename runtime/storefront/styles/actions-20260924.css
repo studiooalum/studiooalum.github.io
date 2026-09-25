@@ -43,7 +43,9 @@ body :is(
   .account-btn--secondary,
   .account-btn--signup,
   .edition-btn--secondary,
-  .payment-btn--outline
+  .checkout-btn--outline:not(.checkout-btn--outline-small),
+  .payment-btn--outline,
+  .repair-ticket-file-button
 ) {
   background: #fff !important;
   color: #111 !important;
@@ -65,7 +67,8 @@ body :is(
   .repair-ticket-submit,
   .repair-ticket-file-button,
   .workshop-apply-btn,
-  .workshop-booking-form__submit
+  .workshop-booking-form__submit,
+  .workshop-inquiry-form button[type="submit"]
 ):hover,
 body :is(
   .account-btn,
@@ -83,11 +86,34 @@ body :is(
   .repair-ticket-submit,
   .repair-ticket-file-button,
   .workshop-apply-btn,
-  .workshop-booking-form__submit
+  .workshop-booking-form__submit,
+  .workshop-inquiry-form button[type="submit"]
 ):focus-visible {
   border-color: #111 !important;
   background: #fff !important;
   color: #111 !important;
+  outline: 0;
+}
+
+body :is(
+  .account-btn--secondary,
+  .account-btn--signup,
+  .edition-btn--secondary,
+  .checkout-btn--outline:not(.checkout-btn--outline-small),
+  .payment-btn--outline,
+  .repair-ticket-file-button
+):hover,
+body :is(
+  .account-btn--secondary,
+  .account-btn--signup,
+  .edition-btn--secondary,
+  .checkout-btn--outline:not(.checkout-btn--outline-small),
+  .payment-btn--outline,
+  .repair-ticket-file-button
+):focus-visible {
+  border-color: #111 !important;
+  background: #111 !important;
+  color: #fff !important;
   outline: 0;
 }
 

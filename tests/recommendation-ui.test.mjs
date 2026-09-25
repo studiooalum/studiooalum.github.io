@@ -80,6 +80,8 @@ test("product overview copy stays stacked in the first desktop column", () => {
 test("shared command buttons do not add a hover outline", () => {
   assert.doesNotMatch(actionsCss, /outline:\s*1px solid #111/);
   assert.doesNotMatch(actionsCss.slice(0, actionsCss.indexOf(") {")), /\.account-overview__link/);
+  assert.match(actionsCss, /\.workshop-inquiry-form button\[type="submit"\][\s\S]*?:hover/);
+  assert.match(actionsCss, /\.repair-ticket-file-button[\s\S]*?:hover,[\s\S]*?background:\s*#111 !important;[\s\S]*?color:\s*#fff !important;/);
 });
 
 test("admin action controls retain their compact fulfillment sizing", async () => {

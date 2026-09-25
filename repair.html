@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260909-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260921-05">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260922-03">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260925-17">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260926-01">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -71,19 +71,22 @@
                 <li><span>가죽</span><span>30,000원</span></li>
                 <li><span>특수소재</span><span>50,000원</span></li>
               </ul>
+              <div class="repair-price-notes">
+                <p>위 가격은 모두 시작 가격이며, 실제 비용은 제품의 소재, 손상 상태, 작업 면적, 작업 난이도 및 필요한 작업량에 따라 달라질 수 있습니다.</p>
+                <p>하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.</p>
+              </div>
             </section>
             <section class="repair-content-section repair-methods repair-price-panel" aria-label="수선 기법별 가격" data-repair-price-panel="methods" hidden>
               <ul class="repair-method-price-list">
-                <li><span class="repair-method-price-list__name">패치</span><span class="repair-method-price-list__amounts"><span>(소)30,000원</span><span>(중)55,000원</span><span>(대)80,000원</span></span></li>
-                <li><span class="repair-method-price-list__name">우븐</span><span class="repair-method-price-list__amounts"><span>(소)60,000원</span><span>(중)90,000원</span><span>(대)140,000원</span></span></li>
-                <li><span class="repair-method-price-list__name">보로</span><span class="repair-method-price-list__amounts"><span>(소)70,000원</span><span>(중)100,000원</span><span>(대)120,000원</span></span></li>
-                <li><span class="repair-method-price-list__name">사시코<br>비저블멘딩</span><span class="repair-method-price-list__amounts"><span>(소)50,000원</span><span>(중)80,000원</span><span>(대)120,000원</span></span></li>
+                <li><span class="repair-method-price-list__name">패치</span><span class="repair-method-price-list__amounts"><span>30,000원</span><span>55,000원</span><span>80,000원</span></span></li>
+                <li><span class="repair-method-price-list__name">우븐</span><span class="repair-method-price-list__amounts"><span>60,000원</span><span>90,000원</span><span>140,000원</span></span></li>
+                <li><span class="repair-method-price-list__name">보로</span><span class="repair-method-price-list__amounts"><span>70,000원</span><span>100,000원</span><span>120,000원</span></span></li>
+                <li><span class="repair-method-price-list__name">사시코</span><span class="repair-method-price-list__amounts"><span>50,000원</span><span>80,000원</span><span>120,000원</span></span></li>
               </ul>
+              <div class="repair-price-notes repair-price-notes--methods">
+                <p>수선 기법은 작업 면적에 따라 S/M/L 로 구분되며, 가격은 크기 순으로 표기되어 있습니다.</p>
+              </div>
             </section>
-            <div class="repair-price-notes">
-              <p>위 가격은 모두 시작 가격이며, 실제 비용은 제품의 소재, 손상 상태, 작업 면적, 작업 난이도 및 필요한 작업량에 따라 달라질 수 있습니다.</p>
-              <p>하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.</p>
-            </div>
           </div>
         </details>
         <details class="repair-accordion repair-accordion--process">
@@ -123,19 +126,19 @@
           <section class="repair-request-form__section repair-request-form__section--identity">
             <div class="repair-request-form__grid">
               <label class="repair-field repair-field--line">
-                <span>이름 *</span>
-                <input type="text" name="customerName" autocomplete="name" maxlength="120" required>
+                <span>이름 <span class="repair-required-mark" aria-hidden="true">*</span></span>
+                <input type="text" name="customerName" autocomplete="name" maxlength="120" placeholder="이름" required>
               </label>
               <label class="repair-field repair-field--line">
-                <span>전화번호 *</span>
-                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="010[0-9]{8}" required>
+                <span>전화번호 <span class="repair-required-mark" aria-hidden="true">*</span></span>
+                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="010[0-9]{8}" placeholder="전화번호" required>
               </label>
               <label class="repair-field repair-field--line js-repair-email-field">
-                <span>이메일 주소 *</span>
-                <input class="js-repair-email-input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="320" required>
+                <span>이메일 <span class="repair-required-mark" aria-hidden="true">*</span></span>
+                <input class="js-repair-email-input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="320" placeholder="이메일" required>
               </label>
               <label class="repair-field repair-field--line">
-                <span>국가 *</span>
+                <span>국가 <span class="repair-required-mark" aria-hidden="true">*</span></span>
                 <select class="js-repair-country" name="country" autocomplete="country-name" required>
                   <option value="네덜란드">네덜란드</option><option value="노르웨이">노르웨이</option><option value="뉴질랜드">뉴질랜드</option>
                   <option value="대만">대만</option><option value="대한민국" selected>대한민국</option><option value="덴마크">덴마크</option>
@@ -150,40 +153,30 @@
                 </select>
               </label>
               <label class="repair-field repair-field--line js-repair-country-custom-field" hidden>
-                <span>국가명 *</span>
-                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120">
+                <span>국가명 <span class="repair-required-mark" aria-hidden="true">*</span></span>
+                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120" placeholder="국가명">
               </label>
               <label class="repair-field repair-field--line">
-                <span>우편번호 *</span>
+                <span>우편번호 <span class="repair-required-mark" aria-hidden="true">*</span></span>
                 <div class="repair-address-search-row">
                   <input class="js-repair-postal-code" type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" maxlength="20" readonly required>
                   <button class="repair-address-search-button js-repair-address-search" type="button">주소 검색</button>
                 </div>
               </label>
               <label class="repair-field repair-field--line">
-                <span>주소 *</span>
-                <input class="js-repair-address-line1" type="text" name="addressLine1" autocomplete="address-line1" maxlength="300" readonly required>
+                <span>주소 <span class="repair-required-mark" aria-hidden="true">*</span></span>
+                <input class="js-repair-address-line1" type="text" name="addressLine1" autocomplete="address-line1" maxlength="300" placeholder="주소" readonly required>
               </label>
               <label class="repair-field repair-field--line">
-                <span>상세주소 *</span>
-                <input class="js-repair-address-line2" type="text" name="addressLine2" autocomplete="address-line2" maxlength="180" required>
+                <span>상세 주소 <span class="repair-required-mark" aria-hidden="true">*</span></span>
+                <input class="js-repair-address-line2" type="text" name="addressLine2" autocomplete="address-line2" maxlength="180" placeholder="상세 주소" required>
               </label>
-              <label class="repair-field repair-field--question">
-                <span>* 어떤 제품인가요?</span>
-                <select name="itemType" required>
-                  <option value="" selected disabled>제품 종류를 선택해주세요.</option>
-                  <option value="자켓">자켓</option>
-                  <option value="상의">상의</option>
-                  <option value="하의">하의</option>
-                  <option value="기타">기타</option>
-                  <option value="데님">데님</option>
-                  <option value="니트">니트</option>
-                  <option value="특수소재">특수소재</option>
-                  <option value="가죽">가죽</option>
-                </select>
+              <input type="hidden" name="itemType" value="수선 의뢰">
+              <label class="repair-field repair-field--line repair-field--memo">
+                <span>메모 <span class="repair-required-mark" aria-hidden="true">*</span></span>
+                <textarea name="issueDescription" rows="2" maxlength="4000" placeholder="어떤 제품의, 어떤 부분이 손상되었나요?" required></textarea>
               </label>
-              <label class="repair-field repair-field--question"><span>* 어떤 부분이 손상되었나요?</span><textarea name="issueDescription" rows="5" maxlength="4000" required></textarea></label>
-              <fieldset class="repair-choice-group repair-choice-group--line"><legend>* 원하시는 방향이 있나요?</legend><div><label><input type="radio" name="desiredResult" value="기존 모습과 비슷하게 수선" required> 기존 모습과 비슷하게 수선</label><label><input type="radio" name="desiredResult" value="수선 흔적을 살리고 싶어요"> 수선 흔적을 살리고 싶어요</label><label><input type="radio" name="desiredResult" value="디자인은 오알룸에게 맡기고 싶어요"> 디자인은 오알룸에게 맡기고 싶어요</label><label><input type="radio" name="desiredResult" value="잘 모르겠어요"> 잘 모르겠어요</label></div></fieldset>
+              <fieldset class="repair-choice-group repair-choice-group--line"><legend>원하시는 방향이 있나요? <span class="repair-required-mark" aria-hidden="true">*</span></legend><div><label><input type="radio" name="desiredResult" value="기존 모습과 비슷하게 수선" required> 기존 모습과 비슷하게 수선</label><label><input type="radio" name="desiredResult" value="수선 흔적을 살리고 싶어요"> 수선 흔적을 살리고 싶어요</label><label><input type="radio" name="desiredResult" value="디자인은 맡기고 싶어요"> 디자인은 맡기고 싶어요</label><label><input type="radio" name="desiredResult" value="잘 모르겠어요"> 잘 모르겠어요</label></div></fieldset>
             </div>
           </section>
 
@@ -191,25 +184,25 @@
             <div class="repair-image-upload__head">
               <div class="repair-image-upload__copy">
                 <div class="repair-image-upload__title-row">
-                  <h3>* 제품 사진을 올려주세요.</h3>
+                  <h3>제품 사진을 올려주세요 <span class="repair-required-mark" aria-hidden="true">*</span></h3>
                 </div>
               </div>
             </div>
             <label class="repair-image-picker repair-image-dropzone js-repair-image-dropzone">
-                <span>사진 선택</span>
+                <span>사진 선택하기</span>
                 <input class="js-repair-image-input" type="file" name="images" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
             </label>
             <div class="repair-image-preview-list js-repair-image-preview-list" aria-live="polite"></div>
           </section>
 
-          <section class="repair-request-form__section repair-request-form__section--notes">
-            <label class="repair-field repair-field--notes"><span>기타 요청사항</span><textarea class="js-repair-budget-note" name="budgetNote" rows="4" maxlength="1000"></textarea></label>
-          </section>
-
           <section class="repair-request-form__section repair-request-form__consent">
             <label class="repair-checkbox">
+              <input type="checkbox" name="addressConsent" required>
+              <span>개인정보 보호 방침에 따라 주소 정보를 사용하는 데 동의</span>
+            </label>
+            <label class="repair-checkbox">
               <input type="checkbox" name="privacyConsent" required>
-              <span>수선 검토를 위해 입력한 전화번호, 이메일 주소, 배송 주소와 사진을 수집·이용하는 것에 동의합니다.</span>
+              <span>사진을 수집·이용하는 것에 동의</span>
             </label>
           </section>
 
@@ -244,7 +237,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260918-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260922-03";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260926-01";
 
     initSiteChrome();
     initCartUI();
