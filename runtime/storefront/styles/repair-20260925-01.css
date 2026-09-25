@@ -55,6 +55,114 @@ body.repair-page .repair-stage__rail .repair-accordion--shipping > div {
   gap: 0;
 }
 
+body.repair-page .repair-stage__rail .repair-accordion--price > div {
+  gap: 0;
+}
+
+body.repair-page .repair-stage__rail .repair-price-tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0 0 24.8px;
+  background: transparent;
+}
+
+body.repair-page .repair-stage__rail .repair-price-tabs button,
+body.repair-page .repair-stage__rail .repair-price-tabs button.is-active {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+body.repair-page .repair-stage__rail .repair-price-tabs button:focus-visible {
+  outline: 1px solid #111;
+  outline-offset: 3px;
+}
+
+body.repair-page .repair-stage__rail .repair-price-panel,
+body.repair-page .repair-stage__rail .repair-price-panel[data-repair-price-panel="methods"] {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: visible;
+}
+
+body.repair-page .repair-stage__rail .repair-price-panel[hidden] {
+  display: none;
+}
+
+body.repair-page .repair-stage__rail :is(.repair-basic-price-list, .repair-method-price-list) {
+  display: grid;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-stage__rail .repair-basic-price-list {
+  gap: 0;
+}
+
+body.repair-page .repair-stage__rail .repair-method-price-list {
+  gap: 24.8px;
+}
+
+body.repair-page .repair-stage__rail :is(.repair-basic-price-list, .repair-method-price-list) > li {
+  display: grid;
+  grid-template-columns: 96px 120px;
+  align-items: start;
+  gap: 0;
+}
+
+body.repair-page .repair-stage__rail .repair-basic-price-list > li > span:last-child,
+body.repair-page .repair-stage__rail .repair-method-price-list__amounts > span {
+  display: block;
+  text-align: right;
+  white-space: nowrap;
+}
+
+body.repair-page .repair-stage__rail .repair-method-price-list__amounts {
+  display: grid;
+  gap: 0;
+}
+
+body.repair-page .repair-stage__rail .repair-price-notes {
+  gap: 0;
+  margin-top: 24.8px;
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-stage__rail .repair-price-notes p {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
 @media (min-width: 960px) {
   .repair-stage__sticky {
     display: grid;

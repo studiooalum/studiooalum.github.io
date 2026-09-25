@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260909-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260921-05">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260922-03">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260925-09">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260925-10">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -57,34 +57,28 @@
           <summary>가격 및 견적</summary>
           <div>
             <div class="repair-price-tabs" role="tablist" aria-label="가격표 선택">
-              <button type="button" class="is-active" role="tab" aria-selected="true" data-repair-price-tab="basic">Basic</button>
-              <button type="button" role="tab" aria-selected="false" data-repair-price-tab="methods">Repair Methods</button>
+              <button type="button" class="is-active" role="tab" aria-selected="true" data-repair-price-tab="basic">베이직</button>
+              <button type="button" role="tab" aria-selected="false" data-repair-price-tab="methods">수선기법</button>
             </div>
             <section class="repair-content-section repair-price-panel" aria-label="기본 수선 가격" data-repair-price-panel="basic">
-              <table class="repair-basic-table">
-                <thead><tr><th>제품</th><th>시작 가격</th></tr></thead>
-                <tbody>
-                  <tr><td>자켓</td><td>₩25,000~</td></tr>
-                  <tr><td>상의</td><td>₩15,000~</td></tr>
-                  <tr><td>하의</td><td>₩20,000~</td></tr>
-                  <tr><td>기타</td><td>₩10,000~</td></tr>
-                  <tr><td>데님</td><td>₩25,000~</td></tr>
-                  <tr><td>니트</td><td>₩25,000~</td></tr>
-                  <tr><td>특수소재</td><td>₩30,000~</td></tr>
-                  <tr><td>가죽</td><td>₩50,000~</td></tr>
-                </tbody>
-              </table>
+              <ul class="repair-basic-price-list">
+                <li><span>자켓</span><span>25,000원</span></li>
+                <li><span>상의</span><span>15,000원</span></li>
+                <li><span>하의</span><span>20,000원</span></li>
+                <li><span>기타</span><span>10,000원</span></li>
+                <li><span>데님</span><span>25,000원</span></li>
+                <li><span>니트</span><span>25,000원</span></li>
+                <li><span>가죽</span><span>30,000원</span></li>
+                <li><span>특수소재</span><span>50,000원</span></li>
+              </ul>
             </section>
-            <section class="repair-content-section repair-methods repair-price-panel" aria-label="수선 기법별 가격, 좁은 화면에서는 표를 좌우로 스크롤할 수 있습니다" data-repair-price-panel="methods" tabindex="0" hidden>
-              <table class="repair-method-matrix">
-                <thead><tr><th>수선 기법</th><th>SMALL</th><th>MEDIUM</th><th>LARGE</th><th>FULL</th></tr></thead>
-                <tbody>
-                  <tr><th>PATCH</th><td>₩30,000~</td><td>₩55,000~</td><td>₩80,000~</td><td>₩180,000~</td></tr>
-                  <tr><th>WOVEN</th><td>₩60,000~</td><td>₩90,000~</td><td>₩140,000~</td><td>₩250,000~</td></tr>
-                  <tr><th>SASHIKO /<br>VISIBLE MENDING</th><td>₩50,000~</td><td>₩80,000~</td><td>₩120,000~</td><td>₩250,000~</td></tr>
-                  <tr><th>BORO</th><td>₩70,000~</td><td>₩100,000~</td><td>₩150,000~</td><td>₩300,000~</td></tr>
-                </tbody>
-              </table>
+            <section class="repair-content-section repair-methods repair-price-panel" aria-label="수선 기법별 가격" data-repair-price-panel="methods" hidden>
+              <ul class="repair-method-price-list">
+                <li><span class="repair-method-price-list__name">패치</span><span class="repair-method-price-list__amounts"><span>(소)30,000원</span><span>(중)55,000원</span><span>(대)80,000원</span></span></li>
+                <li><span class="repair-method-price-list__name">우븐</span><span class="repair-method-price-list__amounts"><span>(소)60,000원</span><span>(중)90,000원</span><span>(대)140,000원</span></span></li>
+                <li><span class="repair-method-price-list__name">보로</span><span class="repair-method-price-list__amounts"><span>(소)70,000원</span><span>(중)100,000원</span><span>(대)120,000원</span></span></li>
+                <li><span class="repair-method-price-list__name">사시코<br>비저블멘딩</span><span class="repair-method-price-list__amounts"><span>(소)50,000원</span><span>(중)80,000원</span><span>(대)120,000원</span></span></li>
+              </ul>
             </section>
             <div class="repair-price-notes">
               <p>위 가격은 모두 시작 가격이며, 실제 비용은 제품의 소재, 손상 상태, 작업 면적, 작업 난이도 및 필요한 작업량에 따라 달라질 수 있습니다.</p>

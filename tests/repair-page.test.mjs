@@ -34,10 +34,14 @@ test("repair page keeps the Figma accordion content contract", () => {
   );
 
   for (const text of [
-    "Basic",
-    "Repair Methods",
-    "자켓</td><td>₩25,000~",
-    "가죽</td><td>₩50,000~",
+    "베이직",
+    "수선기법",
+    "<li><span>자켓</span><span>25,000원</span></li>",
+    "<li><span>가죽</span><span>30,000원</span></li>",
+    "<li><span>특수소재</span><span>50,000원</span></li>",
+    "(소)30,000원",
+    "(중)100,000원",
+    "(대)140,000원",
     "하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.",
     "신청폼 접수 후 답변은 1~2 영업일 정도 소요되고 있으니 양해 부탁드립니다.",
     "왕복 배송비는 고객 부담입니다.",
@@ -56,7 +60,7 @@ test("repair accordion uses the three-column rail and Figma typography", () => {
   assert.match(repairCss, /font-size:\s*18px/);
   assert.match(repairCss, /--repair-price-row-height:\s*36px/);
   assert.match(repairCss, /\.repair-process-list\s*\{[\s\S]*?gap:\s*7px/);
-  assert.match(repairCss, /\.repair-accordion--shipping > div\s*\{[\s\S]*?gap:\s*10px/);
+  assert.match(repairDetailCss, /\.repair-accordion--shipping > div\s*\{[^}]*gap:\s*0/);
 });
 
 test("repair accordion keeps summary geometry stable when toggled", () => {
@@ -67,17 +71,16 @@ test("repair accordion keeps summary geometry stable when toggled", () => {
   );
 });
 
-test("Repair Methods matches Basic typography without a forced panel height", () => {
-  assert.match(repairCss, /\.repair-method-matrix\s*\{[^}]*font-size:\s*13px;[^}]*line-height:\s*15px;/);
-  assert.match(repairCss, /\.repair-method-matrix thead th\s*\{[^}]*font-size:\s*11px;/);
-  assert.match(repairCss, /\.repair-method-matrix th,\s*\.repair-stage__rail \.repair-method-matrix td\s*\{[^}]*height:\s*auto;[^}]*padding:\s*10px 4px;/);
-  assert.match(repairCss, /\.repair-price-panel\[data-repair-price-panel="methods"\]\s*\{[^}]*min-height:\s*0;[^}]*overflow-x:\s*auto;/);
-  assert.match(repairCss, /\.repair-method-matrix tbody td:not\(:first-child\)\s*\{[^}]*font-size:\s*13px;[^}]*font-weight:\s*400;[^}]*letter-spacing:\s*inherit;/);
-  assert.doesNotMatch(repairCss, /@media \(max-width:\s*768px\)[\s\S]*?\.repair-stage__rail \.repair-method-matrix\s*\{[^}]*font-size:\s*8px;/);
+test("Basic and repair-method prices use the body type and one aligned compact grid", () => {
+  assert.match(repairDetailCss, /\.repair-price-tabs button,[\s\S]*?font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\);[^}]*text-decoration:\s*underline/);
+  assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\)\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\) > li\s*\{[^}]*grid-template-columns:\s*96px 120px/);
+  assert.match(repairDetailCss, /\.repair-basic-price-list > li > span:last-child,[\s\S]*?text-align:\s*right;[^}]*white-space:\s*nowrap/);
+  assert.doesNotMatch(repairHtml, /repair-basic-table|repair-method-matrix/);
 });
 
-test("the shared pricing notes use compact readable line and paragraph spacing", () => {
-  assert.match(repairCss, /\.repair-stage__rail \.repair-price-notes\s*\{[^}]*gap:\s*4px;[^}]*font-size:\s*11px;[^}]*line-height:\s*16px;/);
+test("pricing notes use the same black body typography without gray metadata", () => {
+  assert.match(repairDetailCss, /\.repair-price-notes\s*\{[^}]*gap:\s*0;[^}]*color:\s*#111;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.equal((repairHtml.match(/class="repair-price-notes"/g) || []).length, 1);
 });
 
@@ -201,7 +204,7 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-09/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-10/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
