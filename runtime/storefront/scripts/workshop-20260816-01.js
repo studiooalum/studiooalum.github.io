@@ -631,7 +631,10 @@ function syncWorkshopStickyStop() {
   }
 
   const lastImage = mediaImages[mediaImages.length - 1];
-  const stopOffset = Math.ceil(lastImage.offsetTop + stickyHeight);
+  const mediaRect = dom.media.getBoundingClientRect();
+  const lastImageRect = lastImage.getBoundingClientRect();
+  const lastImageTop = Math.max(0, lastImageRect.top - mediaRect.top);
+  const stopOffset = Math.ceil(lastImageTop + stickyHeight);
   dom.sidebarTrack.style.height = `${Math.max(stickyHeight, stopOffset)}px`;
 }
 

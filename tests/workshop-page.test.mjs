@@ -63,6 +63,7 @@ test("storefront detail typography matches newsletter reading size without viewp
 test("workshop detail keeps the information-first page structure", () => {
   assert.match(workshopHtml, /workshop-20260918-01\.css/);
   assert.match(workshopHtml, /workshop-20260925-01\.css/);
+  assert.match(workshopHtml, /workshop-20260924\.js\?v=20260925-02/);
   assert.match(workshopHtml, /class="workshop-stage__media"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar-track"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar"/);
@@ -102,7 +103,8 @@ test("workshop detail follows the site's three-column grid and typography tokens
   assert.match(workshopCss, /\.workshop-gallery__grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap:\s*0/);
   assert.match(workshopCss, /\.workshop-gallery__item\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1/);
   assert.match(workshopJs, /function syncWorkshopStickyStop\(\)/);
-  assert.match(workshopJs, /lastImage\.offsetTop \+ stickyHeight/);
+  assert.match(workshopJs, /lastImageRect\.top - mediaRect\.top/);
+  assert.doesNotMatch(workshopJs, /lastImage\.offsetTop \+ stickyHeight/);
   assert.match(workshopJs, /new ResizeObserver\(syncWorkshopStickyStop\)/);
 });
 
