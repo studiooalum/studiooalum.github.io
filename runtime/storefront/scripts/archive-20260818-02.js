@@ -1,18 +1,12 @@
-import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818-01.js?v=20260915-02";
+import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818-01.js?v=20260925-01";
 
 function linkifyDetailTags() {
-  document.querySelectorAll(".archive-detail-meta__more p").forEach((row) => {
-    const label = row.querySelector(":scope > span");
-    if (label?.textContent.trim() !== "태그") return;
-
-    const rawTags = Array.from(row.childNodes)
-      .filter((node) => node !== label)
-      .map((node) => node.textContent)
-      .join("");
+  document.querySelectorAll(".archive-detail-tags").forEach((row) => {
+    const rawTags = row.textContent || "";
     const tags = rawTags.split(/\s*·\s*/).map((tag) => tag.trim()).filter(Boolean);
     if (!tags.length) return;
 
-    const children = [label];
+    const children = [];
     tags.forEach((tag, index) => {
       if (index) children.push(document.createTextNode(" · "));
 

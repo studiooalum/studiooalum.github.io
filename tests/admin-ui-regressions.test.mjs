@@ -85,7 +85,15 @@ test("Archive category navigation remains on the list and hides on details", asy
   assert.match(controller, /else \{[\s\S]*tagsElement\.hidden = false;[\s\S]*renderTags\(tagsElement\)/);
   assert.match(controller, /lastImage\.getBoundingClientRect\(\)\.bottom <= window\.innerHeight/);
   assert.doesNotMatch(controller, /bottom <= meta\.getBoundingClientRect\(\)\.top/);
+  assert.match(controller, /class="archive-detail-spec"><span>소재<\/span>/);
+  assert.match(controller, /class="archive-detail-spec"><span>사이즈<\/span>/);
+  assert.match(controller, /class="archive-detail-tags">/);
+  assert.doesNotMatch(controller, /<span>Tags<\/span>/);
   assert.match(stylesheet, /\.archive-detail-mode \.archive-tags[\s\S]*display:\s*none/);
+  assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec[\s\S]*grid-template-columns:\s*76px minmax\(0, 1fr\)/);
+  assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec[\s\S]*font-size:\s*16px/);
+  assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec > span[\s\S]*color:\s*#111/);
+  assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-tag[\s\S]*text-decoration-line:\s*underline/);
 });
 
 test("My Oalum waits for the account response before revealing an auth view", async () => {
