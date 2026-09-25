@@ -248,8 +248,8 @@ body.repair-page .repair-request-form .repair-field--line select {
 }
 
 body.repair-page .repair-request-form .repair-field--line input::placeholder {
-  color: rgba(17, 17, 17, 0.3);
-  opacity: 1;
+  color: transparent;
+  opacity: 0;
 }
 
 body.repair-page .repair-request-form .repair-field--line input:focus,

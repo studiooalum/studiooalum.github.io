@@ -221,7 +221,8 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-16/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-17/);
+  assert.match(repairDetailCss, /\.repair-field--line input::placeholder\s*\{[^}]*color:\s*transparent;[^}]*opacity:\s*0;/);
   assert.match(repairDetailCss, /\.repair-field--question,[\s\S]*?border-bottom:\s*1px solid #111;/);
   assert.match(repairDetailCss, /\.repair-choice-group--line input\[type="radio"\][\s\S]*?width:\s*16px;[\s\S]*?height:\s*16px;/);
   assert.match(repairDetailCss, /\.repair-image-picker,[\s\S]*?background:\s*#111;[\s\S]*?color:\s*#fff;/);
