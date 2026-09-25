@@ -19,13 +19,32 @@ body.repair-page .repair-stage__content .repair-apply-btn {
   justify-self: start;
 }
 
-body.repair-page .repair-stage__rail .repair-accordion:not([open]) > summary {
+body.repair-page .repair-stage__rail .repair-accordion > summary {
   color: #111 !important;
   font-family: var(--font-kor-body) !important;
   font-size: 16px !important;
   font-weight: 400 !important;
   letter-spacing: var(--tracking-korean) !important;
   line-height: 1.45 !important;
+}
+
+body.repair-page .repair-stage__rail :is(
+  .repair-basic-table tbody td,
+  .repair-method-matrix tbody th,
+  .repair-method-matrix tbody td,
+  .repair-process-list li,
+  .repair-accordion--shipping p
+) {
+  font-family: var(--font-kor-body) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+}
+
+@media (min-width: 960px) {
+  body.repair-page .repair-stage__rail .repair-accordion > summary {
+    min-height: 42px;
+    padding: 9px 0;
+  }
 }
 
 @media (max-width: 768px) {

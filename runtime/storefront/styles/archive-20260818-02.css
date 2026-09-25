@@ -72,7 +72,7 @@
 }
 
 .archive-detail-meta__more .archive-detail-tags {
-  margin-top: 36px;
+  margin-top: 0;
   color: #111;
   font-family: var(--font-kor-body);
   font-size: 16px;
@@ -83,6 +83,7 @@
 
 .archive-detail-meta__more .archive-detail-description {
   margin-top: 0;
+  margin-bottom: 36px;
 }
 
 .archive-detail-meta__more .archive-detail-tag {

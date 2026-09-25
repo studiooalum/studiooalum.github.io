@@ -212,10 +212,10 @@ function renderDetail(shell, item) {
       <h1>${escapeHtml(item.title)}</h1>
       <p class="archive-detail-year">${getYear(item.createdDate) || "-"}</p>
       <div class="archive-detail-meta__more">
-        ${item.material ? `<p class="archive-detail-spec"><span>소재</span>${escapeHtml(item.material)}</p>` : ""}
-        ${item.size ? `<p class="archive-detail-spec"><span>사이즈</span>${escapeHtml(item.size)}</p>` : ""}
         ${item.description ? `<p class="archive-detail-description">${escapeHtml(item.description)}</p>` : ""}
-        <p class="archive-detail-tags">${tags.map(escapeHtml).join(" · ")}</p>
+        ${item.size ? `<p class="archive-detail-spec"><span>사이즈</span>${escapeHtml(item.size)}</p>` : ""}
+        ${item.material ? `<p class="archive-detail-spec"><span>재료</span>${escapeHtml(item.material)}</p>` : ""}
+        <p class="archive-detail-spec archive-detail-tags"><span>태그</span>${tags.map(escapeHtml).join(" · ")}</p>
       </div>
     </div>
   `;

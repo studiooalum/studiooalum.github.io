@@ -2,11 +2,15 @@ import { initArchiveBoard as initExistingArchiveBoard } from "./archive-20260818
 
 function linkifyDetailTags() {
   document.querySelectorAll(".archive-detail-tags").forEach((row) => {
-    const rawTags = row.textContent || "";
+    const label = row.querySelector(":scope > span");
+    const rawTags = Array.from(row.childNodes)
+      .filter((node) => node !== label)
+      .map((node) => node.textContent || "")
+      .join("");
     const tags = rawTags.split(/\s*·\s*/).map((tag) => tag.trim()).filter(Boolean);
     if (!tags.length) return;
 
-    const children = [];
+    const children = label ? [label] : [];
     tags.forEach((tag, index) => {
       if (index) children.push(document.createTextNode(" · "));
 
