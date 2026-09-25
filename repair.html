@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260909-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260921-05">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260922-03">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260925-15">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260925-16">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -124,15 +124,15 @@
             <div class="repair-request-form__grid">
               <label class="repair-field repair-field--line">
                 <span>이름 *</span>
-                <input type="text" name="customerName" autocomplete="name" maxlength="120" placeholder="이름" required>
+                <input type="text" name="customerName" autocomplete="name" maxlength="120" required>
               </label>
               <label class="repair-field repair-field--line">
                 <span>전화번호 *</span>
-                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="010[0-9]{8}" placeholder="01000000000" required>
+                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="010[0-9]{8}" required>
               </label>
               <label class="repair-field repair-field--line js-repair-email-field">
                 <span>이메일 주소 *</span>
-                <input class="js-repair-email-input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="320" placeholder="이메일 주소" required>
+                <input class="js-repair-email-input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="320" required>
               </label>
               <label class="repair-field repair-field--line">
                 <span>국가 *</span>
@@ -151,25 +151,25 @@
               </label>
               <label class="repair-field repair-field--line js-repair-country-custom-field" hidden>
                 <span>국가명 *</span>
-                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120" placeholder="국가명">
+                <input class="js-repair-country-custom" type="text" name="countryCustom" autocomplete="country-name" maxlength="120">
               </label>
               <label class="repair-field repair-field--line">
                 <span>우편번호 *</span>
                 <div class="repair-address-search-row">
-                  <input class="js-repair-postal-code" type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" maxlength="20" placeholder="우편번호" readonly required>
+                  <input class="js-repair-postal-code" type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" maxlength="20" readonly required>
                   <button class="repair-address-search-button js-repair-address-search" type="button">주소 검색</button>
                 </div>
               </label>
               <label class="repair-field repair-field--line">
                 <span>주소 *</span>
-                <input class="js-repair-address-line1" type="text" name="addressLine1" autocomplete="address-line1" maxlength="300" placeholder="도로명 및 번지" readonly required>
+                <input class="js-repair-address-line1" type="text" name="addressLine1" autocomplete="address-line1" maxlength="300" readonly required>
               </label>
               <label class="repair-field repair-field--line">
                 <span>상세주소 *</span>
-                <input class="js-repair-address-line2" type="text" name="addressLine2" autocomplete="address-line2" maxlength="180" placeholder="상세주소" required>
+                <input class="js-repair-address-line2" type="text" name="addressLine2" autocomplete="address-line2" maxlength="180" required>
               </label>
-              <label class="repair-field">
-                <span>1. 어떤 제품인가요?</span>
+              <label class="repair-field repair-field--question">
+                <span>* 어떤 제품인가요?</span>
                 <select name="itemType" required>
                   <option value="" selected disabled>제품 종류를 선택해주세요.</option>
                   <option value="자켓">자켓</option>
@@ -182,8 +182,8 @@
                   <option value="가죽">가죽</option>
                 </select>
               </label>
-              <label class="repair-field"><span>2. 어떤 부분이 손상되었나요?</span><textarea name="issueDescription" rows="5" maxlength="4000" required></textarea></label>
-              <fieldset class="repair-choice-group"><legend>3. 원하시는 방향이 있나요?</legend><div><label><input type="radio" name="desiredResult" value="기존 모습과 비슷하게 수선" required> 기존 모습과 비슷하게 수선</label><label><input type="radio" name="desiredResult" value="수선 흔적을 살리고 싶어요"> 수선 흔적을 살리고 싶어요</label><label><input type="radio" name="desiredResult" value="디자인은 오알룸에게 맡기고 싶어요"> 디자인은 오알룸에게 맡기고 싶어요</label><label><input type="radio" name="desiredResult" value="잘 모르겠어요"> 잘 모르겠어요</label></div></fieldset>
+              <label class="repair-field repair-field--question"><span>* 어떤 부분이 손상되었나요?</span><textarea name="issueDescription" rows="5" maxlength="4000" required></textarea></label>
+              <fieldset class="repair-choice-group repair-choice-group--line"><legend>* 원하시는 방향이 있나요?</legend><div><label><input type="radio" name="desiredResult" value="기존 모습과 비슷하게 수선" required> 기존 모습과 비슷하게 수선</label><label><input type="radio" name="desiredResult" value="수선 흔적을 살리고 싶어요"> 수선 흔적을 살리고 싶어요</label><label><input type="radio" name="desiredResult" value="디자인은 오알룸에게 맡기고 싶어요"> 디자인은 오알룸에게 맡기고 싶어요</label><label><input type="radio" name="desiredResult" value="잘 모르겠어요"> 잘 모르겠어요</label></div></fieldset>
             </div>
           </section>
 
@@ -191,9 +191,8 @@
             <div class="repair-image-upload__head">
               <div class="repair-image-upload__copy">
                 <div class="repair-image-upload__title-row">
-                  <h3>4. 제품 사진을 올려주세요. <em class="repair-image-help js-repair-image-help">(필수) · 최대 4장, 장당 8MB까지 가능합니다.</em></h3>
+                  <h3>* 제품 사진을 올려주세요.</h3>
                 </div>
-                <p class="repair-image-upload__description">전체 사진, 손상 부위 가까이 찍은 사진, 가능하면 안쪽 사진을 함께 올려주세요.</p>
               </div>
             </div>
             <label class="repair-image-picker repair-image-dropzone js-repair-image-dropzone">
@@ -204,7 +203,7 @@
           </section>
 
           <section class="repair-request-form__section repair-request-form__section--notes">
-            <label class="repair-field"><span>5. 기타 요청사항 <em>(선택)</em></span><textarea class="js-repair-budget-note" name="budgetNote" rows="4" maxlength="1000" placeholder="의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다. 원치 않으시면 기타 요청사항에 미리 말씀해 주세요."></textarea></label>
+            <label class="repair-field repair-field--notes"><span>기타 요청사항</span><textarea class="js-repair-budget-note" name="budgetNote" rows="4" maxlength="1000"></textarea></label>
           </section>
 
           <section class="repair-request-form__section repair-request-form__consent">

@@ -297,6 +297,114 @@ body.repair-page .repair-request-form__section--identity .repair-field--line + .
   margin-top: 32px;
 }
 
+body.repair-page .repair-request-form__section--identity :is(
+  .repair-field--question,
+  .repair-choice-group--line
+) {
+  margin-top: 0;
+}
+
+body.repair-page .repair-request-form__section--identity .repair-field--line + .repair-field--question {
+  margin-top: 32px;
+}
+
+body.repair-page .repair-request-form .repair-field--question,
+body.repair-page .repair-request-form .repair-choice-group--line,
+body.repair-page .repair-request-form__section--images,
+body.repair-page .repair-request-form__section--notes {
+  border: 0;
+  border-bottom: 1px solid #111;
+  padding: 16px 0;
+}
+
+body.repair-page .repair-request-form .repair-field--question,
+body.repair-page .repair-request-form .repair-field--notes {
+  gap: 8px;
+}
+
+body.repair-page .repair-request-form :is(
+  .repair-field--question > span,
+  .repair-choice-group--line > legend,
+  .repair-field--notes > span,
+  .repair-image-upload__title-row h3
+),
+body.repair-page .repair-request-form .repair-field--question :is(select, textarea),
+body.repair-page .repair-request-form .repair-field--notes textarea,
+body.repair-page .repair-request-form .repair-choice-group--line label {
+  color: #111;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-request-form .repair-field--question :is(select, textarea),
+body.repair-page .repair-request-form .repair-field--notes textarea {
+  width: 100%;
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  outline: 0;
+}
+
+body.repair-page .repair-request-form .repair-field--question textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+body.repair-page .repair-request-form .repair-field--notes textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+body.repair-page .repair-request-form .repair-choice-group--line > div {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+body.repair-page .repair-request-form .repair-choice-group--line label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.repair-page .repair-request-form .repair-choice-group--line input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #111;
+}
+
+body.repair-page .repair-request-form__section--images {
+  display: grid;
+  gap: 12px;
+}
+
+body.repair-page .repair-request-form .repair-image-upload__title-row h3 {
+  margin: 0;
+}
+
+body.repair-page .repair-request-form .repair-image-picker,
+body.repair-page .repair-request-form .repair-image-picker:hover,
+body.repair-page .repair-request-form .repair-image-picker:focus-within {
+  min-height: 48px;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-request-form__section--notes {
+  gap: 0;
+}
+
 @media (max-width: 560px) {
   body.repair-page .repair-request-form .repair-field--line {
     grid-template-columns: 104px minmax(0, 1fr);

@@ -116,7 +116,7 @@ test("repair accordion omits section divider lines at every viewport", () => {
   assert.match(repairCss, /@media \(max-width:\s*768px\)[\s\S]*?\.repair-stage__rail[\s\S]*?border:\s*0;/);
 });
 
-test("repair request separates applicant and shipping fields without changing questions 1–5", () => {
+test("repair request separates applicant and shipping fields and uses unnumbered required questions", () => {
   for (const field of [
     '<span>이름 *</span>',
     '<span>전화번호 *</span>',
@@ -140,23 +140,24 @@ test("repair request separates applicant and shipping fields without changing qu
   assert.match(repairHtml, /접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다\./);
   assert.doesNotMatch(repairHtml, /접수 후 물건을 보내주시면 상태를 확인하고/);
   assert.match(repairHtml, /name="addressLine2"[^>]+required/);
-  assert.deepEqual(
-    [...repairHtml.matchAll(/<(?:span|legend|h3)>([1-5]\. [^<]+)/g)].map((match) => match[1]),
-    [
-      "1. 어떤 제품인가요?",
-      "2. 어떤 부분이 손상되었나요?",
-      "3. 원하시는 방향이 있나요?",
-      "4. 제품 사진을 올려주세요. ",
-      "5. 기타 요청사항 ",
-    ],
-  );
+  for (const label of [
+    "<span>* 어떤 제품인가요?</span>",
+    "<span>* 어떤 부분이 손상되었나요?</span>",
+    "<legend>* 원하시는 방향이 있나요?</legend>",
+    "<h3>* 제품 사진을 올려주세요.</h3>",
+    "<span>기타 요청사항</span>",
+  ]) {
+    assert.ok(repairHtml.includes(label), `missing request label: ${label}`);
+  }
+  assert.doesNotMatch(repairHtml, />(?:[1-5])\. (?:어떤|원하시는|제품 사진|기타 요청사항)/);
+  assert.doesNotMatch(repairHtml, /name="(?:customerName|phone|email|countryCustom|postalCode|addressLine1|addressLine2)"[^>]*placeholder=/);
 });
 
 test("repair request supports postcode search, international entry, account autofill, and KR phone formatting", () => {
   assert.match(repairRequestSource, /new window\.daum\.Postcode/);
   assert.match(repairRequestSource, /dom\.postalCode\.readOnly = korean/);
   assert.match(repairRequestSource, /dom\.addressLine1\.readOnly = korean/);
-  assert.match(repairHtml, /name="phone"[^>]+inputmode="numeric"[^>]+maxlength="11"[^>]+pattern="010\[0-9\]\{8\}"[^>]+placeholder="01000000000"/);
+  assert.match(repairHtml, /name="phone"[^>]+inputmode="numeric"[^>]+maxlength="11"[^>]+pattern="010\[0-9\]\{8\}"[^>]+required/);
   assert.match(repairRequestSource, /dom\.phoneInput\.value = isKoreanAddress\(\)[\s\S]*?replace\(\/\\D\/g, ""\)/);
   assert.match(repairRequestSource, /accountUser\.fullName/);
   assert.match(repairRequestSource, /accountUser\.phone/);
@@ -176,8 +177,10 @@ test("country choices use Korean alphabetical order with a neutral direct-entry 
   assert.match(repairFormCss, /\.repair-request-form \.repair-field\[hidden\]\s*\{[^}]*display:\s*none/);
 });
 
-test("repair photo-use notice appears in the optional request placeholder", () => {
-  assert.match(repairHtml, /name="budgetNote"[^>]+placeholder="의뢰하신 의류의 수선 전후 이미지를 작업 아카이브나 SNS에 사용할 수 있습니다\. 원치 않으시면 기타 요청사항에 미리 말씀해 주세요\."/);
+test("repair optional request stays blank without gray placeholder copy", () => {
+  assert.match(repairHtml, /name="budgetNote"/);
+  assert.doesNotMatch(repairHtml, /name="budgetNote"[^>]+placeholder=/);
+  assert.doesNotMatch(repairHtml, /의뢰하신 의류의 수선 전후 이미지를/);
   assert.doesNotMatch(repairHtml, /name="archiveConsentChoice"/);
   assert.doesNotMatch(repairHtml, /작업 사진 기록/);
   assert.match(repairHtml, /name="privacyConsent" required/);
@@ -218,7 +221,10 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-15/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260925-16/);
+  assert.match(repairDetailCss, /\.repair-field--question,[\s\S]*?border-bottom:\s*1px solid #111;/);
+  assert.match(repairDetailCss, /\.repair-choice-group--line input\[type="radio"\][\s\S]*?width:\s*16px;[\s\S]*?height:\s*16px;/);
+  assert.match(repairDetailCss, /\.repair-image-picker,[\s\S]*?background:\s*#111;[\s\S]*?color:\s*#fff;/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
