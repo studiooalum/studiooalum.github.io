@@ -158,10 +158,8 @@ function renderPointsSection(totals = getCheckoutTotals()) {
   const balanceEl = document.getElementById("checkoutPointsBalance");
   const inputEl = document.getElementById("checkoutPointsInput");
   const maxButton = document.getElementById("checkoutPointsMaxBtn");
-  const copyEl = document.getElementById("checkoutPointsCopy");
-  const earnEl = document.getElementById("checkoutPointsEarn");
 
-  if (!section || !balanceEl || !inputEl || !maxButton || !copyEl || !earnEl) {
+  if (!section || !balanceEl || !inputEl || !maxButton) {
     return;
   }
 
@@ -170,7 +168,6 @@ function renderPointsSection(totals = getCheckoutTotals()) {
     inputEl.value = "";
     inputEl.disabled = true;
     maxButton.disabled = true;
-    earnEl.textContent = "예상 적립 0 포인트";
     return;
   }
 
@@ -183,28 +180,14 @@ function renderPointsSection(totals = getCheckoutTotals()) {
   inputEl.max = String(spendablePoints);
   inputEl.value = totals.pointsUsed > 0 ? String(totals.pointsUsed) : "";
   maxButton.disabled = !canUsePoints;
-  earnEl.textContent = `예상 적립 ${totals.expectedEarnedPoints.toLocaleString("ko-KR")} 포인트`;
-
-  if (availablePoints < 0) {
-    copyEl.textContent = "반품/환불 정산으로 포인트 잔액이 일시적으로 0 미만일 수 있습니다. 현재는 포인트를 사용할 수 없습니다.";
-    return;
-  }
-
-  if (!canUsePoints) {
-    copyEl.textContent = `포인트는 ${MIN_REDEEMABLE_POINTS.toLocaleString("ko-KR")}포인트부터 사용할 수 있습니다.`;
-    return;
-  }
-
-  copyEl.textContent = `포인트는 ${MIN_REDEEMABLE_POINTS.toLocaleString("ko-KR")}포인트부터 사용할 수 있으며, 사용 포인트는 결제 진행 후 30분간 예약됩니다. 적립은 배송 완료 후 확정됩니다.`;
 }
 
 function renderCouponSection() {
   const inputEl = document.getElementById("checkoutCouponInput");
   const statusEl = document.getElementById("checkoutCouponStatus");
-  const copyEl = document.getElementById("checkoutCouponCopy");
   const totals = getCheckoutTotals();
 
-  if (!inputEl || !statusEl || !copyEl) {
+  if (!inputEl || !statusEl) {
     return;
   }
 
@@ -212,30 +195,25 @@ function renderCouponSection() {
 
   if (checkoutState.pricingQuoteLoading) {
     statusEl.textContent = "쿠폰 할인 계산 중입니다.";
-    copyEl.textContent = "입력한 쿠폰의 적용 가능 여부와 할인 금액을 서버에서 확인하고 있습니다.";
     return;
   }
 
   if (totals.pricingError) {
     statusEl.textContent = totals.pricingError;
-    copyEl.textContent = "쿠폰 코드를 다시 확인하거나, 대상 이메일/회원 계정이 맞는지 확인해주세요.";
     return;
   }
 
   if (!checkoutState.couponCode) {
     statusEl.textContent = "";
-    copyEl.textContent = "쿠폰은 입력 즉시 적용 가능 여부를 확인합니다. 총 결제금액과 할인 금액이 아래에 바로 반영됩니다.";
     return;
   }
 
   if (totals.couponDiscountAmount > 0) {
     statusEl.textContent = `${totals.couponCode || checkoutState.couponCode} 적용됨`;
-    copyEl.textContent = `쿠폰 할인 ${formatWon(totals.couponDiscountAmount)}이 총 결제금액에 반영되었습니다.`;
     return;
   }
 
   statusEl.textContent = `입력된 쿠폰 ${checkoutState.couponCode}`;
-  copyEl.textContent = "쿠폰 적용 여부를 확인하는 중입니다.";
 }
 
 function applyPointsInput(rawValue) {

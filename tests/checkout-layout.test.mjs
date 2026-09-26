@@ -14,7 +14,7 @@ const [html, css, checkoutScript, archiveSource, accountHtml, accountCss] = awai
 ]);
 
 test("checkout follows the three-column repair form layout", () => {
-  assert.match(html, /checkout\.css\?v=20260927-04/);
+  assert.match(html, /checkout\.css\?v=20260927-05/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
   assert.match(html, />전화번호 <span class="required">\*<\/span>/);
@@ -34,12 +34,15 @@ test("checkout follows the three-column repair form layout", () => {
   assert.match(css, /\.checkout-field__zip-row \{[^}]*justify-content: flex-start;/);
   assert.match(css, /\.checkout-field__zip-row input \{[^}]*position: absolute;[^}]*clip-path: inset\(50%\);/);
   assert.match(css, /\.checkout-submit-btn \{[^}]*background: #111;[^}]*font: 400 16px/);
-  assert.match(css, /\.checkout-coupon__controls input \{[^}]*height: 68px;[^}]*min-height: 68px;/);
+  assert.match(css, /\.checkout-coupon__controls input \{[^}]*height: 68px;[^}]*min-height: 68px;[^}]*border: 0;[^}]*border-bottom: 1px solid #111;/);
   assert.match(css, /\.checkout-summary > \.checkout-coupon \{ margin-top: 23px; \}/);
-  assert.match(css, /\.checkout-points \{[^}]*width: 100%;/);
+  assert.match(css, /\.checkout-points \{[^}]*width: 100%;[^}]*margin-top: 0;[^}]*padding: 0;[^}]*border: 0;/);
+  assert.match(css, /\.checkout-points__controls \{[^}]*min-height: 68px;[^}]*border-bottom: 1px solid #111;/);
   assert.match(css, /input\[type="number"\]::-webkit-inner-spin-button/);
   assert.match(html, /checkoutCouponSection[\s\S]*checkoutPointsSection[\s\S]*checkout-form-section/);
   assert.match(html, /checkoutPointsBalance">보유 포인트 0</);
+  assert.match(html, /placeholder="포인트는 1,000포인트부터 사용할 수 있습니다"/);
+  assert.doesNotMatch(html, /checkout-points__title|checkoutPointsCopy|checkoutPointsEarn|checkoutCouponCopy/);
   assert.match(checkoutScript, /`보유 포인트 \$\{availablePoints\.toLocaleString\("ko-KR"\)\}`/);
   assert.match(css, /#searchZipBtn \{[^}]*width: auto !important;[^}]*justify-content: flex-start !important;/);
   assert.match(css, /input\[type="checkbox"\]:checked[^}]*background-image: url\("data:image\/svg\+xml/);
