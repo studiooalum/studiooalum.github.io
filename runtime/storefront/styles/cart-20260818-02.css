@@ -1,7 +1,20 @@
 @import url("./cart-20260818-01.css");
 
+.cart-panel {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.cart-panel__header {
+  min-height: 64px;
+}
+
 .cart-panel__title {
   font-family: var(--font-english-ui);
+  font-size: 16px;
+}
+
+.cart-panel__close {
+  color: #111;
 }
 
 .cart-panel__empty,
@@ -9,11 +22,38 @@
 .cart-item__qty,
 .cart-item__price,
 .cart-panel__total {
-  font-family: var(--font-kor-body);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+}
+
+.cart-panel__items {
+  padding-top: 24px;
+}
+
+.cart-item {
+  min-height: 128px;
+  gap: 16px;
+  padding-top: 24px;
+}
+
+.cart-item:first-child {
+  padding-top: 0;
+}
+
+.cart-item__img,
+.cart-item__fallback {
+  width: 128px;
+  height: 128px;
+}
+
+.cart-item__info {
+  gap: 8px;
 }
 
 .cart-item__title {
   padding-right: 26px;
+  font-size: 16px;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
@@ -23,35 +63,61 @@
 
 .cart-item__price,
 .cart-panel__total {
+  color: #111;
+  font-size: 16px;
   font-weight: 500;
 }
 
 .cart-item__qty-btn {
-  flex: 0 0 22px;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  font-family: var(--font-kor-body);
-  font-size: 11px;
+  border: 1px solid #111;
+  border-radius: 50%;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
   line-height: 1;
 }
 
 .cart-item__qty {
-  min-height: 22px;
+  min-height: 28px;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .cart-item__qty > span {
   display: inline-flex;
-  height: 22px;
+  height: 28px;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transform: translateY(1px);
+  transform: none;
+}
+
+.cart-item__remove {
+  top: 0;
+  padding: 0;
+  color: #111;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 20px;
+}
+
+.cart-item__remove:hover {
+  color: #111;
+}
+
+.cart-panel__total {
+  line-height: 1.55;
 }
 
 .cart-panel__checkout-btn {
   font-family: var(--font-kor-button);
   height: 46px !important;
   min-height: 46px !important;
+  font-size: 16px;
   font-weight: 400 !important;
 }
 
@@ -59,5 +125,9 @@
   .cart-panel {
     width: 100%;
     max-width: 100%;
+  }
+
+  .cart-panel__title {
+    display: none;
   }
 }

@@ -216,7 +216,7 @@ test("collapsed desktop accordion titles use compact spacing without changing op
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260926-07/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260926-08/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
@@ -227,8 +227,8 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /\.repair-image-preview-list:empty\s*\{[^}]*display:\s*none;/);
   assert.match(repairDetailCss, /\.repair-address-search-button:focus-visible\s*\{[^}]*text-decoration:\s*none;/);
   assert.match(repairDetailCss, /\.repair-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
-  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, select, textarea\)\s*\{[^}]*outline:\s*0;[^}]*color:\s*red;/);
-  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(255, 0, 0, 0\.52\);/);
+  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, select, textarea\)\s*\{[^}]*outline:\s*0;[^}]*color:\s*#c92a2a;/);
+  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*#c92a2a;/);
   assert.match(repairDetailCss, /\.repair-request-form__section--images\.is-invalid[\s\S]*?outline:\s*0;/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);

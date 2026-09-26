@@ -265,12 +265,12 @@
 }
 
 .account-auth-shell .account-field.is-invalid input {
-  border-bottom-color: red;
-  color: red;
+  border-bottom-color: #c92a2a;
+  color: #c92a2a;
 }
 
 .account-auth-shell .account-field.is-invalid input::placeholder {
-  color: red;
+  color: #c92a2a;
 }
 
 .account-auth-shell .account-status.is-error {
@@ -312,7 +312,7 @@
 }
 
 .account-status.is-error {
-  color: #ad2b2b;
+  color: #c92a2a;
 }
 
 .account-orders {

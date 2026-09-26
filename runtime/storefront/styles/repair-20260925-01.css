@@ -510,12 +510,12 @@ body.repair-page .repair-request-form.is-validation-visible
   .repair-field.is-invalid :is(input, select, textarea) {
   border: 0;
   outline: 0;
-  color: red;
+  color: #c92a2a;
 }
 
 body.repair-page .repair-request-form.is-validation-visible
   .repair-field.is-invalid :is(input, textarea)::placeholder {
-  color: rgba(255, 0, 0, 0.52);
+  color: #c92a2a;
   opacity: 1;
 }
 
@@ -530,7 +530,7 @@ body.repair-page .repair-request-form.is-validation-visible
     .repair-request-form__section--images.is-invalid .repair-required-mark,
     .repair-checkbox.is-invalid
   ) {
-  color: red;
+  color: #c92a2a;
 }
 
 body.repair-page .repair-request-form.is-validation-visible
@@ -544,7 +544,7 @@ body.repair-page .repair-request-form.is-validation-visible
 }
 
 body.repair-page .repair-form__status.is-error {
-  color: red;
+  color: #c92a2a;
 }
 
 @media (max-width: 560px) {

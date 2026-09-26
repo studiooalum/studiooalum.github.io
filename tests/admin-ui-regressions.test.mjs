@@ -126,7 +126,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260926-03/);
+  assert.match(html, /account\.css\?v=20260926-04/);
   assert.match(html, /account\.js\?v=20260926-02/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
@@ -154,8 +154,8 @@ test("login and guest errors use red field text and underlines without an error 
   assert.match(controller, /setAuthFieldInvalid\(guestForm, "reference"\);\s*setAuthFieldInvalid\(guestForm, "email"\);\s*setStatus\(guestStatusEl, ""\);/);
   assert.doesNotMatch(controller, /setStatus\(loginStatusEl, "이메일 주소를 다시 확인해주세요\."/);
   assert.doesNotMatch(controller, /setStatus\(guestStatusEl, "이메일 주소를 다시 확인해주세요\."/);
-  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input\s*\{[^}]*border-bottom-color:\s*red;[^}]*color:\s*red;/);
-  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input::placeholder\s*\{[^}]*color:\s*red;/);
+  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input\s*\{[^}]*border-bottom-color:\s*#c92a2a;[^}]*color:\s*#c92a2a;/);
+  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input::placeholder\s*\{[^}]*color:\s*#c92a2a;/);
   assert.match(stylesheet, /\.account-auth-shell \.account-status\.is-error\s*\{[^}]*visibility:\s*hidden;/);
 });
 

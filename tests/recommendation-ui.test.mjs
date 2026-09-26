@@ -72,12 +72,17 @@ test("newsletter detail recommendations use columns one and two", () => {
   assert.match(newsletterCss, /@media \(min-width:\s*960px\)[\s\S]*?\.newsletter-recommendation__grid\s*\{[\s\S]*?repeat\(4,/);
 });
 
-test("cart quantity controls share one vertical center", () => {
-  assert.match(cartCss, /\.cart-item__qty\s*\{[\s\S]*?min-height:\s*22px;[\s\S]*?line-height:\s*1;/);
-  assert.match(cartCss, /\.cart-item__qty > span\s*\{[\s\S]*?height:\s*22px;[\s\S]*?align-items:\s*center;[\s\S]*?transform:\s*translateY\(1px\);/);
-  assert.match(cartCss, /\.cart-item__qty-btn\s*\{[\s\S]*?padding:\s*0;[\s\S]*?font-size:\s*11px;[\s\S]*?line-height:\s*1;/);
+test("cart keeps its desktop label, hides the mobile label, and uses the large 16px item treatment", () => {
+  assert.match(cartCss, /\.cart-panel__title\s*\{[^}]*font-family:\s*var\(--font-english-ui\);[^}]*font-size:\s*16px;/);
+  assert.match(cartCss, /@media \(max-width:\s*480px\)[\s\S]*?\.cart-panel__title\s*\{[^}]*display:\s*none;/);
+  assert.match(cartCss, /\.cart-item\s*\{[\s\S]*?min-height:\s*128px;/);
+  assert.match(cartCss, /\.cart-item__img,[\s\S]*?\.cart-item__fallback\s*\{[\s\S]*?width:\s*128px;[\s\S]*?height:\s*128px;/);
+  assert.match(cartCss, /\.cart-item__qty\s*\{[\s\S]*?min-height:\s*28px;[\s\S]*?font-size:\s*16px;[\s\S]*?line-height:\s*1;/);
+  assert.match(cartCss, /\.cart-item__qty > span\s*\{[\s\S]*?height:\s*28px;[\s\S]*?align-items:\s*center;[\s\S]*?transform:\s*none;/);
+  assert.match(cartCss, /\.cart-item__qty-btn\s*\{[\s\S]*?border:\s*1px solid #111;[\s\S]*?border-radius:\s*50%;[\s\S]*?font-size:\s*16px;/);
+  assert.match(cartCss, /\.cart-item__remove\s*\{[\s\S]*?color:\s*#111;/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260925-03/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260926-01/, `stale cart stylesheet in ${cartPagePaths[index]}`);
   });
 });
 
