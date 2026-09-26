@@ -23,7 +23,8 @@ body.edition-page #addToCartBtn {
   max-inline-size: none !important;
   min-width: 0;
   height: auto;
-  padding: 0;
+  margin-left: 0 !important;
+  padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
   color: #111 !important;
@@ -32,6 +33,8 @@ body.edition-page #addToCartBtn {
   font-weight: 400 !important;
   line-height: 1.45;
   justify-content: flex-start;
+  justify-self: start;
+  text-align: left;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;

@@ -42,7 +42,7 @@ const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}
 test("edition recommendations crop square images from the center", () => {
   assert.match(editionHtml, /edition\.css\?v=20260926-05/);
   assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-04/);
-  assert.match(editionHtml, /storefront-actions-20260925-02\.css\?v=20260926-06/);
+  assert.match(editionHtml, /storefront-actions-20260925-02\.css\?v=20260927-01/);
   assert.doesNotMatch(editionHtml, /editionKicker/);
   assert.match(editionHtml, />사이즈<\/span>/);
   assert.match(editionHtml, />소재<\/span>/);
@@ -55,6 +55,7 @@ test("edition recommendations crop square images from the center", () => {
   assert.match(editionCss, /\.edition-specs\s*\{[^}]*margin-top:\s*36px;[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.45;/);
   assert.match(editionCss, /\.edition-spec\s*\{[^}]*grid-template-columns:\s*76px minmax\(0, 1fr\);/);
   assert.match(storefrontActionsCss, /body\.edition-page #addToCartBtn\s*\{[^}]*width:\s*auto !important;[^}]*border:\s*0 !important;[^}]*background:\s*transparent !important;[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px !important;[^}]*text-decoration:\s*underline;/);
+  assert.match(storefrontActionsCss, /body\.edition-page #addToCartBtn\s*\{[^}]*margin-left:\s*0 !important;[^}]*padding:\s*0 !important;[^}]*justify-self:\s*start;[^}]*text-align:\s*left;/);
   assert.match(storefrontActionsCss, /body\.edition-page #buyNowBtn\s*\{[^}]*background:\s*#111 !important;[^}]*color:\s*#fff !important;/);
   assert.match(storefrontActionsCss, /body\.edition-page #addToCartBtn:is\(:hover, :focus-visible, \.is-pointer-hover\)\s*\{[^}]*background:\s*transparent !important;[^}]*color:\s*#111 !important;/);
   assert.match(storefrontActionsCss, /body\.edition-page #buyNowBtn:is\(:hover, :focus-visible, :active, \.is-pointer-hover\)\s*\{[^}]*background:\s*#fff !important;[^}]*color:\s*#111 !important;/);
@@ -108,6 +109,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartCss, /\.cart-panel,[\s\S]*?\.cart-panel__footer\s*\{[^}]*background:\s*#fff;/);
   assert.match(cartCss, /\.cart-panel__header\s*\{[^}]*flex:\s*0 0 auto;[^}]*background-color:\s*#e34234 !important;[^}]*background-image:\s*none !important;/);
   assert.match(cartCss, /body\.archive-page \.cart-panel \.cart-panel__header\s*\{[^}]*background-color:\s*#e34234 !important;/);
+  assert.match(cartCss, /body\.archive-page\.cart-open \.cart-panel\s*\{[^}]*z-index:\s*1001;/);
   assert.doesNotMatch(cartCss, /body\.archive-page\.cart-open \.gnb\.gnb--archive/);
   assert.match(cartCss, /\.cart-panel__footer\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(cartCss, /\.cart-item__img\s*\{[^}]*object-fit:\s*contain;/);
@@ -120,7 +122,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartScript, /style\.setProperty\("background-color", "#e34234", "important"\)/);
   assert.match(cartEntryScript, /cart-20260706-06\.js\?v=20260926-02/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260926-09/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260927-01/, `stale cart stylesheet in ${cartPagePaths[index]}`);
     assert.match(html, /cart-20260818-02\.js\?v=20260926-02/, `stale cart script in ${cartPagePaths[index]}`);
   });
 });

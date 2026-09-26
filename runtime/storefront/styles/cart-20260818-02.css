@@ -21,6 +21,10 @@ body.archive-page .cart-panel .cart-panel__header {
   background-image: none !important;
 }
 
+body.archive-page.cart-open .cart-panel {
+  z-index: 1001;
+}
+
 .cart-panel__footer {
   box-shadow: none;
 }
