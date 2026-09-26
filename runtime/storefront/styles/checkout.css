@@ -26,7 +26,7 @@
 .checkout-item__subtotal { display: none; }
 
 .checkout-totals { display: grid; padding-top: 0; border-top: 1px solid #111; }
-.checkout-totals__row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 34px; padding: 0; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-totals__row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 33.75px; padding: 0; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 .checkout-totals__row--total { min-height: 44px; margin-top: 0; padding-top: 0; border-top: 1px solid #111; }
 
 .checkout-coupon { display: grid; gap: 12px; padding: 0; border: 0; background: transparent; }

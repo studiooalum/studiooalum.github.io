@@ -14,7 +14,7 @@ const [html, css, checkoutScript, archiveSource, accountHtml, accountCss] = awai
 ]);
 
 test("checkout follows the two-column repair form layout", () => {
-  assert.match(html, /checkout\.css\?v=20260927-01/);
+  assert.match(html, /checkout\.css\?v=20260927-02/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
   assert.match(html, />전화번호 <span class="required">\*<\/span>/);
@@ -27,7 +27,7 @@ test("checkout follows the two-column repair form layout", () => {
   assert.match(css, /\.checkout-item \{[^}]*grid-template-columns: 184px minmax\(0, 1fr\)/);
   assert.match(css, /\.checkout-summary > \.checkout-totals \{ margin-top: 20px; \}/);
   assert.match(css, /\.checkout-totals \{[^}]*padding-top: 0;/);
-  assert.match(css, /\.checkout-totals__row \{[^}]*align-items: center;[^}]*min-height: 34px;[^}]*padding: 0;/);
+  assert.match(css, /\.checkout-totals__row \{[^}]*align-items: center;[^}]*min-height: 33\.75px;[^}]*padding: 0;/);
   assert.match(css, /\.checkout-totals__row--total \{[^}]*margin-top: 0;/);
   assert.match(css, /\.checkout-field__zip-row \{[^}]*justify-content: flex-start;/);
   assert.match(css, /\.checkout-field__zip-row input \{[^}]*position: absolute;[^}]*clip-path: inset\(50%\);/);
