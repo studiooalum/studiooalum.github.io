@@ -53,20 +53,20 @@ test("edition recommendations crop square images from the center", () => {
   assert.match(editionCss, /\.edition-page \.edition-desc\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.45 !important;/);
   assert.match(editionCss, /\.edition-specs\s*\{[^}]*margin-top:\s*36px;[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.45;/);
   assert.match(editionCss, /\.edition-spec\s*\{[^}]*grid-template-columns:\s*76px minmax\(0, 1fr\);/);
-  assert.match(storefrontActionsCss, /body\.edition-page #addToCartBtn\s*\{[^}]*width:\s*auto !important;[^}]*border:\s*0 !important;[^}]*background:\s*transparent !important;[^}]*text-decoration:\s*underline;/);
+  assert.match(storefrontActionsCss, /body\.edition-page #addToCartBtn\s*\{[^}]*width:\s*auto !important;[^}]*border:\s*0 !important;[^}]*background:\s*transparent !important;[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px !important;[^}]*text-decoration:\s*underline;/);
   assert.match(storefrontActionsCss, /body\.edition-page #buyNowBtn\s*\{[^}]*background:\s*#111 !important;[^}]*color:\s*#fff !important;/);
   assert.match(storefrontActionsCss, /body\.edition-page #addToCartBtn:is\(:hover, :focus-visible, \.is-pointer-hover\)\s*\{[^}]*background:\s*transparent !important;[^}]*color:\s*#111 !important;/);
-  assert.match(storefrontActionsCss, /body\.edition-page #buyNowBtn:is\(:hover, :focus-visible, \.is-pointer-hover\)\s*\{[^}]*background:\s*#fff !important;[^}]*color:\s*#111 !important;/);
+  assert.match(storefrontActionsCss, /body\.edition-page #buyNowBtn:is\(:hover, :focus-visible, :active, \.is-pointer-hover\)\s*\{[^}]*background:\s*#fff !important;[^}]*color:\s*#111 !important;/);
   assert.match(editionScript, /사이즈\\s\+\(\[\^\\n\]\+\)/);
   assert.match(editionScript, /sizeEl\.textContent = displayContent\.size/);
   assert.match(editionScript, /materialEl\.textContent = displayContent\.material/);
   assert.match(editionScript, /`\$\{Number\(price\)\.toLocaleString\("ko-KR"\)\}원`/);
 });
 
-test("mobile navigation returns to content height with 12px labels", () => {
-  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-07")));
+test("mobile navigation returns to content height with 13px labels", () => {
+  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-08")));
   assert.doesNotMatch(gnbCss, /height:\s*(?:37\.5|50)dvh/);
-  assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*12px;[^}]*line-height:\s*1;/);
+  assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*13px;[^}]*line-height:\s*1;/);
   assert.match(editionCss, /\.edition-media__dot\s*\{[^}]*border:\s*1px solid #111;/);
   assert.match(editionCss, /\.edition-media__dot\.is-active\s*\{[^}]*background:\s*#111;/);
 });
@@ -107,7 +107,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartCss, /\.cart-panel,[\s\S]*?\.cart-panel__footer\s*\{[^}]*background:\s*#fff;/);
   assert.match(cartCss, /\.cart-panel__header\s*\{[^}]*flex:\s*0 0 auto;[^}]*background-color:\s*#e34234 !important;[^}]*background-image:\s*none !important;/);
   assert.match(cartCss, /body\.archive-page \.cart-panel \.cart-panel__header\s*\{[^}]*background-color:\s*#e34234 !important;/);
-  assert.match(cartCss, /body\.archive-page\.cart-open \.gnb\.gnb--archive\s*\{[^}]*background:\s*#e34234 !important;/);
+  assert.doesNotMatch(cartCss, /body\.archive-page\.cart-open \.gnb\.gnb--archive/);
   assert.match(cartCss, /\.cart-panel__footer\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(cartCss, /\.cart-item__img\s*\{[^}]*object-fit:\s*contain;/);
   assert.match(cartCss, /\.cart-item__price,[\s\S]*?\.cart-panel__total\s*\{[^}]*font-weight:\s*400;/);
@@ -118,7 +118,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartScript, /style\.setProperty\("background-color", "#e34234", "important"\)/);
   assert.match(cartEntryScript, /cart-20260706-06\.js\?v=20260926-02/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260926-06/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260926-07/, `stale cart stylesheet in ${cartPagePaths[index]}`);
     assert.match(html, /cart-20260818-02\.js\?v=20260926-02/, `stale cart script in ${cartPagePaths[index]}`);
   });
 });
@@ -143,7 +143,8 @@ test("shared command buttons do not add a hover outline", () => {
   assert.match(actionsCss, /\.workshop-inquiry-form button\[type="submit"\][\s\S]*?:hover/);
   assert.match(actionsCss, /\.repair-ticket-file-button[\s\S]*?background:\s*#fff !important;[\s\S]*?color:\s*#111 !important;/);
   assert.doesNotMatch(actionsCss, /\.repair-ticket-file-button\s*\n\):hover[\s\S]*?background:\s*#111 !important/);
-  assert.match(actionsCss, /:root body :is\([\s\S]*?\.repair-submit,[\s\S]*?\.cart-panel__checkout-btn,[\s\S]*?\.fulfillment-btn:not\(\.fulfillment-btn--secondary\)[\s\S]*?\):is\(:hover, :focus-visible, \.is-pointer-hover\)/);
+  assert.match(actionsCss, /-webkit-tap-highlight-color:\s*transparent;/);
+  assert.match(actionsCss, /:root body :is\([\s\S]*?\.repair-submit,[\s\S]*?\.cart-panel__checkout-btn,[\s\S]*?\.fulfillment-btn:not\(\.fulfillment-btn--secondary\)[\s\S]*?\):is\(:hover, :focus-visible, :active, \.is-pointer-hover\)/);
   assert.doesNotMatch(actionsCss.slice(actionsCss.indexOf(":root body :is(")), /\.repair-ticket-file-button|\.repair-address-search-button/);
 });
 

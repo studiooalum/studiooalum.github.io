@@ -37,6 +37,7 @@ body :is(
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
@@ -70,7 +71,7 @@ body :is(
   .placeholder-form__button,
   .fulfillment-btn:not(.fulfillment-btn--secondary),
   .admin-login-form button
-):is(:hover, :focus-visible, .is-pointer-hover) {
+):is(:hover, :focus-visible, :active, .is-pointer-hover) {
   border-color: #111 !important;
   background: #fff !important;
   color: #111 !important;

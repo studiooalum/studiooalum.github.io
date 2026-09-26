@@ -1,6 +1,6 @@
 @import url("./gnb-20260818-03.css");
 @import url("./progressive-images-20260818-02.css");
-@import url("./actions-20260924.css?v=20260926-03");
+@import url("./actions-20260924.css?v=20260926-04");
 
 .gnb__action--cart .gnb__count {
   font: inherit;
@@ -10,7 +10,7 @@
 @media (max-width: 959px) {
   .gnb__mobile-item,
   .gnb__mobile-actions .gnb__action {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1;
   }
 }
