@@ -26,3 +26,10 @@
     flex: 0 1 auto;
   }
 }
+
+:root body .admin-login-form button:is(:hover, :focus-visible) {
+  border-color: #111 !important;
+  background: #fff !important;
+  color: #111 !important;
+  outline: 0;
+}

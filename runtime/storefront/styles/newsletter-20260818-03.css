@@ -1,5 +1,9 @@
 @import url("./newsletter-20260818-02.css");
 
+.newsletter-post-card.is-pointer-hover .newsletter-post-card__image {
+  transform: scale(1.025);
+}
+
 .newsletter-post-card__media {
   display: block;
 }

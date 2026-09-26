@@ -18,7 +18,7 @@ const cartPagePaths = [
   "workshop.html",
   "workshops.html",
 ];
-const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, productCss, actionsCss] = await Promise.all([
+const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, productCss, actionsCss, siteChromeScript] = await Promise.all([
   read("../edition.html"),
   read("../runtime/storefront/scripts/edition-20260706-06.js"),
   read("../runtime/storefront/styles/edition.css"),
@@ -29,6 +29,7 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
   read("../runtime/storefront/styles/cart-20260818-02.css"),
   read("../runtime/storefront/styles/product.css"),
   read("../runtime/storefront/styles/actions-20260924.css"),
+  read("../runtime/storefront/scripts/components/siteChrome-20260818-05.js"),
 ]);
 const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}`)));
 
@@ -83,6 +84,16 @@ test("shared command buttons do not add a hover outline", () => {
   assert.match(actionsCss, /\.workshop-inquiry-form button\[type="submit"\][\s\S]*?:hover/);
   assert.match(actionsCss, /\.repair-ticket-file-button[\s\S]*?background:\s*#fff !important;[\s\S]*?color:\s*#111 !important;/);
   assert.doesNotMatch(actionsCss, /\.repair-ticket-file-button\s*\n\):hover[\s\S]*?background:\s*#111 !important/);
+  assert.match(actionsCss, /:root body :is\([\s\S]*?\.repair-submit,[\s\S]*?\.cart-panel__checkout-btn,[\s\S]*?\.fulfillment-btn:not\(\.fulfillment-btn--secondary\)[\s\S]*?\):is\(:hover, :focus-visible, \.is-pointer-hover\)/);
+  assert.doesNotMatch(actionsCss.slice(actionsCss.indexOf(":root body :is(")), /\.repair-ticket-file-button|\.repair-address-search-button/);
+});
+
+test("pointer hover restores card and button feedback without requiring a click", () => {
+  assert.match(siteChromeScript, /document\.addEventListener\("pointerover"/);
+  assert.match(siteChromeScript, /document\.addEventListener\("pointerout"/);
+  assert.match(siteChromeScript, /event\.pointerType !== "mouse" && event\.pointerType !== "pen"/);
+  assert.match(archiveCss, /\.archive-card\.is-pointer-hover \.archive-card__overlay\s*\{[^}]*opacity:\s*1;/);
+  assert.match(newsletterCss, /\.newsletter-post-card\.is-pointer-hover \.newsletter-post-card__image\s*\{[^}]*transform:\s*scale\(1\.025\);/);
 });
 
 test("admin action controls retain their compact fulfillment sizing", async () => {
@@ -91,5 +102,5 @@ test("admin action controls retain their compact fulfillment sizing", async () =
   assert.match(fulfillmentCss, /\.fulfillment-btn\s*\{[\s\S]*?min-width:\s*108px;[\s\S]*?height:\s*38px/);
   assert.match(fulfillmentCss, /\.fulfillment-actions\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap/);
   assert.match(workshopAdminCss, /\.workshop-admin-action-bar\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap/);
-  assert.doesNotMatch(actionsCss, /\.fulfillment-btn|\.fulfillment-actions|\.workshop-admin-action-bar/);
+  assert.doesNotMatch(actionsCss, /\.fulfillment-actions|\.workshop-admin-action-bar/);
 });

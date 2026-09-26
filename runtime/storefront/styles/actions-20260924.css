@@ -37,6 +37,7 @@ body :is(
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
 body :is(
@@ -51,44 +52,25 @@ body :is(
   color: #111 !important;
 }
 
-body :is(
-  .account-btn,
-  .edition-btn,
-  .checkout-btn--outline:not(.checkout-btn--outline-small),
+:root body :is(
+  .account-btn:not(.account-btn--secondary):not(.account-btn--signup),
+  .edition-btn:not(.edition-btn--secondary),
   .checkout-submit-btn,
   .newsletter-form__button,
   .payment-submit-btn,
-  .payment-btn--outline,
   .payment-btn--secondary,
   .repair-apply-btn,
   .repair-submit,
   .repair-success__reset,
-  .repair-address-search-button,
   .repair-ticket-submit,
-  .repair-ticket-file-button,
   .workshop-apply-btn,
   .workshop-booking-form__submit,
-  .workshop-inquiry-form button[type="submit"]
-):hover,
-body :is(
-  .account-btn,
-  .edition-btn,
-  .checkout-btn--outline:not(.checkout-btn--outline-small),
-  .checkout-submit-btn,
-  .newsletter-form__button,
-  .payment-submit-btn,
-  .payment-btn--outline,
-  .payment-btn--secondary,
-  .repair-apply-btn,
-  .repair-submit,
-  .repair-success__reset,
-  .repair-address-search-button,
-  .repair-ticket-submit,
-  .repair-ticket-file-button,
-  .workshop-apply-btn,
-  .workshop-booking-form__submit,
-  .workshop-inquiry-form button[type="submit"]
-):focus-visible {
+  .workshop-inquiry-form button[type="submit"],
+  .cart-panel__checkout-btn,
+  .placeholder-form__button,
+  .fulfillment-btn:not(.fulfillment-btn--secondary),
+  .admin-login-form button
+):is(:hover, :focus-visible, .is-pointer-hover) {
   border-color: #111 !important;
   background: #fff !important;
   color: #111 !important;

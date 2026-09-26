@@ -1,5 +1,9 @@
 @import url("./archive-20260818-01.css");
 
+.archive-card.is-pointer-hover .archive-card__overlay {
+  opacity: 1;
+}
+
 .archive-detail-mode .archive-tags,
 .archive-tags[hidden] {
   display: none;

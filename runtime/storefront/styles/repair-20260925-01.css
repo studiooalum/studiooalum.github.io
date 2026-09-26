@@ -416,6 +416,10 @@ body.repair-page .repair-request-form__section--images {
   padding: 0;
 }
 
+body.repair-page .repair-request-form .repair-image-preview-list:empty {
+  display: none;
+}
+
 body.repair-page .repair-request-form .repair-image-upload__title-row h3 {
   margin: 0;
 }
