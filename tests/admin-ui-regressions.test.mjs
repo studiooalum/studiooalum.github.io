@@ -120,6 +120,26 @@ test("My Oalum waits for the account response before revealing an auth view", as
   assert.match(initialization, /setActiveAuthPanel[\s\S]*loadAccount\(\{ silent: true \}\)/);
 });
 
+test("account entry uses compact line fields and the revised guest lookup copy", async () => {
+  const [html, stylesheet] = await Promise.all([
+    read("account.html"),
+    read("runtime/storefront/styles/account.css"),
+  ]);
+
+  assert.match(html, /account\.css\?v=20260926-01/);
+  assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
+  assert.match(html, /placeholder="이메일"/);
+  assert.match(html, /placeholder="비밀번호"/);
+  assert.match(html, />회원가입<\/a>[\s\S]*?>비밀번호 찾기<\/a>/);
+  assert.match(html, /<h2 class="account-heading">비회원 내역 조회<\/h2>/);
+  assert.match(html, /placeholder="조회번호"/);
+  assert.match(html, /조회번호는 접수 완료 화면과 안내 이메일 문자에서 확인할 수 있습니다\./);
+  assert.doesNotMatch(html, /비회원 신청 내역 조회|주문번호, 워크숍 예약번호 또는 수선 접수 조회번호/);
+  assert.match(stylesheet, /\.account-auth-shell > \.account-panel \.account-heading\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*font-weight:\s*600;/);
+  assert.match(stylesheet, /\.account-auth-shell \.account-field input\s*\{[^}]*border:\s*0;[^}]*border-bottom:\s*1px solid #111;[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.account-guest-lookup-help\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;/);
+});
+
 test("My Oalum keeps logout in the account page and removes it from the GNB", async () => {
   const [html, stylesheet, siteChrome] = await Promise.all([
     read("account.html"),

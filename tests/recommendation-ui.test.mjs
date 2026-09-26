@@ -35,17 +35,17 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
 const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}`)));
 
 test("edition recommendations crop square images from the center", () => {
-  assert.match(editionHtml, /edition\.css\?v=20260926-01/);
+  assert.match(editionHtml, /edition\.css\?v=20260926-02/);
   assert.match(editionCss, /\.edition-recommend-card__thumb > \.progressive-image\s*\{[\s\S]*?height:\s*100%;/);
   assert.match(editionCss, /\.edition-recommend-card__thumb img\s*\{[\s\S]*?object-fit:\s*cover;[\s\S]*?object-position:\s*center center;/);
-  assert.match(editionCss, /\.edition-page \.edition-title\s*\{[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-weight:\s*400;[^}]*line-height:\s*1\.15;/);
-  assert.match(editionCss, /\.edition-page \.edition-desc\s*\{[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-weight:\s*400;[^}]*line-height:\s*1\.4;/);
+  assert.match(editionCss, /\.edition-page \.edition-title\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.2 !important;/);
+  assert.match(editionCss, /\.edition-page \.edition-desc\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.35 !important;/);
 });
 
 test("mobile navigation opens to half the viewport with larger labels", () => {
-  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-04")));
+  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-05")));
   assert.match(gnbCss, /@media \(max-width:\s*959px\)[\s\S]*?\.gnb__mobile-panel\s*\{[^}]*height:\s*50dvh;[^}]*min-height:\s*50dvh;/);
-  assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*14px;/);
+  assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*18px;[^}]*line-height:\s*1\.2;/);
 });
 
 test("edition sidebar sticky stop uses media-relative image position", () => {

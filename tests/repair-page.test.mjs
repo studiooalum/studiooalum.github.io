@@ -196,8 +196,7 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
 });
 
 test("guest repair lookup number is provided consistently", () => {
-  assert.match(accountHtml, /수선 접수 조회번호/);
-  assert.match(accountHtml, /접수 완료 화면과 안내 이메일·문자에서 확인/);
+  assert.match(accountHtml, /조회번호는 접수 완료 화면과 안내 이메일 문자에서 확인할 수 있습니다/);
   assert.match(repairRequestSource, /비회원 조회번호는 \$\{requestNumber\}입니다/);
   assert.match(repairTicketSource, /\["수선 접수 조회번호", repair\.requestNumber \|\| "-"\]/);
 });
