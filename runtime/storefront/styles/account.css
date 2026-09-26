@@ -264,11 +264,16 @@
   box-shadow: none;
 }
 
-.account-panel--login .account-field.is-invalid input {
+.account-auth-shell .account-field.is-invalid input {
   border-bottom-color: red;
+  color: red;
 }
 
-.account-panel--login .account-status.is-error {
+.account-auth-shell .account-field.is-invalid input::placeholder {
+  color: red;
+}
+
+.account-auth-shell .account-status.is-error {
   visibility: hidden;
 }
 

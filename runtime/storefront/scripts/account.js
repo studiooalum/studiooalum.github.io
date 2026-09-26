@@ -376,20 +376,32 @@ export function initAccountPage() {
     orderImagesBySlug: {},
   };
 
-  const setLoginFieldInvalid = (fieldName, invalid = true) => {
-    const field = loginForm.elements[fieldName]?.closest(".account-field");
+  const setAuthFieldInvalid = (form, fieldName, invalid = true) => {
+    const field = form.elements[fieldName]?.closest(".account-field");
     field?.classList.toggle("is-invalid", invalid);
   };
 
   const clearLoginFieldErrors = () => {
-    setLoginFieldInvalid("email", false);
-    setLoginFieldInvalid("password", false);
+    setAuthFieldInvalid(loginForm, "email", false);
+    setAuthFieldInvalid(loginForm, "password", false);
+  };
+
+  const clearGuestFieldErrors = () => {
+    setAuthFieldInvalid(guestForm, "reference", false);
+    setAuthFieldInvalid(guestForm, "email", false);
   };
 
   loginForm.addEventListener("input", (event) => {
     const fieldName = event.target?.name;
     if (fieldName === "email" || fieldName === "password") {
-      setLoginFieldInvalid(fieldName, false);
+      setAuthFieldInvalid(loginForm, fieldName, false);
+    }
+  });
+
+  guestForm.addEventListener("input", (event) => {
+    const fieldName = event.target?.name;
+    if (fieldName === "reference" || fieldName === "email") {
+      setAuthFieldInvalid(guestForm, fieldName, false);
     }
   });
 
@@ -521,6 +533,7 @@ export function initAccountPage() {
     loginForm.reset();
     clearLoginFieldErrors();
     guestForm.reset();
+    clearGuestFieldErrors();
     if (initialReference) {
       guestForm.elements.reference.value = initialReference;
       setActiveAuthPanel("guest");
@@ -1058,13 +1071,13 @@ export function initAccountPage() {
     setStatus(loginStatusEl, "");
 
     if (!isValidEmail(email)) {
-      setLoginFieldInvalid("email");
+      setAuthFieldInvalid(loginForm, "email");
       loginForm.elements.email.focus();
       return;
     }
 
     if (!password) {
-      setLoginFieldInvalid("password");
+      setAuthFieldInvalid(loginForm, "password");
       loginForm.elements.password.focus();
       return;
     }
@@ -1085,8 +1098,8 @@ export function initAccountPage() {
       setStatus(memberStatusEl, "다시 만나서 반갑습니다. 계정 정보를 불러왔습니다.", "success");
       window.dispatchEvent(new Event("studiooalum:auth-changed"));
     } catch (error) {
-      setLoginFieldInvalid("email");
-      setLoginFieldInvalid("password");
+      setAuthFieldInvalid(loginForm, "email");
+      setAuthFieldInvalid(loginForm, "password");
       setStatus(loginStatusEl, "");
     } finally {
       setButtonLoading(submitButton, false, "로그인 중…");
@@ -1133,14 +1146,17 @@ export function initAccountPage() {
     const reference = String(guestForm.elements.reference.value || "").trim();
     const email = String(guestForm.elements.email.value || "").trim();
 
+    clearGuestFieldErrors();
+    setStatus(guestStatusEl, "");
+
     if (!reference) {
-      setStatus(guestStatusEl, "조회 번호를 입력해주세요.", "error");
+      setAuthFieldInvalid(guestForm, "reference");
       guestForm.elements.reference.focus();
       return;
     }
 
     if (!isValidEmail(email)) {
-      setStatus(guestStatusEl, "이메일 주소를 다시 확인해주세요.", "error");
+      setAuthFieldInvalid(guestForm, "email");
       guestForm.elements.email.focus();
       return;
     }
@@ -1161,7 +1177,9 @@ export function initAccountPage() {
       setStatus(guestStatusEl, "신청 내역을 불러왔습니다. 조회 권한은 15분 동안 유효합니다.", "success");
     } catch (error) {
       renderGuestResource("", null, "");
-      setStatus(guestStatusEl, getFriendlyApiMessage(error, "신청 내역을 불러오지 못했습니다. 조회 번호와 이메일을 다시 확인해주세요."), "error");
+      setAuthFieldInvalid(guestForm, "reference");
+      setAuthFieldInvalid(guestForm, "email");
+      setStatus(guestStatusEl, "");
     } finally {
       setButtonLoading(submitButton, false, "조회 중…");
     }
