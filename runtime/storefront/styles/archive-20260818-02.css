@@ -1,5 +1,19 @@
 @import url("./archive-20260818-01.css");
 
+.archive-board {
+  grid-auto-rows: 1px;
+  column-gap: var(--grid-gap);
+  row-gap: var(--grid-gap);
+}
+
+.archive-board > .archive-card {
+  align-self: start;
+}
+
+.archive-board > .archive-empty {
+  grid-row-end: auto !important;
+}
+
 .archive-card.is-pointer-hover .archive-card__overlay {
   opacity: 1;
 }

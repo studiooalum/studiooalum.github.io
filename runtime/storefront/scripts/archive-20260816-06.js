@@ -35,6 +35,36 @@ const state = {
   selectedTag: String(new URLSearchParams(window.location.search).get("tag") || "all").trim().toLowerCase(),
 };
 
+let archiveMasonryFrame = 0;
+
+function layoutArchiveMasonry(board) {
+  if (!board || !board.isConnected || board.querySelector(".archive-empty")) return;
+  const cards = Array.from(board.querySelectorAll(":scope > .archive-card"));
+  if (!cards.length) return;
+
+  const boardStyle = window.getComputedStyle(board);
+  const rowHeight = Number.parseFloat(boardStyle.gridAutoRows) || 1;
+  const rowGap = Number.parseFloat(boardStyle.rowGap) || 0;
+
+  cards.forEach((card) => {
+    card.style.gridRowEnd = "auto";
+  });
+
+  cards.forEach((card) => {
+    const cardHeight = card.getBoundingClientRect().height;
+    const span = Math.max(1, Math.ceil((cardHeight + rowGap) / (rowHeight + rowGap)));
+    card.style.gridRowEnd = `span ${span}`;
+  });
+}
+
+function scheduleArchiveMasonry(board) {
+  if (!board) return;
+  window.cancelAnimationFrame(archiveMasonryFrame);
+  archiveMasonryFrame = window.requestAnimationFrame(() => {
+    layoutArchiveMasonry(board);
+  });
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -194,6 +224,7 @@ function createArchiveCard(item, imageData) {
   if (imageData.width) image.width = imageData.width;
   if (imageData.height) image.height = imageData.height;
   if (!imageData.rgb) image.addEventListener("load", () => applyAverageColor(card, image), { once: true });
+  image.addEventListener("load", () => scheduleArchiveMasonry(card.closest(".archive-board")), { once: true });
 
   const overlay = document.createElement("div");
   overlay.className = "archive-card__overlay";
@@ -329,6 +360,7 @@ function renderBoard(board, loadError = null) {
     if (item.images[0]) fragment.append(createArchiveCard(item, item.images[0]));
   }
   board.append(fragment);
+  scheduleArchiveMasonry(board);
 }
 
 export async function initArchiveBoard() {
@@ -374,4 +406,6 @@ export async function initArchiveBoard() {
     renderTags(tagsElement);
     renderBoard(board);
   });
+
+  window.addEventListener("resize", () => scheduleArchiveMasonry(board), { passive: true });
 }
