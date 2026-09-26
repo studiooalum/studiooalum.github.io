@@ -3,7 +3,7 @@ import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js";
 import { imageUrl } from "./sanity/image.js";
 import { addToCart, addToCartSilent } from "./cart.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
-import { formatPrice, getFirstParagraph, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
+import { getFirstParagraph, getProductTags, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -210,11 +210,11 @@ function renderEditionPrice(price, discountRate) {
 
     const originalSpan = document.createElement("span");
     originalSpan.className = "shop-card__price--original";
-    originalSpan.textContent = formatPrice(price);
+    originalSpan.textContent = `${Number(price).toLocaleString("ko-KR")}원`;
 
     const discountedSpan = document.createElement("span");
     discountedSpan.className = "shop-card__price";
-    discountedSpan.textContent = formatPrice(discounted);
+    discountedSpan.textContent = `${Number(discounted).toLocaleString("ko-KR")}원`;
 
     const badge = document.createElement("span");
     badge.className = "shop-card__discount";
@@ -226,7 +226,7 @@ function renderEditionPrice(price, discountRate) {
 
   const priceSpan = document.createElement("span");
   priceSpan.className = "shop-card__price";
-  priceSpan.textContent = formatPrice(price);
+  priceSpan.textContent = `${Number(price).toLocaleString("ko-KR")}원`;
   priceEl.appendChild(priceSpan);
 }
 

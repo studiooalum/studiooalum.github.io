@@ -15,6 +15,10 @@
   background: #e34234;
 }
 
+body.archive-page .cart-panel__header {
+  background: #e34234 !important;
+}
+
 .cart-panel__footer {
   box-shadow: none;
 }

@@ -40,29 +40,33 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
 const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}`)));
 
 test("edition recommendations crop square images from the center", () => {
-  assert.match(editionHtml, /edition\.css\?v=20260926-03/);
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-01/);
+  assert.match(editionHtml, /edition\.css\?v=20260926-04/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-02/);
   assert.doesNotMatch(editionHtml, /editionKicker/);
   assert.match(editionHtml, />사이즈<\/span>/);
   assert.match(editionHtml, />태그<\/span>/);
   assert.match(editionCss, /\.edition-recommend-card__thumb > \.progressive-image\s*\{[\s\S]*?height:\s*100%;/);
   assert.match(editionCss, /\.edition-recommend-card__thumb img\s*\{[\s\S]*?object-fit:\s*cover;[\s\S]*?object-position:\s*center center;/);
   assert.match(editionCss, /\.edition-page \.edition-title\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.2 !important;/);
+  assert.match(editionCss, /\.edition-title\s*\{[^}]*margin:\s*0;/);
   assert.match(editionCss, /\.edition-page \.edition-desc\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.45 !important;/);
   assert.match(editionCss, /\.edition-specs\s*\{[^}]*margin-top:\s*36px;[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.45;/);
   assert.match(editionCss, /\.edition-spec\s*\{[^}]*grid-template-columns:\s*76px minmax\(0, 1fr\);/);
   assert.match(storefrontActionsCss, /body\.edition-page \.edition-btn--primary\s*\{[^}]*background:\s*#fff !important;[^}]*color:\s*#111 !important;/);
+  assert.match(storefrontActionsCss, /body\.edition-page \.edition-btn--secondary\s*\{[^}]*background:\s*#111 !important;[^}]*color:\s*#fff !important;/);
   assert.match(storefrontActionsCss, /body\.edition-page \.edition-btn--primary:is\(:hover, :focus-visible, \.is-pointer-hover\)\s*\{[^}]*background:\s*#111 !important;[^}]*color:\s*#fff !important;/);
+  assert.match(storefrontActionsCss, /body\.edition-page \.edition-btn--secondary:is\(:hover, :focus-visible, \.is-pointer-hover\)\s*\{[^}]*background:\s*#fff !important;[^}]*color:\s*#111 !important;/);
+  assert.match(editionScript, /`\$\{Number\(price\)\.toLocaleString\("ko-KR"\)\}원`/);
 });
 
 test("mobile navigation opens to half the viewport with larger labels", () => {
-  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-05")));
-  assert.match(gnbCss, /@media \(max-width:\s*959px\)[\s\S]*?\.gnb__mobile-panel\s*\{[^}]*height:\s*50dvh;[^}]*min-height:\s*50dvh;/);
-  assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*18px;[^}]*line-height:\s*1\.2;/);
+  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-06")));
+  assert.match(gnbCss, /@media \(max-width:\s*959px\)[\s\S]*?\.gnb__mobile-panel\s*\{[^}]*height:\s*37\.5dvh;[^}]*min-height:\s*37\.5dvh;/);
+  assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*17px;[^}]*line-height:\s*1\.2;/);
 });
 
 test("edition sidebar sticky stop uses media-relative image position", () => {
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-01/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-02/);
   assert.match(editionScript, /lastImage\.getBoundingClientRect\(\)\.top - mediaTop/);
   assert.doesNotMatch(editionScript, /lastImage\.offsetTop \+ stickyHeight/);
 });
@@ -96,6 +100,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartCss, /\.cart-item__remove\s*\{[\s\S]*?color:\s*#111;/);
   assert.match(cartCss, /\.cart-panel,[\s\S]*?\.cart-panel__footer\s*\{[^}]*background:\s*#fff;/);
   assert.match(cartCss, /\.cart-panel__header\s*\{[^}]*flex:\s*0 0 auto;[^}]*background:\s*#e34234;/);
+  assert.match(cartCss, /body\.archive-page \.cart-panel__header\s*\{[^}]*background:\s*#e34234 !important;/);
   assert.match(cartCss, /\.cart-panel__footer\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(cartCss, /\.cart-item__img\s*\{[^}]*object-fit:\s*contain;/);
   assert.match(cartCss, /\.cart-item__price,[\s\S]*?\.cart-panel__total\s*\{[^}]*font-weight:\s*400;/);
@@ -105,7 +110,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.doesNotMatch(cartScript, /formatPrice\(item\.price\)|formatPrice\(total\)/);
   assert.match(cartEntryScript, /cart-20260706-06\.js\?v=20260926-01/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260926-03/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260926-04/, `stale cart stylesheet in ${cartPagePaths[index]}`);
     assert.match(html, /cart-20260818-02\.js\?v=20260926-01/, `stale cart script in ${cartPagePaths[index]}`);
   });
 });

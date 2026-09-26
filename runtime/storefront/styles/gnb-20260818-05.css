@@ -9,13 +9,13 @@
 
 @media (max-width: 959px) {
   .gnb__mobile-panel {
-    height: 50dvh;
-    min-height: 50dvh;
+    height: 37.5dvh;
+    min-height: 37.5dvh;
   }
 
   .gnb__mobile-item,
   .gnb__mobile-actions .gnb__action {
-    font-size: 18px;
+    font-size: 17px;
     line-height: 1.2;
   }
 }
