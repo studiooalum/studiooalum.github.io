@@ -12,7 +12,7 @@ const [html, css, checkoutScript, archiveSource] = await Promise.all([
 ]);
 
 test("checkout follows the two-column repair form layout", () => {
-  assert.match(html, /checkout\.css\?v=20260926-01/);
+  assert.match(html, /checkout\.css\?v=20260926-02/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
   assert.match(html, />전화번호 <span class="required">\*<\/span>/);
