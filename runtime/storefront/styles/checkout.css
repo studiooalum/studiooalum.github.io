@@ -2,6 +2,10 @@
 .checkout-page { min-height: 100vh; background: #fff; color: #111; font-family: "Pretendard", var(--font-kor-body, sans-serif); font-size: 16px; font-weight: 400; letter-spacing: var(--tracking-korean, 0); }
 .checkout-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; min-height: 100vh; padding: calc(var(--gnb-height, 40px) + 36px) var(--page-gutter, 16px) 80px; }
 .checkout-summary, .checkout-form-section { display: grid; min-width: 0; align-content: start; gap: 68px; }
+.checkout-summary { gap: 0; }
+.checkout-summary > .checkout-items { min-height: 184px; margin-top: 68px; }
+.checkout-summary > .checkout-totals { margin-top: 20px; }
+.checkout-summary > .checkout-coupon { margin-top: 68px; }
 .checkout-section-title { width: fit-content; margin: 0; padding: 0; border: 0; font: 600 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 
 .checkout-items { display: grid; gap: 20px; }
@@ -48,7 +52,8 @@
 .checkout-field input[type="text"], .checkout-field input[type="email"], .checkout-field input[type="tel"], .checkout-field select { width: 100%; min-width: 0; min-height: 67px; height: auto; padding: 10px 0; border: 0; border-radius: 0; outline: 0; background: transparent; color: #111; box-sizing: border-box; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 .checkout-field input[readonly] { cursor: default; }
 .checkout-field select { appearance: none; -webkit-appearance: none; background-image: none; }
-.checkout-field__zip-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-width: 0; }
+.checkout-field__zip-row { position: relative; display: flex; align-items: center; justify-content: flex-start; min-width: 0; }
+.checkout-field__zip-row input { position: absolute; width: 1px !important; height: 1px !important; min-height: 0 !important; margin: -1px; padding: 0 !important; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .checkout-btn--outline { display: inline-flex; align-items: center; justify-content: center; min-width: auto; min-height: 48px; height: auto; padding: 0; border: 0; background: transparent; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); cursor: pointer; white-space: nowrap; }
 .checkout-btn--outline:hover, .checkout-btn--outline:focus-visible { background: transparent; color: #111; text-decoration: underline; text-underline-offset: 3px; }
 body.checkout-page #searchZipBtn { min-width: auto !important; min-height: 48px !important; height: auto !important; padding: 0 !important; border: 0 !important; background: transparent !important; color: #111 !important; font-family: "Pretendard", var(--font-kor-body, sans-serif) !important; font-size: 16px !important; font-weight: 400 !important; }
@@ -69,6 +74,10 @@ body.checkout-page #searchZipBtn:is(:hover, :focus-visible, :active, .is-pointer
 @media (max-width: 959px) {
   .checkout-layout { grid-template-columns: 1fr; gap: 64px; padding-top: calc(var(--gnb-height, 40px) + 28px); }
   .checkout-summary, .checkout-form-section { gap: 36px; }
+  .checkout-summary { gap: 0; }
+  .checkout-summary > .checkout-items { min-height: 128px; margin-top: 36px; }
+  .checkout-summary > .checkout-totals { margin-top: 20px; }
+  .checkout-summary > .checkout-coupon { margin-top: 36px; }
   .checkout-item { grid-template-columns: 128px minmax(0, 1fr); gap: 20px; min-height: 128px; }
   .checkout-item__img, .checkout-item__fallback { width: 128px; height: 128px; }
   .checkout-coupon__controls input { min-height: 72px; }

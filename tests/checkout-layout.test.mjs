@@ -12,7 +12,7 @@ const [html, css, checkoutScript, archiveSource] = await Promise.all([
 ]);
 
 test("checkout follows the two-column repair form layout", () => {
-  assert.match(html, /checkout\.css\?v=20260926-02/);
+  assert.match(html, /checkout\.css\?v=20260926-03/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
   assert.match(html, />전화번호 <span class="required">\*<\/span>/);
@@ -23,6 +23,9 @@ test("checkout follows the two-column repair form layout", () => {
   assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.checkout-field, \.checkout-field--fixed \{[^}]*border-bottom: 1px solid #111/);
   assert.match(css, /\.checkout-item \{[^}]*grid-template-columns: 184px minmax\(0, 1fr\)/);
+  assert.match(css, /\.checkout-summary > \.checkout-totals \{ margin-top: 20px; \}/);
+  assert.match(css, /\.checkout-field__zip-row \{[^}]*justify-content: flex-start;/);
+  assert.match(css, /\.checkout-field__zip-row input \{[^}]*position: absolute;[^}]*clip-path: inset\(50%\);/);
   assert.match(css, /\.checkout-submit-btn \{[^}]*background: #111;[^}]*font: 400 16px/);
   assert.match(checkoutScript, /function formatWon\(value\)/);
   assert.match(checkoutScript, /couponRow\.hidden = false/);
