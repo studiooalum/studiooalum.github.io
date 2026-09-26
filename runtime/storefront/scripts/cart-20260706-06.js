@@ -3,7 +3,6 @@
 ========================= */
 
 import { imageUrl } from "./sanity/image.js";
-import { formatPrice } from "./utils/catalog.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 import { CART_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
@@ -13,10 +12,15 @@ function resolveCartImageUrl(image) {
   if (typeof image === "string") return image;
 
   try {
-    return imageUrl(image, { width: 120 }) || "";
+    return imageUrl(image, { width: 512 }) || "";
   } catch {
     return typeof image?.asset?.url === "string" ? image.asset.url : "";
   }
+}
+
+function formatCartPrice(value) {
+  if (value !== 0 && !value) return "";
+  return `${Number(value).toLocaleString("ko-KR")}원`;
 }
 
 /* =========================
@@ -236,7 +240,7 @@ export function renderCartPanel() {
           ${imgSrc ? `<img class="cart-item__img" src="${imgSrc}" alt="${item.title}" />` : '<span class="cart-item__fallback" aria-hidden="true"></span>'}
           <div class="cart-item__info">
             <div class="cart-item__title">${item.title}</div>
-            <div class="cart-item__price">${formatPrice(item.price)}</div>
+            <div class="cart-item__price">${formatCartPrice(item.price)}</div>
             <div class="cart-item__qty">
               <button class="cart-item__qty-btn" data-action="dec" data-id="${item.lineId || item._id}">−</button>
               <span>${item.qty}</span>
@@ -262,7 +266,7 @@ export function renderCartPanel() {
   }
 
   const totalEl = document.getElementById("cartTotal");
-  if (totalEl) totalEl.textContent = formatPrice(total);
+  if (totalEl) totalEl.textContent = formatCartPrice(total);
 }
 
 /* =========================

@@ -18,7 +18,7 @@ const cartPagePaths = [
   "workshop.html",
   "workshops.html",
 ];
-const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, productCss, actionsCss, siteChromeScript, gnbCss] = await Promise.all([
+const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, cartScript, cartEntryScript, productCss, actionsCss, siteChromeScript, gnbCss] = await Promise.all([
   read("../edition.html"),
   read("../runtime/storefront/scripts/edition-20260706-06.js"),
   read("../runtime/storefront/styles/edition.css"),
@@ -27,6 +27,8 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
   read("../runtime/storefront/scripts/newsletter-20260818-02.js"),
   read("../runtime/storefront/styles/newsletter-20260818-03.css"),
   read("../runtime/storefront/styles/cart-20260818-02.css"),
+  read("../runtime/storefront/scripts/cart-20260706-06.js"),
+  read("../runtime/storefront/scripts/cart-20260818-02.js"),
   read("../runtime/storefront/styles/product.css"),
   read("../runtime/storefront/styles/actions-20260924.css"),
   read("../runtime/storefront/scripts/components/siteChrome-20260818-05.js"),
@@ -81,8 +83,17 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartCss, /\.cart-item__qty > span\s*\{[\s\S]*?height:\s*28px;[\s\S]*?align-items:\s*center;[\s\S]*?transform:\s*none;/);
   assert.match(cartCss, /\.cart-item__qty-btn\s*\{[\s\S]*?border:\s*1px solid #111;[\s\S]*?border-radius:\s*50%;[\s\S]*?font-size:\s*16px;/);
   assert.match(cartCss, /\.cart-item__remove\s*\{[\s\S]*?color:\s*#111;/);
+  assert.match(cartCss, /\.cart-panel,[\s\S]*?\.cart-panel__footer\s*\{[^}]*background:\s*#fff;/);
+  assert.match(cartCss, /\.cart-panel__footer\s*\{[^}]*box-shadow:\s*none;/);
+  assert.match(cartCss, /\.cart-item__img\s*\{[^}]*object-fit:\s*contain;/);
+  assert.match(cartCss, /\.cart-item__price,[\s\S]*?\.cart-panel__total\s*\{[^}]*font-weight:\s*400;/);
+  assert.match(cartScript, /imageUrl\(image, \{ width: 512 \}\)/);
+  assert.match(cartScript, /return `\$\{Number\(value\)\.toLocaleString\("ko-KR"\)\}원`;/);
+  assert.doesNotMatch(cartScript, /formatPrice\(item\.price\)|formatPrice\(total\)/);
+  assert.match(cartEntryScript, /cart-20260706-06\.js\?v=20260926-01/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260926-01/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260926-02/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.js\?v=20260926-01/, `stale cart script in ${cartPagePaths[index]}`);
   });
 });
 

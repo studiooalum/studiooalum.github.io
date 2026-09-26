@@ -1,6 +1,6 @@
-import { closeCart, initCartUI as initExistingCartUI } from "./cart-20260706-06.js";
+import { closeCart, initCartUI as initExistingCartUI } from "./cart-20260706-06.js?v=20260926-01";
 
-export * from "./cart-20260706-06.js";
+export * from "./cart-20260706-06.js?v=20260926-01";
 
 let escapeListenerBound = false;
 let titleRoleObserver = null;
