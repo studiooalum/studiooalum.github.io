@@ -567,10 +567,17 @@ body.repair-page .repair-form__status.is-error {
     min-width: 0;
   }
 
-  .repair-stage__sticky > .repair-stage__content,
   .repair-stage__sticky > .repair-stage__rail {
-    grid-column: auto;
-    grid-row: auto;
+    grid-column: 1;
+    grid-row: 1;
+    position: static;
+    top: auto;
+    align-self: start;
+  }
+
+  .repair-stage__sticky > .repair-stage__content {
+    grid-column: 2;
+    grid-row: 1;
     position: static;
     top: auto;
     align-self: start;
