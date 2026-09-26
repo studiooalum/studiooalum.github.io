@@ -38,7 +38,9 @@ function renderEditionGrid(editions) {
   if (!representative) return;
   const price = Number(representative.price) || 0;
   const discountRate = Number(representative.discountRate) || 0;
-  const displayPrice = Number(price).toLocaleString("ko-KR");
+  const displayPrice = Number(
+    discountRate > 0 ? Math.round(price * (1 - discountRate / 100)) : price,
+  ).toLocaleString("ko-KR");
   const primaryImageUrl = Array.isArray(representative.images) && representative.images.length > 0
     ? imageUrl(representative.images[0], { width: 1200, height: 1200 })
     : null;
@@ -85,13 +87,7 @@ function renderEditionGrid(editions) {
     ],
   });
 
-  if (discountRate > 0) {
-    const discounted = Math.round(price * (1 - discountRate / 100));
-    const discountedLabel = Number(discounted).toLocaleString("ko-KR");
-    metaEl.innerHTML = `<span class="product-meta__item">총 ${editions.length}개 개당 ￦${discountedLabel} (${discountRate}%할인)</span>`;
-  } else {
-    metaEl.innerHTML = `<span class="product-meta__item">총 ${editions.length}개 개당 ￦${displayPrice}</span>`;
-  }
+  metaEl.innerHTML = `<span class="product-meta__item">${editions.length}개 제작 ${displayPrice}원</span>`;
 
   gridEl.innerHTML = "";
 

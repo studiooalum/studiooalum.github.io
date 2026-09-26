@@ -19,27 +19,28 @@
 
 .product-overview {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
 .product-title {
   margin: 0;
-  font-family: var(--font-book);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: clamp(28px, 2.6vw, 34px);
   font-weight: 400;
-  line-height: 1.08;
-  letter-spacing: var(--tracking-latin);
+  line-height: 1.18;
+  letter-spacing: 0;
 }
 
 .product-intro {
   margin: 0;
   max-width: 72ch;
-  font-family: var(--font-kor-body);
-  font-size: 14px;
-  letter-spacing: var(--tracking-korean);
-  line-height: 1.6;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.55;
   white-space: pre-line;
-  color: rgba(17, 17, 17, 0.8);
+  color: #111;
 }
 
 .product-meta {
@@ -47,11 +48,12 @@
   flex-wrap: wrap;
   gap: 0;
   align-items: baseline;
-  font-family: var(--font-kor-button);
-  font-size: 13px;
-  letter-spacing: var(--tracking-korean);
-  line-height: 1;
-  color: var(--point);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.55;
+  color: #111;
 }
 
 .product-meta__item {

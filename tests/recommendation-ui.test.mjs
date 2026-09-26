@@ -18,7 +18,7 @@ const cartPagePaths = [
   "workshop.html",
   "workshops.html",
 ];
-const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, cartScript, cartEntryScript, productCss, actionsCss, siteChromeScript, gnbCss] = await Promise.all([
+const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, cartScript, cartEntryScript, productHtml, productScript, productCss, actionsCss, siteChromeScript, gnbCss] = await Promise.all([
   read("../edition.html"),
   read("../runtime/storefront/scripts/edition-20260706-06.js"),
   read("../runtime/storefront/styles/edition.css"),
@@ -29,6 +29,8 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
   read("../runtime/storefront/styles/cart-20260818-02.css"),
   read("../runtime/storefront/scripts/cart-20260706-06.js"),
   read("../runtime/storefront/scripts/cart-20260818-02.js"),
+  read("../product.html"),
+  read("../runtime/storefront/scripts/product.js"),
   read("../runtime/storefront/styles/product.css"),
   read("../runtime/storefront/styles/actions-20260924.css"),
   read("../runtime/storefront/scripts/components/siteChrome-20260818-05.js"),
@@ -100,6 +102,12 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
 });
 
 test("product overview copy stays stacked in the first desktop column", () => {
+  assert.match(productHtml, /product\.css\?v=20260926-01/);
+  assert.match(productHtml, /product\.js\?v=20260926-01/);
+  assert.match(productScript, /\$\{editions\.length\}개 제작 \$\{displayPrice\}원/);
+  assert.match(productCss, /\.product-overview\s*\{[^}]*gap:\s*16px;/);
+  assert.match(productCss, /\.product-intro\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.55;/);
+  assert.match(productCss, /\.product-meta\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.55;[^}]*color:\s*#111;/);
   assert.match(productCss, /@media \(min-width:\s*900px\)[\s\S]*?\.product-title,\s*\.product-intro,\s*\.product-meta\s*\{\s*grid-column:\s*1;/);
   assert.doesNotMatch(productCss, /\.product-intro\s*\{\s*grid-column:\s*2/);
   assert.doesNotMatch(productCss, /\.product-meta\s*\{\s*grid-column:\s*3/);
