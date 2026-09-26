@@ -2,8 +2,8 @@
 .checkout-page { min-height: 100vh; background: #fff; color: #111; font-family: "Pretendard", var(--font-kor-body, sans-serif); font-size: 16px; font-weight: 400; letter-spacing: var(--tracking-korean, 0); }
 .checkout-layout { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; min-height: 100vh; padding: calc(var(--gnb-height, 40px) + var(--page-top-space, 72px)) var(--page-gutter, 16px) 80px; }
 .checkout-summary, .checkout-form-section { display: grid; min-width: 0; align-content: start; gap: 68px; }
-.checkout-summary { grid-column: 1 / span 2; gap: 0; }
-.checkout-form-section { grid-column: 3; }
+.checkout-summary { grid-column: 1; gap: 0; }
+.checkout-form-section { grid-column: 2; }
 .checkout-summary > .checkout-items { min-height: 184px; margin-top: 68px; }
 .checkout-summary > .checkout-totals { margin-top: 20px; }
 .checkout-summary > .checkout-coupon { margin-top: 23px; }
@@ -40,7 +40,7 @@
 
 .checkout-form { display: grid; gap: 0; }
 .checkout-auth-panel { display: none; }
-.checkout-points { display: grid; width: calc(50% - 8px); gap: 10px; margin-top: 24px; padding: 16px; border: 1px solid #111; background: #fff; box-sizing: border-box; }
+.checkout-points { display: grid; width: 100%; gap: 10px; margin-top: 24px; padding: 16px; border: 1px solid #111; background: #fff; box-sizing: border-box; }
 .checkout-points[hidden] { display: none; }
 .checkout-points__head, .checkout-points__controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .checkout-points__title, .checkout-points__balance, .checkout-points__copy, .checkout-points__earn { margin: 0; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
