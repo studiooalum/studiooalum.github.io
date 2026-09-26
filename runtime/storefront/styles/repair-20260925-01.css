@@ -575,18 +575,6 @@ body.repair-page .repair-form__status.is-error {
     align-self: start;
   }
 
-  .repair-stage__sticky > .repair-stage__content {
-    grid-column: 2;
-    grid-row: 1;
-    position: static;
-    top: auto;
-    align-self: start;
-  }
-
-  body.repair-page .repair-stage__content .repair-body-copy {
-    gap: 8px;
-  }
-
   body.repair-page .repair-stage__rail .repair-accordion > summary {
     min-height: 24px;
     padding: 0;

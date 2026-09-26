@@ -216,7 +216,7 @@ test("desktop accordion titles use underlined half-height spacing without changi
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-03/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-04/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
@@ -254,7 +254,7 @@ test("repair introduction and accordion follow the archive body typography", () 
 test("repair content and accordion share one desktop sticky frame", () => {
   assert.match(
     repairHtml,
-    /<div class="repair-stage__sticky">[\s\S]*?<section class="repair-stage__content">[\s\S]*?<aside class="repair-stage__rail"/,
+    /<aside class="repair-stage__rail"[\s\S]*?<details class="repair-accordion repair-accordion--shipping">[\s\S]*?<section class="repair-stage__content">/,
   );
   assert.match(
     repairDetailCss,
@@ -264,10 +264,6 @@ test("repair content and accordion share one desktop sticky frame", () => {
     repairDetailCss,
     /\.repair-stage__sticky > \.repair-stage__rail\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*1;[^}]*position:\s*static;/,
   );
-  assert.match(
-    repairDetailCss,
-    /\.repair-stage__sticky > \.repair-stage__content\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;[^}]*position:\s*static;/,
-  );
-  assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-body-copy\s*\{[^}]*gap:\s*8px;/);
+  assert.doesNotMatch(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-body-copy\s*\{[^}]*gap:\s*8px;/);
   assert.match(repairDetailCss, /@media \(max-width:\s*959px\)[\s\S]*?\.repair-stage__sticky\s*\{[^}]*display:\s*contents;/);
 });
