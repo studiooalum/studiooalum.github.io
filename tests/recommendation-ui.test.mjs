@@ -84,6 +84,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartCss, /\.cart-item__qty-btn\s*\{[\s\S]*?border:\s*1px solid #111;[\s\S]*?border-radius:\s*50%;[\s\S]*?font-size:\s*16px;/);
   assert.match(cartCss, /\.cart-item__remove\s*\{[\s\S]*?color:\s*#111;/);
   assert.match(cartCss, /\.cart-panel,[\s\S]*?\.cart-panel__footer\s*\{[^}]*background:\s*#fff;/);
+  assert.match(cartCss, /\.cart-panel__header\s*\{[^}]*flex:\s*0 0 auto;[^}]*background:\s*#e34234;/);
   assert.match(cartCss, /\.cart-panel__footer\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(cartCss, /\.cart-item__img\s*\{[^}]*object-fit:\s*contain;/);
   assert.match(cartCss, /\.cart-item__price,[\s\S]*?\.cart-panel__total\s*\{[^}]*font-weight:\s*400;/);
@@ -93,7 +94,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.doesNotMatch(cartScript, /formatPrice\(item\.price\)|formatPrice\(total\)/);
   assert.match(cartEntryScript, /cart-20260706-06\.js\?v=20260926-01/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260926-02/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260926-03/, `stale cart stylesheet in ${cartPagePaths[index]}`);
     assert.match(html, /cart-20260818-02\.js\?v=20260926-01/, `stale cart script in ${cartPagePaths[index]}`);
   });
 });

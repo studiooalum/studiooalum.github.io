@@ -5,10 +5,14 @@
 }
 
 .cart-panel,
-.cart-panel__header,
 .cart-panel__items,
 .cart-panel__footer {
   background: #fff;
+}
+
+.cart-panel__header {
+  flex: 0 0 auto;
+  background: #e34234;
 }
 
 .cart-panel__footer {
