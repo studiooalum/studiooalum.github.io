@@ -583,6 +583,10 @@ body.repair-page .repair-form__status.is-error {
     align-self: start;
   }
 
+  body.repair-page .repair-stage__content .repair-body-copy {
+    gap: 8px;
+  }
+
   body.repair-page .repair-stage__rail .repair-accordion > summary {
     min-height: 24px;
     padding: 0;
