@@ -24,6 +24,7 @@ const sidebarEl = document.getElementById("editionSidebar");
 const titleEl = document.getElementById("editionTitle");
 const numberEl = document.getElementById("editionNumber");
 const sizeEl = document.getElementById("editionSize");
+const materialEl = document.getElementById("editionMaterial");
 const priceEl = document.getElementById("editionPrice");
 const descEl = document.getElementById("editionDesc");
 const tagsEl = document.getElementById("editionTags");
@@ -232,7 +233,16 @@ function renderEditionPrice(price, discountRate) {
 
 function getEditionDisplayContent(product) {
   let size = String(product.size || "").trim();
-  const description = String(product.description || "제품 정보")
+  let material = Array.isArray(product.materials)
+    ? product.materials.map((item) => String(item || "").trim()).filter(Boolean).join(", ")
+    : String(product.material || "").trim();
+  const rawDescription = String(product.description || "제품 정보");
+
+  if (!material) {
+    material = rawDescription.match(/([가-힣A-Za-z0-9·/]+)\s*소재로/)?.[1] || "";
+  }
+
+  const description = rawDescription
     .replace(/\r\n/g, "\n")
     .replace(/(?:^|\n)\s*사이즈\s+([^\n]+)\s*(?=\n|$)/i, (_, embeddedSize) => {
       if (!size) size = embeddedSize.trim();
@@ -244,6 +254,7 @@ function getEditionDisplayContent(product) {
   return {
     description: description || "제품 정보",
     size: size || "-",
+    material: material || "-",
   };
 }
 
@@ -518,6 +529,7 @@ async function init() {
     const displayContent = getEditionDisplayContent(product);
     descEl.textContent = displayContent.description;
     sizeEl.textContent = displayContent.size;
+    materialEl.textContent = displayContent.material;
 
     updatePageSeo({
       title: `${product.title} | 오알룸 샵 | 스튜디오 오알룸`,

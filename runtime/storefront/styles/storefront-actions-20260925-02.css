@@ -17,9 +17,19 @@ body.checkout-page .checkout-submit-btn {
 }
 
 body.edition-page #addToCartBtn {
-  background: #fff !important;
+  width: auto !important;
+  inline-size: auto !important;
+  max-width: none !important;
+  max-inline-size: none !important;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0 !important;
+  background: transparent !important;
   color: #111 !important;
-  border-color: #111 !important;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 body.edition-page #buyNowBtn {
@@ -29,11 +39,16 @@ body.edition-page #buyNowBtn {
 }
 
 body.edition-page #addToCartBtn:is(:hover, :focus-visible, .is-pointer-hover) {
-  background: #111 !important;
-  color: #fff !important;
+  background: transparent !important;
+  color: #111 !important;
 }
 
 body.edition-page #buyNowBtn:is(:hover, :focus-visible, .is-pointer-hover) {
   background: #fff !important;
   color: #111 !important;
+}
+
+body.edition-page .edition-actions {
+  flex-direction: column;
+  align-items: flex-start;
 }

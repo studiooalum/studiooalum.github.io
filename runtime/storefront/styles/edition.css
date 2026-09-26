@@ -599,7 +599,7 @@
   .edition-media__dot {
     width: 9px;
     height: 9px;
-    border: 1px solid var(--point);
+    border: 1px solid #111;
     padding: 0;
     border-radius: 999px;
     background: transparent;
@@ -607,7 +607,7 @@
   }
 
   .edition-media__dot.is-active {
-    background: var(--point);
+    background: #111;
   }
 }
 

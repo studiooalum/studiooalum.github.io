@@ -43,6 +43,8 @@ export const PRODUCT_BY_SLUG_QUERY = `
     title,
     description,
     size,
+    material,
+    materials,
     price,
     discountRate,
     soldOut,

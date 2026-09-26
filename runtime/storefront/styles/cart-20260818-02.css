@@ -21,6 +21,12 @@ body.archive-page .cart-panel .cart-panel__header {
   background-image: none !important;
 }
 
+body.archive-page.cart-open .gnb.gnb--archive {
+  --gnb-surface: #e34234;
+  --gnb-surface-opaque: #e34234;
+  background: #e34234 !important;
+}
+
 .cart-panel__footer {
   box-shadow: none;
 }
