@@ -65,7 +65,7 @@ test("edition recommendations crop square images from the center", () => {
 });
 
 test("mobile navigation returns to content height with 13px labels", () => {
-  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-09")));
+  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-10")));
   assert.doesNotMatch(gnbCss, /height:\s*(?:37\.5|50)dvh/);
   assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*13px;[^}]*line-height:\s*1;/);
   assert.match(editionCss, /\.edition-media__dot\s*\{[^}]*border:\s*1px solid #111;/);
@@ -113,13 +113,14 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartCss, /\.cart-item__img\s*\{[^}]*object-fit:\s*contain;/);
   assert.match(cartCss, /\.cart-item__price,[\s\S]*?\.cart-panel__total\s*\{[^}]*font-weight:\s*400;/);
   assert.match(cartCss, /\.cart-panel__total\s*\{[^}]*padding-top:\s*12px;[^}]*border-top:\s*1px solid #111;/);
+  assert.match(cartCss, /\.cart-panel__checkout-btn\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;/);
   assert.match(cartScript, /imageUrl\(image, \{ width: 512 \}\)/);
   assert.match(cartScript, /return `\$\{Number\(value\)\.toLocaleString\("ko-KR"\)\}원`;/);
   assert.doesNotMatch(cartScript, /formatPrice\(item\.price\)|formatPrice\(total\)/);
   assert.match(cartScript, /style\.setProperty\("background-color", "#e34234", "important"\)/);
   assert.match(cartEntryScript, /cart-20260706-06\.js\?v=20260926-02/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260926-08/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260926-09/, `stale cart stylesheet in ${cartPagePaths[index]}`);
     assert.match(html, /cart-20260818-02\.js\?v=20260926-02/, `stale cart script in ${cartPagePaths[index]}`);
   });
 });
@@ -139,6 +140,8 @@ test("product overview copy stays stacked in the first desktop column", () => {
 });
 
 test("shared command buttons do not add a hover outline", () => {
+  assert.match(actionsCss, /font-family:\s*"Pretendard"[^;]*!important;/);
+  assert.match(actionsCss, /font-size:\s*16px !important;/);
   assert.doesNotMatch(actionsCss, /outline:\s*1px solid #111/);
   assert.doesNotMatch(actionsCss.slice(0, actionsCss.indexOf(") {")), /\.account-overview__link/);
   assert.match(actionsCss, /\.workshop-inquiry-form button\[type="submit"\][\s\S]*?:hover/);

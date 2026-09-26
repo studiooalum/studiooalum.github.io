@@ -138,10 +138,10 @@ body.archive-page .cart-panel .cart-panel__header {
 }
 
 .cart-panel__checkout-btn {
-  font-family: var(--font-kor-button);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif !important;
   height: 46px !important;
   min-height: 46px !important;
-  font-size: 16px;
+  font-size: 16px !important;
   font-weight: 400 !important;
 }
 
