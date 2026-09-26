@@ -205,6 +205,10 @@ export function initCartUI() {
   `;
   document.body.appendChild(panelEl);
 
+  const headerEl = panelEl.querySelector(".cart-panel__header");
+  headerEl?.style.setProperty("background-color", "#e34234", "important");
+  headerEl?.style.setProperty("background-image", "none", "important");
+
   // Backdrop
   const backdrop = document.createElement("div");
   backdrop.className = "cart-backdrop";

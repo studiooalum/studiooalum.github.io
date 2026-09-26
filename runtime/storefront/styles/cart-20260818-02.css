@@ -12,11 +12,13 @@
 
 .cart-panel__header {
   flex: 0 0 auto;
-  background: #e34234;
+  background-color: #e34234 !important;
+  background-image: none !important;
 }
 
-body.archive-page .cart-panel__header {
-  background: #e34234 !important;
+body.archive-page .cart-panel .cart-panel__header {
+  background-color: #e34234 !important;
+  background-image: none !important;
 }
 
 .cart-panel__footer {

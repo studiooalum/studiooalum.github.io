@@ -232,6 +232,23 @@ function renderEditionPrice(price, discountRate) {
   priceEl.appendChild(priceSpan);
 }
 
+function getEditionDisplayContent(product) {
+  let size = String(product.size || "").trim();
+  const description = String(product.description || "제품 정보")
+    .replace(/\r\n/g, "\n")
+    .replace(/(?:^|\n)\s*사이즈\s+([^\n]+)\s*(?=\n|$)/i, (_, embeddedSize) => {
+      if (!size) size = embeddedSize.trim();
+      return "\n";
+    })
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return {
+    description: description || "제품 정보",
+    size: size || "-",
+  };
+}
+
 function syncStickyStop() {
   if (!sidebarTrackEl || !sidebarEl) return;
 
@@ -505,8 +522,9 @@ async function init() {
     document.title = `${product.title} | 오알룸 샵 | 스튜디오 오알룸`;
     titleEl.textContent = baseName;
     numberEl.textContent = editionLabel || product.title;
-    descEl.textContent = product.description || "제품 정보";
-    sizeEl.textContent = String(product.size || "-").trim() || "-";
+    const displayContent = getEditionDisplayContent(product);
+    descEl.textContent = displayContent.description;
+    sizeEl.textContent = displayContent.size;
 
     updatePageSeo({
       title: `${product.title} | 오알룸 샵 | 스튜디오 오알룸`,
