@@ -1,1 +1,1 @@
-import "./checkout.js?v=20260926-02";
+import "./checkout.js?v=20260926-03";

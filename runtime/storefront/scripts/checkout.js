@@ -257,7 +257,7 @@ function resolveCheckoutImageUrl(image) {
   if (typeof image === "string") return image;
 
   try {
-    return imageUrl(image, { width: 120 }) || "";
+    return imageUrl(image, { width: 512 }) || "";
   } catch {
     return typeof image?.asset?.url === "string" ? image.asset.url : "";
   }

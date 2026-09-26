@@ -786,7 +786,7 @@
 
 @media (max-width: 959px) {
   .account-main {
-    padding-top: calc(var(--gnb-height, 40px) + var(--page-gutter));
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
   }
 
   .account-auth-shell {
