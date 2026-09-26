@@ -178,7 +178,7 @@ function renderPointsSection(totals = getCheckoutTotals()) {
   const availablePoints = Math.trunc(Number(checkoutState.availablePoints) || 0);
   const canUsePoints = spendablePoints >= MIN_REDEEMABLE_POINTS;
 
-  balanceEl.textContent = `보유 포인트 ${availablePoints.toLocaleString("ko-KR")} 포인트`;
+  balanceEl.textContent = `보유 포인트 ${availablePoints.toLocaleString("ko-KR")}`;
   inputEl.disabled = !canUsePoints;
   inputEl.max = String(spendablePoints);
   inputEl.value = totals.pointsUsed > 0 ? String(totals.pointsUsed) : "";

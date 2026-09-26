@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260927-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260927-03">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260926-09">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css?v=20260926-10">
   <link rel="stylesheet" href="./runtime/storefront/styles/storefront-actions-20260925-02.css">
@@ -56,6 +56,18 @@
         <p class="checkout-coupon__status" id="checkoutCouponStatus" aria-live="polite"></p>
         <p class="checkout-coupon__copy" id="checkoutCouponCopy">쿠폰은 입력 즉시 총 결제금액과 할인 금액이 아래에 반영됩니다.</p>
       </section>
+      <section class="checkout-points" id="checkoutPointsSection" hidden>
+        <div class="checkout-points__head">
+          <p class="checkout-points__title">포인트 사용</p>
+          <p class="checkout-points__balance" id="checkoutPointsBalance">보유 포인트 0</p>
+        </div>
+        <div class="checkout-points__controls">
+          <input type="number" id="checkoutPointsInput" min="0" step="1" inputmode="numeric" placeholder="0">
+          <button type="button" class="checkout-btn--outline checkout-btn--outline-small" id="checkoutPointsMaxBtn">최대 사용</button>
+        </div>
+        <p class="checkout-points__copy" id="checkoutPointsCopy">1,000 포인트부터 사용 가능하며, 사용 포인트는 결제 진행 후 30분간 예약됩니다. 적립은 배송 완료 후 확정됩니다.</p>
+        <p class="checkout-points__earn" id="checkoutPointsEarn">예상 적립 0 포인트</p>
+      </section>
     </section>
 
     <section class="checkout-form-section">
@@ -66,18 +78,6 @@
           <p class="checkout-auth-panel__copy" id="checkoutAuthCopy">로그인하면 기본 주소와 주문 내역을 계정에 연결할 수 있습니다.</p>
           <a href="./account.html" class="checkout-auth-panel__link" id="checkoutAuthLink">로그인 / 회원가입</a>
         </div>
-        <section class="checkout-points" id="checkoutPointsSection" hidden>
-          <div class="checkout-points__head">
-            <p class="checkout-points__title">포인트 사용</p>
-            <p class="checkout-points__balance" id="checkoutPointsBalance">보유 포인트 0 포인트</p>
-          </div>
-          <div class="checkout-points__controls">
-            <input type="number" id="checkoutPointsInput" min="0" step="1" inputmode="numeric" placeholder="0">
-            <button type="button" class="checkout-btn--outline checkout-btn--outline-small" id="checkoutPointsMaxBtn">최대 사용</button>
-          </div>
-          <p class="checkout-points__copy" id="checkoutPointsCopy">1,000 포인트부터 사용 가능하며, 사용 포인트는 결제 진행 후 30분간 예약됩니다. 적립은 배송 완료 후 확정됩니다.</p>
-          <p class="checkout-points__earn" id="checkoutPointsEarn">예상 적립 0 포인트</p>
-        </section>
         <div class="checkout-field">
           <label for="name">이름 <span class="required">*</span></label>
           <input type="text" id="name" name="name" required placeholder="이름" autocomplete="name" />
@@ -141,7 +141,7 @@
   </main>
 
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <script type="module" src="./runtime/storefront/scripts/checkout-20260802-01.js?v=20260926-03"></script>
+  <script type="module" src="./runtime/storefront/scripts/checkout-20260802-01.js?v=20260927-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";
