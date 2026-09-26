@@ -216,7 +216,7 @@ test("desktop accordion titles use underlined half-height spacing without changi
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.doesNotMatch(repairHtml, /<h1 id="repair-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-04/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-05/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
@@ -256,6 +256,7 @@ test("repair content and accordion share one desktop sticky frame", () => {
     repairHtml,
     /<aside class="repair-stage__rail"[\s\S]*?<details class="repair-accordion repair-accordion--shipping">[\s\S]*?<section class="repair-stage__content">/,
   );
+  assert.match(repairDetailCss, /body\.repair-page \.repair-stage__rail > \.repair-stage__content\s*\{[^}]*margin-top:\s*24px;/);
   assert.match(
     repairDetailCss,
     /@media \(min-width:\s*960px\)[\s\S]*?\.repair-stage__sticky\s*\{[^}]*display:\s*grid;[^}]*grid-column:\s*2 \/ -1;[^}]*grid-row:\s*2;[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*position:\s*sticky;[^}]*top:\s*calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\)/,

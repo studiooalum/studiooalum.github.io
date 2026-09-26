@@ -2,6 +2,10 @@
   padding-top: 0;
 }
 
+body.repair-page .repair-stage__rail > .repair-stage__content {
+  margin-top: 24px;
+}
+
 body.repair-page .repair-body-copy p,
 body.repair-page .repair-body-copy .repair-body-copy__lead,
 body.repair-page .repair-body-copy p:last-child {
