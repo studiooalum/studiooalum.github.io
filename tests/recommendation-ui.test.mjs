@@ -18,7 +18,7 @@ const cartPagePaths = [
   "workshop.html",
   "workshops.html",
 ];
-const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, productCss, actionsCss, siteChromeScript] = await Promise.all([
+const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, productCss, actionsCss, siteChromeScript, gnbCss] = await Promise.all([
   read("../edition.html"),
   read("../runtime/storefront/scripts/edition-20260706-06.js"),
   read("../runtime/storefront/styles/edition.css"),
@@ -30,13 +30,22 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
   read("../runtime/storefront/styles/product.css"),
   read("../runtime/storefront/styles/actions-20260924.css"),
   read("../runtime/storefront/scripts/components/siteChrome-20260818-05.js"),
+  read("../runtime/storefront/styles/gnb-20260818-05.css"),
 ]);
 const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}`)));
 
 test("edition recommendations crop square images from the center", () => {
-  assert.match(editionHtml, /edition\.css\?v=20260915-02/);
+  assert.match(editionHtml, /edition\.css\?v=20260926-01/);
   assert.match(editionCss, /\.edition-recommend-card__thumb > \.progressive-image\s*\{[\s\S]*?height:\s*100%;/);
   assert.match(editionCss, /\.edition-recommend-card__thumb img\s*\{[\s\S]*?object-fit:\s*cover;[\s\S]*?object-position:\s*center center;/);
+  assert.match(editionCss, /\.edition-page \.edition-title\s*\{[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-weight:\s*400;[^}]*line-height:\s*1\.15;/);
+  assert.match(editionCss, /\.edition-page \.edition-desc\s*\{[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-weight:\s*400;[^}]*line-height:\s*1\.4;/);
+});
+
+test("mobile navigation opens to half the viewport with larger labels", () => {
+  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-04")));
+  assert.match(gnbCss, /@media \(max-width:\s*959px\)[\s\S]*?\.gnb__mobile-panel\s*\{[^}]*height:\s*50dvh;[^}]*min-height:\s*50dvh;/);
+  assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*14px;/);
 });
 
 test("edition sidebar sticky stop uses media-relative image position", () => {

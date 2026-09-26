@@ -6,3 +6,15 @@
   font: inherit;
   letter-spacing: inherit;
 }
+
+@media (max-width: 959px) {
+  .gnb__mobile-panel {
+    height: 50dvh;
+    min-height: 50dvh;
+  }
+
+  .gnb__mobile-item,
+  .gnb__mobile-actions .gnb__action {
+    font-size: 14px;
+  }
+}

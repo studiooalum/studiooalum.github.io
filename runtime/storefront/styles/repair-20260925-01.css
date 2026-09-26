@@ -505,6 +505,48 @@ body.repair-page .repair-stage__rail .repair-price-notes--methods {
   margin-top: 24.8px;
 }
 
+/* Validation uses text color only; keep the form's regular underline design. */
+body.repair-page .repair-request-form.is-validation-visible
+  .repair-field.is-invalid :is(input, select, textarea) {
+  border: 0;
+  outline: 0;
+  color: red;
+}
+
+body.repair-page .repair-request-form.is-validation-visible
+  .repair-field.is-invalid :is(input, textarea)::placeholder {
+  color: rgba(255, 0, 0, 0.52);
+  opacity: 1;
+}
+
+body.repair-page .repair-request-form.is-validation-visible
+  :is(
+    .repair-field.is-invalid > span,
+    .repair-field.is-invalid .repair-required-mark,
+    .repair-choice-group.is-invalid,
+    .repair-choice-group.is-invalid legend,
+    .repair-choice-group.is-invalid label,
+    .repair-request-form__section--images.is-invalid .repair-image-upload__title-row h3,
+    .repair-request-form__section--images.is-invalid .repair-required-mark,
+    .repair-checkbox.is-invalid
+  ) {
+  color: red;
+}
+
+body.repair-page .repair-request-form.is-validation-visible
+  :is(
+    .repair-choice-group.is-invalid,
+    .repair-checkbox.is-invalid,
+    .repair-request-form__section--images.is-invalid
+  ) {
+  outline: 0;
+  outline-offset: 0;
+}
+
+body.repair-page .repair-form__status.is-error {
+  color: red;
+}
+
 @media (max-width: 560px) {
   body.repair-page .repair-request-form .repair-field--line {
     grid-template-columns: 104px minmax(0, 1fr);

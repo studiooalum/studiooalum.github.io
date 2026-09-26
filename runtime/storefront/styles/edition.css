@@ -295,6 +295,30 @@
   color: rgba(17, 17, 17, 0.8);
 }
 
+/* Keep the existing placement and tune only the edition copy typography. */
+.edition-page .edition-title {
+  font-family: var(--font-kor-body);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.edition-page .edition-desc {
+  font-family: var(--font-kor-body);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: #111;
+}
+
+.edition-page .edition-price,
+.edition-page .edition-price :is(.shop-card__price--original, .shop-card__price, .shop-card__discount) {
+  font-family: var(--font-kor-body);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
 .edition-tags {
   display: flex;
   flex-wrap: wrap;
