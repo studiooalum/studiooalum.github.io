@@ -87,6 +87,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartCss, /\.cart-panel__footer\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(cartCss, /\.cart-item__img\s*\{[^}]*object-fit:\s*contain;/);
   assert.match(cartCss, /\.cart-item__price,[\s\S]*?\.cart-panel__total\s*\{[^}]*font-weight:\s*400;/);
+  assert.match(cartCss, /\.cart-panel__total\s*\{[^}]*padding-top:\s*12px;[^}]*border-top:\s*1px solid #111;/);
   assert.match(cartScript, /imageUrl\(image, \{ width: 512 \}\)/);
   assert.match(cartScript, /return `\$\{Number\(value\)\.toLocaleString\("ko-KR"\)\}원`;/);
   assert.doesNotMatch(cartScript, /formatPrice\(item\.price\)|formatPrice\(total\)/);
