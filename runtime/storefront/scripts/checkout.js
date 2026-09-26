@@ -5,7 +5,6 @@
 import { imageUrl } from "./sanity/image.js";
 import { openSitePolicyPanel } from "./components/siteFooter.js?v=20260914-01";
 import { removeFromCart, renderCartPanel, updateQty } from "./cart.js";
-import { formatPrice } from "./utils/catalog.js";
 import { CART_KEY, ORDER_KEY, readStoredJson, writeStoredJson } from "./utils/storage.js";
 
 const ORDER_CREATE_ENDPOINT = "/api/orders";
@@ -27,6 +26,10 @@ const checkoutState = {
 };
 
 let pricingQuoteTimer = null;
+
+function formatWon(value) {
+  return `${Math.max(0, Math.round(Number(value) || 0)).toLocaleString("ko-KR")}원`;
+}
 
 /* =========================
    CART DATA (read-only on this page)
@@ -220,14 +223,14 @@ function renderCouponSection() {
   }
 
   if (!checkoutState.couponCode) {
-    statusEl.textContent = "환영/보상 쿠폰은 여기서 입력하세요.";
+    statusEl.textContent = "";
     copyEl.textContent = "쿠폰은 입력 즉시 적용 가능 여부를 확인합니다. 총 결제금액과 할인 금액이 아래에 바로 반영됩니다.";
     return;
   }
 
   if (totals.couponDiscountAmount > 0) {
     statusEl.textContent = `${totals.couponCode || checkoutState.couponCode} 적용됨`;
-    copyEl.textContent = `쿠폰 할인 ${formatPrice(totals.couponDiscountAmount)}이 총 결제금액에 반영되었습니다.`;
+    copyEl.textContent = `쿠폰 할인 ${formatWon(totals.couponDiscountAmount)}이 총 결제금액에 반영되었습니다.`;
     return;
   }
 
@@ -394,13 +397,15 @@ function renderOrderSummary() {
   if (items.length === 0) {
     container.innerHTML = `<p class="checkout-empty">장바구니가 비어있습니다</p>`;
     submitButton.disabled = true;
-    document.getElementById("checkoutSubtotal").textContent = formatPrice(0);
-    document.getElementById("checkoutTotal").textContent = formatPrice(0);
+    document.getElementById("checkoutSubtotal").textContent = formatWon(0);
+    document.getElementById("checkoutTotal").textContent = formatWon(0);
     if (couponRow) {
-      couponRow.hidden = true;
+      couponRow.hidden = false;
+      couponDiscount.textContent = formatWon(0);
     }
     if (pointsRow) {
-      pointsRow.hidden = true;
+      pointsRow.hidden = false;
+      pointsDiscount.textContent = formatWon(0);
     }
     renderCouponSection();
     renderPointsSection({ subtotal: 0, pointsUsed: 0, total: 0, expectedEarnedPoints: 0 });
@@ -420,7 +425,7 @@ function renderOrderSummary() {
             <div class="checkout-item__title">${item.title}${editionLabel}</div>
             <button type="button" class="checkout-item__remove" data-checkout-remove="${item.lineId || item._id}" aria-label="삭제">×</button>
           </div>
-          <div class="checkout-item__meta">${formatPrice(item.price)}</div>
+          <div class="checkout-item__meta">${formatWon(item.price)}</div>
           <div class="checkout-item__controls">
             <div class="checkout-item__qty">
               <button type="button" class="checkout-item__qty-btn" data-checkout-qty="dec" data-id="${item.lineId || item._id}">−</button>
@@ -429,22 +434,26 @@ function renderOrderSummary() {
             </div>
           </div>
         </div>
-        <div class="checkout-item__subtotal">${formatPrice(item.price * item.qty)}</div>
+        <div class="checkout-item__subtotal">${formatWon(item.price * item.qty)}</div>
       </div>
     `;
   }).join("");
 
-  document.getElementById("checkoutSubtotal").textContent = formatPrice(totals.subtotal);
-  document.getElementById("checkoutTotal").textContent = formatPrice(totals.total);
+  document.getElementById("checkoutSubtotal").textContent = formatWon(totals.subtotal);
+  document.getElementById("checkoutTotal").textContent = formatWon(totals.total);
 
   if (couponRow && couponDiscount) {
-    couponRow.hidden = totals.couponDiscountAmount <= 0;
-    couponDiscount.textContent = `-${formatPrice(totals.couponDiscountAmount)}`;
+    couponRow.hidden = false;
+    couponDiscount.textContent = totals.couponDiscountAmount > 0
+      ? `-${formatWon(totals.couponDiscountAmount)}`
+      : formatWon(0);
   }
 
   if (pointsRow && pointsDiscount) {
-    pointsRow.hidden = totals.pointsUsed <= 0;
-    pointsDiscount.textContent = `-${formatPrice(totals.pointsUsed)}`;
+    pointsRow.hidden = false;
+    pointsDiscount.textContent = totals.pointsUsed > 0
+      ? `-${formatWon(totals.pointsUsed)}`
+      : formatWon(0);
   }
 
   renderCouponSection();
@@ -507,8 +516,8 @@ function syncEmailCompositeField() {
     emailInput,
   } = getEmailFieldElements();
 
-  if (!localInput || !domainSelect || !customDomainInput || !emailInput) {
-    return "";
+  if (!localInput || !domainSelect || !customDomainInput) {
+    return String(emailInput?.value || "").trim();
   }
 
   const localPart = String(localInput.value || "").trim();
@@ -535,7 +544,12 @@ function applyEmailCompositeValue(email) {
     emailInput,
   } = getEmailFieldElements();
 
-  if (!localInput || !domainSelect || !customDomainInput || !emailInput) {
+  if (!emailInput) {
+    return;
+  }
+
+  if (!localInput || !domainSelect || !customDomainInput) {
+    emailInput.value = String(email || "").trim();
     return;
   }
 
@@ -575,6 +589,8 @@ function setupEmailField() {
   } = getEmailFieldElements();
 
   if (!localInput || !domainSelect || !customDomainInput) {
+    const emailInput = document.getElementById("email");
+    emailInput?.addEventListener("input", schedulePricingQuoteRefresh);
     return;
   }
 
@@ -812,7 +828,7 @@ function setupForm() {
       return;
     }
 
-    if (!name || !phone || !email || !zipcode || !address1) {
+    if (!name || !phone || !email || !zipcode || !address1 || !address2 || !memo) {
       alert("필수 항목을 모두 입력해주세요.");
       return;
     }

@@ -1,6 +1,7 @@
 const ARCHIVE_QUERY = `
   *[_type == "archive"] | order(createdDate desc, _createdAt desc) {
     _id,
+    _createdAt,
     title,
     material,
     createdDate,
@@ -82,6 +83,7 @@ function normalizeArchiveItem(item, index) {
 
   return {
     id: item?._id || `archive-${index}`,
+    createdAt: String(item?._createdAt || "").trim(),
     title,
     createdDate: String(item?.createdDate || "").trim(),
     material: String(item?.material || "").trim(),
@@ -90,6 +92,26 @@ function normalizeArchiveItem(item, index) {
     tags: Array.isArray(item?.tags) ? item.tags.map(normalizeTag).filter(Boolean) : [],
     images,
   };
+}
+
+function getArchiveDateValue(value) {
+  const normalized = String(value || "").trim();
+  const parsed = Date.parse(normalized);
+  if (Number.isFinite(parsed)) return parsed;
+
+  const match = normalized.match(/(\d{4})(?:\D+(\d{1,2}))?(?:\D+(\d{1,2}))?/);
+  if (!match) return 0;
+  return Date.UTC(Number(match[1]), Number(match[2] || 1) - 1, Number(match[3] || 1));
+}
+
+function sortArchiveNewestFirst(items) {
+  return [...items].sort((left, right) => {
+    const dateDifference = getArchiveDateValue(right.createdDate) - getArchiveDateValue(left.createdDate);
+    if (dateDifference) return dateDifference;
+    const creationDifference = getArchiveDateValue(right.createdAt) - getArchiveDateValue(left.createdAt);
+    if (creationDifference) return creationDifference;
+    return String(right.id).localeCompare(String(left.id), "ko");
+  });
 }
 
 async function fetchArchiveItems() {
@@ -317,7 +339,9 @@ export async function initArchiveBoard() {
   let loadError = null;
   try {
     const result = await fetchArchiveItems();
-    state.items = result.map(normalizeArchiveItem).filter((item) => item.images.length > 0);
+    state.items = sortArchiveNewestFirst(
+      result.map(normalizeArchiveItem).filter((item) => item.images.length > 0),
+    );
   } catch (error) {
     loadError = error;
     state.items = [];

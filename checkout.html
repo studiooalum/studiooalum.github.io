@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260527-01">
+  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260926-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260926-08">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css?v=20260926-09">
   <link rel="stylesheet" href="./runtime/storefront/styles/storefront-actions-20260925-02.css">
@@ -28,36 +28,33 @@
       <div class="checkout-items" id="checkoutItems"></div>
       <div class="checkout-totals">
         <div class="checkout-totals__row">
-          <span>상품 합계</span>
-          <span id="checkoutSubtotal">₩0</span>
+          <span>합계</span>
+          <span id="checkoutSubtotal">0원</span>
         </div>
         <div class="checkout-totals__row">
           <span>배송비</span>
           <span id="checkoutShipping">무료</span>
         </div>
-        <div class="checkout-totals__row" id="checkoutCouponDiscountRow" hidden>
+        <div class="checkout-totals__row" id="checkoutCouponDiscountRow">
           <span>쿠폰 할인</span>
-          <span id="checkoutCouponDiscount">-₩0</span>
+          <span id="checkoutCouponDiscount">0원</span>
         </div>
-        <div class="checkout-totals__row" id="checkoutPointsRow" hidden>
+        <div class="checkout-totals__row" id="checkoutPointsRow">
           <span>포인트 사용</span>
-          <span id="checkoutPointsDiscount">-₩0</span>
+          <span id="checkoutPointsDiscount">0원</span>
         </div>
         <div class="checkout-totals__row checkout-totals__row--total">
-          <span>총 결제금액</span>
-          <span id="checkoutTotal">₩0</span>
+          <span>총 합계</span>
+          <span id="checkoutTotal">0원</span>
         </div>
       </div>
       <section class="checkout-coupon" id="checkoutCouponSection">
-        <div class="checkout-coupon__head">
-          <p class="checkout-coupon__title">쿠폰 코드</p>
-          <p class="checkout-coupon__status" id="checkoutCouponStatus">환영/보상 쿠폰은 여기서 입력하세요.</p>
-        </div>
         <div class="checkout-coupon__controls">
-          <input type="text" id="checkoutCouponInput" maxlength="48" placeholder="예: OALUM-WELCOME" autocapitalize="characters" spellcheck="false">
+          <input type="text" id="checkoutCouponInput" maxlength="48" placeholder="쿠폰 코드 입력하기" aria-label="쿠폰 코드 입력하기" autocapitalize="characters" spellcheck="false">
           <button type="button" class="checkout-btn--outline checkout-btn--outline-small" id="checkoutCouponClearBtn">지우기</button>
         </div>
-        <p class="checkout-coupon__copy" id="checkoutCouponCopy">쿠폰은 입력 즉시 적용 가능 여부를 확인합니다. 총 결제금액과 할인 금액이 아래에 바로 반영됩니다.</p>
+        <p class="checkout-coupon__status" id="checkoutCouponStatus" aria-live="polite"></p>
+        <p class="checkout-coupon__copy" id="checkoutCouponCopy">쿠폰은 입력 즉시 총 결제금액과 할인 금액이 아래에 반영됩니다.</p>
       </section>
     </section>
 
@@ -83,49 +80,36 @@
         </section>
         <div class="checkout-field">
           <label for="name">이름 <span class="required">*</span></label>
-          <input type="text" id="name" name="name" required placeholder="홍길동" autocomplete="name" />
+          <input type="text" id="name" name="name" required placeholder="이름" autocomplete="name" />
         </div>
         <div class="checkout-field">
-          <label for="phone">연락처 <span class="required">*</span></label>
-          <input type="tel" id="phone" name="phone" required placeholder="010-1234-5678" autocomplete="tel" />
+          <label for="phone">전화번호 <span class="required">*</span></label>
+          <input type="tel" id="phone" name="phone" required placeholder="전화번호" autocomplete="tel" />
         </div>
         <div class="checkout-field">
-          <label for="emailLocal">이메일 <span class="required">*</span></label>
-          <div class="checkout-email-row">
-            <input type="text" id="emailLocal" name="emailLocal" required placeholder="example" inputmode="email" autocapitalize="none" spellcheck="false" />
-            <span class="checkout-email-at" aria-hidden="true">@</span>
-            <select id="emailDomainSelect" name="emailDomainSelect" aria-label="이메일 도메인 선택">
-              <option value="">선택</option>
-              <option value="naver.com">naver.com</option>
-              <option value="gmail.com">gmail.com</option>
-              <option value="daum.net">daum.net</option>
-              <option value="hanmail.net">hanmail.net</option>
-              <option value="kakao.com">kakao.com</option>
-              <option value="outlook.com">outlook.com</option>
-              <option value="hotmail.com">hotmail.com</option>
-              <option value="icloud.com">icloud.com</option>
-              <option value="custom">기타(직접 입력)</option>
-            </select>
-          </div>
-          <input type="text" id="emailDomainCustom" name="emailDomainCustom" class="checkout-field__email-custom" placeholder="직접 도메인 입력" inputmode="email" autocapitalize="none" spellcheck="false" hidden />
-          <input type="hidden" id="email" name="email" />
+          <label for="email">이메일 <span class="required">*</span></label>
+          <input type="email" id="email" name="email" required placeholder="이메일" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" />
+        </div>
+        <div class="checkout-field checkout-field--fixed">
+          <span class="checkout-field__label">국가 <span class="required">*</span></span>
+          <span class="checkout-field__value">대한민국</span>
         </div>
         <div class="checkout-field-row">
           <div class="checkout-field checkout-field--zip">
             <label for="zipcode">우편번호 <span class="required">*</span></label>
             <div class="checkout-field__zip-row">
-              <input type="text" id="zipcode" name="zipcode" required placeholder="12345" readonly />
-              <button type="button" id="searchZipBtn" class="checkout-btn--outline">주소 검색</button>
+              <input type="text" id="zipcode" name="zipcode" required aria-label="우편번호" readonly />
+              <button type="button" id="searchZipBtn" class="checkout-btn--outline">주소검색</button>
             </div>
           </div>
         </div>
         <div class="checkout-field">
-          <label for="address1">기본 주소 <span class="required">*</span></label>
-          <input type="text" id="address1" name="address1" required placeholder="주소 검색을 이용해주세요" readonly />
+          <label for="address1">주소 <span class="required">*</span></label>
+          <input type="text" id="address1" name="address1" required placeholder="주소" readonly />
         </div>
         <div class="checkout-field">
-          <label for="address2">상세 주소</label>
-          <input type="text" id="address2" name="address2" placeholder="동/호수, 층 등" autocomplete="address-line2" />
+          <label for="address2">상세 주소 <span class="required">*</span></label>
+          <input type="text" id="address2" name="address2" required placeholder="상세 주소" autocomplete="address-line2" />
         </div>
         <div class="checkout-save-address" id="checkoutSaveAddressField" hidden>
           <label>
@@ -134,9 +118,9 @@
           </label>
         </div>
         <div class="checkout-field">
-          <label for="memo">배송 메모</label>
-          <select id="memo" name="memo">
-            <option value="">선택 안함</option>
+          <label for="memo">메모 <span class="required">*</span></label>
+          <select id="memo" name="memo" required>
+            <option value="">배송 메모</option>
             <option value="문 앞에 놓아주세요">문 앞에 놓아주세요</option>
             <option value="경비실에 맡겨주세요">경비실에 맡겨주세요</option>
             <option value="배송 전 연락 바랍니다">배송 전 연락 바랍니다</option>
@@ -145,7 +129,6 @@
           </select>
           <input type="text" id="memoCustom" name="memoCustom" class="checkout-field__memo-custom" placeholder="배송 메모를 입력해주세요" style="display:none;" />
         </div>
-        <div class="checkout-divider"></div>
         <div class="checkout-agree">
           <label class="checkout-agree__item">
             <input type="checkbox" id="agreeTermsPrivacy" required />
@@ -158,7 +141,7 @@
   </main>
 
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <script type="module" src="./runtime/storefront/scripts/checkout-20260802-01.js"></script>
+  <script type="module" src="./runtime/storefront/scripts/checkout-20260802-01.js?v=20260926-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";
