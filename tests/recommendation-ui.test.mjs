@@ -18,7 +18,7 @@ const cartPagePaths = [
   "workshop.html",
   "workshops.html",
 ];
-const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, cartScript, cartEntryScript, productHtml, productScript, productCss, actionsCss, siteChromeScript, gnbCss] = await Promise.all([
+const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsletterScript, newsletterCss, cartCss, cartScript, cartEntryScript, productHtml, productScript, productCss, actionsCss, storefrontActionsCss, siteChromeScript, gnbCss] = await Promise.all([
   read("../edition.html"),
   read("../runtime/storefront/scripts/edition-20260706-06.js"),
   read("../runtime/storefront/styles/edition.css"),
@@ -33,17 +33,26 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
   read("../runtime/storefront/scripts/product.js"),
   read("../runtime/storefront/styles/product.css"),
   read("../runtime/storefront/styles/actions-20260924.css"),
+  read("../runtime/storefront/styles/storefront-actions-20260925-02.css"),
   read("../runtime/storefront/scripts/components/siteChrome-20260818-05.js"),
   read("../runtime/storefront/styles/gnb-20260818-05.css"),
 ]);
 const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}`)));
 
 test("edition recommendations crop square images from the center", () => {
-  assert.match(editionHtml, /edition\.css\?v=20260926-02/);
+  assert.match(editionHtml, /edition\.css\?v=20260926-03/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-01/);
+  assert.doesNotMatch(editionHtml, /editionKicker/);
+  assert.match(editionHtml, />사이즈<\/span>/);
+  assert.match(editionHtml, />태그<\/span>/);
   assert.match(editionCss, /\.edition-recommend-card__thumb > \.progressive-image\s*\{[\s\S]*?height:\s*100%;/);
   assert.match(editionCss, /\.edition-recommend-card__thumb img\s*\{[\s\S]*?object-fit:\s*cover;[\s\S]*?object-position:\s*center center;/);
   assert.match(editionCss, /\.edition-page \.edition-title\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.2 !important;/);
-  assert.match(editionCss, /\.edition-page \.edition-desc\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.35 !important;/);
+  assert.match(editionCss, /\.edition-page \.edition-desc\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.45 !important;/);
+  assert.match(editionCss, /\.edition-specs\s*\{[^}]*margin-top:\s*36px;[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.45;/);
+  assert.match(editionCss, /\.edition-spec\s*\{[^}]*grid-template-columns:\s*76px minmax\(0, 1fr\);/);
+  assert.match(storefrontActionsCss, /body\.edition-page \.edition-btn--primary\s*\{[^}]*background:\s*#fff !important;[^}]*color:\s*#111 !important;/);
+  assert.match(storefrontActionsCss, /body\.edition-page \.edition-btn--primary:is\(:hover, :focus-visible, \.is-pointer-hover\)\s*\{[^}]*background:\s*#111 !important;[^}]*color:\s*#fff !important;/);
 });
 
 test("mobile navigation opens to half the viewport with larger labels", () => {
@@ -53,7 +62,7 @@ test("mobile navigation opens to half the viewport with larger labels", () => {
 });
 
 test("edition sidebar sticky stop uses media-relative image position", () => {
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260915-02/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-01/);
   assert.match(editionScript, /lastImage\.getBoundingClientRect\(\)\.top - mediaTop/);
   assert.doesNotMatch(editionScript, /lastImage\.offsetTop \+ stickyHeight/);
 });
@@ -102,10 +111,11 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
 });
 
 test("product overview copy stays stacked in the first desktop column", () => {
-  assert.match(productHtml, /product\.css\?v=20260926-01/);
+  assert.match(productHtml, /product\.css\?v=20260926-02/);
   assert.match(productHtml, /product\.js\?v=20260926-01/);
   assert.match(productScript, /\$\{editions\.length\}개 제작 \$\{displayPrice\}원/);
-  assert.match(productCss, /\.product-overview\s*\{[^}]*gap:\s*16px;/);
+  assert.match(productCss, /\.product-overview\s*\{[^}]*gap:\s*10px;/);
+  assert.match(productCss, /@media \(min-width:\s*900px\)[\s\S]*?\.product-overview\s*\{[^}]*padding:\s*60px 0 32px;/);
   assert.match(productCss, /\.product-intro\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.55;/);
   assert.match(productCss, /\.product-meta\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*1\.55;[^}]*color:\s*#111;/);
   assert.match(productCss, /@media \(min-width:\s*900px\)[\s\S]*?\.product-title,\s*\.product-intro,\s*\.product-meta\s*\{\s*grid-column:\s*1;/);

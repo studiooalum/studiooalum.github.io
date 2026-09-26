@@ -258,7 +258,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px 12px;
-  margin: calc(40px + 1lh) 0 0;
+  margin: 36px 0 0;
   font-family: var(--font-book);
   font-size: 16px;
   color: rgba(17, 17, 17, 0.82);
@@ -288,9 +288,9 @@
 .edition-desc {
   margin: 0;
   font-family: var(--font-kor-body);
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: var(--tracking-korean);
-  line-height: 1.6;
+  line-height: 1.45;
   white-space: pre-line;
   color: rgba(17, 17, 17, 0.8);
 }
@@ -306,7 +306,7 @@
 .edition-page .edition-desc {
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif !important;
   font-weight: 400 !important;
-  line-height: 1.35 !important;
+  line-height: 1.45 !important;
   letter-spacing: -0.025em !important;
   color: #111 !important;
 }
@@ -319,21 +319,41 @@
   letter-spacing: -0.025em !important;
 }
 
+.edition-specs {
+  display: grid;
+  gap: 0;
+  margin-top: 36px;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  color: #111;
+}
+
+.edition-spec {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 0;
+}
+
 .edition-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
-  margin-top: calc(40px + 1lh);
+  gap: 0 20px;
+  margin: 0;
 }
 
 .edition-tag {
   color: #111;
-  font-family: var(--font-kor-button);
-  font-size: 14px;
-  letter-spacing: var(--tracking-korean);
-  line-height: 1.2;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .edition-actions {
@@ -531,35 +551,11 @@
     flex-direction: column;
   }
 
-  .edition-price,
-  .edition-tags {
-    margin-top: 0;
-  }
-
-  .edition-price {
-    order: 1;
-    margin-top: 18px;
-  }
-
-  .edition-actions {
-    order: 2;
-    margin-top: 12px;
-  }
-
-  .edition-note {
-    order: 3;
-    margin-top: 12px;
-  }
-
-  .edition-desc {
-    order: 4;
-    margin-top: 20px;
-  }
-
-  .edition-tags {
-    order: 5;
-    margin-top: 56px;
-  }
+  .edition-desc { order: 1; }
+  .edition-specs { order: 2; margin-top: 36px; }
+  .edition-price { order: 3; margin-top: 36px; }
+  .edition-actions { order: 4; margin-top: 24px; }
+  .edition-note { order: 5; margin-top: 12px; }
 
   .edition-recommendation {
     margin-top: 56px;

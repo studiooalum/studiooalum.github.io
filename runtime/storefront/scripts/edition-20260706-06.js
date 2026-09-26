@@ -21,9 +21,9 @@ if (!slug) {
 const mediaEl = document.getElementById("editionMedia");
 const sidebarTrackEl = document.getElementById("editionSidebarTrack");
 const sidebarEl = document.getElementById("editionSidebar");
-const kickerEl = document.getElementById("editionKicker");
 const titleEl = document.getElementById("editionTitle");
 const numberEl = document.getElementById("editionNumber");
+const sizeEl = document.getElementById("editionSize");
 const priceEl = document.getElementById("editionPrice");
 const descEl = document.getElementById("editionDesc");
 const tagsEl = document.getElementById("editionTags");
@@ -503,10 +503,10 @@ async function init() {
       : null;
 
     document.title = `${product.title} | 오알룸 샵 | 스튜디오 오알룸`;
-    kickerEl.textContent = tags[0] || "edition";
     titleEl.textContent = baseName;
     numberEl.textContent = editionLabel || product.title;
     descEl.textContent = product.description || "제품 정보";
+    sizeEl.textContent = String(product.size || "-").trim() || "-";
 
     updatePageSeo({
       title: `${product.title} | 오알룸 샵 | 스튜디오 오알룸`,

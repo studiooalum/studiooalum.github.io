@@ -19,7 +19,7 @@
 
 .product-overview {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .product-title {
@@ -147,7 +147,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--grid-gap);
     min-height: 0;
-    padding: 80px 0;
+    padding: 60px 0 32px;
   }
 
   .product-title,
