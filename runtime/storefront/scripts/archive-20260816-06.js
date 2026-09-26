@@ -42,19 +42,33 @@ function layoutArchiveMasonry(board) {
   const cards = Array.from(board.querySelectorAll(":scope > .archive-card"));
   if (!cards.length) return;
 
+  board.classList.remove("is-masonry");
+  board.style.height = "";
+  cards.forEach((card) => {
+    card.style.width = "";
+    card.style.transform = "";
+    card.style.gridRowEnd = "";
+  });
+
   const boardStyle = window.getComputedStyle(board);
-  const rowHeight = Number.parseFloat(boardStyle.gridAutoRows) || 1;
-  const rowGap = Number.parseFloat(boardStyle.rowGap) || 0;
+  const gap = Number.parseFloat(boardStyle.columnGap) || 0;
+  const columnCount = window.matchMedia("(min-width: 960px)").matches ? 3 : 1;
+  const columnWidth = (board.clientWidth - gap * (columnCount - 1)) / columnCount;
+  const columnHeights = Array.from({ length: columnCount }, () => 0);
 
-  cards.forEach((card) => {
-    card.style.gridRowEnd = "auto";
+  board.classList.add("is-masonry");
+  cards.forEach((card, index) => {
+    const columnIndex = index < columnCount
+      ? index
+      : columnHeights.indexOf(Math.min(...columnHeights));
+    const x = columnIndex * (columnWidth + gap);
+    const y = columnHeights[columnIndex];
+    card.style.width = `${columnWidth}px`;
+    card.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    columnHeights[columnIndex] = y + card.getBoundingClientRect().height + gap;
   });
 
-  cards.forEach((card) => {
-    const cardHeight = card.getBoundingClientRect().height;
-    const span = Math.max(1, Math.ceil((cardHeight + rowGap) / (rowHeight + rowGap)));
-    card.style.gridRowEnd = `span ${span}`;
-  });
+  board.style.height = `${Math.max(0, ...columnHeights) - gap}px`;
 }
 
 function scheduleArchiveMasonry(board) {

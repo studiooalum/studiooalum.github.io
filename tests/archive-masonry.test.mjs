@@ -11,11 +11,15 @@ test("archive cards use equal-gap masonry without changing newest-first source o
     read("../runtime/storefront/scripts/archive-20260816-06.js"),
   ]);
 
-  assert.match(html, /archive-20260818-02\.css\?v=20260927-01/);
-  assert.match(html, /archive-20260924\.js\?v=20260927-01/);
-  assert.match(css, /\.archive-board \{[^}]*grid-auto-rows: 1px;[^}]*column-gap: var\(--grid-gap\);[^}]*row-gap: var\(--grid-gap\);/);
+  assert.match(html, /archive-20260818-02\.css\?v=20260927-02/);
+  assert.match(html, /archive-20260924\.js\?v=20260927-02/);
+  assert.match(css, /\.archive-board \{[^}]*column-gap: var\(--grid-gap\);[^}]*row-gap: var\(--grid-gap\);/);
+  assert.match(css, /\.archive-board\.is-masonry \{[^}]*position: relative;[^}]*display: block;/);
+  assert.match(css, /\.archive-board\.is-masonry > \.archive-card \{[^}]*position: absolute;/);
   assert.match(source, /function layoutArchiveMasonry\(board\)/);
-  assert.match(source, /Math\.ceil\(\(cardHeight \+ rowGap\) \/ \(rowHeight \+ rowGap\)\)/);
+  assert.match(source, /columnHeights\.indexOf\(Math\.min\(\.\.\.columnHeights\)\)/);
+  assert.match(source, /columnHeights\[columnIndex\] = y \+ card\.getBoundingClientRect\(\)\.height \+ gap/);
+  assert.match(source, /board\.style\.height = `\$\{Math\.max\(0, \.\.\.columnHeights\) - gap\}px`/);
   assert.match(source, /image\.addEventListener\("load", \(\) => scheduleArchiveMasonry/);
   assert.match(source, /window\.addEventListener\("resize", \(\) => scheduleArchiveMasonry/);
   assert.match(source, /sortArchiveNewestFirst/);

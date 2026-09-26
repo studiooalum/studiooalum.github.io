@@ -1,17 +1,21 @@
 @import url("./archive-20260818-01.css");
 
 .archive-board {
-  grid-auto-rows: 1px;
   column-gap: var(--grid-gap);
   row-gap: var(--grid-gap);
 }
 
-.archive-board > .archive-card {
-  align-self: start;
+.archive-board.is-masonry {
+  position: relative;
+  display: block;
 }
 
-.archive-board > .archive-empty {
-  grid-row-end: auto !important;
+.archive-board.is-masonry > .archive-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: auto;
+  margin: 0;
 }
 
 .archive-card.is-pointer-hover .archive-card__overlay {
