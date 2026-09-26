@@ -126,7 +126,8 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260926-01/);
+  assert.match(html, /account\.css\?v=20260926-02/);
+  assert.match(html, /account\.js\?v=20260926-01/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
   assert.match(html, /placeholder="비밀번호"/);
@@ -138,6 +139,22 @@ test("account entry uses compact line fields and the revised guest lookup copy",
   assert.match(stylesheet, /\.account-auth-shell > \.account-panel \.account-heading\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*font-weight:\s*600;/);
   assert.match(stylesheet, /\.account-auth-shell \.account-field input\s*\{[^}]*border:\s*0;[^}]*border-bottom:\s*1px solid #111;[^}]*font-size:\s*16px;/);
   assert.match(stylesheet, /\.account-guest-lookup-help\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;/);
+});
+
+test("login errors use red field underlines without an error sentence", async () => {
+  const [controller, stylesheet] = await Promise.all([
+    read("runtime/storefront/scripts/account.js"),
+    read("runtime/storefront/styles/account.css"),
+  ]);
+
+  assert.match(controller, /const setLoginFieldInvalid = \(fieldName, invalid = true\)/);
+  assert.match(controller, /if \(!isValidEmail\(email\)\)\s*\{\s*setLoginFieldInvalid\("email"\);/);
+  assert.match(controller, /if \(!password\)\s*\{\s*setLoginFieldInvalid\("password"\);/);
+  assert.match(controller, /catch \(error\) \{\s*setLoginFieldInvalid\("email"\);\s*setLoginFieldInvalid\("password"\);\s*setStatus\(loginStatusEl, ""\);/);
+  assert.doesNotMatch(controller, /setStatus\(loginStatusEl, "이메일 주소를 다시 확인해주세요\."/);
+  assert.match(stylesheet, /\.account-panel--login \.account-field\.is-invalid input\s*\{[^}]*border-bottom-color:\s*red;/);
+  assert.doesNotMatch(stylesheet, /\.account-panel--login \.account-field\.is-invalid input\s*\{[^}]*\n\s+color:\s*red;/);
+  assert.match(stylesheet, /\.account-panel--login \.account-status\.is-error\s*\{[^}]*visibility:\s*hidden;/);
 });
 
 test("My Oalum keeps logout in the account page and removes it from the GNB", async () => {

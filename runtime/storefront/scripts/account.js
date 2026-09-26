@@ -376,6 +376,23 @@ export function initAccountPage() {
     orderImagesBySlug: {},
   };
 
+  const setLoginFieldInvalid = (fieldName, invalid = true) => {
+    const field = loginForm.elements[fieldName]?.closest(".account-field");
+    field?.classList.toggle("is-invalid", invalid);
+  };
+
+  const clearLoginFieldErrors = () => {
+    setLoginFieldInvalid("email", false);
+    setLoginFieldInvalid("password", false);
+  };
+
+  loginForm.addEventListener("input", (event) => {
+    const fieldName = event.target?.name;
+    if (fieldName === "email" || fieldName === "password") {
+      setLoginFieldInvalid(fieldName, false);
+    }
+  });
+
   function setAccountView(view, { push = false } = {}) {
     const nextView = accountViews.has(view) ? view : "dashboard";
     memberLayout.dataset.accountView = nextView;
@@ -502,6 +519,7 @@ export function initAccountPage() {
     authShell.hidden = false;
     memberLayout.hidden = true;
     loginForm.reset();
+    clearLoginFieldErrors();
     guestForm.reset();
     if (initialReference) {
       guestForm.elements.reference.value = initialReference;
@@ -1036,14 +1054,17 @@ export function initAccountPage() {
     const email = String(loginForm.elements.email.value || "").trim();
     const password = String(loginForm.elements.password.value || "");
 
+    clearLoginFieldErrors();
+    setStatus(loginStatusEl, "");
+
     if (!isValidEmail(email)) {
-      setStatus(loginStatusEl, "이메일 주소를 다시 확인해주세요.", "error");
+      setLoginFieldInvalid("email");
       loginForm.elements.email.focus();
       return;
     }
 
     if (!password) {
-      setStatus(loginStatusEl, "비밀번호를 입력해주세요.", "error");
+      setLoginFieldInvalid("password");
       loginForm.elements.password.focus();
       return;
     }
@@ -1064,7 +1085,9 @@ export function initAccountPage() {
       setStatus(memberStatusEl, "다시 만나서 반갑습니다. 계정 정보를 불러왔습니다.", "success");
       window.dispatchEvent(new Event("studiooalum:auth-changed"));
     } catch (error) {
-      setStatus(loginStatusEl, getFriendlyApiMessage(error, "이메일 주소와 비밀번호를 다시 확인해주세요."), "error");
+      setLoginFieldInvalid("email");
+      setLoginFieldInvalid("password");
+      setStatus(loginStatusEl, "");
     } finally {
       setButtonLoading(submitButton, false, "로그인 중…");
       loginForm.elements.password.value = "";

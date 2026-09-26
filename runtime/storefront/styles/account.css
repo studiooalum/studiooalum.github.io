@@ -264,6 +264,14 @@
   box-shadow: none;
 }
 
+.account-panel--login .account-field.is-invalid input {
+  border-bottom-color: red;
+}
+
+.account-panel--login .account-status.is-error {
+  visibility: hidden;
+}
+
 .account-auth-shell .account-btn {
   height: 42px;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
