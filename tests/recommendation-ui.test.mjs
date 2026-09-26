@@ -42,6 +42,7 @@ const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}
 test("edition recommendations crop square images from the center", () => {
   assert.match(editionHtml, /edition\.css\?v=20260926-05/);
   assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-04/);
+  assert.match(editionHtml, /storefront-actions-20260925-02\.css\?v=20260926-06/);
   assert.doesNotMatch(editionHtml, /editionKicker/);
   assert.match(editionHtml, />사이즈<\/span>/);
   assert.match(editionHtml, />소재<\/span>/);
@@ -64,7 +65,7 @@ test("edition recommendations crop square images from the center", () => {
 });
 
 test("mobile navigation returns to content height with 13px labels", () => {
-  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-08")));
+  assert.ok(cartPages.every((html) => html.includes("gnb-20260818-05.css?v=20260926-09")));
   assert.doesNotMatch(gnbCss, /height:\s*(?:37\.5|50)dvh/);
   assert.match(gnbCss, /\.gnb__mobile-item,[\s\S]*?\.gnb__mobile-actions \.gnb__action\s*\{[^}]*font-size:\s*13px;[^}]*line-height:\s*1;/);
   assert.match(editionCss, /\.edition-media__dot\s*\{[^}]*border:\s*1px solid #111;/);
@@ -118,7 +119,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
   assert.match(cartScript, /style\.setProperty\("background-color", "#e34234", "important"\)/);
   assert.match(cartEntryScript, /cart-20260706-06\.js\?v=20260926-02/);
   cartPages.forEach((html, index) => {
-    assert.match(html, /cart-20260818-02\.css\?v=20260926-07/, `stale cart stylesheet in ${cartPagePaths[index]}`);
+    assert.match(html, /cart-20260818-02\.css\?v=20260926-08/, `stale cart stylesheet in ${cartPagePaths[index]}`);
     assert.match(html, /cart-20260818-02\.js\?v=20260926-02/, `stale cart script in ${cartPagePaths[index]}`);
   });
 });
