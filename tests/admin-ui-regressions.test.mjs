@@ -129,7 +129,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260927-03/);
+  assert.match(html, /account\.css\?v=20260927-04/);
   assert.match(html, /account\.js\?v=20260926-02/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
@@ -169,7 +169,7 @@ test("signup follows the 16px line-form and checkbox rules", async () => {
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260927-03/);
+  assert.match(html, /account\.css\?v=20260927-04/);
   assert.match(html, /이메일과 비밀번호로 계정을 만들고 주문내역, 주소, 포인트를 관리할 수 있습니다\./);
   for (const placeholder of ["이름", "이메일", "인증번호 6자리", "비밀번호", "비밀번호 확인"]) {
     assert.match(html, new RegExp(`placeholder="${placeholder}"`));
@@ -180,7 +180,21 @@ test("signup follows the 16px line-form and checkbox rules", async () => {
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox input:checked\s*\{[^}]*background-image:\s*url\("data:image\/svg\+xml/);
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-actions \.account-btn,[\s\S]*?width:\s*50%;[^}]*background:\s*#111;/);
-  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-btn--signup\s*\{[^}]*justify-content:\s*flex-start;[^}]*width:\s*fit-content;[^}]*padding:\s*0;[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*1\.45;[^}]*text-decoration:\s*underline;[^}]*text-underline-offset:\s*3px;/);
+  assert.match(html, /class="account-return-link">로그인으로 돌아가기<\/a>/);
+  assert.match(stylesheet, /body:is\(\.signup-page, \.forgot-password-page\) \.account-panel \.account-panel-actions--auth > button\.account-btn\s*\{[^}]*width:\s*50% !important;[^}]*max-width:\s*50% !important;[^}]*min-width:\s*0 !important;/);
+  assert.match(stylesheet, /body:is\(\.signup-page, \.forgot-password-page\) \.account-return-link\s*\{[^}]*justify-content:\s*flex-start;[^}]*width:\s*auto !important;[^}]*padding:\s*0;[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*1\.45;[^}]*text-decoration:\s*underline;[^}]*text-underline-offset:\s*3px;/);
+});
+
+test("password recovery follows the signup line-form and action rules", async () => {
+  const html = await read("forgot-password.html");
+
+  assert.match(html, /account\.css\?v=20260927-04/);
+  for (const placeholder of ["이메일", "인증번호 6자리", "새 비밀번호", "새 비밀번호 확인"]) {
+    assert.match(html, new RegExp(`placeholder="${placeholder}"`));
+  }
+  assert.match(html, /class="account-return-link">로그인으로 돌아가기<\/a>/);
+  assert.match(html, />인증코드 받기<\/button>/);
+  assert.match(html, />비밀번호 재설정<\/button>/);
 });
 
 test("My Oalum keeps logout in the account page and removes it from the GNB", async () => {
