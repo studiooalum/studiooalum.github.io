@@ -128,7 +128,7 @@
 
   .repair-body-copy .repair-body-copy__lead {
     display: block;
-    color: #111;
+    color: rgba(17, 17, 17, 0.8);
     font-size: 13.5px;
     font-weight: 700;
     line-height: 21.5px;

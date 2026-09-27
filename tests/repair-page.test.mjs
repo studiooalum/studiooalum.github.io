@@ -27,7 +27,7 @@ const repairTicketHtml = await readFile(new URL("../repair-ticket.html", import.
 const repairAdminHtml = await readFile(new URL("../repair-admin.html", import.meta.url), "utf8");
 
 test("repair page keeps the Figma accordion content contract", () => {
-  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260921-05/);
+  assert.match(repairHtml, /repair-20260915-01\.css\?v=20260927-80/);
   assert.deepEqual(
     [...repairHtml.matchAll(/<summary>([^<]+)<\/summary>/g)].slice(0, 3).map((match) => match[1]),
     ["가격 및 견적", "접수 및 진행", "배송 및 결제"],
@@ -84,7 +84,7 @@ test("repair accordion keeps summary geometry stable when toggled", () => {
 
 test("Basic and repair-method prices use the body type and one aligned compact grid", () => {
   assert.match(repairDetailCss, /\.repair-price-tabs button,[\s\S]*?font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\);[^}]*text-decoration:\s*underline/);
-  assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\)\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\)\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\);[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.match(repairDetailCss, /:is\(\.repair-basic-price-list, \.repair-method-price-list\) > li\s*\{[^}]*grid-template-columns:\s*96px 120px/);
   assert.match(repairDetailCss, /\.repair-basic-price-list > li > span:last-child,[\s\S]*?text-align:\s*left;[^}]*white-space:\s*nowrap/);
   assert.match(repairDetailCss, /\.repair-method-price-list\s*\{[^}]*gap:\s*12\.4px;/);
@@ -92,7 +92,7 @@ test("Basic and repair-method prices use the body type and one aligned compact g
 });
 
 test("pricing notes use the same black body typography without gray metadata", () => {
-  assert.match(repairDetailCss, /\.repair-price-notes\s*\{[^}]*gap:\s*0;[^}]*color:\s*#111;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(repairDetailCss, /\.repair-price-notes\s*\{[^}]*gap:\s*0;[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\);[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.equal((repairHtml.match(/class="repair-price-notes(?: repair-price-notes--methods)?"/g) || []).length, 2);
   assert.match(repairHtml, /data-repair-price-panel="basic"[\s\S]*?위 가격은 모두 시작 가격이며/);
   assert.match(repairHtml, /data-repair-price-panel="methods"[\s\S]*?수선 기법은 작업 면적에 따라 S\/M\/L 로 구분되며/);
@@ -221,14 +221,14 @@ test("accordion titles stay underlined on mobile and use half-height desktop spa
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.match(repairHtml, /<h1 class="repair-studio-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-08/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-80/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
   assert.match(repairDetailCss, /\.repair-choice-group--line input\[type="radio"\][\s\S]*?width:\s*16px;[\s\S]*?height:\s*16px;/);
   assert.match(repairDetailCss, /\.repair-choice-group--line > div\s*\{[^}]*gap:\s*4px;[^}]*margin-top:\s*16px;/);
-  assert.match(repairDetailCss, /\.repair-image-picker,[\s\S]*?width:\s*50%;[\s\S]*?background:\s*#fff;[\s\S]*?color:\s*#111;/);
-  assert.match(repairDetailCss, /\.repair-image-picker:hover\s*\{[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
+  assert.match(repairDetailCss, /\.repair-image-picker,[\s\S]*?width:\s*50%;[\s\S]*?background:\s*#fff;[\s\S]*?color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\);/);
+  assert.match(repairDetailCss, /\.repair-image-picker:hover\s*\{[^}]*background:\s*#fff;[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\);/);
   assert.match(repairDetailCss, /\.repair-image-preview-list:empty\s*\{[^}]*display:\s*none;/);
   assert.match(repairDetailCss, /\.repair-address-search-button:focus-visible\s*\{[^}]*text-decoration:\s*none;/);
   assert.match(repairDetailCss, /\.repair-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
@@ -240,16 +240,16 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-apply-btn\s*\{[^}]*width:\s*50% !important;[^}]*min-width:\s*0 !important;[^}]*justify-self:\s*start;/);
   assert.match(repairDetailCss, /\.repair-accordion > summary\s*\{[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.45 !important;/);
   assert.match(repairDetailCss, /@media \(min-width:\s*960px\)[\s\S]*?\.repair-accordion > summary\s*\{[^}]*min-height:\s*24px;[^}]*padding:\s*0;/);
-  assert.match(repairDetailCss, /\.repair-basic-table tbody td,[\s\S]*?\.repair-method-matrix tbody th,[\s\S]*?\.repair-method-matrix tbody td,[\s\S]*?\.repair-process-list li,[\s\S]*?\.repair-accordion--shipping p[\s\S]*?color:\s*#111 !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important/);
+  assert.match(repairDetailCss, /\.repair-basic-table tbody td,[\s\S]*?\.repair-method-matrix tbody th,[\s\S]*?\.repair-method-matrix tbody td,[\s\S]*?\.repair-process-list li,[\s\S]*?\.repair-accordion--shipping p[\s\S]*?color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important/);
   assert.doesNotMatch(repairDetailCss, /:is\([^)]*(?:thead th|repair-price-notes|repair-process-note)/);
-  assert.match(repairDetailCss, /\.repair-process-list span\s*\{[^}]*color:\s*#111 !important;[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
+  assert.match(repairDetailCss, /\.repair-process-list span\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\) !important;[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /\.repair-process-list\s*\{[^}]*gap:\s*0;/);
   assert.match(repairDetailCss, /\.repair-process-list li\s*\{[^}]*display:\s*flex;[^}]*gap:\s*4px;/);
   assert.match(repairDetailCss, /\.repair-accordion > summary\s*\{[^}]*display:\s*block;/);
   assert.match(repairDetailCss, /\.repair-accordion > summary::before,[\s\S]*?\.repair-accordion\[open\] > summary::before\s*\{[^}]*display:\s*none;[^}]*content:\s*none;/);
-  assert.match(repairDetailCss, /\.repair-process-note\s*\{[^}]*color:\s*#111 !important;[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
+  assert.match(repairDetailCss, /\.repair-process-note\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\) !important;[^}]*font-family:\s*var\(--font-kor-body\) !important;[^}]*font-size:\s*16px !important;[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);
   assert.match(repairDetailCss, /\.repair-accordion--shipping > div\s*\{[^}]*gap:\s*0;/);
-  assert.match(repairDetailCss, /\.repair-request-rail__notice\s*\{[^}]*color:\s*#111;[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-size:\s*16px;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(repairDetailCss, /\.repair-request-rail__notice\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\);[^}]*font-family:\s*var\(--font-kor-body\);[^}]*font-size:\s*16px;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.match(repairDetailCss, /\.repair-field--line\s*\{[^}]*grid-template-columns:\s*minmax\(120px, 24%\) minmax\(0, 1fr\);[^}]*border-bottom:\s*1px solid #111;/);
   assert.match(repairDetailCss, /\.repair-field--line input,[\s\S]*?\.repair-field--line select,[\s\S]*?\.repair-field--line textarea\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/);
   assert.match(repairDetailCss, /\.repair-field--line\[hidden\]\s*\{[^}]*display:\s*none;/);

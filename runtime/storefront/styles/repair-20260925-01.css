@@ -4,7 +4,7 @@
 
 body.repair-page .repair-studio-title {
   margin: 0 0 32px;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-book);
   font-size: var(--type-page-title, 34px);
   font-weight: 400;
@@ -15,7 +15,7 @@ body.repair-page .repair-studio-title {
 body.repair-page .repair-body-copy p,
 body.repair-page .repair-body-copy .repair-body-copy__lead,
 body.repair-page .repair-body-copy p:last-child {
-  color: #111 !important;
+  color: rgba(17, 17, 17, 0.8) !important;
   font-family: var(--font-kor-body) !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -31,7 +31,7 @@ body.repair-page .repair-stage__content .repair-apply-btn {
 
 body.repair-page .repair-stage__rail .repair-accordion > summary {
   display: block;
-  color: #111 !important;
+  color: rgba(17, 17, 17, 0.8) !important;
   font-family: var(--font-kor-body) !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -55,7 +55,7 @@ body.repair-page .repair-stage__rail :is(
   .repair-process-list li,
   .repair-accordion--shipping p
 ) {
-  color: #111 !important;
+  color: rgba(17, 17, 17, 0.8) !important;
   font-family: var(--font-kor-body) !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -63,7 +63,7 @@ body.repair-page .repair-stage__rail :is(
 }
 
 body.repair-page .repair-stage__rail .repair-process-list span {
-  color: #111 !important;
+  color: rgba(17, 17, 17, 0.8) !important;
   font-family: var(--font-kor-body) !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -86,7 +86,7 @@ body.repair-page .repair-stage__rail .repair-process-list li > span {
 
 body.repair-page .repair-stage__rail .repair-process-note {
   margin-top: 24.8px;
-  color: #111 !important;
+  color: rgba(17, 17, 17, 0.8) !important;
   font-family: var(--font-kor-body) !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -119,7 +119,7 @@ body.repair-page .repair-stage__rail .repair-price-tabs button.is-active {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -154,7 +154,7 @@ body.repair-page .repair-stage__rail :is(.repair-basic-price-list, .repair-metho
   margin: 0;
   padding: 0;
   list-style: none;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -192,7 +192,7 @@ body.repair-page .repair-stage__rail .repair-method-price-list__amounts {
 body.repair-page .repair-stage__rail .repair-price-notes {
   gap: 0;
   margin-top: 24.8px;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -215,7 +215,7 @@ body.repair-page .repair-request-rail__header {
 
 body.repair-page .repair-request-rail__notice {
   margin: 0 0 32px;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -245,7 +245,7 @@ body.repair-page .repair-request-form .repair-field--line input,
 body.repair-page .repair-request-form .repair-field--line select,
 body.repair-page .repair-request-form .repair-field--line textarea,
 body.repair-page .repair-request-form .repair-address-search-button {
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -276,7 +276,7 @@ body.repair-page .repair-request-form .repair-field--line textarea:focus {
 }
 
 body.repair-page .repair-request-form .repair-field--line:focus-within {
-  border-bottom-color: #111;
+  border-bottom-color: rgba(17, 17, 17, 0.8);
   box-shadow: none;
 }
 
@@ -312,7 +312,7 @@ body.repair-page .repair-request-form .repair-address-search-button:focus-visibl
   border: 0 !important;
   padding: 10px 0 !important;
   background: transparent !important;
-  color: #111 !important;
+  color: rgba(17, 17, 17, 0.8) !important;
   font-family: var(--font-kor-body) !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -366,7 +366,7 @@ body.repair-page .repair-request-form :is(
 body.repair-page .repair-request-form .repair-field--question :is(select, textarea),
 body.repair-page .repair-request-form .repair-field--notes textarea,
 body.repair-page .repair-request-form .repair-choice-group--line label {
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-style: normal;
@@ -443,7 +443,7 @@ body.repair-page .repair-request-form .repair-image-picker:focus-within {
   min-height: 48px;
   border: 1px solid #111;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -453,9 +453,9 @@ body.repair-page .repair-request-form .repair-image-picker:focus-within {
 }
 
 body.repair-page .repair-request-form .repair-image-picker:hover {
-  border-color: #111;
+  border-color: rgba(17, 17, 17, 0.8);
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   outline: 0;
 }
 
@@ -482,7 +482,7 @@ body.repair-page .repair-request-form__consent {
 body.repair-page .repair-request-form .repair-checkbox {
   align-items: center;
   gap: 6px;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -501,7 +501,7 @@ body.repair-page .repair-request-form .repair-checkbox input {
 }
 
 body.repair-page .repair-request-form .repair-checkbox input:checked {
-  background-color: #111;
+  background-color: rgba(17, 17, 17, 0.8);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.2 6.7 11.3 12.7 4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 

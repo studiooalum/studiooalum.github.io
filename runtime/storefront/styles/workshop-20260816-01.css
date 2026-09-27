@@ -3,7 +3,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-base);
 }
 
@@ -63,7 +63,7 @@
 }
 
 .workshop-poster__dot.is-active {
-  border-color: #111;
+  border-color: rgba(17, 17, 17, 0.8);
   background: #111;
 }
 
@@ -336,7 +336,7 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 0;
   padding: 0;
   background: transparent;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   cursor: pointer;
 }
 
@@ -402,7 +402,7 @@ body.workshop-booking-open .workshop-rail__panel {
   display: inline-block;
   font-size: clamp(42px, 4vw, 56px);
   letter-spacing: -0.04em;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
 }
 
 .workshop-calendar__spacer {
@@ -525,13 +525,13 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 1px solid rgba(17, 17, 17, 0.6);
   padding: 0 8px;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   text-align: center;
   cursor: pointer;
 }
 
 .workshop-slot-btn.is-active {
-  border-color: #111;
+  border-color: rgba(17, 17, 17, 0.8);
   background: #111;
   color: #fff;
 }
@@ -563,7 +563,7 @@ body.workshop-booking-open .workshop-rail__panel {
   width: 16px;
   height: 16px;
   margin: 2px 0 0;
-  accent-color: #111;
+  accent-color: rgba(17, 17, 17, 0.8);
 }
 
 .workshop-booking-form__notice {
@@ -589,7 +589,7 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 1px solid rgba(17, 17, 17, 0.6);
   padding: 10px 12px;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font: inherit;
 }
 
@@ -610,7 +610,7 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 0;
   padding: 0;
   background: transparent;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-button);
   font-size: 14px;
   line-height: 1.2;
@@ -639,7 +639,7 @@ body.workshop-booking-open .workshop-rail__panel {
 }
 
 .workshop-booking-form__feedback.is-success {
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
 }
 
 @media (min-width: 960px) {

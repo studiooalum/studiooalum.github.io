@@ -2,7 +2,7 @@
   --bg: #ffffff;
   --point: #e34234;
   background: var(--bg);
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   min-height: 100vh;
   overflow-y: auto;
   font-family: var(--font-base);
@@ -40,7 +40,7 @@
   letter-spacing: 0;
   line-height: 1.55;
   white-space: pre-line;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
 }
 
 .product-meta {
@@ -53,7 +53,7 @@
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1.55;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
 }
 
 .product-meta__item {

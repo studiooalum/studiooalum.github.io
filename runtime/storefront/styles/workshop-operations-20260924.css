@@ -5,7 +5,7 @@
   padding: 28px;
   border: 1px solid #111;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   overflow-y: auto;
   font-family: var(--font-kor-body);
   letter-spacing: 0;

@@ -49,7 +49,7 @@
   margin: 0;
   padding-bottom: 17px;
   border-bottom: 1px solid rgba(17, 17, 17, 0.12);
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
 }
 
 .workshop-body-copy {
@@ -128,7 +128,7 @@
 .workshop-notes .workshop-note {
   padding: 20px 22px;
   background: #f5f5f3;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-size: 13px;
   line-height: 1.75;
 }

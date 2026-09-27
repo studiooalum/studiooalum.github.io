@@ -28,8 +28,8 @@
 }
 
 :root body .admin-login-form button:is(:hover, :focus-visible) {
-  border-color: #111 !important;
+  border-color: rgba(17, 17, 17, 0.8) !important;
   background: #fff !important;
-  color: #111 !important;
+  color: rgba(17, 17, 17, 0.8) !important;
   outline: 0;
 }

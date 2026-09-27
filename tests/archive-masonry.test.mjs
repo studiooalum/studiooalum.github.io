@@ -11,7 +11,7 @@ test("archive cards use equal-gap masonry without changing newest-first source o
     read("../runtime/storefront/scripts/archive-20260816-06.js"),
   ]);
 
-  assert.match(html, /archive-20260818-02\.css\?v=20260927-02/);
+  assert.match(html, /archive-20260818-02\.css\?v=20260927-80/);
   assert.match(html, /archive-20260924\.js\?v=20260927-02/);
   assert.match(css, /\.archive-board \{[^}]*column-gap: var\(--grid-gap\);[^}]*row-gap: var\(--grid-gap\);/);
   assert.match(css, /\.archive-board\.is-masonry \{[^}]*position: relative;[^}]*display: block;/);

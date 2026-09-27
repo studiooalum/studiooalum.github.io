@@ -1,5 +1,5 @@
 /* Checkout — repair-form visual system */
-.checkout-page { min-height: 100vh; background: #fff; color: #111; font-family: "Pretendard", var(--font-kor-body, sans-serif); font-size: 16px; font-weight: 400; letter-spacing: var(--tracking-korean, 0); }
+.checkout-page { min-height: 100vh; background: #fff; color: rgba(17, 17, 17, 0.8); font-family: "Pretendard", var(--font-kor-body, sans-serif); font-size: 16px; font-weight: 400; letter-spacing: var(--tracking-korean, 0); }
 .checkout-layout { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; min-height: 100vh; padding: calc(var(--gnb-height, 40px) + var(--page-top-space, 72px)) var(--page-gutter, 16px) 80px; }
 .checkout-summary, .checkout-form-section { display: grid; min-width: 0; align-content: start; gap: 68px; }
 .checkout-summary { grid-column: 1; gap: 0; }
@@ -17,24 +17,24 @@
 .checkout-item__fallback { background: linear-gradient(135deg, #f8f8f8, #ececec); }
 .checkout-item__info { display: grid; min-width: 0; gap: 8px; }
 .checkout-item__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.checkout-item__title, .checkout-item__meta, .checkout-item__qty, .checkout-item__qty-value { color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-item__title, .checkout-item__meta, .checkout-item__qty, .checkout-item__qty-value { color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 .checkout-item__title { min-width: 0; }
 .checkout-item__controls { margin-top: 2px; }
 .checkout-item__qty { display: inline-flex; align-items: center; gap: 20px; }
-.checkout-item__qty-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid #111; border-radius: 50%; background: transparent; color: #111; font: 400 16px/1 "Pretendard", sans-serif; cursor: pointer; }
+.checkout-item__qty-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid #111; border-radius: 50%; background: transparent; color: rgba(17, 17, 17, 0.8); font: 400 16px/1 "Pretendard", sans-serif; cursor: pointer; }
 .checkout-item__qty-value { min-width: 12px; text-align: center; }
-.checkout-item__remove { flex: 0 0 auto; border: 0; padding: 0; background: transparent; color: #111; font: 400 20px/1 "Pretendard", sans-serif; cursor: pointer; }
+.checkout-item__remove { flex: 0 0 auto; border: 0; padding: 0; background: transparent; color: rgba(17, 17, 17, 0.8); font: 400 20px/1 "Pretendard", sans-serif; cursor: pointer; }
 .checkout-item__subtotal { display: none; }
 
 .checkout-totals { display: grid; padding-top: 0; border-top: 1px solid #111; }
-.checkout-totals__row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 33.75px; padding: 0; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-totals__row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 33.75px; padding: 0; color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 .checkout-totals__row--total { min-height: 44px; margin-top: 0; padding-top: 0; border-top: 1px solid #111; }
 
 .checkout-coupon { display: grid; gap: 0; padding: 0; border: 0; background: transparent; }
 .checkout-coupon__controls { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
-.checkout-coupon__controls input { width: 100%; height: 68px; min-height: 68px; padding: 10px 0; border: 0; border-bottom: 1px solid #111; border-radius: 0; outline: 0; background: transparent; color: #111; box-sizing: border-box; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); text-transform: none; }
+.checkout-coupon__controls input { width: 100%; height: 68px; min-height: 68px; padding: 10px 0; border: 0; border-bottom: 1px solid #111; border-radius: 0; outline: 0; background: transparent; color: rgba(17, 17, 17, 0.8); box-sizing: border-box; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); text-transform: none; }
 .checkout-coupon__controls input::placeholder, .checkout-field input::placeholder, .checkout-field select:invalid { color: rgba(17,17,17,.34); opacity: 1; }
-.checkout-coupon__status, .checkout-coupon__copy { margin: 0; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-coupon__status, .checkout-coupon__copy { margin: 0; color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 .checkout-coupon__status:empty { display: none; }
 .checkout-btn--outline-small { display: none !important; }
 
@@ -43,8 +43,8 @@
 .checkout-points { display: grid; width: 100%; gap: 0; margin-top: 0; padding: 0; border: 0; background: transparent; box-sizing: border-box; }
 .checkout-points[hidden] { display: none; }
 .checkout-points__controls { display: flex; min-height: 68px; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #111; }
-.checkout-points__balance { margin: 8px 0 0; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
-.checkout-points__controls input { width: 100%; min-height: 67px; padding: 10px 0; border: 0; border-radius: 0; outline: 0; background: transparent; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-points__balance { margin: 8px 0 0; color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-points__controls input { width: 100%; min-height: 67px; padding: 10px 0; border: 0; border-radius: 0; outline: 0; background: transparent; color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 .checkout-points__controls input::placeholder { color: rgba(17,17,17,.34); opacity: 1; }
 .checkout-points__controls input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 .checkout-points__controls input[type="number"]::-webkit-inner-spin-button,
@@ -52,28 +52,28 @@
 
 .checkout-field, .checkout-field--fixed { display: grid; grid-template-columns: minmax(140px, 22%) minmax(0, 1fr); align-items: center; gap: 16px; min-height: 68px; border-bottom: 1px solid #111; }
 .checkout-field-row { display: contents; }
-.checkout-field label, .checkout-field__label, .checkout-field__value { display: block; margin: 0; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
-.required { color: #111; }
-.checkout-field input[type="text"], .checkout-field input[type="email"], .checkout-field input[type="tel"], .checkout-field select { width: 100%; min-width: 0; min-height: 67px; height: auto; padding: 10px 0; border: 0; border-radius: 0; outline: 0; background: transparent; color: #111; box-sizing: border-box; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-field label, .checkout-field__label, .checkout-field__value { display: block; margin: 0; color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.required { color: rgba(17, 17, 17, 0.8); }
+.checkout-field input[type="text"], .checkout-field input[type="email"], .checkout-field input[type="tel"], .checkout-field select { width: 100%; min-width: 0; min-height: 67px; height: auto; padding: 10px 0; border: 0; border-radius: 0; outline: 0; background: transparent; color: rgba(17, 17, 17, 0.8); box-sizing: border-box; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
 .checkout-field input[readonly] { cursor: default; }
 .checkout-field select { appearance: none; -webkit-appearance: none; background-image: none; }
 .checkout-field__zip-row { position: relative; display: flex; align-items: center; justify-content: flex-start; min-width: 0; }
 .checkout-field__zip-row input { position: absolute; width: 1px !important; height: 1px !important; min-height: 0 !important; margin: -1px; padding: 0 !important; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
-.checkout-btn--outline { display: inline-flex; align-items: center; justify-content: center; min-width: auto; min-height: 48px; height: auto; padding: 0; border: 0; background: transparent; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); cursor: pointer; white-space: nowrap; }
-.checkout-btn--outline:hover, .checkout-btn--outline:focus-visible { background: transparent; color: #111; text-decoration: underline; text-underline-offset: 3px; }
-body.checkout-page #searchZipBtn { width: auto !important; inline-size: auto !important; min-width: auto !important; min-height: 48px !important; height: auto !important; padding: 0 !important; border: 0 !important; background: transparent !important; color: #111 !important; font-family: "Pretendard", var(--font-kor-body, sans-serif) !important; font-size: 16px !important; font-weight: 400 !important; justify-content: flex-start !important; text-align: left !important; }
-body.checkout-page #searchZipBtn:is(:hover, :focus-visible, :active, .is-pointer-hover) { border: 0 !important; background: transparent !important; color: #111 !important; text-decoration: underline; text-underline-offset: 3px; }
+.checkout-btn--outline { display: inline-flex; align-items: center; justify-content: center; min-width: auto; min-height: 48px; height: auto; padding: 0; border: 0; background: transparent; color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); cursor: pointer; white-space: nowrap; }
+.checkout-btn--outline:hover, .checkout-btn--outline:focus-visible { background: transparent; color: rgba(17, 17, 17, 0.8); text-decoration: underline; text-underline-offset: 3px; }
+body.checkout-page #searchZipBtn { width: auto !important; inline-size: auto !important; min-width: auto !important; min-height: 48px !important; height: auto !important; padding: 0 !important; border: 0 !important; background: transparent !important; color: rgba(17, 17, 17, 0.8) !important; font-family: "Pretendard", var(--font-kor-body, sans-serif) !important; font-size: 16px !important; font-weight: 400 !important; justify-content: flex-start !important; text-align: left !important; }
+body.checkout-page #searchZipBtn:is(:hover, :focus-visible, :active, .is-pointer-hover) { border: 0 !important; background: transparent !important; color: rgba(17, 17, 17, 0.8) !important; text-decoration: underline; text-underline-offset: 3px; }
 .checkout-field__memo-custom, .checkout-field__email-custom { grid-column: 2; margin: 0 0 10px; }
 
-.checkout-save-address { margin-top: 12px; color: #111; font-size: 16px; }
+.checkout-save-address { margin-top: 12px; color: rgba(17, 17, 17, 0.8); font-size: 16px; }
 .checkout-save-address[hidden] { display: none; }
 .checkout-save-address label, .checkout-agree__item { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .checkout-save-address input[type="checkbox"], .checkout-agree__item input[type="checkbox"] { appearance: none; -webkit-appearance: none; flex: 0 0 16px; width: 16px; height: 16px; margin: 4px 0 0; border: 1px solid #111; border-radius: 0; background: #fff; }
-.checkout-save-address input[type="checkbox"]:checked, .checkout-agree__item input[type="checkbox"]:checked { background-color: #111; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.2 6.7 11.3 12.7 4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; box-shadow: none; }
-.checkout-agree { margin-top: 16px; color: #111; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
-.checkout-link { border: 0; padding: 0; background: transparent; color: #111; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.checkout-save-address input[type="checkbox"]:checked, .checkout-agree__item input[type="checkbox"]:checked { background-color: rgba(17, 17, 17, 0.8); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.2 6.7 11.3 12.7 4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; box-shadow: none; }
+.checkout-agree { margin-top: 16px; color: rgba(17, 17, 17, 0.8); font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); }
+.checkout-link { border: 0; padding: 0; background: transparent; color: rgba(17, 17, 17, 0.8); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .checkout-submit-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 56px; margin-top: 24px; padding: 0 16px; border: 1px solid #111; background: #111; color: #fff; font: 400 16px/1.55 "Pretendard", var(--font-kor-body, sans-serif); cursor: pointer; }
-.checkout-submit-btn:hover, .checkout-submit-btn:focus-visible, .checkout-submit-btn.is-pointer-hover { background: #fff; color: #111; }
+.checkout-submit-btn:hover, .checkout-submit-btn:focus-visible, .checkout-submit-btn.is-pointer-hover { background: #fff; color: rgba(17, 17, 17, 0.8); }
 .checkout-submit-btn:disabled { border-color: #bdbdbd; background: #bdbdbd; color: #fff; cursor: not-allowed; }
 
 @media (max-width: 959px) {

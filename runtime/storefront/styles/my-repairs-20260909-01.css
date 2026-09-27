@@ -1,7 +1,7 @@
 .my-repairs-page {
   min-height: 100vh;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-kor-body);
   letter-spacing: var(--tracking-korean);
 }
@@ -18,7 +18,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-english-ui);
   font-size: 11px;
   letter-spacing: var(--tracking-latin);
@@ -116,8 +116,8 @@
 }
 
 .my-repairs-filters button.is-active {
-  border-bottom-color: #111;
-  color: #111;
+  border-bottom-color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.8);
 }
 
 .my-repairs-list {
@@ -149,7 +149,7 @@
   padding: 12px 18px;
   border: 1px solid #111;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   text-decoration: none;
   transition: background-color 180ms ease;
 }

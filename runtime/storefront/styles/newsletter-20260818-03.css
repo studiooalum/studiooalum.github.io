@@ -290,7 +290,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   cursor: pointer;
 }
 
@@ -315,7 +315,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   cursor: pointer;
 }
 

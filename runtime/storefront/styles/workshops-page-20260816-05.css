@@ -3,7 +3,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   background: #fff;
-  color: #111;
+  color: rgba(17, 17, 17, 0.8);
   font-family: var(--font-base);
 }
 
