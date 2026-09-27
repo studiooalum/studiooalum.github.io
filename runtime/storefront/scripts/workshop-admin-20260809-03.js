@@ -1094,7 +1094,7 @@ function renderInquiries() {
     <label class="fulfillment-field"><span>관리자 메모</span><textarea name="inquiryAdminNote" maxlength="2000">${escapeHtml(inquiry.admin_note)}</textarea></label>
     <button type="button" class="fulfillment-btn" data-save-inquiry>저장</button>
     <p class="fulfillment-status" role="status"></p>
-  </article>`).join("") || '<p class="fulfillment-empty">접수된 맞춤 워크샵 문의가 없습니다.</p>';
+  </article>`).join("") || '<p class="fulfillment-empty">접수된 맞춤 워크숍 문의가 없습니다.</p>';
 }
 
 function resetUi() {
@@ -1410,7 +1410,7 @@ function attachEvents() {
       body.set("file", file);
       setStatus(status, "업로드 중...");
       const payload = await requestAdmin("./api/workshops/admin", { method: "POST", body });
-      await submitAdminAction({ action: "saveCustomWorkshopImage", imageUrl: payload.image.url, imageAlt: "맞춤 워크샵" }, { successTarget: status });
+      await submitAdminAction({ action: "saveCustomWorkshopImage", imageUrl: payload.image.url, imageAlt: "맞춤 워크숍" }, { successTarget: status });
     } catch (error) { setStatus(status, error.message, "error"); }
     finally { event.target.value = ""; }
   });

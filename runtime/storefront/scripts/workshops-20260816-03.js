@@ -177,7 +177,7 @@ async function init() {
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok || !payload?.ok || !Array.isArray(payload.workshops)) {
-      throw new Error(payload?.error || "워크샵 목록을 불러오지 못했습니다.");
+      throw new Error(payload?.error || "워크숍 목록을 불러오지 못했습니다.");
     }
     renderWorkshops(payload.workshops);
   } catch (error) {

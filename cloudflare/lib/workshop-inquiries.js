@@ -24,10 +24,10 @@ function requireDb(env) {
 
 export async function readCustomWorkshopContent(env) {
   const row = await requireDb(env).prepare("SELECT image_url, image_alt FROM workshop_custom_content WHERE id = 'default'").first();
-  return { imageUrl: row?.image_url || "", imageAlt: row?.image_alt || "맞춤 워크샵" };
+  return { imageUrl: row?.image_url || "", imageAlt: row?.image_alt || "맞춤 워크숍" };
 }
 
-export async function saveCustomWorkshopContent(env, { imageUrl, imageAlt = "맞춤 워크샵" }) {
+export async function saveCustomWorkshopContent(env, { imageUrl, imageAlt = "맞춤 워크숍" }) {
   const safeUrl = /^(?:\.\/|\/(?!\/))/.test(imageUrl) || /^https:\/\//.test(imageUrl);
   if (imageUrl && (!safeUrl || /[<>"\\\u0000-\u0020]/.test(imageUrl))) {
     throw Object.assign(new Error("올바른 대표 이미지 주소를 입력해주세요."), { status: 400 });
