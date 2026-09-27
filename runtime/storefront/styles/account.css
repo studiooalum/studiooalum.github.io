@@ -253,7 +253,7 @@
 }
 
 .account-auth-shell .account-field input::placeholder {
-  color: #111;
+  color: rgba(17, 17, 17, 0.3);
   opacity: 1;
 }
 
@@ -363,15 +363,21 @@
 }
 
 .signup-page .account-panel--signup .account-btn--signup {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
   width: fit-content;
+  max-width: none;
   min-width: 0;
   height: auto;
+  margin-left: 0;
   padding: 0;
   border: 0;
   background: transparent;
   color: #111;
-  line-height: 1.55;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
   text-align: left;
   text-decoration: underline;
   text-decoration-thickness: 1px;

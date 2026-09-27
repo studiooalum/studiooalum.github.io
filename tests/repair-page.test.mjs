@@ -123,8 +123,9 @@ test("repair accordion omits section divider lines at every viewport", () => {
 
 test("repair request follows the compact line-form reference", () => {
   for (const field of ["이름", "전화번호", "이메일", "국가", "우편번호", "주소", "상세 주소", "메모"]) {
-    assert.match(repairHtml, new RegExp(`<span>${field} <span class="repair-required-mark"`));
+    assert.match(repairHtml, new RegExp(`<span>${field}</span>`));
   }
+  assert.doesNotMatch(repairHtml, /repair-required-mark/);
 
   assert.match(repairHtml, /<input class="js-repair-country" type="text" name="country"[^>]+value="대한민국" readonly required>/);
   assert.match(repairHtml, /js-repair-address-search[^>]*>주소검색<\/button>/);
@@ -140,8 +141,8 @@ test("repair request follows the compact line-form reference", () => {
   assert.match(repairHtml, /name="addressLine2"[^>]+required/);
   assert.match(repairHtml, /type="hidden" name="itemType" value="수선 의뢰"/);
   assert.match(repairHtml, /name="issueDescription"[^>]+placeholder="어떤 제품의, 어떤 부분이 손상되었나요\?"[^>]+required/);
-  assert.match(repairHtml, /<legend>원하시는 방향이 있나요\? <span class="repair-required-mark"/);
-  assert.match(repairHtml, /<h3>제품 사진을 올려주세요 <span class="repair-required-mark"/);
+  assert.match(repairHtml, /<legend>원하시는 방향이 있나요\?<\/legend>/);
+  assert.match(repairHtml, /<h3>제품 사진을 올려주세요<\/h3>/);
   assert.match(repairHtml, />사진 선택하기<\/span>/);
   assert.doesNotMatch(repairHtml, /어떤 제품인가요\?|어떤 부분이 손상되었나요\?<\/span>|기타 요청사항/);
   for (const [name, placeholder] of [

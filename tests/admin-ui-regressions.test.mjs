@@ -129,7 +129,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260926-05/);
+  assert.match(html, /account\.css\?v=20260927-03/);
   assert.match(html, /account\.js\?v=20260926-02/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
@@ -141,6 +141,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
   assert.doesNotMatch(html, /비회원 신청 내역 조회|주문번호, 워크숍 예약번호 또는 수선 접수 조회번호/);
   assert.match(stylesheet, /\.account-auth-shell > \.account-panel \.account-heading\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*font-weight:\s*600;/);
   assert.match(stylesheet, /\.account-auth-shell \.account-field input\s*\{[^}]*border:\s*0;[^}]*border-bottom:\s*1px solid #111;[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.account-auth-shell \.account-field input::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);/);
   assert.match(stylesheet, /\.account-guest-lookup-help\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;/);
 });
 
@@ -168,7 +169,7 @@ test("signup follows the 16px line-form and checkbox rules", async () => {
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260927-02/);
+  assert.match(html, /account\.css\?v=20260927-03/);
   assert.match(html, /이메일과 비밀번호로 계정을 만들고 주문내역, 주소, 포인트를 관리할 수 있습니다\./);
   for (const placeholder of ["이름", "이메일", "인증번호 6자리", "비밀번호", "비밀번호 확인"]) {
     assert.match(html, new RegExp(`placeholder="${placeholder}"`));
@@ -179,7 +180,7 @@ test("signup follows the 16px line-form and checkbox rules", async () => {
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox input:checked\s*\{[^}]*background-image:\s*url\("data:image\/svg\+xml/);
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-actions \.account-btn,[\s\S]*?width:\s*50%;[^}]*background:\s*#111;/);
-  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-btn--signup\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*text-decoration:\s*underline;/);
+  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-btn--signup\s*\{[^}]*justify-content:\s*flex-start;[^}]*width:\s*fit-content;[^}]*padding:\s*0;[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*1\.45;[^}]*text-decoration:\s*underline;[^}]*text-underline-offset:\s*3px;/);
 });
 
 test("My Oalum keeps logout in the account page and removes it from the GNB", async () => {

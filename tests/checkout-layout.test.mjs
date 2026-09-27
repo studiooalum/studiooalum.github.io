@@ -17,8 +17,7 @@ test("checkout follows the three-column repair form layout", () => {
   assert.match(html, /checkout\.css\?v=20260927-05/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
-  assert.match(html, />전화번호 <span class="required">\*<\/span>/);
-  assert.match(html, />국가 <span class="required">\*<\/span>/);
+  assert.doesNotMatch(html, /<span class="required">\*<\/span>/);
   assert.match(html, /checkout-field__value">대한민국/);
   assert.match(html, />주소검색<\/button>/);
   assert.match(html, /placeholder="쿠폰 코드 입력하기"/);
@@ -54,7 +53,7 @@ test("checkout follows the three-column repair form layout", () => {
 });
 
 test("account and checkout share the standard page-top spacing", () => {
-  assert.match(accountHtml, /account\.css\?v=20260926-05/);
+  assert.match(accountHtml, /account\.css\?v=20260927-03/);
   assert.match(accountCss, /@media \(max-width: 959px\)[\s\S]*?\.account-main \{\s*padding-top: calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\);/);
 });
 

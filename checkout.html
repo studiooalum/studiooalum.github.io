@@ -73,24 +73,24 @@
           <a href="./account.html" class="checkout-auth-panel__link" id="checkoutAuthLink">로그인 / 회원가입</a>
         </div>
         <div class="checkout-field">
-          <label for="name">이름 <span class="required">*</span></label>
+          <label for="name">이름</label>
           <input type="text" id="name" name="name" required placeholder="이름" autocomplete="name" />
         </div>
         <div class="checkout-field">
-          <label for="phone">전화번호 <span class="required">*</span></label>
+          <label for="phone">전화번호</label>
           <input type="tel" id="phone" name="phone" required placeholder="전화번호" autocomplete="tel" />
         </div>
         <div class="checkout-field">
-          <label for="email">이메일 <span class="required">*</span></label>
+          <label for="email">이메일</label>
           <input type="email" id="email" name="email" required placeholder="이메일" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" />
         </div>
         <div class="checkout-field checkout-field--fixed">
-          <span class="checkout-field__label">국가 <span class="required">*</span></span>
+          <span class="checkout-field__label">국가</span>
           <span class="checkout-field__value">대한민국</span>
         </div>
         <div class="checkout-field-row">
           <div class="checkout-field checkout-field--zip">
-            <label for="zipcode">우편번호 <span class="required">*</span></label>
+            <label for="zipcode">우편번호</label>
             <div class="checkout-field__zip-row">
               <input type="text" id="zipcode" name="zipcode" required aria-label="우편번호" readonly />
               <button type="button" id="searchZipBtn" class="checkout-btn--outline">주소검색</button>
@@ -98,11 +98,11 @@
           </div>
         </div>
         <div class="checkout-field">
-          <label for="address1">주소 <span class="required">*</span></label>
+          <label for="address1">주소</label>
           <input type="text" id="address1" name="address1" required placeholder="주소" readonly />
         </div>
         <div class="checkout-field">
-          <label for="address2">상세 주소 <span class="required">*</span></label>
+          <label for="address2">상세 주소</label>
           <input type="text" id="address2" name="address2" required placeholder="상세 주소" autocomplete="address-line2" />
         </div>
         <div class="checkout-save-address" id="checkoutSaveAddressField" hidden>
@@ -112,7 +112,7 @@
           </label>
         </div>
         <div class="checkout-field">
-          <label for="memo">메모 <span class="required">*</span></label>
+          <label for="memo">메모</label>
           <select id="memo" name="memo" required>
             <option value="">배송 메모</option>
             <option value="문 앞에 놓아주세요">문 앞에 놓아주세요</option>
@@ -126,7 +126,7 @@
         <div class="checkout-agree">
           <label class="checkout-agree__item">
             <input type="checkbox" id="agreeTermsPrivacy" required />
-            <span>주문 내용을 확인했으며, <button type="button" class="checkout-link" data-checkout-policy="terms">이용약관</button> 및 <button type="button" class="checkout-link" data-checkout-policy="privacy">개인정보 처리방침</button>에 동의합니다. <span class="required">*</span></span>
+            <span>주문 내용을 확인했으며, <button type="button" class="checkout-link" data-checkout-policy="terms">이용약관</button> 및 <button type="button" class="checkout-link" data-checkout-policy="privacy">개인정보 처리방침</button>에 동의합니다.</span>
           </label>
         </div>
         <button type="submit" class="checkout-submit-btn" id="submitOrderBtn">결제 진행하기</button>
