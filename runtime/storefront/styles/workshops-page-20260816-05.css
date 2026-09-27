@@ -147,15 +147,20 @@
   color: rgba(17, 17, 17, 0.82);
 }
 
-.workshops-card__meta-row {
+.workshops-card__title-row {
   display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.workshops-card__title-row .workshops-card__title {
+  min-width: 0;
 }
 
 .workshops-card__category {
   flex: 0 0 auto;
+  padding-top: 3px;
   color: inherit;
   font-family: var(--font-book);
   font-size: 11px;

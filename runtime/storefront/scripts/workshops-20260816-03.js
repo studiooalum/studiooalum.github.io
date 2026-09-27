@@ -54,10 +54,6 @@ function getWorkshopCategory(workshop) {
   return normalizeWorkshopCategory(workshop?.category || workshop?.workshopCategory);
 }
 
-function getWorkshopDuration(workshop) {
-  return String(workshop?.durationLabel || workshop?.duration || "TBD").trim() || "TBD";
-}
-
 function getWorkshopPoster(workshop) {
   return resolveWorkshopPoster(workshop);
 }
@@ -134,28 +130,24 @@ function createWorkshopCard(workshop) {
   const body = document.createElement("div");
   body.className = "workshops-card__body";
 
-  const metaRow = document.createElement("div");
-  metaRow.className = "workshops-card__meta-row";
+  const titleRow = document.createElement("div");
+  titleRow.className = "workshops-card__title-row";
 
   const category = document.createElement("span");
   category.className = "workshops-card__category";
   category.textContent = workshop.custom ? "custom" : (getWorkshopCategory(workshop) || "workshop");
-  metaRow.appendChild(category);
-
   const title = document.createElement("h2");
   title.className = "workshops-card__title";
   title.textContent = workshop?.title || "Untitled workshop";
+  titleRow.append(title, category);
 
   const meta = document.createElement("p");
   meta.className = "workshops-card__copy";
-  meta.textContent = (workshop.custom
-    ? ["맞춤 문의"]
-    : [workshop.bookingConfig?.mode === "daily" ? "원데이클래스" : "오알룸 워크숍", getWorkshopDuration(workshop)])
-    .map((value) => String(value || "").trim())
-    .filter(Boolean)
-    .join(" ");
+  meta.textContent = workshop.custom
+    ? "원하는 내용과 일정에 맞춰 워크숍을 구성합니다."
+    : String(workshop?.summary || workshop?.description || "").trim();
 
-  body.append(metaRow, title, meta);
+  body.append(titleRow, meta);
   card.append(body);
   return card;
 }
