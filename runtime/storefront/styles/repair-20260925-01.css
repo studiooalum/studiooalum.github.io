@@ -2,8 +2,14 @@
   padding-top: 0;
 }
 
-body.repair-page .repair-stage__rail > .repair-stage__content {
-  margin-top: 24px;
+body.repair-page .repair-studio-title {
+  margin: 0 0 32px;
+  color: #111;
+  font-family: var(--font-book);
+  font-size: var(--type-page-title, 34px);
+  font-weight: 400;
+  letter-spacing: var(--tracking-latin);
+  line-height: 1.18;
 }
 
 body.repair-page .repair-body-copy p,
@@ -577,6 +583,13 @@ body.repair-page .repair-form__status.is-error {
     position: static;
     top: auto;
     align-self: start;
+  }
+
+  .repair-stage__sticky > .repair-stage__content {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    min-width: 0;
   }
 
   body.repair-page .repair-stage__rail .repair-accordion > summary {
