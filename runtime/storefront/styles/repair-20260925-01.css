@@ -37,6 +37,9 @@ body.repair-page .repair-stage__rail .repair-accordion > summary {
   font-weight: 400 !important;
   letter-spacing: var(--tracking-korean) !important;
   line-height: 1.45 !important;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 body.repair-page .repair-stage__rail .repair-accordion > summary::before,
@@ -595,9 +598,6 @@ body.repair-page .repair-form__status.is-error {
   body.repair-page .repair-stage__rail .repair-accordion > summary {
     min-height: 24px;
     padding: 0;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
   }
 }
 

@@ -205,10 +205,14 @@ test("repair request close button has no hover box outline", () => {
   assert.match(repairCss, /\.repair-request-rail__close:hover\s*\{[^}]*outline:\s*none;[^}]*outline-offset:\s*0;/);
 });
 
-test("desktop accordion titles use underlined half-height spacing without changing open content", () => {
+test("accordion titles stay underlined on mobile and use half-height desktop spacing", () => {
   assert.match(
     repairDetailCss,
-    /@media \(min-width:\s*960px\)[\s\S]*?body\.repair-page \.repair-stage__rail \.repair-accordion > summary\s*\{[^}]*min-height:\s*24px;[^}]*padding:\s*0;[^}]*text-decoration:\s*underline;/,
+    /body\.repair-page \.repair-stage__rail \.repair-accordion > summary\s*\{[^}]*text-decoration:\s*underline;[^}]*text-decoration-thickness:\s*1px;[^}]*text-underline-offset:\s*3px;/,
+  );
+  assert.match(
+    repairDetailCss,
+    /@media \(min-width:\s*960px\)[\s\S]*?body\.repair-page \.repair-stage__rail \.repair-accordion > summary\s*\{[^}]*min-height:\s*24px;[^}]*padding:\s*0;/,
   );
   assert.match(repairCss, /\.repair-stage__rail \.repair-accordion > div\s*\{[^}]*padding:\s*0 0 24px;/);
 });
@@ -216,7 +220,7 @@ test("desktop accordion titles use underlined half-height spacing without changi
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.match(repairHtml, /<h1 class="repair-studio-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-06/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-07/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
