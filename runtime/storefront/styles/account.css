@@ -277,6 +277,77 @@
   visibility: hidden;
 }
 
+.signup-page .account-panel--signup,
+.signup-page .account-panel--signup :is(input, button, a) {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.signup-page .account-panel--signup .account-copy {
+  margin: 0;
+  color: #111;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.signup-page .account-panel--signup .account-field input::placeholder {
+  color: rgba(17, 17, 17, 0.3);
+  opacity: 1;
+}
+
+.signup-page .account-panel--signup .account-field-note {
+  color: #111;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.signup-page .account-panel--signup .account-consent-list {
+  gap: 4px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.signup-page .account-panel--signup .account-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #111;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.signup-page .account-panel--signup .account-checkbox input {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #111;
+  border-radius: 0;
+  background: #fff;
+}
+
+.signup-page .account-panel--signup .account-checkbox input:checked {
+  background-color: #111;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.2 6.7 11.3 12.7 4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.signup-page .account-panel--signup .account-checkbox-copy {
+  gap: 6px;
+}
+
+.signup-page .account-panel--signup .account-consent-prefix {
+  color: #111;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: inherit;
+}
+
 .account-auth-shell .account-btn {
   height: 42px;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;

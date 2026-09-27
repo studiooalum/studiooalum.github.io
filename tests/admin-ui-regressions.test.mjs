@@ -162,6 +162,24 @@ test("login and guest errors use red field text and underlines without an error 
   assert.match(stylesheet, /\.account-auth-shell \.account-status\.is-error\s*\{[^}]*visibility:\s*hidden;/);
 });
 
+test("signup follows the 16px line-form and checkbox rules", async () => {
+  const [html, stylesheet] = await Promise.all([
+    read("signup.html"),
+    read("runtime/storefront/styles/account.css"),
+  ]);
+
+  assert.match(html, /account\.css\?v=20260927-01/);
+  assert.match(html, /이메일과 비밀번호로 계정을 만들고 주문내역, 주소, 포인트를 관리할 수 있습니다\./);
+  for (const placeholder of ["이름", "이메일", "인증번호 6자리", "비밀번호", "비밀번호 확인"]) {
+    assert.match(html, new RegExp(`placeholder="${placeholder}"`));
+  }
+  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-copy\s*\{[^}]*color:\s*#111;[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-field input::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);/);
+  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox\s*\{[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
+  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox input:checked\s*\{[^}]*background-image:\s*url\("data:image\/svg\+xml/);
+});
+
 test("My Oalum keeps logout in the account page and removes it from the GNB", async () => {
   const [html, stylesheet, siteChrome] = await Promise.all([
     read("account.html"),
