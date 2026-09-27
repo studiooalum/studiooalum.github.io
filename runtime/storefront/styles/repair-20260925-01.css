@@ -605,6 +605,53 @@ body.repair-page .repair-form__status.is-error {
   .repair-stage__sticky {
     display: contents;
   }
+
+  body.repair-page .repair-stage__rail .repair-accordion > summary {
+    min-height: 24px;
+    padding: 0;
+  }
+
+  body.repair-page .repair-image-gallery {
+    aspect-ratio: auto;
+    overflow: visible;
+  }
+
+  body.repair-page .repair-gallery-slider {
+    height: auto;
+  }
+
+  body.repair-page .repair-gallery-track,
+  body.repair-page .repair-gallery-card {
+    aspect-ratio: 326 / 438;
+    height: auto;
+  }
+
+  body.repair-page .repair-gallery-card img {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  body.repair-page .repair-gallery-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 12px;
+  }
+
+  body.repair-page .repair-gallery-dot {
+    width: 9px;
+    height: 9px;
+    border: 1px solid #111;
+    border-radius: 999px;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  body.repair-page .repair-gallery-dot.is-active {
+    background: #111;
+  }
 }
 
 @media (max-width: 768px) {

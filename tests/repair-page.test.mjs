@@ -220,7 +220,7 @@ test("accordion titles stay underlined on mobile and use half-height desktop spa
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.match(repairHtml, /<h1 class="repair-studio-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-07/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260927-08/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
@@ -275,4 +275,20 @@ test("repair content and accordion share one desktop sticky frame", () => {
   );
   assert.doesNotMatch(repairDetailCss, /body\.repair-page \.repair-stage__content \.repair-body-copy\s*\{[^}]*gap:\s*8px;/);
   assert.match(repairDetailCss, /@media \(max-width:\s*959px\)[\s\S]*?\.repair-stage__sticky\s*\{[^}]*display:\s*contents;/);
+});
+
+test("mobile repair uses compact accordion rows and edition-style gallery dots", () => {
+  assert.match(
+    repairDetailCss,
+    /@media \(max-width:\s*959px\)[\s\S]*?\.repair-stage__rail \.repair-accordion > summary\s*\{[^}]*min-height:\s*24px;[^}]*padding:\s*0;/,
+  );
+  assert.match(
+    repairDetailCss,
+    /@media \(max-width:\s*959px\)[\s\S]*?\.repair-gallery-dots\s*\{[^}]*display:\s*flex;[^}]*gap:\s*8px;[^}]*padding-top:\s*12px;/,
+  );
+  assert.match(
+    repairDetailCss,
+    /\.repair-gallery-dot\s*\{[^}]*width:\s*9px;[^}]*height:\s*9px;[^}]*border:\s*1px solid #111;[^}]*border-radius:\s*999px;/,
+  );
+  assert.match(repairDetailCss, /\.repair-gallery-dot\.is-active\s*\{[^}]*background:\s*#111;/);
 });
