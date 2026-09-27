@@ -1,5 +1,5 @@
 import client from "./sanity/client.js?v=20260520-03";
-import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js?v=20260818-01";
+import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js?v=20260927-01";
 import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
 import { getFirstParagraph, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
 import { buildBreadcrumbList, setJsonLd, toAbsoluteUrl, truncateDescription, updatePageSeo } from "./utils/seo.js";

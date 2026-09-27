@@ -35,9 +35,6 @@ export function getProductTags(product) {
     }
   }
 
-  const categoryTag = normalizeShopTag(product?.category);
-  if (categoryTag) tags.add(categoryTag);
-
   return Array.from(tags);
 }
 

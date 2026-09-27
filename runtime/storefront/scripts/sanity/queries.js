@@ -14,7 +14,6 @@ export const ALL_PRODUCTS_QUERY = `
     discountRate,
     soldOut,
     slug,
-    category,
     shopTags,
     images[]{
       asset->{
@@ -49,7 +48,6 @@ export const PRODUCT_BY_SLUG_QUERY = `
     discountRate,
     soldOut,
     slug,
-    category,
     shopTags,
     images[]{
       asset->{

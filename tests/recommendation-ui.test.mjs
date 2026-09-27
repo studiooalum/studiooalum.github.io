@@ -41,7 +41,7 @@ const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}
 
 test("edition recommendations crop square images from the center", () => {
   assert.match(editionHtml, /edition\.css\?v=20260926-05/);
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-04/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-01/);
   assert.match(editionHtml, /storefront-actions-20260925-02\.css\?v=20260927-01/);
   assert.doesNotMatch(editionHtml, /editionKicker/);
   assert.match(editionHtml, />사이즈<\/span>/);
@@ -74,7 +74,7 @@ test("mobile navigation returns to content height with 13px labels", () => {
 });
 
 test("edition sidebar sticky stop uses media-relative image position", () => {
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260926-04/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-01/);
   assert.match(editionScript, /lastImage\.getBoundingClientRect\(\)\.top - mediaTop/);
   assert.doesNotMatch(editionScript, /lastImage\.offsetTop \+ stickyHeight/);
 });
@@ -129,7 +129,7 @@ test("cart keeps its desktop label, hides the mobile label, and uses the large 1
 
 test("product overview copy stays stacked in the first desktop column", () => {
   assert.match(productHtml, /product\.css\?v=20260926-03/);
-  assert.match(productHtml, /product\.js\?v=20260926-01/);
+  assert.match(productHtml, /product\.js\?v=20260927-01/);
   assert.match(productScript, /\$\{editions\.length\}개 제작 \$\{displayPrice\}원/);
   assert.match(productCss, /\.product-overview\s*\{[^}]*gap:\s*10px;/);
   assert.match(productCss, /@media \(min-width:\s*900px\)[\s\S]*?\.product-overview\s*\{[^}]*padding:\s*60px 0 32px;/);
