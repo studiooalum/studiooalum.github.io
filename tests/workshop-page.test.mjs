@@ -62,8 +62,8 @@ const workshopAdminHtml = await readFile(new URL("../workshop-admin.html", impor
 const typography = await readFile(new URL("../runtime/storefront/styles/typography-20260924.css", import.meta.url), "utf8");
 
 test("workshop listing follows the newsletter card ratio without image hover", () => {
-  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-01/);
-  assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-01/);
+  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-02/);
+  assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-02/);
   assert.match(workshopsCss, /\.workshops-card__poster\s*\{[^}]*aspect-ratio:\s*1\.6 \/ 1;/);
   assert.match(workshopsCss, /\.workshops-card__title\s*\{[^}]*font-size:\s*20px;[^}]*line-height:\s*1\.2;/);
   assert.match(workshopsCss, /\.workshops-card__meta-row\s*\{[^}]*justify-content:\s*flex-end;/);
@@ -72,6 +72,13 @@ test("workshop listing follows the newsletter card ratio without image hover", (
   assert.match(workshopsJs, /body\.append\(metaRow, title, meta\)/);
   assert.match(workshopsJs, /\? \["맞춤 문의"\][\s\S]*?\[workshop\.bookingConfig\?\.mode === "daily" \? "원데이클래스" : "오알룸 워크숍", getWorkshopDuration\(workshop\)\]/);
   assert.doesNotMatch(workshopsJs, /getWorkshopLocation|locationName/);
+  assert.match(workshopsHtml, /id="workshopsPrev"[^>]*>&lt;<\/button>/);
+  assert.match(workshopsHtml, /id="workshopsNext"[^>]*>&gt;<\/button>/);
+  assert.match(workshopsCss, /\.workshops-carousel-button\s*\{[^}]*border-radius:\s*50%;/);
+  assert.match(workshopsCss, /@media \(min-width:\s*800px\)[\s\S]*?\.workshops-grid\s*\{[^}]*grid-auto-columns:\s*calc\(\(100% - \(2 \* var\(--grid-gap\)\)\) \/ 3\);/);
+  assert.match(workshopsJs, /gridEl\.scrollBy\(\{ left:\s*-getCarouselStep\(\), behavior:\s*"smooth" \}\)/);
+  assert.match(workshopsJs, /gridEl\.scrollBy\(\{ left:\s*getCarouselStep\(\), behavior:\s*"smooth" \}\)/);
+  assert.match(workshopsJs, /Number\(right\.bookingConfig\?\.mode === "daily"\) - Number\(left\.bookingConfig\?\.mode === "daily"\)/);
 });
 test("storefront detail typography matches newsletter reading size without viewport font scaling", () => {
   assert.match(typography, /--type-body:\s*16px/);

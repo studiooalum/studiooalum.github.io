@@ -8,11 +8,37 @@ import {
 
 const gridEl = document.getElementById("workshopsGrid");
 const tagsEl = document.getElementById("workshopsTags");
+const prevButton = document.getElementById("workshopsPrev");
+const nextButton = document.getElementById("workshopsNext");
 const activeCategory = normalizeWorkshopCategory(new URLSearchParams(window.location.search).get("category")) || "all";
 let customWorkshop = {};
 
-if (!gridEl || !tagsEl) {
+if (!gridEl || !tagsEl || !prevButton || !nextButton) {
   throw new Error("Workshops DOM is missing required workshops layout elements.");
+}
+
+function getCarouselStep() {
+  const card = gridEl.querySelector(".workshops-card");
+  if (!card) return gridEl.clientWidth;
+  const gap = Number.parseFloat(getComputedStyle(gridEl).columnGap) || 0;
+  return card.getBoundingClientRect().width + gap;
+}
+
+function updateCarouselControls() {
+  const maxScroll = Math.max(0, gridEl.scrollWidth - gridEl.clientWidth);
+  prevButton.disabled = gridEl.scrollLeft <= 1;
+  nextButton.disabled = gridEl.scrollLeft >= maxScroll - 1;
+}
+
+function bindCarouselControls() {
+  prevButton.addEventListener("click", () => {
+    gridEl.scrollBy({ left: -getCarouselStep(), behavior: "smooth" });
+  });
+  nextButton.addEventListener("click", () => {
+    gridEl.scrollBy({ left: getCarouselStep(), behavior: "smooth" });
+  });
+  gridEl.addEventListener("scroll", updateCarouselControls, { passive: true });
+  window.addEventListener("resize", updateCarouselControls);
 }
 
 function getWorkshopCategory(workshop) {
@@ -130,7 +156,7 @@ function renderWorkshops(workshops, { loadError = false } = {}) {
     ? workshops.map((workshop) => normalizeWorkshop(workshop))
     : [];
   const filtered = activeCategory === "all"
-    ? items
+    ? [...items].sort((left, right) => Number(right.bookingConfig?.mode === "daily") - Number(left.bookingConfig?.mode === "daily"))
     : items.filter((workshop) => getWorkshopCategory(workshop) === activeCategory);
 
   gridEl.innerHTML = "";
@@ -158,6 +184,7 @@ function renderWorkshops(workshops, { loadError = false } = {}) {
   card.addEventListener("click", (event) => { event.preventDefault(); openInquiry(); });
   card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); openInquiry(); } });
   gridEl.appendChild(card);
+  requestAnimationFrame(updateCarouselControls);
 }
 
 function bindInquiryForm() {
@@ -195,6 +222,7 @@ function bindInquiryForm() {
 
 async function init() {
   renderTags();
+  bindCarouselControls();
   bindInquiryForm();
 
   try {
