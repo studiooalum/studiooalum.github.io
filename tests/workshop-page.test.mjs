@@ -63,6 +63,7 @@ const workshopAdminHtml = await readFile(new URL("../workshop-admin.html", impor
 const typography = await readFile(new URL("../runtime/storefront/styles/typography-20260924.css", import.meta.url), "utf8");
 const workshopSchema = await readFile(new URL("../cloudflare/d1/schema.sql", import.meta.url), "utf8");
 const workshopTypeMigration = await readFile(new URL("../cloudflare/d1/migrations/0040_workshop_type_unification.sql", import.meta.url), "utf8");
+const workshopContentJs = await readFile(new URL("../cloudflare/lib/workshop-content.js", import.meta.url), "utf8");
 
 test("workshop listing follows the newsletter card ratio without image hover", () => {
   assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-08/);
@@ -221,6 +222,7 @@ test("workshop admin keeps material fields with detail content and limits advanc
   assert.match(workshopAdminHtml, /<option value="event">워크숍<\/option>/);
   assert.doesNotMatch(workshopAdminHtml, /name="category"|name="categoryPreset"|>분류</);
   assert.doesNotMatch(workshopSchema.match(/CREATE TABLE IF NOT EXISTS workshops \([\s\S]*?\);/)?.[0] || "", /\bcategory\b/);
+  assert.match(workshopContentJs, /category:\s*_legacyCategory[\s\S]*?workshopCategory:\s*_legacyWorkshopCategory/);
   assert.match(workshopTypeMigration, /json_set\([\s\S]*?'\$\.workshopType'/);
   assert.match(workshopTypeMigration, /ALTER TABLE workshops DROP COLUMN category/);
 });

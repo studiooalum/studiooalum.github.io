@@ -173,6 +173,12 @@ function formatWorkshopRow(row) {
   };
 }
 
+function normalizePublicWorkshopSnapshot(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const { category: _legacyCategory, workshopCategory: _legacyWorkshopCategory, ...workshop } = value;
+  return normalizeWorkshop(workshop);
+}
+
 export async function readStoredWorkshopContentBySlug(env, slug, { includeDraft = false } = {}) {
   const database = getDb(env);
   if (!database) return null;
@@ -212,12 +218,14 @@ export async function readPublicWorkshopSnapshotBySlug(env, slug) {
 
   const snapshot = await readPublicContentSnapshot(env, workshopSnapshotKey(normalizedSlug));
   if (snapshot && typeof snapshot === "object" && snapshot.slug === normalizedSlug) {
-    return snapshot;
+    const normalizedSnapshot = normalizePublicWorkshopSnapshot(snapshot);
+    await writePublicContentSnapshot(env, workshopSnapshotKey(normalizedSlug), normalizedSnapshot).catch(() => false);
+    return normalizedSnapshot;
   }
 
   const catalog = await readPublicContentSnapshot(env, workshopCatalogSnapshotKey());
   const catalogWorkshop = Array.isArray(catalog)
-    ? catalog.find((item) => item?.slug === normalizedSlug) || null
+    ? normalizePublicWorkshopSnapshot(catalog.find((item) => item?.slug === normalizedSlug) || null)
     : null;
   if (catalogWorkshop) {
     await writePublicContentSnapshot(env, workshopSnapshotKey(normalizedSlug), catalogWorkshop).catch(() => false);
@@ -233,7 +241,11 @@ export async function readPublicWorkshopSnapshotBySlug(env, slug) {
 
 export async function readPublicWorkshopSnapshotCatalog(env) {
   const snapshot = await readPublicContentSnapshot(env, workshopCatalogSnapshotKey());
-  if (Array.isArray(snapshot)) return snapshot;
+  if (Array.isArray(snapshot)) {
+    const normalizedSnapshot = snapshot.map(normalizePublicWorkshopSnapshot).filter(Boolean);
+    await writePublicContentSnapshot(env, workshopCatalogSnapshotKey(), normalizedSnapshot).catch(() => false);
+    return normalizedSnapshot;
+  }
 
   if (!getDb(env)) return [];
 
@@ -246,7 +258,7 @@ export async function readPublicWorkshopSnapshotCatalog(env) {
 
 export async function writePublicWorkshopSnapshot(env, workshop) {
   if (!workshop?.slug) return false;
-  await writePublicContentSnapshot(env, workshopSnapshotKey(workshop.slug), workshop);
+  await writePublicContentSnapshot(env, workshopSnapshotKey(workshop.slug), normalizePublicWorkshopSnapshot(workshop));
   return true;
 }
 
@@ -254,9 +266,9 @@ export async function syncPublicWorkshopSnapshots(env, workshop) {
   const catalog = await readPublicWorkshopCatalog(env);
   if (!Array.isArray(catalog)) return false;
 
-  const catalogSnapshot = workshop?.slug
+  const catalogSnapshot = (workshop?.slug
     ? catalog.map((item) => item.slug === workshop.slug ? workshop : item)
-    : catalog;
+    : catalog).map(normalizePublicWorkshopSnapshot).filter(Boolean);
   await writePublicContentSnapshot(env, workshopCatalogSnapshotKey(), catalogSnapshot);
 
   if (workshop?.status === "published") {
