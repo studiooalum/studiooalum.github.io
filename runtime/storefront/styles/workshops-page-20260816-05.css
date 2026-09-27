@@ -400,6 +400,10 @@
 }
 
 @media (min-width: 800px) {
+  .workshops-tier.is-empty {
+    display: none;
+  }
+
   .workshops-content {
     grid-column: 1 / span 2;
   }

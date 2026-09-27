@@ -168,6 +168,8 @@ function renderWorkshops(workshops, { loadError = false } = {}) {
   standardCountEl.textContent = `${standardItems.length}개의 워크숍`;
   oneDayCountEl.textContent = `${oneDayItems.length}개의 원데이 클래스`;
   customCountEl.textContent = "1개의 맞춤 워크숍";
+  standardGridEl.closest(".workshops-tier")?.classList.toggle("is-empty", standardItems.length === 0);
+  oneDayGridEl.closest(".workshops-tier")?.classList.toggle("is-empty", oneDayItems.length === 0);
 
   for (const workshop of standardItems) standardGridEl.appendChild(createWorkshopCard(workshop));
   for (const workshop of oneDayItems) oneDayGridEl.appendChild(createWorkshopCard(workshop));
