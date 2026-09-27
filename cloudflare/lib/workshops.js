@@ -146,6 +146,12 @@ function getReservationStatusLabel(status) {
   return normalized || "확정";
 }
 
+function getWorkshopTypeLabel(workshop) {
+  return getWorkshopBookingConfig(workshop).workshopType === WORKSHOP_TYPES.DAILY
+    ? "원데이클래스"
+    : "워크숍";
+}
+
 function addHoursIso(hours) {
   const date = new Date();
   date.setHours(date.getHours() + Math.max(1, Number(hours) || 1));
@@ -1060,7 +1066,7 @@ function buildReservationValues({
     phone: applicant.phone,
     workshopSlug: workshop.slug,
     workshopTitle: workshop.title || "Workshop",
-    workshopCategory: workshop.category || "",
+    workshopCategory: getWorkshopTypeLabel(workshop),
     workshopLocation: getReservationLocation(workshop),
     slotKey: slot.key,
     slotLabel: cleanText(slot.label || `${slot.date} ${slot.startTime}`, 160),
@@ -1072,7 +1078,7 @@ function buildReservationValues({
     note: applicant.note,
     workshopSnapshot: encodeJson({
       title: workshop.title || "Workshop",
-      category: workshop.category || "",
+      workshopType: getWorkshopBookingConfig(workshop).workshopType,
       locationName: workshop.locationName || "",
       locationAddress: workshop.locationAddress || "",
       bookingType,

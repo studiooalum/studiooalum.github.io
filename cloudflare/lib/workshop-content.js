@@ -133,7 +133,6 @@ function formatWorkshopRow(row) {
     id: row.id,
     slug: row.slug,
     title: row.title,
-    category: row.category,
     summary: row.summary,
     description: row.description,
     durationLabel: row.duration_label,
@@ -314,7 +313,6 @@ export async function upsertWorkshopContent(env, input) {
         id,
         slug,
         title,
-        category,
         summary,
         description,
         duration_label,
@@ -343,10 +341,9 @@ export async function upsertWorkshopContent(env, input) {
         archived_at,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(slug) DO UPDATE SET
         title = excluded.title,
-        category = excluded.category,
         summary = excluded.summary,
         description = excluded.description,
         duration_label = excluded.duration_label,
@@ -379,7 +376,6 @@ export async function upsertWorkshopContent(env, input) {
       id,
       slug,
       title,
-      cleanText(input.category, 80),
       cleanText(input.summary, 400),
       cleanText(input.description, 12000),
       cleanText(input.durationLabel, 80),

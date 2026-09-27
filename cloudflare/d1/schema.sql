@@ -303,7 +303,6 @@ CREATE TABLE IF NOT EXISTS workshops (
   id TEXT PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
-  category TEXT NOT NULL DEFAULT '',
   summary TEXT NOT NULL DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
   duration_label TEXT NOT NULL DEFAULT '',

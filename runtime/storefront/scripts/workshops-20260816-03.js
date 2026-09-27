@@ -1,57 +1,28 @@
 import { imageUrl } from "./sanity/image-20260816-02.js";
 import {
-  WORKSHOP_CATEGORIES,
   getWorkshopPoster as resolveWorkshopPoster,
   normalizeWorkshop,
-  normalizeWorkshopCategory,
 } from "./utils/workshops.js";
 
 const tagsEl = document.getElementById("workshopsTags");
-const standardGridEl = document.getElementById("workshopsStandardGrid");
-const oneDayGridEl = document.getElementById("workshopsOneDayGrid");
-const customGridEl = document.getElementById("workshopsCustomGrid");
-const standardCountEl = document.getElementById("workshopsStandardCount");
-const oneDayCountEl = document.getElementById("workshopsOneDayCount");
-const customCountEl = document.getElementById("workshopsCustomCount");
-const activeCategory = normalizeWorkshopCategory(new URLSearchParams(window.location.search).get("category")) || "all";
-let customWorkshop = {};
+const gridEl = document.getElementById("workshopsGrid");
+const activeType = String(new URLSearchParams(window.location.search).get("type") || "").trim();
+const WORKSHOP_TYPE_FILTERS = [
+  { value: "daily", label: "원데이클래스" },
+  { value: "event", label: "워크숍" },
+  { value: "custom", label: "맞춤 워크숍" },
+];
 
-if (!tagsEl || !standardGridEl || !oneDayGridEl || !customGridEl || !standardCountEl || !oneDayCountEl || !customCountEl) {
+if (!tagsEl || !gridEl) {
   throw new Error("Workshops DOM is missing required workshops layout elements.");
 }
 
-function getCarouselStep(gridEl) {
-  const card = gridEl.querySelector(".workshops-card");
-  if (!card) return gridEl.clientWidth;
-  const gap = Number.parseFloat(getComputedStyle(gridEl).columnGap) || 0;
-  return card.getBoundingClientRect().width + gap;
+function getWorkshopType(workshop) {
+  return workshop?.bookingConfig?.workshopType === "daily" ? "daily" : "event";
 }
 
-function updateCarouselControls(gridEl) {
-  const prevButton = document.querySelector(`[data-carousel-prev="${gridEl.id}"]`);
-  const nextButton = document.querySelector(`[data-carousel-next="${gridEl.id}"]`);
-  if (!prevButton || !nextButton) return;
-  const maxScroll = Math.max(0, gridEl.scrollWidth - gridEl.clientWidth);
-  prevButton.disabled = gridEl.scrollLeft <= 1;
-  nextButton.disabled = gridEl.scrollLeft >= maxScroll - 1;
-}
-
-function bindCarouselControls(gridEl) {
-  const prevButton = document.querySelector(`[data-carousel-prev="${gridEl.id}"]`);
-  const nextButton = document.querySelector(`[data-carousel-next="${gridEl.id}"]`);
-  if (!prevButton || !nextButton) return;
-  prevButton.addEventListener("click", () => {
-    gridEl.scrollBy({ left: -getCarouselStep(gridEl), behavior: "smooth" });
-  });
-  nextButton.addEventListener("click", () => {
-    gridEl.scrollBy({ left: getCarouselStep(gridEl), behavior: "smooth" });
-  });
-  gridEl.addEventListener("scroll", () => updateCarouselControls(gridEl), { passive: true });
-  window.addEventListener("resize", () => updateCarouselControls(gridEl));
-}
-
-function getWorkshopCategory(workshop) {
-  return normalizeWorkshopCategory(workshop?.category || workshop?.workshopCategory);
+function getWorkshopTypeLabel(workshop) {
+  return getWorkshopType(workshop) === "daily" ? "원데이클래스" : "워크숍";
 }
 
 function getWorkshopPoster(workshop) {
@@ -70,21 +41,20 @@ function getWorkshopHref(workshop) {
   return `./${rawHref.replace(/^\.\//, "")}`;
 }
 
-function getWorkshopsPath(category) {
-  return category && category !== "all"
-    ? `./workshops.html?category=${encodeURIComponent(category)}`
-    : "./workshops.html";
-}
-
 function renderTags() {
   tagsEl.innerHTML = "";
 
-  for (const tag of WORKSHOP_CATEGORIES) {
-    const link = document.createElement("a");
-    link.className = tag.value === activeCategory ? "workshops-tag is-active" : "workshops-tag";
-    link.href = getWorkshopsPath(tag.value);
-    link.textContent = tag.label;
-    tagsEl.appendChild(link);
+  for (const tag of WORKSHOP_TYPE_FILTERS) {
+    const control = document.createElement(tag.value === "custom" ? "button" : "a");
+    control.className = tag.value === activeType ? "workshops-tag is-active" : "workshops-tag";
+    control.textContent = tag.label;
+    if (tag.value === "custom") {
+      control.type = "button";
+      control.addEventListener("click", () => document.getElementById("customWorkshopDialog")?.showModal());
+    } else {
+      control.href = `./workshops.html?type=${encodeURIComponent(tag.value)}`;
+    }
+    tagsEl.appendChild(control);
   }
 }
 
@@ -133,59 +103,32 @@ function createWorkshopCard(workshop) {
   const titleRow = document.createElement("div");
   titleRow.className = "workshops-card__title-row";
 
-  const category = document.createElement("span");
-  category.className = "workshops-card__category";
-  category.textContent = workshop.custom ? "custom" : (getWorkshopCategory(workshop) || "workshop");
+  const type = document.createElement("span");
+  type.className = "workshops-card__type";
+  type.textContent = getWorkshopTypeLabel(workshop);
   const title = document.createElement("h2");
   title.className = "workshops-card__title";
   title.textContent = workshop?.title || "Untitled workshop";
-  titleRow.append(title, category);
+  titleRow.append(title, type);
 
   const meta = document.createElement("p");
   meta.className = "workshops-card__copy";
-  meta.textContent = workshop.custom
-    ? "원하는 내용과 일정에 맞춰 워크숍을 구성합니다."
-    : String(workshop?.summary || workshop?.description || "").trim();
+  meta.textContent = String(workshop?.summary || workshop?.description || "").trim();
 
   body.append(titleRow, meta);
   card.append(body);
   return card;
 }
 
-function renderWorkshops(workshops, { loadError = false } = {}) {
+function renderWorkshops(workshops) {
   const items = Array.isArray(workshops)
     ? workshops.map((workshop) => normalizeWorkshop(workshop))
     : [];
-  const filtered = activeCategory === "all"
-    ? items
-    : items.filter((workshop) => getWorkshopCategory(workshop) === activeCategory);
-  const standardItems = filtered.filter((workshop) => workshop.bookingConfig?.mode !== "daily");
-  const oneDayItems = filtered.filter((workshop) => workshop.bookingConfig?.mode === "daily");
+  const filtered = ["daily", "event"].includes(activeType)
+    ? items.filter((workshop) => getWorkshopType(workshop) === activeType)
+    : items;
 
-  standardGridEl.innerHTML = "";
-  oneDayGridEl.innerHTML = "";
-  customGridEl.innerHTML = "";
-  standardCountEl.textContent = `${standardItems.length}개의 워크숍`;
-  oneDayCountEl.textContent = `${oneDayItems.length}개의 원데이 클래스`;
-  customCountEl.textContent = "1개의 맞춤 워크숍";
-  standardGridEl.closest(".workshops-tier")?.classList.toggle("is-empty", standardItems.length === 0);
-  oneDayGridEl.closest(".workshops-tier")?.classList.toggle("is-empty", oneDayItems.length === 0);
-
-  for (const workshop of standardItems) standardGridEl.appendChild(createWorkshopCard(workshop));
-  for (const workshop of oneDayItems) oneDayGridEl.appendChild(createWorkshopCard(workshop));
-
-  const card = createWorkshopCard({ title: "맞춤 워크숍", custom: true, durationLabel: "",
-    poster: customWorkshop.imageUrl ? { asset: { url: customWorkshop.imageUrl } } : null });
-  card.setAttribute("href", "#custom-workshop");
-  card.setAttribute("role", "button");
-  card.tabIndex = 0;
-  const openInquiry = () => document.getElementById("customWorkshopDialog").showModal();
-  card.addEventListener("click", (event) => { event.preventDefault(); openInquiry(); });
-  card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); openInquiry(); } });
-  customGridEl.appendChild(card);
-  requestAnimationFrame(() => {
-    [standardGridEl, oneDayGridEl, customGridEl].forEach(updateCarouselControls);
-  });
+  gridEl.replaceChildren(...filtered.map(createWorkshopCard));
 }
 
 function bindInquiryForm() {
@@ -223,13 +166,9 @@ function bindInquiryForm() {
 
 async function init() {
   renderTags();
-  [standardGridEl, oneDayGridEl, customGridEl].forEach(bindCarouselControls);
   bindInquiryForm();
 
   try {
-    const customResponse = await fetch("./api/workshops/inquiries");
-    const customPayload = await customResponse.json();
-    customWorkshop = customPayload.customWorkshop || {};
     const response = await fetch("./api/workshops/catalog", {
       headers: {
         Accept: "application/json",
@@ -243,7 +182,7 @@ async function init() {
     renderWorkshops(payload.workshops);
   } catch (error) {
     console.error("Failed to fetch workshops", error);
-    renderWorkshops([], { loadError: true });
+    renderWorkshops([]);
   }
 }
 

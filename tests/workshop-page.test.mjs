@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { getWorkshopBookingConfig, getWorkshopScheduleSlots } from "../runtime/storefront/scripts/utils/workshops.js";
 
@@ -60,34 +61,31 @@ const workshopJs = await readFile(
 );
 const workshopAdminHtml = await readFile(new URL("../workshop-admin.html", import.meta.url), "utf8");
 const typography = await readFile(new URL("../runtime/storefront/styles/typography-20260924.css", import.meta.url), "utf8");
+const workshopSchema = await readFile(new URL("../cloudflare/d1/schema.sql", import.meta.url), "utf8");
+const workshopTypeMigration = await readFile(new URL("../cloudflare/d1/migrations/0040_workshop_type_unification.sql", import.meta.url), "utf8");
 
 test("workshop listing follows the newsletter card ratio without image hover", () => {
-  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-07/);
-  assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-06/);
+  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-08/);
+  assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-07/);
   assert.match(workshopsCss, /\.workshops-card__poster\s*\{[^}]*aspect-ratio:\s*1\.6 \/ 1;/);
   assert.match(workshopsCss, /\.workshops-card__title\s*\{[^}]*font-size:\s*20px;[^}]*line-height:\s*1\.2;/);
   assert.match(workshopsCss, /\.workshops-card__title-row\s*\{[^}]*align-items:\s*flex-start;[^}]*justify-content:\s*space-between;/);
-  assert.match(workshopsCss, /\.workshops-card__category\s*\{[^}]*text-decoration:\s*underline;/);
+  assert.match(workshopsCss, /\.workshops-card__type\s*\{[^}]*text-decoration:\s*underline;/);
   assert.match(workshopsCss, /\.workshops-card:is\(:hover, :focus-visible, \.is-pointer-hover\) \.workshops-card__poster img\s*\{[^}]*transform:\s*none;/);
-  assert.match(workshopsJs, /titleRow\.append\(title, category\)/);
+  assert.match(workshopsJs, /titleRow\.append\(title, type\)/);
   assert.match(workshopsJs, /body\.append\(titleRow, meta\)/);
   assert.match(workshopsJs, /String\(workshop\?\.summary \|\| workshop\?\.description \|\| ""\)\.trim\(\)/);
   assert.doesNotMatch(workshopsJs, /getWorkshopLocation|locationName/);
-  assert.match(workshopsHtml, /id="workshopsStandardCount">0개의 워크숍/);
-  assert.match(workshopsHtml, /id="workshopsOneDayCount">0개의 원데이 클래스/);
-  assert.match(workshopsHtml, /id="workshopsCustomCount">1개의 맞춤 워크숍/);
-  assert.match(workshopsHtml, /data-carousel-prev="workshopsStandardGrid"[^>]*>&lt;<\/button>/);
-  assert.match(workshopsHtml, /data-carousel-next="workshopsStandardGrid"[^>]*>&gt;<\/button>/);
-  assert.match(workshopsCss, /\.workshops-carousel-button\s*\{[^}]*border-radius:\s*50%;/);
-  assert.match(workshopsCss, /@media \(min-width:\s*800px\)[\s\S]*?\.workshops-content\s*\{[^}]*grid-column:\s*1 \/ span 2;[\s\S]*?\.workshops-grid\s*\{[^}]*grid-auto-columns:\s*calc\(\(100% - var\(--grid-gap\)\) \/ 2\);/);
-  assert.match(workshopsJs, /gridEl\.scrollBy\(\{ left:\s*-getCarouselStep\(gridEl\), behavior:\s*"smooth" \}\)/);
-  assert.match(workshopsJs, /gridEl\.scrollBy\(\{ left:\s*getCarouselStep\(gridEl\), behavior:\s*"smooth" \}\)/);
-  assert.match(workshopsJs, /standardItems\.length\}개의 워크숍/);
-  assert.match(workshopsJs, /oneDayItems\.length\}개의 원데이 클래스/);
-  assert.doesNotMatch(workshopsJs, /현재 진행 중인 워크숍이 없습니다|선택한 분류의 워크숍이 없습니다/);
-  assert.match(workshopsJs, /classList\.toggle\("is-empty", standardItems\.length === 0\)/);
-  assert.match(workshopsJs, /classList\.toggle\("is-empty", oneDayItems\.length === 0\)/);
-  assert.match(workshopsCss, /\.workshops-tier\.is-empty\s*\{[^}]*display:\s*none;/);
+  assert.match(workshopsHtml, /id="workshopsGrid"/);
+  assert.doesNotMatch(workshopsHtml, /개의 워크숍|개의 원데이 클래스|개의 맞춤 워크숍|workshops-carousel|data-carousel/);
+  assert.doesNotMatch(workshopsCss, /workshops-carousel|grid-auto-flow|scroll-snap-type/);
+  assert.match(workshopsCss, /@media \(min-width:\s*800px\)[\s\S]*?\.workshops-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/);
+  assert.match(workshopsJs, /\{ value:\s*"daily", label:\s*"원데이클래스" \}/);
+  assert.match(workshopsJs, /\{ value:\s*"event", label:\s*"워크숍" \}/);
+  assert.match(workshopsJs, /\{ value:\s*"custom", label:\s*"맞춤 워크숍" \}/);
+  assert.match(workshopsJs, /tag\.value === "custom" \? "button" : "a"/);
+  assert.match(workshopsJs, /getWorkshopTypeLabel\(workshop\)/);
+  assert.doesNotMatch(workshopsJs, /normalizeWorkshopCategory|WORKSHOP_CATEGORIES|standardItems|oneDayItems|customGridEl/);
   assert.match(workshopsCss, /@media \(min-width:\s*800px\)[\s\S]*?\.workshops-page \.workshops-card__title\s*\{[^}]*font-size:\s*20px;[^}]*line-height:\s*1\.2;/);
 });
 test("storefront detail typography matches newsletter reading size without viewport font scaling", () => {
@@ -218,4 +216,35 @@ test("workshop admin keeps material fields with detail content and limits advanc
   assert.match(advancedSection, /name="slug"/);
   assert.match(advancedSection, /name="sortOrder"/);
   assert.doesNotMatch(advancedSection, /name="materials"|name="thingsToBring"|name="locationDetail"/);
+  assert.match(workshopAdminHtml, /<span>워크숍 유형<\/span>/);
+  assert.match(workshopAdminHtml, /<option value="daily">원데이클래스<\/option>/);
+  assert.match(workshopAdminHtml, /<option value="event">워크숍<\/option>/);
+  assert.doesNotMatch(workshopAdminHtml, /name="category"|name="categoryPreset"|>분류</);
+  assert.doesNotMatch(workshopSchema.match(/CREATE TABLE IF NOT EXISTS workshops \([\s\S]*?\);/)?.[0] || "", /\bcategory\b/);
+  assert.match(workshopTypeMigration, /json_set\([\s\S]*?'\$\.workshopType'/);
+  assert.match(workshopTypeMigration, /ALTER TABLE workshops DROP COLUMN category/);
+});
+
+test("workshop type migration preserves daily workshops, defaults others, and removes category", () => {
+  const db = new DatabaseSync(":memory:");
+  db.exec(`
+    CREATE TABLE workshops (
+      id TEXT PRIMARY KEY,
+      category TEXT NOT NULL DEFAULT '',
+      booking_config_json TEXT NOT NULL DEFAULT '{}'
+    );
+    INSERT INTO workshops (id, category, booking_config_json) VALUES
+      ('daily', 'legacy', '{"mode":"daily"}'),
+      ('event', 'legacy', '{"workshopType":"event"}'),
+      ('invalid', 'legacy', 'not-json');
+  `);
+
+  db.exec(workshopTypeMigration);
+
+  const columns = db.prepare("PRAGMA table_info(workshops)").all().map((column) => column.name);
+  assert.equal(columns.includes("category"), false);
+  const rows = db.prepare("SELECT id, booking_config_json FROM workshops ORDER BY id").all();
+  const types = Object.fromEntries(rows.map((row) => [row.id, JSON.parse(row.booking_config_json).workshopType]));
+  assert.deepEqual(types, { daily: "daily", event: "event", invalid: "event" });
+  db.close();
 });

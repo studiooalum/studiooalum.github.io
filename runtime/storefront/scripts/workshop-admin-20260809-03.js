@@ -47,8 +47,6 @@ const dom = {
   publishButton: document.querySelector(".js-workshop-admin-publish-btn"),
   archiveButton: document.querySelector(".js-workshop-admin-archive-btn"),
   deleteContentButton: document.querySelector(".js-workshop-admin-delete-content-btn"),
-  categorySelect: document.querySelector(".js-workshop-admin-category-select"),
-  categoryCustom: document.querySelector(".js-workshop-admin-category-custom"),
   durationSelect: document.querySelector(".js-workshop-admin-duration-select"),
   difficultySelect: document.querySelector(".js-workshop-admin-difficulty-select"),
   bookingModeSelect: document.querySelector(".js-workshop-admin-booking-mode"),
@@ -183,7 +181,6 @@ function emptyWorkshopDraft(seed = {}) {
     id: "",
     slug: seed.slug || "",
     title: seed.title || "",
-    category: seed.category || "",
     summary: seed.summary || "",
     description: seed.description || "",
     durationLabel: seed.durationLabel || "1시간",
@@ -210,36 +207,6 @@ function emptyWorkshopDraft(seed = {}) {
     sourceMode: seed.sourceMode || "d1-r2-ready",
     publishedAt: seed.publishedAt || "",
   };
-}
-
-function getCategoryValue() {
-  const preset = String(dom.categorySelect?.value || "").trim();
-  if (preset && preset !== "custom") {
-    return preset;
-  }
-  return String(dom.categoryCustom?.value || "").trim();
-}
-
-function setCategoryValue(value) {
-  const normalized = String(value || "").trim();
-  const options = Array.from(dom.categorySelect?.options || []).map((option) => option.value);
-  const matched = !normalized ? "" : (options.includes(normalized) ? normalized : "custom");
-
-  if (dom.categorySelect) {
-    dom.categorySelect.value = matched;
-  }
-  if (dom.categoryCustom) {
-    dom.categoryCustom.hidden = matched !== "custom";
-    dom.categoryCustom.value = matched === "custom" ? normalized : "";
-  }
-}
-
-function syncCategoryField() {
-  if (!dom.categorySelect || !dom.categoryCustom) return;
-  dom.categoryCustom.hidden = dom.categorySelect.value !== "custom";
-  if (dom.categorySelect.value !== "custom") {
-    dom.categoryCustom.value = "";
-  }
 }
 
 function ensureSelectOption(select, value) {
@@ -915,8 +882,6 @@ function resetContentForm(seed = {}) {
   dom.contentForm.elements.paymentDeadlineHours.value = String(bookingConfig.paymentDeadlineHours);
   applyBookingModeUi(bookingConfig.workshopType);
 
-  setCategoryValue(workshop.category);
-
   ensureSelectOption(dom.durationSelect, workshop.durationLabel);
   dom.durationSelect.value = workshop.durationLabel || "1시간";
 
@@ -1053,7 +1018,6 @@ function collectWorkshopPayload(statusOverride) {
     id: String(form.elements.id.value || "").trim(),
     slug,
     title,
-    category: getCategoryValue(),
     sortOrder: Number(form.elements.sortOrder.value || 0),
     durationLabel: String(dom.durationSelect?.value || "1시간").trim(),
     levelLabel: difficulty,
@@ -1705,8 +1669,6 @@ function attachEvents() {
     renderContentList();
     resetContentForm();
   });
-
-  dom.categorySelect?.addEventListener("change", syncCategoryField);
 
   dom.bookingModeSelect?.addEventListener("change", () => {
     const currentSlots = collectSlotItems();

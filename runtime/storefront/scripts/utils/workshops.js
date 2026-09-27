@@ -8,14 +8,6 @@ export const WORKSHOP_TYPES = Object.freeze({
   ONE_DAY_FIXED: "event",
 });
 
-export const WORKSHOP_CATEGORIES = [
-  { value: "all", label: "all" },
-  { value: "beginning", label: "beginning" },
-  { value: "repair", label: "repair" },
-  { value: "making", label: "making" },
-  { value: "for kids", label: "for kid" },
-];
-
 function padNumber(value) {
   return String(value).padStart(2, "0");
 }
@@ -197,28 +189,6 @@ function createUpcomingSlots(slug, {
   return slots;
 }
 
-export function normalizeWorkshopCategory(value) {
-  const raw = String(value || "").trim().toLowerCase().replace(/[-_]+/g, " ");
-  if (!raw) return "";
-
-  const aliases = {
-    beginner: "beginning",
-    beginners: "beginning",
-    beginning: "beginning",
-    repair: "repair",
-    repairing: "repair",
-    making: "making",
-    maker: "making",
-    makers: "making",
-    kids: "for kids",
-    kid: "for kids",
-    children: "for kids",
-    "for kids": "for kids",
-  };
-
-  return aliases[raw] || raw;
-}
-
 export function slugifyWorkshopTitle(value) {
   return String(value || "")
     .trim()
@@ -334,12 +304,9 @@ export function getWorkshopScheduleSlots(workshop) {
 }
 
 export function normalizeWorkshop(workshop = {}) {
-  const category = normalizeWorkshopCategory(workshop?.category || workshop?.workshopCategory) || "beginning";
-
   return {
     ...workshop,
     slug: getWorkshopSlug(workshop),
-    category,
     summary: getWorkshopShortDescription(workshop),
     description: getWorkshopDescription(workshop),
     durationLabel: getWorkshopDuration(workshop),

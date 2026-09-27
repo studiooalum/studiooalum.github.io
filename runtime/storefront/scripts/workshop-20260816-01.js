@@ -14,7 +14,6 @@ const dom = {
   sidebar: document.getElementById("workshopSidebar"),
   back: document.getElementById("workshopBack"),
   poster: document.getElementById("workshopPoster"),
-  kicker: document.getElementById("workshopKicker"),
   title: document.getElementById("workshopTitle"),
   duration: document.getElementById("workshopDuration"),
   level: document.getElementById("workshopLevel"),
@@ -745,13 +744,7 @@ function renderWorkshopDetails(workshop) {
   });
 
   if (dom.back) {
-    dom.back.href = workshop.category ? `./workshops?category=${encodeURIComponent(workshop.category)}` : "./workshops";
-  }
-
-  if (dom.kicker) {
-    const category = String(workshop.category || "").trim();
-    dom.kicker.textContent = category;
-    dom.kicker.hidden = !category;
+    dom.back.href = "./workshops";
   }
 
   if (dom.title) {
