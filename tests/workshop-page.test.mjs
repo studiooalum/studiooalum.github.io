@@ -62,8 +62,8 @@ const workshopAdminHtml = await readFile(new URL("../workshop-admin.html", impor
 const typography = await readFile(new URL("../runtime/storefront/styles/typography-20260924.css", import.meta.url), "utf8");
 
 test("workshop listing follows the newsletter card ratio without image hover", () => {
-  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-05/);
-  assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-05/);
+  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-06/);
+  assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-06/);
   assert.match(workshopsCss, /\.workshops-card__poster\s*\{[^}]*aspect-ratio:\s*1\.6 \/ 1;/);
   assert.match(workshopsCss, /\.workshops-card__title\s*\{[^}]*font-size:\s*20px;[^}]*line-height:\s*1\.2;/);
   assert.match(workshopsCss, /\.workshops-card__title-row\s*\{[^}]*align-items:\s*flex-start;[^}]*justify-content:\s*space-between;/);
@@ -88,6 +88,7 @@ test("workshop listing follows the newsletter card ratio without image hover", (
   assert.match(workshopsJs, /classList\.toggle\("is-empty", standardItems\.length === 0\)/);
   assert.match(workshopsJs, /classList\.toggle\("is-empty", oneDayItems\.length === 0\)/);
   assert.match(workshopsCss, /@media \(min-width:\s*800px\)[\s\S]*?\.workshops-tier\.is-empty\s*\{[^}]*display:\s*none;/);
+  assert.match(workshopsCss, /@media \(min-width:\s*800px\)[\s\S]*?\.workshops-page \.workshops-card__title\s*\{[^}]*font-size:\s*20px;[^}]*line-height:\s*1\.2;/);
 });
 test("storefront detail typography matches newsletter reading size without viewport font scaling", () => {
   assert.match(typography, /--type-body:\s*16px/);

@@ -404,6 +404,11 @@
     display: none;
   }
 
+  .workshops-page .workshops-card__title {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
   .workshops-content {
     grid-column: 1 / span 2;
   }
