@@ -348,6 +348,36 @@
   line-height: inherit;
 }
 
+.signup-page .account-panel--signup .account-actions .account-btn,
+.signup-page .account-panel--signup .account-panel-actions--auth > button.account-btn {
+  width: 50%;
+  min-width: 0;
+  background: #111;
+  color: #fff;
+}
+
+.signup-page .account-panel--signup .account-panel-actions--auth {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.signup-page .account-panel--signup .account-btn--signup {
+  display: inline;
+  width: fit-content;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111;
+  line-height: 1.55;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
 .account-auth-shell .account-btn {
   height: 42px;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
