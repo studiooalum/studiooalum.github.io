@@ -29,6 +29,15 @@ test("one-day calendar exposes valid administrator time slots and stable keys", 
 });
 
 const workshopHtml = await readFile(new URL("../workshop.html", import.meta.url), "utf8");
+const workshopsHtml = await readFile(new URL("../workshops.html", import.meta.url), "utf8");
+const workshopsCss = await readFile(
+  new URL("../runtime/storefront/styles/workshops-page-20260816-05.css", import.meta.url),
+  "utf8",
+);
+const workshopsJs = await readFile(
+  new URL("../runtime/storefront/scripts/workshops-20260816-03.js", import.meta.url),
+  "utf8",
+);
 const workshopCss = await readFile(
   new URL("../runtime/storefront/styles/workshop-20260918-01.css", import.meta.url),
   "utf8",
@@ -51,6 +60,19 @@ const workshopJs = await readFile(
 );
 const workshopAdminHtml = await readFile(new URL("../workshop-admin.html", import.meta.url), "utf8");
 const typography = await readFile(new URL("../runtime/storefront/styles/typography-20260924.css", import.meta.url), "utf8");
+
+test("workshop listing follows the newsletter card ratio without image hover", () => {
+  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-01/);
+  assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-01/);
+  assert.match(workshopsCss, /\.workshops-card__poster\s*\{[^}]*aspect-ratio:\s*1\.6 \/ 1;/);
+  assert.match(workshopsCss, /\.workshops-card__title\s*\{[^}]*font-size:\s*20px;[^}]*line-height:\s*1\.2;/);
+  assert.match(workshopsCss, /\.workshops-card__meta-row\s*\{[^}]*justify-content:\s*flex-end;/);
+  assert.match(workshopsCss, /\.workshops-card__category\s*\{[^}]*text-decoration:\s*underline;/);
+  assert.match(workshopsCss, /\.workshops-card:is\(:hover, :focus-visible, \.is-pointer-hover\) \.workshops-card__poster img\s*\{[^}]*transform:\s*none;/);
+  assert.match(workshopsJs, /body\.append\(metaRow, title, meta\)/);
+  assert.match(workshopsJs, /\? \["맞춤 문의"\][\s\S]*?\[workshop\.bookingConfig\?\.mode === "daily" \? "원데이클래스" : "오알룸 워크숍", getWorkshopDuration\(workshop\)\]/);
+  assert.doesNotMatch(workshopsJs, /getWorkshopLocation|locationName/);
+});
 test("storefront detail typography matches newsletter reading size without viewport font scaling", () => {
   assert.match(typography, /--type-body:\s*16px/);
   assert.match(typography, /--type-body-leading:\s*1\.55/);

@@ -27,10 +27,6 @@ function getWorkshopPoster(workshop) {
   return resolveWorkshopPoster(workshop);
 }
 
-function getWorkshopLocation(workshop) {
-  return String(workshop?.locationName || "Studio OALUM").trim() || "Studio OALUM";
-}
-
 function getWorkshopHref(workshop) {
   const slug = String(workshop?.slug || "").trim();
   if (slug) {
@@ -64,7 +60,7 @@ function renderTags() {
 function createWorkshopCard(workshop) {
   const href = getWorkshopHref(workshop);
   const posterAsset = getWorkshopPoster(workshop);
-  const posterUrl = imageUrl(posterAsset, { width: 1200, height: 1200 });
+  const posterUrl = imageUrl(posterAsset, { width: 1200, height: 750 });
   const card = document.createElement(href ? "a" : "article");
 
   card.className = `workshops-card${href ? " is-link" : ""}`;
@@ -103,18 +99,28 @@ function createWorkshopCard(workshop) {
   const body = document.createElement("div");
   body.className = "workshops-card__body";
 
+  const metaRow = document.createElement("div");
+  metaRow.className = "workshops-card__meta-row";
+
+  const category = document.createElement("span");
+  category.className = "workshops-card__category";
+  category.textContent = workshop.custom ? "custom" : (getWorkshopCategory(workshop) || "workshop");
+  metaRow.appendChild(category);
+
   const title = document.createElement("h2");
   title.className = "workshops-card__title";
   title.textContent = workshop?.title || "Untitled workshop";
 
   const meta = document.createElement("p");
   meta.className = "workshops-card__copy";
-  meta.textContent = [workshop.custom ? "맞춤 문의" : workshop.bookingConfig?.mode === "daily" ? "원데이클래스" : "오알룸 워크샵", getWorkshopDuration(workshop), getWorkshopLocation(workshop)]
+  meta.textContent = (workshop.custom
+    ? ["맞춤 문의"]
+    : [workshop.bookingConfig?.mode === "daily" ? "원데이클래스" : "오알룸 워크숍", getWorkshopDuration(workshop)])
     .map((value) => String(value || "").trim())
     .filter(Boolean)
-    .join(" · ");
+    .join(" ");
 
-  body.append(title, meta);
+  body.append(metaRow, title, meta);
   card.append(body);
   return card;
 }
@@ -143,7 +149,7 @@ function renderWorkshops(workshops, { loadError = false } = {}) {
   for (const workshop of filtered) {
     gridEl.appendChild(createWorkshopCard(workshop));
   }
-  const card = createWorkshopCard({ title: "맞춤 워크샵", custom: true, durationLabel: "", locationName: "오알룸 작업실 · 원하는 장소",
+  const card = createWorkshopCard({ title: "맞춤 워크샵", custom: true, durationLabel: "",
     poster: customWorkshop.imageUrl ? { asset: { url: customWorkshop.imageUrl } } : null });
   card.setAttribute("href", "#custom-workshop");
   card.setAttribute("role", "button");

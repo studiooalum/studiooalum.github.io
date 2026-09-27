@@ -27,12 +27,13 @@ function getWorkshopDuration(workshop) {
   return String(workshop?.durationLabel || workshop?.duration || "TBD").trim() || "TBD";
 }
 
-function getWorkshopPoster(workshop) {
-  return resolveWorkshopPoster(workshop);
+function getWorkshopTypeLabel(workshop) {
+  if (workshop?.custom) return "맞춤 문의";
+  return workshop?.bookingConfig?.mode === "daily" ? "원데이클래스" : "오알룸 워크숍";
 }
 
-function getWorkshopLocation(workshop) {
-  return String(workshop?.locationName || "Studio OALUM").trim() || "Studio OALUM";
+function getWorkshopPoster(workshop) {
+  return resolveWorkshopPoster(workshop);
 }
 
 function getWorkshopHref(workshop) {
@@ -68,7 +69,7 @@ function renderTags() {
 function createWorkshopCard(workshop, { isSample = false } = {}) {
   const href = getWorkshopHref(workshop);
   const posterAsset = getWorkshopPoster(workshop);
-  const posterUrl = imageUrl(posterAsset, { width: 1200, height: 1200 });
+  const posterUrl = imageUrl(posterAsset, { width: 1200, height: 750 });
   const card = document.createElement(href ? "a" : "article");
 
   card.className = `workshops-card${href ? " is-link" : ""}`;
@@ -106,18 +107,26 @@ function createWorkshopCard(workshop, { isSample = false } = {}) {
   const body = document.createElement("div");
   body.className = "workshops-card__body";
 
+  const metaRow = document.createElement("div");
+  metaRow.className = "workshops-card__meta-row";
+
+  const category = document.createElement("span");
+  category.className = "workshops-card__category";
+  category.textContent = isSample ? "custom" : (getWorkshopCategory(workshop) || "workshop");
+  metaRow.appendChild(category);
+
   const title = document.createElement("h2");
   title.className = "workshops-card__title";
   title.textContent = workshop?.title || "Untitled workshop";
 
   const meta = document.createElement("p");
   meta.className = "workshops-card__copy";
-  meta.textContent = [getWorkshopDuration(workshop), getWorkshopLocation(workshop)]
+  meta.textContent = [getWorkshopTypeLabel(workshop), getWorkshopDuration(workshop)]
     .map((value) => String(value || "").trim())
     .filter(Boolean)
-    .join(" · ");
+    .join(" ");
 
-  body.append(title, meta);
+  body.append(metaRow, title, meta);
   card.append(body);
   return card;
 }
