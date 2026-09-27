@@ -750,7 +750,9 @@ function renderWorkshopDetails(workshop) {
   }
 
   if (dom.kicker) {
+    const workshopType = getWorkshopBookingConfig(workshop).workshopType;
     dom.kicker.textContent = getWorkshopTypeLabel(workshop);
+    dom.kicker.href = `./workshops.html?type=${encodeURIComponent(workshopType)}`;
     dom.kicker.hidden = false;
   }
 

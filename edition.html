@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
-  <link rel="stylesheet" href="./runtime/storefront/styles/edition.css?v=20260926-05">
+  <link rel="stylesheet" href="./runtime/storefront/styles/edition.css?v=20260927-02">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260927-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css?v=20260926-10">
   <link rel="stylesheet" href="./runtime/storefront/styles/storefront-actions-20260925-02.css?v=20260927-01">
@@ -42,6 +42,7 @@
       <div class="edition-stage__sidebar-track" id="editionSidebarTrack">
         <div class="edition-stage__sidebar" id="editionSidebar">
           <section class="edition-stage__summary">
+            <div class="edition-tags edition-tags--category" id="editionTags" aria-label="Shop 카테고리"></div>
             <h1 class="edition-title" id="editionTitle"></h1>
             <p class="edition-number" id="editionNumber"></p>
           </section>
@@ -57,10 +58,6 @@
                 <div class="edition-spec">
                   <span>소재</span>
                   <span id="editionMaterial"></span>
-                </div>
-                <div class="edition-spec">
-                  <span>태그</span>
-                  <div class="edition-tags" id="editionTags"></div>
                 </div>
               </div>
               <p class="edition-price" id="editionPrice">₩0</p>
@@ -116,7 +113,7 @@ studio.oalum@gmail.com</p>
     </footer>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/edition-20260706-06.js?v=20260927-01"></script>
+  <script type="module" src="./runtime/storefront/scripts/edition-20260706-06.js?v=20260927-02"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";

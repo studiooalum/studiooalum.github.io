@@ -46,6 +46,8 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.match(stylesheet, /\.newsletter-admin-style-menu__popover/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\]/);
   assert.match(stylesheet, /\.newsletter-admin-editor p,[\s\S]*?\.newsletter-admin-preview p\s*\{\s*margin:\s*0;/);
+  assert.match(stylesheet, /\.newsletter-admin-editor\s*\{[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\);/);
+  assert.match(stylesheet, /\.newsletter-admin-editor p \+ p,[\s\S]*?margin-top:\s*0;/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor-20260910-01.js", root)));
 });

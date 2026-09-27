@@ -319,7 +319,7 @@ function renderTags(product) {
   for (const tag of tags) {
     const link = document.createElement("a");
     link.className = "edition-tag";
-    link.href = `./shop?tag=${encodeURIComponent(tag)}`;
+    link.href = `./shop.html?tag=${encodeURIComponent(tag)}`;
     link.textContent = tag;
     tagsEl.appendChild(link);
   }

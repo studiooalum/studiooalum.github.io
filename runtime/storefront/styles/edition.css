@@ -223,6 +223,7 @@
 .edition-stage__summary {
   display: flex;
   flex-direction: column;
+  gap: 8px;
   width: max-content;
   max-width: 100%;
 }
@@ -342,6 +343,14 @@
   flex-wrap: wrap;
   gap: 0 20px;
   margin: 0;
+}
+
+.edition-tags--category {
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-korean);
 }
 
 .edition-tag {

@@ -488,7 +488,7 @@
   outline: 0;
   font-family: var(--font-kor-body);
   font-size: 15px;
-  line-height: 1.9;
+  line-height: var(--type-body-leading, 1.55);
   letter-spacing: var(--tracking-korean);
 }
 
@@ -562,6 +562,13 @@
 .newsletter-admin-editor p,
 .newsletter-admin-preview p {
   margin: 0;
+  padding: 0;
+  line-height: inherit;
+}
+
+.newsletter-admin-editor p + p,
+.newsletter-admin-preview p + p {
+  margin-top: 0;
 }
 
 .newsletter-admin-editor p:has(> span[style*="line-height: 0;"]),
@@ -908,7 +915,7 @@
   margin-top: 18px;
   font-family: var(--font-kor-body);
   font-size: 16px;
-  line-height: 1.9;
+  line-height: var(--type-body-leading, 1.55);
 }
 
 .newsletter-admin-preview__cover {

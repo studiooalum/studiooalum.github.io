@@ -105,10 +105,11 @@ test("storefront detail typography matches newsletter reading size without viewp
 
 test("workshop detail keeps the information-first page structure", () => {
   assert.match(workshopHtml, /workshop-20260918-01\.css/);
-  assert.match(workshopHtml, /workshop-20260925-01\.css\?v=20260927-01/);
-  assert.match(workshopHtml, /workshop-20260924\.js\?v=20260927-01/);
-  assert.match(workshopHtml, /class="workshop-kicker" id="workshopKicker" hidden/);
+  assert.match(workshopHtml, /workshop-20260925-01\.css\?v=20260927-02/);
+  assert.match(workshopHtml, /workshop-20260924\.js\?v=20260927-02/);
+  assert.match(workshopHtml, /class="workshop-kicker" id="workshopKicker"[^>]*hidden/);
   assert.match(workshopJs, /dom\.kicker\.textContent = getWorkshopTypeLabel\(workshop\)/);
+  assert.match(workshopJs, /dom\.kicker\.href = `\.\/workshops\.html\?type=\$\{encodeURIComponent\(workshopType\)\}`/);
   assert.match(workshopHtml, /class="workshop-stage__media"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar-track"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar"/);

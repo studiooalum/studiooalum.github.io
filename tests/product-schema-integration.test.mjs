@@ -27,7 +27,7 @@ test("storefront reads the current product schema without the removed category f
 test("storefront cache versions expose the schema change immediately", () => {
   assert.match(shopHtml, /shop\.js\?v=20260927-01/);
   assert.match(productHtml, /product\.js\?v=20260927-01/);
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-01/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-02/);
   assert.match(shopScript, /queries\.js\?v=20260927-01/);
   assert.match(productScript, /queries\.js\?v=20260927-01/);
   assert.match(editionScript, /queries\.js\?v=20260927-01/);

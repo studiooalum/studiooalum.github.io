@@ -40,13 +40,15 @@ const [editionHtml, editionScript, editionCss, archiveScript, archiveCss, newsle
 const cartPages = await Promise.all(cartPagePaths.map((path) => read(`../${path}`)));
 
 test("edition recommendations crop square images from the center", () => {
-  assert.match(editionHtml, /edition\.css\?v=20260926-05/);
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-01/);
+  assert.match(editionHtml, /edition\.css\?v=20260927-02/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-02/);
   assert.match(editionHtml, /storefront-actions-20260925-02\.css\?v=20260927-01/);
-  assert.doesNotMatch(editionHtml, /editionKicker/);
+  assert.match(editionHtml, /class="edition-tags edition-tags--category" id="editionTags"/);
   assert.match(editionHtml, />사이즈<\/span>/);
   assert.match(editionHtml, />소재<\/span>/);
-  assert.match(editionHtml, />태그<\/span>/);
+  assert.doesNotMatch(editionHtml, />태그<\/span>/);
+  assert.match(editionScript, /link\.href = `\.\/shop\.html\?tag=\$\{encodeURIComponent\(tag\)\}`/);
+  assert.match(editionCss, /\.edition-tags--category\s*\{[^}]*font-size:\s*14px;/);
   assert.match(editionCss, /\.edition-recommend-card__thumb > \.progressive-image\s*\{[\s\S]*?height:\s*100%;/);
   assert.match(editionCss, /\.edition-recommend-card__thumb img\s*\{[\s\S]*?object-fit:\s*cover;[\s\S]*?object-position:\s*center center;/);
   assert.match(editionCss, /\.edition-page \.edition-title\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-weight:\s*400 !important;[^}]*line-height:\s*1\.2 !important;/);
@@ -74,7 +76,7 @@ test("mobile navigation returns to content height with 13px labels", () => {
 });
 
 test("edition sidebar sticky stop uses media-relative image position", () => {
-  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-01/);
+  assert.match(editionHtml, /edition-20260706-06\.js\?v=20260927-02/);
   assert.match(editionScript, /lastImage\.getBoundingClientRect\(\)\.top - mediaTop/);
   assert.doesNotMatch(editionScript, /lastImage\.offsetTop \+ stickyHeight/);
 });
