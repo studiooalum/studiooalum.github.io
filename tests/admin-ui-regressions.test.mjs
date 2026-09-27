@@ -171,6 +171,8 @@ test("signup follows the 16px line-form and checkbox rules", async () => {
 
   assert.match(html, /account\.css\?v=20260927-04/);
   assert.match(html, /이메일과 비밀번호로 계정을 만들고 주문내역, 주소, 포인트를 관리할 수 있습니다\./);
+  assert.match(html, /비밀번호는 8자 이상으로 입력해주세요\./);
+  assert.doesNotMatch(html, /영문, 숫자, 기호를 함께 쓰면 더 안전합니다\./);
   for (const placeholder of ["이름", "이메일", "인증번호 6자리", "비밀번호", "비밀번호 확인"]) {
     assert.match(html, new RegExp(`placeholder="${placeholder}"`));
   }
