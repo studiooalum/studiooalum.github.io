@@ -6,39 +6,48 @@ import {
   normalizeWorkshopCategory,
 } from "./utils/workshops.js";
 
-const gridEl = document.getElementById("workshopsGrid");
 const tagsEl = document.getElementById("workshopsTags");
-const prevButton = document.getElementById("workshopsPrev");
-const nextButton = document.getElementById("workshopsNext");
+const standardGridEl = document.getElementById("workshopsStandardGrid");
+const oneDayGridEl = document.getElementById("workshopsOneDayGrid");
+const customGridEl = document.getElementById("workshopsCustomGrid");
+const standardCountEl = document.getElementById("workshopsStandardCount");
+const oneDayCountEl = document.getElementById("workshopsOneDayCount");
+const customCountEl = document.getElementById("workshopsCustomCount");
 const activeCategory = normalizeWorkshopCategory(new URLSearchParams(window.location.search).get("category")) || "all";
 let customWorkshop = {};
 
-if (!gridEl || !tagsEl || !prevButton || !nextButton) {
+if (!tagsEl || !standardGridEl || !oneDayGridEl || !customGridEl || !standardCountEl || !oneDayCountEl || !customCountEl) {
   throw new Error("Workshops DOM is missing required workshops layout elements.");
 }
 
-function getCarouselStep() {
+function getCarouselStep(gridEl) {
   const card = gridEl.querySelector(".workshops-card");
   if (!card) return gridEl.clientWidth;
   const gap = Number.parseFloat(getComputedStyle(gridEl).columnGap) || 0;
   return card.getBoundingClientRect().width + gap;
 }
 
-function updateCarouselControls() {
+function updateCarouselControls(gridEl) {
+  const prevButton = document.querySelector(`[data-carousel-prev="${gridEl.id}"]`);
+  const nextButton = document.querySelector(`[data-carousel-next="${gridEl.id}"]`);
+  if (!prevButton || !nextButton) return;
   const maxScroll = Math.max(0, gridEl.scrollWidth - gridEl.clientWidth);
   prevButton.disabled = gridEl.scrollLeft <= 1;
   nextButton.disabled = gridEl.scrollLeft >= maxScroll - 1;
 }
 
-function bindCarouselControls() {
+function bindCarouselControls(gridEl) {
+  const prevButton = document.querySelector(`[data-carousel-prev="${gridEl.id}"]`);
+  const nextButton = document.querySelector(`[data-carousel-next="${gridEl.id}"]`);
+  if (!prevButton || !nextButton) return;
   prevButton.addEventListener("click", () => {
-    gridEl.scrollBy({ left: -getCarouselStep(), behavior: "smooth" });
+    gridEl.scrollBy({ left: -getCarouselStep(gridEl), behavior: "smooth" });
   });
   nextButton.addEventListener("click", () => {
-    gridEl.scrollBy({ left: getCarouselStep(), behavior: "smooth" });
+    gridEl.scrollBy({ left: getCarouselStep(gridEl), behavior: "smooth" });
   });
-  gridEl.addEventListener("scroll", updateCarouselControls, { passive: true });
-  window.addEventListener("resize", updateCarouselControls);
+  gridEl.addEventListener("scroll", () => updateCarouselControls(gridEl), { passive: true });
+  window.addEventListener("resize", () => updateCarouselControls(gridEl));
 }
 
 function getWorkshopCategory(workshop) {
@@ -156,26 +165,22 @@ function renderWorkshops(workshops, { loadError = false } = {}) {
     ? workshops.map((workshop) => normalizeWorkshop(workshop))
     : [];
   const filtered = activeCategory === "all"
-    ? [...items].sort((left, right) => Number(right.bookingConfig?.mode === "daily") - Number(left.bookingConfig?.mode === "daily"))
+    ? items
     : items.filter((workshop) => getWorkshopCategory(workshop) === activeCategory);
+  const standardItems = filtered.filter((workshop) => workshop.bookingConfig?.mode !== "daily");
+  const oneDayItems = filtered.filter((workshop) => workshop.bookingConfig?.mode === "daily");
 
-  gridEl.innerHTML = "";
+  standardGridEl.innerHTML = "";
+  oneDayGridEl.innerHTML = "";
+  customGridEl.innerHTML = "";
+  standardCountEl.textContent = `${standardItems.length}개의 워크숍`;
+  oneDayCountEl.textContent = `${oneDayItems.length}개의 원데이 클래스`;
+  customCountEl.textContent = "1개의 맞춤 워크숍";
 
-  if (filtered.length === 0) {
-    const state = document.createElement("p");
-    state.className = "workshops-state";
-    state.textContent = loadError
-      ? "워크숍 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
-      : items.length && activeCategory !== "all"
-        ? "선택한 분류의 워크숍이 없습니다."
-        : "현재 진행 중인 워크숍이 없습니다.";
-    gridEl.appendChild(state);
-  }
+  for (const workshop of standardItems) standardGridEl.appendChild(createWorkshopCard(workshop));
+  for (const workshop of oneDayItems) oneDayGridEl.appendChild(createWorkshopCard(workshop));
 
-  for (const workshop of filtered) {
-    gridEl.appendChild(createWorkshopCard(workshop));
-  }
-  const card = createWorkshopCard({ title: "맞춤 워크샵", custom: true, durationLabel: "",
+  const card = createWorkshopCard({ title: "맞춤 워크숍", custom: true, durationLabel: "",
     poster: customWorkshop.imageUrl ? { asset: { url: customWorkshop.imageUrl } } : null });
   card.setAttribute("href", "#custom-workshop");
   card.setAttribute("role", "button");
@@ -183,8 +188,10 @@ function renderWorkshops(workshops, { loadError = false } = {}) {
   const openInquiry = () => document.getElementById("customWorkshopDialog").showModal();
   card.addEventListener("click", (event) => { event.preventDefault(); openInquiry(); });
   card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); openInquiry(); } });
-  gridEl.appendChild(card);
-  requestAnimationFrame(updateCarouselControls);
+  customGridEl.appendChild(card);
+  requestAnimationFrame(() => {
+    [standardGridEl, oneDayGridEl, customGridEl].forEach(updateCarouselControls);
+  });
 }
 
 function bindInquiryForm() {
@@ -222,7 +229,7 @@ function bindInquiryForm() {
 
 async function init() {
   renderTags();
-  bindCarouselControls();
+  [standardGridEl, oneDayGridEl, customGridEl].forEach(bindCarouselControls);
   bindInquiryForm();
 
   try {

@@ -52,7 +52,7 @@
     <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
-    <link rel="stylesheet" href="./runtime/storefront/styles/workshops-page-20260816-05.css?v=20260927-02">
+    <link rel="stylesheet" href="./runtime/storefront/styles/workshops-page-20260816-05.css?v=20260927-03">
     <link rel="stylesheet" href="./runtime/storefront/styles/workshop-operations-20260924.css">
     <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260927-01">
     <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css?v=20260926-10">
@@ -68,11 +68,38 @@
     <main class="workshops-main">
         <section class="workshops-shell">
             <div class="workshops-content">
-                <div class="workshops-carousel-controls" aria-label="워크숍 목록 이동">
-                    <button type="button" class="workshops-carousel-button" id="workshopsPrev" aria-label="이전 워크숍">&lt;</button>
-                    <button type="button" class="workshops-carousel-button" id="workshopsNext" aria-label="다음 워크숍">&gt;</button>
-                </div>
-                <section class="workshops-grid" id="workshopsGrid" aria-live="polite"></section>
+                <section class="workshops-tier" aria-labelledby="workshopsStandardCount">
+                    <header class="workshops-tier__header">
+                        <p class="workshops-tier__count" id="workshopsStandardCount">0개의 워크숍</p>
+                        <div class="workshops-carousel-controls" aria-label="워크숍 목록 이동">
+                            <button type="button" class="workshops-carousel-button" data-carousel-prev="workshopsStandardGrid" aria-label="이전 워크숍">&lt;</button>
+                            <button type="button" class="workshops-carousel-button" data-carousel-next="workshopsStandardGrid" aria-label="다음 워크숍">&gt;</button>
+                        </div>
+                    </header>
+                    <div class="workshops-grid" id="workshopsStandardGrid" aria-live="polite"></div>
+                </section>
+
+                <section class="workshops-tier" aria-labelledby="workshopsOneDayCount">
+                    <header class="workshops-tier__header">
+                        <p class="workshops-tier__count" id="workshopsOneDayCount">0개의 원데이 클래스</p>
+                        <div class="workshops-carousel-controls" aria-label="원데이 클래스 목록 이동">
+                            <button type="button" class="workshops-carousel-button" data-carousel-prev="workshopsOneDayGrid" aria-label="이전 원데이 클래스">&lt;</button>
+                            <button type="button" class="workshops-carousel-button" data-carousel-next="workshopsOneDayGrid" aria-label="다음 원데이 클래스">&gt;</button>
+                        </div>
+                    </header>
+                    <div class="workshops-grid" id="workshopsOneDayGrid" aria-live="polite"></div>
+                </section>
+
+                <section class="workshops-tier" aria-labelledby="workshopsCustomCount">
+                    <header class="workshops-tier__header">
+                        <p class="workshops-tier__count" id="workshopsCustomCount">1개의 맞춤 워크숍</p>
+                        <div class="workshops-carousel-controls" aria-label="맞춤 워크숍 목록 이동">
+                            <button type="button" class="workshops-carousel-button" data-carousel-prev="workshopsCustomGrid" aria-label="이전 맞춤 워크숍">&lt;</button>
+                            <button type="button" class="workshops-carousel-button" data-carousel-next="workshopsCustomGrid" aria-label="다음 맞춤 워크숍">&gt;</button>
+                        </div>
+                    </header>
+                    <div class="workshops-grid" id="workshopsCustomGrid" aria-live="polite"></div>
+                </section>
             </div>
         </section>
 
@@ -126,7 +153,7 @@ studio.oalum@gmail.com</p>
             <p id="customWorkshopFeedback" role="status" aria-live="polite"></p>
         </form>
     </dialog>
-    <script type="module" src="./runtime/storefront/scripts/workshops-20260924.js?v=20260927-02"></script>
+    <script type="module" src="./runtime/storefront/scripts/workshops-20260924.js?v=20260927-03"></script>
     <script type="module">
         import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
         import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";

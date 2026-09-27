@@ -322,16 +322,37 @@
   }
 }
 
-/* Three-column workshop carousel */
+/* Three-tier, two-column workshop carousels */
 .workshops-content {
-  gap: 0;
+  gap: clamp(56px, 8vw, 112px);
+}
+
+.workshops-tier {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.workshops-tier__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+}
+
+.workshops-tier__count {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: var(--tracking-korean);
 }
 
 .workshops-carousel-controls {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
 .workshops-carousel-button {
@@ -375,11 +396,11 @@
 
 @media (min-width: 800px) {
   .workshops-content {
-    grid-column: 1 / -1;
+    grid-column: 1 / span 2;
   }
 
   .workshops-grid {
-    grid-auto-columns: calc((100% - (2 * var(--grid-gap))) / 3);
+    grid-auto-columns: calc((100% - var(--grid-gap)) / 2);
     grid-template-columns: none;
   }
 }
