@@ -2,6 +2,7 @@ import {
   getWorkshopShortDescription,
   getWorkshopSlug,
   getWorkshopBookingConfig,
+  getWorkshopTypeLabel,
   normalizeWorkshop,
 } from "./utils/workshops.js";
 import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
@@ -14,6 +15,7 @@ const dom = {
   sidebar: document.getElementById("workshopSidebar"),
   back: document.getElementById("workshopBack"),
   poster: document.getElementById("workshopPoster"),
+  kicker: document.getElementById("workshopKicker"),
   title: document.getElementById("workshopTitle"),
   duration: document.getElementById("workshopDuration"),
   level: document.getElementById("workshopLevel"),
@@ -745,6 +747,11 @@ function renderWorkshopDetails(workshop) {
 
   if (dom.back) {
     dom.back.href = "./workshops";
+  }
+
+  if (dom.kicker) {
+    dom.kicker.textContent = getWorkshopTypeLabel(workshop);
+    dom.kicker.hidden = false;
   }
 
   if (dom.title) {

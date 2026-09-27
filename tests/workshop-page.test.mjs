@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { getWorkshopBookingConfig, getWorkshopScheduleSlots } from "../runtime/storefront/scripts/utils/workshops.js";
+import { getWorkshopBookingConfig, getWorkshopScheduleSlots, getWorkshopTypeLabel } from "../runtime/storefront/scripts/utils/workshops.js";
 
 test("workshop prices use administrator pricing for the entire party without invented defaults", () => {
   const config = getWorkshopBookingConfig({ price: 50000, bookingConfig: { type: "daily", maxParticipants: 8 } });
@@ -10,6 +10,11 @@ test("workshop prices use administrator pricing for the entire party without inv
   assert.equal(config.attendeePrices[8], 400000);
   assert.equal(getWorkshopBookingConfig({ bookingConfig: { type: "daily" } }).attendeePrices[1], 0);
   assert.equal(getWorkshopBookingConfig({ price: 50000, bookingConfig: { type: "daily", priceTiers: { 2: 90000 } } }).attendeePrices[2], 90000);
+});
+
+test("workshop type labels match the administrator workshop type", () => {
+  assert.equal(getWorkshopTypeLabel({ bookingConfig: { workshopType: "daily" } }), "원데이클래스");
+  assert.equal(getWorkshopTypeLabel({ bookingConfig: { workshopType: "event" } }), "워크숍");
 });
 
 test("one-day calendar exposes valid administrator time slots and stable keys", () => {
@@ -100,8 +105,10 @@ test("storefront detail typography matches newsletter reading size without viewp
 
 test("workshop detail keeps the information-first page structure", () => {
   assert.match(workshopHtml, /workshop-20260918-01\.css/);
-  assert.match(workshopHtml, /workshop-20260925-01\.css/);
-  assert.match(workshopHtml, /workshop-20260924\.js\?v=20260925-02/);
+  assert.match(workshopHtml, /workshop-20260925-01\.css\?v=20260927-01/);
+  assert.match(workshopHtml, /workshop-20260924\.js\?v=20260927-01/);
+  assert.match(workshopHtml, /class="workshop-kicker" id="workshopKicker" hidden/);
+  assert.match(workshopJs, /dom\.kicker\.textContent = getWorkshopTypeLabel\(workshop\)/);
   assert.match(workshopHtml, /class="workshop-stage__media"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar-track"/);
   assert.match(workshopHtml, /class="workshop-stage__sidebar"/);
@@ -175,14 +182,14 @@ test("workshop details mirror the edition columns and the application panel stay
   assert.match(workshopCss, /\.workshop-facts\s*\{[\s\S]*?gap:\s*24px/);
 });
 
-test("workshop information removes the category kicker and uses one archive-like hierarchy", () => {
+test("workshop information uses the workshop type kicker and one archive-like hierarchy", () => {
   for (const label of ["소개", "제공하는 재료", "장소", "커리큘럼", "안내"]) {
     assert.match(workshopHtml, new RegExp(`>${label}<\\/h2>`));
   }
   assert.doesNotMatch(workshopHtml, />준비물<\/h2>|id="workshopBring"/);
   assert.doesNotMatch(workshopHtml, />금액<\/span>/);
   assert.match(workshopHtml, /id="workshopPrice"/);
-  assert.doesNotMatch(workshopHtml, /id="workshopKicker"/);
+  assert.match(workshopHtml, /id="workshopKicker"/);
   assert.match(workshopCss, /\.workshop-schedule-overview\[hidden\]\s*\{\s*display:\s*none/);
   assert.match(workshopJs, /제공되는 재료가 없습니다\./);
   assert.match(workshopJs, /dom\.bringSection\.hidden = thingsToBring\.length === 0/);

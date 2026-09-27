@@ -561,7 +561,7 @@
 
 .newsletter-admin-editor p,
 .newsletter-admin-preview p {
-  margin: 0 0 18px;
+  margin: 0;
 }
 
 .newsletter-admin-editor p:has(> span[style*="line-height: 0;"]),

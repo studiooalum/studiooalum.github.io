@@ -1,6 +1,7 @@
 import { imageUrl } from "./sanity/image-20260816-02.js";
 import {
   getWorkshopPoster as resolveWorkshopPoster,
+  getWorkshopTypeLabel,
   normalizeWorkshop,
 } from "./utils/workshops.js";
 
@@ -19,10 +20,6 @@ if (!tagsEl || !gridEl) {
 
 function getWorkshopType(workshop) {
   return workshop?.bookingConfig?.workshopType === "daily" ? "daily" : "event";
-}
-
-function getWorkshopTypeLabel(workshop) {
-  return getWorkshopType(workshop) === "daily" ? "원데이클래스" : "워크숍";
 }
 
 function getWorkshopPoster(workshop) {

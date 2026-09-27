@@ -2,6 +2,20 @@
   margin-top: 0;
 }
 
+.workshop-hero {
+  gap: 8px;
+}
+
+.workshop-kicker {
+  margin: 0;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-korean);
+  color: #111;
+}
+
 .workshop-stage__summary {
   gap: 28px;
 }

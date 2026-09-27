@@ -126,6 +126,12 @@ export function getWorkshopBookingConfig(workshop = {}) {
   };
 }
 
+export function getWorkshopTypeLabel(workshop = {}) {
+  return getWorkshopBookingConfig(workshop).workshopType === WORKSHOP_TYPES.DAILY
+    ? "원데이클래스"
+    : "워크숍";
+}
+
 function createDailyClassSlots(workshop) {
   const slug = getWorkshopSlug(workshop);
   const config = getWorkshopBookingConfig(workshop);
