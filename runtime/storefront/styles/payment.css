@@ -123,7 +123,7 @@
 .payment-empty a {
   display: inline-block;
   margin-top: 16px;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-button, sans-serif);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -160,7 +160,7 @@
   font-size: 22px;
   font-weight: 400;
   margin: 16px 0 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
 }
 
 .payment-result__desc {
@@ -245,7 +245,7 @@
   border: 1px solid #111;
   border-radius: 6px;
   background: transparent;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   text-decoration: none;
   cursor: pointer;
   font-family: var(--font-kor-button, sans-serif);

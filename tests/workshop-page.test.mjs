@@ -71,7 +71,7 @@ const workshopTypeMigration = await readFile(new URL("../cloudflare/d1/migration
 const workshopContentJs = await readFile(new URL("../cloudflare/lib/workshop-content.js", import.meta.url), "utf8");
 
 test("workshop listing follows the newsletter card ratio without image hover", () => {
-  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260927-80/);
+  assert.match(workshopsHtml, /workshops-page-20260816-05\.css\?v=20260929-90/);
   assert.match(workshopsHtml, /workshops-20260924\.js\?v=20260927-07/);
   assert.match(workshopsCss, /\.workshops-card__poster\s*\{[^}]*aspect-ratio:\s*1\.6 \/ 1;/);
   assert.match(workshopsCss, /\.workshops-card__title\s*\{[^}]*font-size:\s*20px;[^}]*line-height:\s*1\.2;/);
@@ -105,7 +105,7 @@ test("storefront detail typography matches newsletter reading size without viewp
 
 test("workshop detail keeps the information-first page structure", () => {
   assert.match(workshopHtml, /workshop-20260918-01\.css/);
-  assert.match(workshopHtml, /workshop-20260925-01\.css\?v=20260927-80/);
+  assert.match(workshopHtml, /workshop-20260925-01\.css\?v=20260929-90/);
   assert.match(workshopHtml, /workshop-20260924\.js\?v=20260927-02/);
   assert.match(workshopHtml, /class="workshop-kicker" id="workshopKicker"[^>]*hidden/);
   assert.match(workshopJs, /dom\.kicker\.textContent = getWorkshopTypeLabel\(workshop\)/);
@@ -196,7 +196,7 @@ test("workshop information uses the workshop type kicker and one archive-like hi
   assert.match(workshopJs, /dom\.bringSection\.hidden = thingsToBring\.length === 0/);
   assert.doesNotMatch(workshopJs, /별도로 준비할 재료가 없습니다\./);
   assert.match(workshopCss, /\.workshop-fact__list li::before\s*\{\s*content:\s*none/);
-  assert.match(workshopDetailCss, /font-size:\s*16px;[\s\S]*?line-height:\s*1\.45;[\s\S]*?text-decoration:\s*none;[\s\S]*?color:\s*rgba\(17,\s*17,\s*17,\s*0\.8\)/);
+  assert.match(workshopDetailCss, /font-size:\s*16px;[\s\S]*?line-height:\s*1\.45;[\s\S]*?text-decoration:\s*none;[\s\S]*?color:\s*rgba\(17,\s*17,\s*17,\s*0\.9\)/);
   assert.match(workshopJs, /function formatWon\(amount\)/);
   assert.match(workshopJs, /\? formatWon\(config\.attendeePrices\[1\]\)/);
   assert.match(workshopDetailCss, /#workshopDescription p\s*\{[^}]*line-height:\s*1\.45/);

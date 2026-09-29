@@ -26,7 +26,7 @@
   border-radius: 0;
   padding: 11px 14px;
   background: #fff;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-form);
   font-size: 14px;
   font-weight: 500;
@@ -45,7 +45,7 @@
 
 .repair-request-form .repair-field input[readonly] {
   background: #fff;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   cursor: default;
 }
 

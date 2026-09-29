@@ -21,7 +21,7 @@
   align-items: center;
   column-gap: 10px;
   padding: 15px 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-body);
   font-size: 18px;
   font-weight: 400;
@@ -37,7 +37,7 @@
 
 .repair-stage__rail .repair-accordion > summary::before {
   width: 8px;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   content: "▸";
   font-family: var(--font-kor-body);
   font-size: 13px;
@@ -63,7 +63,7 @@
 .repair-stage__rail .repair-accordion > div {
   display: block;
   padding: 0 0 24px;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-body);
   font-size: 13px;
   font-weight: 400;
@@ -89,7 +89,7 @@
   border-radius: 0;
   padding: 0 10px;
   background: #fff;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-english-ui);
   font-size: 12px;
   font-weight: 400;
@@ -245,7 +245,7 @@
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);
   gap: 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-body);
   font-size: 13px;
   font-weight: 400;
@@ -280,7 +280,7 @@
 
 .repair-stage__rail .repair-accordion--shipping p {
   margin: 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-body);
   font-size: 13px;
   font-weight: 400;

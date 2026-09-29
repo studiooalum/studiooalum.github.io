@@ -5,7 +5,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--shop-bg);
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-base);
 }
 
@@ -142,7 +142,7 @@
   font-family: var(--font-kor-body);
   font-size: 13px;
   letter-spacing: var(--tracking-korean);
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
 }
 
 @media (max-width: 799px) {

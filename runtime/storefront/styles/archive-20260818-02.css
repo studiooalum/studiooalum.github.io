@@ -61,7 +61,7 @@
 
 .archive-detail-tag:hover,
 .archive-detail-tag:focus-visible {
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   outline: none;
 }
 
@@ -73,7 +73,7 @@
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr);
   gap: 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -84,7 +84,7 @@
 .archive-detail-meta__more .archive-detail-spec > span {
   display: inline;
   margin: 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: inherit;
   font-size: inherit;
   font-weight: 400;
@@ -95,7 +95,7 @@
 
 .archive-detail-meta__more .archive-detail-tags {
   margin-top: 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
@@ -109,7 +109,7 @@
 }
 
 .archive-detail-meta__more .archive-detail-tag {
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;

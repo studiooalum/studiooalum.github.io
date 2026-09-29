@@ -35,7 +35,7 @@ body.archive-page.cart-open .cart-panel {
 }
 
 .cart-panel__close {
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
 }
 
 .cart-panel__empty,
@@ -89,7 +89,7 @@ body.archive-page.cart-open .cart-panel {
 
 .cart-item__price,
 .cart-panel__total {
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-size: 16px;
   font-weight: 400;
 }
@@ -126,13 +126,13 @@ body.archive-page.cart-open .cart-panel {
 .cart-item__remove {
   top: 0;
   padding: 0;
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 20px;
 }
 
 .cart-item__remove:hover {
-  color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.9);
 }
 
 .cart-panel__total {
