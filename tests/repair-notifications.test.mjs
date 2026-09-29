@@ -195,9 +195,8 @@ function createRepairForm({
   formData.set("phone", phone);
   if (countryCode) formData.set("countryCode", countryCode);
   formData.set("shippingAddress", shippingAddress);
-  formData.set("itemType", "자켓");
   formData.set("issueDescription", "소매가 찢어졌습니다.");
-  formData.set("desiredResult", "수선 흔적을 살리고 싶어요");
+  formData.set("desiredResult", "디자인은 맡기고 싶어요");
   formData.set("privacyConsent", "true");
   if (archiveConsent) formData.set("archiveConsent", "true");
   formData.append("images", new File([imageBody], "repair.png", { type: "image/png" }));
@@ -421,9 +420,11 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   assert.equal(repeated.ticketNumber, first.ticketNumber);
   assert.equal(putCount, 1);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_requests").first().count, 1);
-  const storedRequest = database.prepare("SELECT shipping_address, country_code FROM repair_requests LIMIT 1").first();
+  const storedRequest = database.prepare("SELECT shipping_address, country_code, item_type, desired_result FROM repair_requests LIMIT 1").first();
   assert.equal(storedRequest.shipping_address, "123 Main Street, Portland, OR, USA");
   assert.equal(storedRequest.country_code, "OTHER");
+  assert.equal(storedRequest.item_type, "기타");
+  assert.equal(storedRequest.desired_result, "디자인은 맡기고 싶어요");
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM notification_outbox").first().count, 2);
   assert.equal(database.prepare("SELECT COUNT(1) AS count FROM repair_tickets").first().count, 1);
 
@@ -434,6 +435,7 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   const legacyForm = createRepairForm({ imageBody: "legacy-image" });
   legacyForm.delete("shippingAddress");
   legacyForm.set("countryCode", "KR");
+  legacyForm.set("itemType", "수선 의뢰");
   const legacyResponse = await submitRepairRequest({
     env,
     request: new Request("https://studiooalum.test/api/repairs", {
@@ -445,9 +447,10 @@ test("POST /api/repairs returns the original receipt for repeated submission key
   assert.equal(legacyResponse.status, 201);
   const legacyReceipt = await legacyResponse.json();
   assert.equal(legacyReceipt.ticketNumber, null);
-  const legacyRequest = database.prepare("SELECT shipping_address, country_code FROM repair_requests WHERE submission_id = ?").bind("repair:44444444-4444-4444-8444-444444444444").first();
+  const legacyRequest = database.prepare("SELECT shipping_address, country_code, item_type FROM repair_requests WHERE submission_id = ?").bind("repair:44444444-4444-4444-8444-444444444444").first();
   assert.equal(legacyRequest.shipping_address, "");
   assert.equal(legacyRequest.country_code, "KR");
+  assert.equal(legacyRequest.item_type, "기타");
 
   const shortAddressForm = createRepairForm({ imageBody: "short-address-image" });
   shortAddressForm.set("shippingAddress", "US");

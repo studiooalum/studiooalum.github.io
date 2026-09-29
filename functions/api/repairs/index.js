@@ -17,6 +17,7 @@ const MAX_IMAGE_COUNT = 4;
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const SUBMISSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,119}$/;
+const REPAIR_ITEM_TYPES = ["자켓", "상의", "하의", "기타", "데님", "니트", "특수소재", "가죽"];
 
 const repairRequestSchema = z.object({
   customerName: z.string().trim().min(1, "이름을 입력해주세요.").max(120),
@@ -24,9 +25,10 @@ const repairRequestSchema = z.object({
   phone: z.string().trim().min(1, "전화번호를 입력해주세요.").max(60).refine((value) => value.replace(/\D/g, "").length >= 7, "전화번호 형식을 확인해주세요."),
   shippingAddress: z.string().trim().max(500, "발송지 주소는 500자 이하로 입력해주세요.").optional().default(""),
   countryCode: z.enum(["KR", "OTHER"]).optional(),
-  itemType: z.enum(["자켓", "상의", "하의", "기타", "데님", "니트", "특수소재", "가죽"], { message: "제품 종류를 선택해주세요." }),
+  itemType: z.enum(REPAIR_ITEM_TYPES, { message: "제품 정보를 확인해주세요." }),
   issueDescription: z.string().trim().min(1, "손상된 부분을 입력해주세요.").max(4000),
-  desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." }),
+  desiredResult: z.enum(["기존 모습과 비슷하게 수선", "수선 흔적을 살리고 싶어요", "디자인은 맡기고 싶어요", "디자인은 오알룸에게 맡기고 싶어요", "잘 모르겠어요"], { message: "원하시는 수선 방향을 선택해주세요." })
+    .transform((value) => value === "디자인은 오알룸에게 맡기고 싶어요" ? "디자인은 맡기고 싶어요" : value),
   budgetNote: z.string().trim().max(1000).default(""),
   archiveConsent: z.boolean().optional().default(false),
   archiveConsentStatus: z.enum(["agreed", "declined", "unrecorded"]).optional().default("unrecorded"),
@@ -52,6 +54,11 @@ function asBoolean(value) {
 
 function asText(value) {
   return typeof value === "string" ? value : "";
+}
+
+function normalizeItemType(value) {
+  const normalized = asText(value).trim();
+  return !normalized || normalized === "수선 의뢰" ? "기타" : normalized;
 }
 
 function readCountryName(formData) {
@@ -129,7 +136,7 @@ function buildRequestPayload(formData) {
     phone: normalizeRepairPhone(formData.get("phone"), countryCode),
     shippingAddress: buildShippingAddress(formData, countryCode),
     countryCode,
-    itemType: asText(formData.get("itemType")),
+    itemType: normalizeItemType(formData.get("itemType")),
     issueDescription: asText(formData.get("issueDescription")) || asText(formData.get("repairDetails")),
     desiredResult: asText(formData.get("desiredResult")),
     budgetNote: asText(formData.get("budgetNote")),
