@@ -330,7 +330,6 @@ export function initAccountPage() {
   const overviewEmailEl = document.querySelector(".js-account-overview-email");
   const overviewAddressEl = document.querySelector(".js-account-overview-address");
   const overviewPhoneEl = document.querySelector(".js-account-overview-phone");
-  const overviewJoinedEl = document.querySelector(".js-account-overview-joined");
   const dashboardRepairsEl = document.querySelector(".js-account-dashboard-repairs");
   const dashboardOrdersEl = document.querySelector(".js-account-dashboard-orders");
   const dashboardClassesEl = document.querySelector(".js-account-dashboard-classes");
@@ -929,7 +928,6 @@ export function initAccountPage() {
     if (overviewEmailEl) overviewEmailEl.textContent = user.email || "-";
     if (overviewAddressEl) overviewAddressEl.textContent = [user.zipcode, user.address1, user.address2].filter(Boolean).join(" ") || "-";
     if (overviewPhoneEl) overviewPhoneEl.textContent = user.phone || "-";
-    if (overviewJoinedEl) overviewJoinedEl.textContent = formatDate(user.createdAt) || "-";
     if (dashboardRepairsEl) dashboardRepairsEl.textContent = activeRepairs.toLocaleString("ko-KR");
     if (dashboardOrdersEl) dashboardOrdersEl.textContent = orders.length.toLocaleString("ko-KR");
     if (dashboardClassesEl) dashboardClassesEl.textContent = workshops.length.toLocaleString("ko-KR");
