@@ -224,7 +224,7 @@ test("My Oalum keeps logout in the account page and removes it from the GNB", as
   assert.match(html, /js-account-overview-phone/);
   assert.doesNotMatch(html, /js-account-overview-joined|>JOINED</);
   assert.match(html, /<dt>이름<\/dt>[\s\S]*?<dt>이메일<\/dt>[\s\S]*?<dt>주소<\/dt>[\s\S]*?<dt>폰<\/dt>/);
-  assert.doesNotMatch(html, />REPAIRS<|>ORDERS<|>CLASSES<|>POINTS<|Repair Ticket/);
+  assert.match(html, />REPAIRS<[\s\S]*?>ORDERS<[\s\S]*?>CLASSES<[\s\S]*?>POINTS</);
   assert.match(stylesheet, /\.account-overview__welcome p:last-child\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\)/);
   assert.match(stylesheet, /\.account-overview__facts\s*\{[^}]*border-top:\s*1px solid #111/);
   assert.match(stylesheet, /\.account-overview__facts > div\s*\{[^}]*border-bottom:\s*1px solid #111/);

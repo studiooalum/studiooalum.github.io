@@ -1086,8 +1086,6 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 /* My Oalum dashboard */
 .account-layout.js-account-member-layout {
   align-items: start;
-  font-family: "Pretendard", var(--font-kor-body, sans-serif);
-  font-size: 16px;
 }
 
 .account-overview {
@@ -1448,10 +1446,4 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   .account-detail-back {
     transition: none;
   }
-}
-
-/* Account member typography follows the shared 16px Pretendard form rule. */
-.account-page .account-layout.js-account-member-layout :is(p, span, strong, small, h2, dt, dd, a, button, label, input, textarea, select) {
-  font-family: "Pretendard", var(--font-kor-body, sans-serif) !important;
-  font-size: 16px !important;
 }
