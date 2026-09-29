@@ -42,7 +42,7 @@
 .repair-ticket-summary__head,
 .repair-ticket-thread__head > div {
   display: grid;
-  gap: 6px;
+  gap: 3px;
 }
 
 .repair-ticket-kicker {
@@ -62,7 +62,7 @@
 
 .repair-ticket-summary h1 {
   font-size: var(--type-page-title, 34px);
-  line-height: 1.18;
+  line-height: 1.2;
   color: rgba(17, 17, 17, 0.85);
   overflow-wrap: anywhere;
 }
@@ -73,9 +73,9 @@
 
 .repair-ticket-status {
   width: fit-content;
-  margin: 4px 0 0;
+  margin: 0;
   border: 0;
-  padding: 4px 0;
+  padding: 0;
   font-family: var(--font-kor-meta);
   font-size: 15px;
   line-height: 1.5;
@@ -177,6 +177,7 @@
   color: rgba(17, 17, 17, 0.85);
   font-size: 17px;
   cursor: pointer;
+  margin-left: auto;
 }
 
 .repair-ticket-messages {
@@ -344,7 +345,9 @@
 .repair-ticket-composer .repair-ticket-file-button,
 .repair-ticket-composer__submit .repair-ticket-submit {
   box-sizing: border-box;
-  width: 50%;
+  width: 50% !important;
+  max-width: 50%;
+  flex: 0 0 50%;
   min-height: 48px;
   font-family: var(--font-kor-body);
   font-size: 16px;
@@ -357,6 +360,11 @@
   border-color: #111 !important;
   background: #fff !important;
   color: rgba(17, 17, 17, 0.85) !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
 }
 
 .repair-ticket-composer__submit .repair-ticket-submit,

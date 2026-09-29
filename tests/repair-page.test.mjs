@@ -207,7 +207,7 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
 test("Repair Ticket uses compact application-style actions and simplified copy", () => {
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260929-ticket-03/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-04/);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260929-ticket-02/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
@@ -222,6 +222,12 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketCss, /\.repair-ticket-loading,[\s\S]*?#repairPaymentDialogStatus\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.85\);[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;/);
   assert.match(repairTicketCss, /\.repair-ticket-summary h1,[\s\S]*?\.repair-ticket-status\s*\{[^}]*font-weight:\s*600;/);
   assert.match(repairTicketCss, /\.repair-ticket-message__meta time\s*\{[^}]*font-size:\s*12px;/);
+  assert.doesNotMatch(repairTicketHtml, /최대 4장 · 장당 8MB/);
+  assert.match(repairTicketCss, /\.repair-ticket-summary__head,[\s\S]*?gap:\s*3px;/);
+  assert.match(repairTicketCss, /\.repair-ticket-status\s*\{[^}]*margin:\s*0;[^}]*padding:\s*0;/);
+  assert.match(repairTicketCss, /\.repair-ticket-refresh\s*\{[^}]*margin-left:\s*auto;/);
+  assert.match(repairTicketCss, /\.repair-ticket-composer \.repair-ticket-file-button,[\s\S]*?width:\s*50% !important;[^}]*max-width:\s*50%;[^}]*flex:\s*0 0 50%;/);
+  assert.match(repairTicketCss, /\.repair-ticket-composer \.repair-ticket-file-button:hover\s*\{[^}]*background:\s*#fff !important;[^}]*box-shadow:\s*none !important;[^}]*transform:\s*none !important;[^}]*transition:\s*none !important;/);
 });
 
 test("guest repair lookup number is provided consistently", () => {
