@@ -207,7 +207,7 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
 test("Repair Ticket uses compact application-style actions and simplified copy", () => {
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260929-ticket-02/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260929-ticket-03/);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260929-ticket-02/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
@@ -218,6 +218,10 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketSource, /상태 안내/);
   assert.match(repairTicketSource, /수선 접수가 완료 되었습니다\. 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketsSource, /body: "수선 접수가 완료 되었습니다\. 확인 후 진행 방향과 예상 가격을 안내 드립니다\."/);
+  assert.match(repairTicketCss, /\.repair-ticket-composer\s*\{[^}]*gap:\s*6px;/);
+  assert.match(repairTicketCss, /\.repair-ticket-loading,[\s\S]*?#repairPaymentDialogStatus\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.85\);[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;/);
+  assert.match(repairTicketCss, /\.repair-ticket-summary h1,[\s\S]*?\.repair-ticket-status\s*\{[^}]*font-weight:\s*600;/);
+  assert.match(repairTicketCss, /\.repair-ticket-message__meta time\s*\{[^}]*font-size:\s*12px;/);
 });
 
 test("guest repair lookup number is provided consistently", () => {

@@ -266,7 +266,7 @@
 
 .repair-ticket-composer {
   display: grid;
-  gap: 12px;
+  gap: 6px;
   border-top: 1px solid #111;
   padding-top: 18px;
 }
@@ -430,6 +430,56 @@
 #repairPaymentClose { width: 40px; height: 40px; border: 0; background: transparent; font-size: 28px; cursor: pointer; }
 #repairPaymentConfirm { width: 50%; }
 #repairPaymentDialogStatus { margin-top: 14px; font-size: 14px; line-height: 1.6; }
+
+/* Ticket typography follows the shared 16px Pretendard body rule. */
+.repair-ticket-loading,
+.repair-ticket-summary h1,
+.repair-ticket-status,
+.repair-ticket-facts dt,
+.repair-ticket-facts dd,
+.repair-ticket-request-images h2,
+.repair-ticket-closed,
+.repair-ticket-empty,
+.repair-ticket-message__meta,
+.repair-ticket-message__author,
+.repair-ticket-message__body,
+.repair-ticket-message--system .repair-ticket-message__body,
+.repair-ticket-message-field > span,
+.repair-ticket-message-field textarea,
+.repair-ticket-file-button,
+.repair-ticket-submit,
+.repair-ticket-file-help,
+.repair-ticket-form-status,
+.repair-ticket-file-list,
+.repair-ticket-payment h2,
+#repairTicketPaymentAmount,
+#repairTicketPaymentStatus,
+.repair-payment-dialog h2,
+#repairPaymentDialogStatus {
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.repair-ticket-summary h1,
+.repair-ticket-status {
+  font-weight: 600;
+}
+
+.repair-ticket-message__meta time {
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.repair-ticket-submit,
+.repair-ticket-composer__submit .repair-ticket-submit,
+.repair-ticket-composer__submit .repair-ticket-submit:hover {
+  color: #fff;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .repair-ticket-shell { animation: ticket-reveal .25s ease-out; }
   @keyframes ticket-reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
