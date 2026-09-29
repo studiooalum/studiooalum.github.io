@@ -53,7 +53,7 @@ test("checkout follows the three-column repair form layout", () => {
 });
 
 test("account and checkout share the standard page-top spacing", () => {
-  assert.match(accountHtml, /account\.css\?v=20260929-account-01/);
+  assert.match(accountHtml, /account\.css\?v=20260929-account-02/);
   assert.match(accountCss, /@media \(max-width: 959px\)[\s\S]*?\.account-main \{\s*padding-top: calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\);/);
 });
 

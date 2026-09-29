@@ -1157,7 +1157,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 
 .account-overview__welcome {
   display: grid;
-  gap: 3px;
+  gap: 0;
   margin-top: 24px;
 }
 
@@ -1165,7 +1165,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   margin: 0;
   font-family: "Pretendard", var(--font-kor-body, sans-serif);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: var(--type-body-leading, 1.55);
 }
 
 .account-overview__welcome p:last-child {
@@ -1180,8 +1180,8 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 
 .account-overview__facts > div {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
   padding: 11px 0;
   border-bottom: 1px solid #111;
 }
