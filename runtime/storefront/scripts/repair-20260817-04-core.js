@@ -569,7 +569,7 @@ async function submitRepairRequest() {
     if (dom.successCopy) {
       dom.successCopy.textContent = Number.isInteger(ticketNumber) && ticketNumber > 0
         ? `수선 티켓 #${String(ticketNumber).padStart(3, "0")}이 생성되었습니다.`
-        : `${requestNumber ? `비회원 조회번호는 ${requestNumber}입니다. ` : ""}진행 상황과 오알룸의 안내를 확인하고, 수선에 관한 메시지를 남길 수 있습니다. 진행 상황은 리페어 티켓에서 확인해주세요.`;
+        : `${requestNumber ? `비회원 조회번호는 ${requestNumber}입니다.\n` : ""}진행 상황과 오알룸의 안내를 확인하고, 수선에 관한 메세지를 남길 수 있습니다.\n진행 상황은 리페어 티켓에서 확인해주세요.`;
     }
     if (dom.successTicket) {
       const ticketUrl = String(payload.ticketUrl || "").trim();

@@ -634,6 +634,10 @@ body.repair-page .repair-request-success__lead {
   padding-bottom: 48px;
 }
 
+body.repair-page .repair-request-success__lead > span {
+  display: block;
+}
+
 body.repair-page .repair-request-success__summary,
 body.repair-page .repair-request-success__delivery {
   display: grid;
@@ -650,6 +654,10 @@ body.repair-page .repair-request-success__summary {
   border-bottom: 1px solid #111;
 }
 
+body.repair-page .repair-request-success__summary .js-repair-success-copy {
+  white-space: pre-line;
+}
+
 body.repair-page .repair-request-success__delivery address {
   font-style: normal;
 }
@@ -660,7 +668,10 @@ body.repair-page .repair-request-success__summary .repair-submit {
   min-width: 0;
   min-height: 0;
   justify-content: flex-start;
+  justify-self: start;
+  align-self: start;
   margin: 0;
+  margin-left: 0 !important;
   padding: 0;
   border: 0 !important;
   background: transparent !important;
@@ -673,6 +684,7 @@ body.repair-page .repair-request-success__summary .repair-submit {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+  transform: none !important;
 }
 
 body.repair-page .repair-request-success__summary .repair-submit:is(:hover, :focus-visible, :active) {

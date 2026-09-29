@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260929-85">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260929-success-02">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260930-success-03">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -116,8 +116,6 @@
       </header>
 
       <div class="repair-request-rail__body">
-        <p class="repair-request-rail__notice">접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다.</p>
-
         <form class="repair-request-form js-repair-form" id="repairRequestForm" enctype="multipart/form-data" novalidate>
           <div class="repair-honeypot" aria-hidden="true">
             <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
@@ -198,7 +196,7 @@
 
         <section class="repair-request-success js-repair-success" hidden aria-live="polite">
           <h2>수선이 접수 되었습니다.</h2>
-          <p class="repair-request-success__lead">접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다. 오알룸 앞으로 택배를 보내주세요.</p>
+          <p class="repair-request-success__lead"><span>접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다.</span><span>오알룸 앞으로 택배를 보내주세요.</span></p>
           <div class="repair-request-success__summary">
             <p class="js-repair-success-copy"></p>
             <a class="repair-submit js-repair-success-ticket" href="./account.html" hidden>Repair Ticket</a>
@@ -216,7 +214,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260929-success-02";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260930-success-03";
 
     initSiteChrome();
     initCartUI();

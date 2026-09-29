@@ -249,7 +249,7 @@ test("accordion titles stay underlined on mobile and use half-height desktop spa
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.match(repairHtml, /<h1 class="repair-studio-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260929-success-02/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260930-success-03/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
@@ -286,7 +286,8 @@ test("repair introduction and accordion follow the archive body typography", () 
 
 test("repair receipt uses the request form line rhythm and an underlined ticket action", () => {
   assert.match(repairHtml, /<h2>수선이 접수 되었습니다\.<\/h2>/);
-  assert.match(repairHtml, /class="repair-request-success__lead">접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다\. 오알룸 앞으로 택배를 보내주세요\.<\/p>/);
+  assert.match(repairHtml, /class="repair-request-success__lead"><span>접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다\.<\/span><span>오알룸 앞으로 택배를 보내주세요\.<\/span><\/p>/);
+  assert.doesNotMatch(repairHtml, /class="repair-request-rail__notice"/);
   assert.match(repairHtml, /class="repair-submit js-repair-success-ticket"[^>]*>Repair Ticket<\/a>/);
   assert.doesNotMatch(repairHtml, /Submitted|Repair Ticket이 함께 생성되었습니다|새 수선 접수/);
   assert.match(repairDetailCss, /\.repair-request-success\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
@@ -294,8 +295,10 @@ test("repair receipt uses the request form line rhythm and an underlined ticket 
   assert.match(repairDetailCss, /\.repair-request-success__summary,[\s\S]*?\.repair-request-success__delivery\s*\{[^}]*min-height:\s*196px;[^}]*align-content:\s*center;[^}]*background:\s*#fff;/);
   assert.match(repairDetailCss, /\.repair-request-success__summary\s*\{[^}]*border-bottom:\s*1px solid #111;/);
   assert.doesNotMatch(repairDetailCss, /\.repair-request-success__delivery\s*\{[^}]*border-bottom/);
-  assert.match(repairDetailCss, /\.repair-request-success__summary \.repair-submit\s*\{[^}]*background:\s*transparent !important;[^}]*font-size:\s*16px;[^}]*text-align:\s*left;[^}]*text-decoration:\s*underline;/);
-  assert.match(repairRequestSource, /비회원 조회번호는 \$\{requestNumber\}입니다\./);
+  assert.match(repairDetailCss, /\.repair-request-success__summary \.js-repair-success-copy\s*\{[^}]*white-space:\s*pre-line;/);
+  assert.match(repairDetailCss, /\.repair-request-success__summary \.repair-submit\s*\{[^}]*justify-self:\s*start;[^}]*margin-left:\s*0 !important;[^}]*background:\s*transparent !important;[^}]*font-size:\s*16px;[^}]*text-align:\s*left;[^}]*text-decoration:\s*underline;[^}]*transform:\s*none !important;/);
+  assert.match(repairRequestSource, /비회원 조회번호는 \$\{requestNumber\}입니다\.\\n/);
+  assert.match(repairRequestSource, /수선에 관한 메세지를 남길 수 있습니다\.\\n진행 상황은 리페어 티켓에서 확인해주세요\./);
   assert.doesNotMatch(repairRequestSource, /수선 접수가 완료되었습니다/);
 });
 
