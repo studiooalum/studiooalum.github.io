@@ -1,7 +1,7 @@
 .repair-ticket-page {
   min-height: 100vh;
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-kor-body);
 }
 
@@ -63,7 +63,7 @@
 .repair-ticket-summary h1 {
   font-size: var(--type-page-title, 34px);
   line-height: 1.18;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   overflow-wrap: anywhere;
 }
 
@@ -174,7 +174,7 @@
   border: 1px solid #111;
   padding: 0;
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-size: 17px;
   cursor: pointer;
 }
@@ -235,7 +235,7 @@
 .repair-ticket-message--customer .repair-ticket-message__body {
   border-color: rgba(17, 17, 17, 0.8);
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .repair-ticket-message--system {
@@ -310,7 +310,7 @@
   border: 1px solid #111;
   padding: 0 14px;
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-kor-button);
   font-size: 14px;
   font-weight: 600;

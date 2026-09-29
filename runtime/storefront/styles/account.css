@@ -1,7 +1,7 @@
 .account-page {
   min-height: 100vh;
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-kor-body);
   letter-spacing: var(--tracking-korean);
 }
@@ -40,7 +40,7 @@
 
 .account-auth-tab.is-active {
   border-bottom-color: rgba(17, 17, 17, 0.8);
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .account-panel {
@@ -94,7 +94,7 @@
 
 .account-guest-lookup-help {
   margin: 0;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-kor-body);
   font-size: 16px;
   line-height: 1.55;
@@ -182,13 +182,13 @@
 
 .account-btn--secondary {
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .account-btn--signup {
   background: transparent;
   border-color: rgba(17, 17, 17, 0.8);
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .account-inline-link-row {
@@ -196,7 +196,7 @@
 }
 
 .account-inline-link {
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
@@ -244,7 +244,7 @@
   border-radius: 0;
   outline: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   font-weight: 400;
@@ -284,7 +284,7 @@
 
 .signup-page .account-panel--signup .account-copy {
   margin: 0;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.55;
@@ -296,7 +296,7 @@
 }
 
 .signup-page .account-panel--signup .account-field-note {
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.55;
@@ -312,7 +312,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.55;
@@ -342,7 +342,7 @@
 }
 
 .signup-page .account-panel--signup .account-consent-prefix {
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-size: 16px;
   font-weight: 400;
   line-height: inherit;
@@ -374,7 +374,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.45;
@@ -625,7 +625,7 @@
   align-items: start;
   padding: clamp(14px, 3vw, 24px);
   border: 1px solid #111;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   text-decoration: none;
 }
 
@@ -874,7 +874,7 @@
 
 .account-consent-tag--optional {
   background: rgba(17, 17, 17, 0.04);
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .account-points {
@@ -1019,7 +1019,7 @@
 
 /* Auth action lock: mirrors the Edition add-to-cart link and half-width primary actions. */
 body:is(.signup-page, .forgot-password-page) .account-panel :is(.account-copy, .account-field-note) {
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   font-weight: 400;
@@ -1066,7 +1066,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link {
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   font-weight: 400;
@@ -1080,7 +1080,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link {
 body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :focus-visible, :active) {
   border: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 /* My Oalum dashboard */
@@ -1214,7 +1214,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-kor-button);
   font-size: 11px;
   font-weight: 500;
@@ -1245,7 +1245,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   padding: clamp(18px, 2vw, 32px);
   overflow: hidden;
   border: 1px solid #111;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   text-decoration: none;
 }
 
@@ -1361,7 +1361,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   display: inline-flex;
   width: fit-content;
   align-items: center;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-book);
   font-size: 20px;
   line-height: 1;

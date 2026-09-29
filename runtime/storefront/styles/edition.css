@@ -2,7 +2,7 @@
   --bg: #ffffff;
   --point: #e34234;
   background: var(--bg);
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   min-height: 100vh;
   overflow-y: auto;
   font-family: var(--font-base);
@@ -114,7 +114,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -151,7 +151,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   cursor: pointer;
 }
 
@@ -276,7 +276,7 @@
   font-size: 16px;
   font-weight: 500;
   line-height: 1.2;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .edition-price .shop-card__discount {
@@ -293,7 +293,7 @@
   letter-spacing: var(--tracking-korean);
   line-height: 1.45;
   white-space: pre-line;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 /* Keep the existing placement and tune only the edition copy typography. */
@@ -309,7 +309,7 @@
   font-weight: 400 !important;
   line-height: 1.45 !important;
   letter-spacing: -0.025em !important;
-  color: rgba(17, 17, 17, 0.9) !important;
+  color: rgba(17, 17, 17, 0.85) !important;
 }
 
 .edition-page .edition-price,
@@ -329,7 +329,7 @@
   font-weight: 400;
   line-height: 1.45;
   letter-spacing: 0;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .edition-spec {
@@ -354,7 +354,7 @@
 }
 
 .edition-tag {
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
@@ -390,7 +390,7 @@
 
 .edition-btn--secondary {
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   border-color: rgba(17, 17, 17, 0.8);
 }
 

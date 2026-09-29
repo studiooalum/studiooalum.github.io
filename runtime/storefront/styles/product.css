@@ -2,7 +2,7 @@
   --bg: #ffffff;
   --point: #e34234;
   background: var(--bg);
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   min-height: 100vh;
   overflow-y: auto;
   font-family: var(--font-base);
@@ -40,7 +40,7 @@
   letter-spacing: 0;
   line-height: 1.55;
   white-space: pre-line;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .product-meta {
@@ -53,7 +53,7 @@
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1.55;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .product-meta__item {
@@ -120,7 +120,7 @@
   font-size: 13px;
   line-height: 1;
   letter-spacing: var(--tracking-korean);
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 @media (max-width: 899px) {

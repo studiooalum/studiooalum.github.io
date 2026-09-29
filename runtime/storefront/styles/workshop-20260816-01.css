@@ -3,7 +3,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-base);
 }
 
@@ -336,7 +336,7 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 0;
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   cursor: pointer;
 }
 
@@ -402,7 +402,7 @@ body.workshop-booking-open .workshop-rail__panel {
   display: inline-block;
   font-size: clamp(42px, 4vw, 56px);
   letter-spacing: -0.04em;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .workshop-calendar__spacer {
@@ -441,7 +441,7 @@ body.workshop-booking-open .workshop-rail__panel {
   line-height: 1;
   letter-spacing: var(--tracking-latin);
   text-transform: lowercase;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .workshop-calendar__day,
@@ -525,7 +525,7 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 1px solid rgba(17, 17, 17, 0.6);
   padding: 0 8px;
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   text-align: center;
   cursor: pointer;
 }
@@ -589,7 +589,7 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 1px solid rgba(17, 17, 17, 0.6);
   padding: 10px 12px;
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font: inherit;
 }
 
@@ -610,7 +610,7 @@ body.workshop-booking-open .workshop-rail__panel {
   border: 0;
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-kor-button);
   font-size: 14px;
   line-height: 1.2;
@@ -639,7 +639,7 @@ body.workshop-booking-open .workshop-rail__panel {
 }
 
 .workshop-booking-form__feedback.is-success {
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 @media (min-width: 960px) {

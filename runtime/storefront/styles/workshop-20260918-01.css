@@ -94,7 +94,7 @@
   line-height: 1.2;
   letter-spacing: var(--tracking-korean);
   text-transform: none;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .workshop-title {
@@ -131,7 +131,7 @@
   text-transform: none;
   text-decoration: underline;
   text-underline-offset: 2px;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .workshop-body-copy {
@@ -189,7 +189,7 @@
 .workshop-notes .workshop-note {
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .workshop-summary-card {
@@ -259,7 +259,7 @@ body.workshop-page .workshop-summary-card__action .workshop-apply-btn {
 body.workshop-page .workshop-summary-card__action .workshop-apply-btn:hover,
 body.workshop-page .workshop-summary-card__action .workshop-apply-btn:focus-visible {
   background: #fff;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .workshop-stage__summary {
@@ -315,7 +315,7 @@ body.workshop-page .workshop-summary-card__action .workshop-apply-btn:focus-visi
   border: 0;
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -344,7 +344,7 @@ body.workshop-page .workshop-summary-card__action .workshop-apply-btn:focus-visi
   border: 0;
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   cursor: pointer;
 }
 

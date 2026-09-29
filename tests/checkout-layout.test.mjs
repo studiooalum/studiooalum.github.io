@@ -14,7 +14,7 @@ const [html, css, checkoutScript, archiveSource, accountHtml, accountCss] = awai
 ]);
 
 test("checkout follows the three-column repair form layout", () => {
-  assert.match(html, /checkout\.css\?v=20260929-90/);
+  assert.match(html, /checkout\.css\?v=20260929-85/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
   assert.doesNotMatch(html, /<span class="required">\*<\/span>/);
@@ -53,7 +53,7 @@ test("checkout follows the three-column repair form layout", () => {
 });
 
 test("account and checkout share the standard page-top spacing", () => {
-  assert.match(accountHtml, /account\.css\?v=20260929-90/);
+  assert.match(accountHtml, /account\.css\?v=20260929-85/);
   assert.match(accountCss, /@media \(max-width: 959px\)[\s\S]*?\.account-main \{\s*padding-top: calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\);/);
 });
 

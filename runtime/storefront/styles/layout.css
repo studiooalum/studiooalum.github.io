@@ -159,7 +159,7 @@ canvas {
 }
 
 .site-footer__link:hover {
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .site-footer__logo {
@@ -169,7 +169,7 @@ canvas {
   line-height: 0.85;
   letter-spacing: var(--tracking-latin);
   text-transform: lowercase;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .site-footer__logo-mark {
@@ -186,7 +186,7 @@ canvas {
   margin-top: 0;
   align-items: center;
   justify-content: center;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .site-footer__instagram svg {
@@ -244,7 +244,7 @@ canvas {
   border: 0;
   padding: 0;
   background: transparent;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
   cursor: pointer;
 }
 
@@ -286,7 +286,7 @@ canvas {
   font-size: 11px;
   letter-spacing: -0.02em;
   line-height: 1.4;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .site-policy__content {
@@ -311,7 +311,7 @@ canvas {
   font-size: 11px;
   letter-spacing: -0.02em;
   line-height: 1.4;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .site-policy__subheading {
@@ -320,7 +320,7 @@ canvas {
   font-size: 10px;
   letter-spacing: -0.02em;
   line-height: 1.35;
-  color: rgba(17, 17, 17, 0.9);
+  color: rgba(17, 17, 17, 0.85);
 }
 
 .site-policy__body,

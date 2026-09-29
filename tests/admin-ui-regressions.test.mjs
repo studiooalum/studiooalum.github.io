@@ -60,7 +60,7 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
     read("runtime/storefront/styles/newsletter-20260818-01.css"),
   ]);
 
-  assert.match(html, /newsletter-20260818-03\.css\?v=20260929-90/);
+  assert.match(html, /newsletter-20260818-03\.css\?v=20260929-85/);
   assert.match(html, /newsletter-20260818-02\.js\?v=20260915-01/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry > \*[\s\S]*grid-column:\s*2/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*grid-template-columns:\s*repeat\(2/);
@@ -72,7 +72,7 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
 
 test("Newsletter main keeps the previous layout and title", async () => {
   const html = await read("newsletter.html");
-  assert.match(html, /styles\/layout\.css\?v=20260929-90/);
+  assert.match(html, /styles\/layout\.css\?v=20260929-85/);
   assert.match(html, /<span class="gnb__title">OALUM Newsletter<\/span>/);
 });
 
@@ -101,7 +101,7 @@ test("Archive category navigation remains on the list and hides on details", asy
   assert.match(stylesheet, /\.archive-detail-mode \.archive-tags[\s\S]*display:\s*none/);
   assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec[\s\S]*grid-template-columns:\s*76px minmax\(0, 1fr\)/);
   assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec[\s\S]*font-size:\s*16px/);
-  assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec > span[\s\S]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.9\)/);
+  assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-spec > span[\s\S]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\)/);
   assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-description\s*\{[^}]*margin-bottom:\s*36px/);
   assert.match(stylesheet, /\.archive-detail-meta__more \.archive-detail-tag[\s\S]*text-decoration-line:\s*underline/);
 });
@@ -129,7 +129,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260929-90/);
+  assert.match(html, /account\.css\?v=20260929-85/);
   assert.match(html, /account\.js\?v=20260926-02/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
@@ -142,7 +142,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
   assert.match(stylesheet, /\.account-auth-shell > \.account-panel \.account-heading\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*font-weight:\s*600;/);
   assert.match(stylesheet, /\.account-auth-shell \.account-field input\s*\{[^}]*border:\s*0;[^}]*border-bottom:\s*1px solid #111;[^}]*font-size:\s*16px;/);
   assert.match(stylesheet, /\.account-auth-shell \.account-field input::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);/);
-  assert.match(stylesheet, /\.account-guest-lookup-help\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.9\);[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.account-guest-lookup-help\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\);[^}]*font-size:\s*16px;/);
 });
 
 test("login and guest errors use red field text and underlines without an error sentence", async () => {
@@ -169,14 +169,14 @@ test("signup follows the 16px line-form and checkbox rules", async () => {
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260929-90/);
+  assert.match(html, /account\.css\?v=20260929-85/);
   assert.match(html, /이메일과 비밀번호로 계정을 만들고 주문내역, 주소, 포인트를 관리할 수 있습니다\./);
   assert.match(html, /비밀번호는 8자 이상으로 입력해주세요\./);
   assert.doesNotMatch(html, /영문, 숫자, 기호를 함께 쓰면 더 안전합니다\./);
   for (const placeholder of ["이름", "이메일", "인증번호 6자리", "비밀번호", "비밀번호 확인"]) {
     assert.match(html, new RegExp(`placeholder="${placeholder}"`));
   }
-  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-copy\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.9\);[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-copy\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\);[^}]*font-size:\s*16px;/);
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-field input::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);/);
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox\s*\{[^}]*font-size:\s*16px;/);
   assert.match(stylesheet, /\.signup-page \.account-panel--signup \.account-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
@@ -190,7 +190,7 @@ test("signup follows the 16px line-form and checkbox rules", async () => {
 test("password recovery follows the signup line-form and action rules", async () => {
   const html = await read("forgot-password.html");
 
-  assert.match(html, /account\.css\?v=20260929-90/);
+  assert.match(html, /account\.css\?v=20260929-85/);
   for (const placeholder of ["이메일", "인증번호 6자리", "새 비밀번호", "새 비밀번호 확인"]) {
     assert.match(html, new RegExp(`placeholder="${placeholder}"`));
   }

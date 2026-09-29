@@ -27,7 +27,7 @@ body.edition-page #addToCartBtn {
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
-  color: rgba(17, 17, 17, 0.9) !important;
+  color: rgba(17, 17, 17, 0.85) !important;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -48,12 +48,12 @@ body.edition-page #buyNowBtn {
 
 body.edition-page #addToCartBtn:is(:hover, :focus-visible, .is-pointer-hover) {
   background: transparent !important;
-  color: rgba(17, 17, 17, 0.9) !important;
+  color: rgba(17, 17, 17, 0.85) !important;
 }
 
 body.edition-page #buyNowBtn:is(:hover, :focus-visible, :active, .is-pointer-hover) {
   background: #fff !important;
-  color: rgba(17, 17, 17, 0.9) !important;
+  color: rgba(17, 17, 17, 0.85) !important;
 }
 
 body.edition-page .edition-actions {
