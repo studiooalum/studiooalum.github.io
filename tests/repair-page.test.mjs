@@ -24,6 +24,7 @@ const accountHtml = await readFile(new URL("../account.html", import.meta.url), 
 const repairAdminSource = await readFile(new URL("../runtime/storefront/scripts/repair-admin.js", import.meta.url), "utf8");
 const repairTicketSource = await readFile(new URL("../runtime/storefront/scripts/repair-ticket-20260824-01.js", import.meta.url), "utf8");
 const repairTicketHtml = await readFile(new URL("../repair-ticket.html", import.meta.url), "utf8");
+const repairTicketCss = await readFile(new URL("../runtime/storefront/styles/repair-ticket-20260824-01.css", import.meta.url), "utf8");
 const repairAdminHtml = await readFile(new URL("../repair-admin.html", import.meta.url), "utf8");
 const middlewareSource = await readFile(new URL("../functions/_middleware.js", import.meta.url), "utf8");
 
@@ -200,6 +201,17 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
   assert.match(repairTicketSource, /data-protected-image-path/);
   assert.match(repairTicketSource, /trackingUrl \? `<div><dt>배송 조회<\/dt>/);
   assert.doesNotMatch(repairTicketSource, /\["배송",[^\n]+\|\| "미발송"\]/);
+});
+
+test("Repair Ticket uses compact application-style actions and simplified copy", () => {
+  assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
+  assert.match(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260929-ticket-01/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260929-ticket-01/);
+  assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
+  assert.match(repairTicketCss, /\.repair-ticket-composer \.repair-ticket-file-button,[\s\S]*?width:\s*50%;[\s\S]*?min-height:\s*48px;[\s\S]*?font-size:\s*16px;[\s\S]*?font-weight:\s*400;/);
+  assert.match(repairTicketCss, /\.repair-ticket-composer \.repair-ticket-file-button:hover\s*\{[^}]*background:\s*#fff;/);
+  assert.match(repairTicketCss, /\.repair-ticket-composer__submit \.repair-ticket-submit:hover\s*\{[^}]*background:\s*#111;/);
 });
 
 test("guest repair lookup number is provided consistently", () => {

@@ -334,6 +334,31 @@
   cursor: wait;
 }
 
+.repair-ticket-composer .repair-ticket-file-button,
+.repair-ticket-composer__submit .repair-ticket-submit {
+  box-sizing: border-box;
+  width: 50%;
+  min-height: 48px;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: var(--type-body-leading, 1.55);
+}
+
+.repair-ticket-composer .repair-ticket-file-button,
+.repair-ticket-composer .repair-ticket-file-button:hover {
+  border-color: #111;
+  background: #fff;
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.repair-ticket-composer__submit .repair-ticket-submit,
+.repair-ticket-composer__submit .repair-ticket-submit:hover {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
 .repair-ticket-file-help,
 .repair-ticket-form-status,
 .repair-ticket-file-list {

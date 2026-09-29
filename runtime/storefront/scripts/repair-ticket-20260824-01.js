@@ -165,8 +165,6 @@ function renderFacts(ticket) {
     ["최종 가격", formatPrice(repair.finalAmount)],
     ["입금 안내", [repair.bankAccount, repair.paymentInstructions].filter(Boolean).join("\n") || "미정"],
     ...(shippingText ? [["배송", shippingText]] : []),
-    ["신청일", formatDate(repair.createdAt)],
-    ["최근 업데이트", formatDate(repair.updatedAt)],
     ["Ticket 생성일", formatDate(ticket.createdAt)],
     ["Ticket 종료일", ticket.closedAt ? formatDate(ticket.closedAt) : "진행 중"],
   ];
