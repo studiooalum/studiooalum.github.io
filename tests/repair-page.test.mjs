@@ -25,6 +25,11 @@ const repairAdminSource = await readFile(new URL("../runtime/storefront/scripts/
 const repairTicketSource = await readFile(new URL("../runtime/storefront/scripts/repair-ticket-20260824-01.js", import.meta.url), "utf8");
 const repairTicketHtml = await readFile(new URL("../repair-ticket.html", import.meta.url), "utf8");
 const repairAdminHtml = await readFile(new URL("../repair-admin.html", import.meta.url), "utf8");
+const middlewareSource = await readFile(new URL("../functions/_middleware.js", import.meta.url), "utf8");
+
+test("repair submissions allow enough retries to recover from transient failures", () => {
+  assert.match(middlewareSource, /\["\/api\/repairs", 20\]/);
+});
 
 test("repair page keeps the Figma accordion content contract", () => {
   assert.match(repairHtml, /repair-20260915-01\.css\?v=20260929-85/);
@@ -139,9 +144,10 @@ test("repair request follows the compact line-form reference", () => {
   assert.match(repairHtml, /접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다\./);
   assert.doesNotMatch(repairHtml, /접수 후 물건을 보내주시면 상태를 확인하고/);
   assert.match(repairHtml, /name="addressLine2"[^>]+required/);
-  assert.match(repairHtml, /type="hidden" name="itemType" value="수선 의뢰"/);
+  assert.doesNotMatch(repairHtml, /name="itemType"/);
   assert.match(repairHtml, /name="issueDescription"[^>]+placeholder="어떤 제품의, 어떤 부분이 손상되었나요\?"[^>]+required/);
   assert.match(repairHtml, /<legend>원하시는 방향이 있나요\?<\/legend>/);
+  assert.match(repairHtml, /name="desiredResult" value="디자인은 맡기고 싶어요"/);
   assert.match(repairHtml, /<h3>제품 사진을 올려주세요<\/h3>/);
   assert.match(repairHtml, />사진 선택하기<\/span>/);
   assert.doesNotMatch(repairHtml, /어떤 제품인가요\?|어떤 부분이 손상되었나요\?<\/span>|기타 요청사항/);
@@ -221,7 +227,7 @@ test("accordion titles stay underlined on mobile and use half-height desktop spa
 test("repair introduction and accordion follow the archive body typography", () => {
   assert.match(repairHtml, /<h1 class="repair-studio-title">Repair Studio<\/h1>/);
   assert.match(repairHtml, /<section class="repair-stage" aria-label="수선 안내">/);
-  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260929-85/);
+  assert.match(repairHtml, /repair-20260925-01\.css\?v=20260929-success-01/);
   assert.match(repairDetailCss, /\.repair-field--line :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.3\);[^}]*opacity:\s*1;/);
   assert.match(repairDetailCss, /\.repair-field--line:focus-within\s*\{[^}]*box-shadow:\s*none;/);
   assert.match(repairDetailCss, /\.repair-required-mark\s*\{[^}]*font-size:\s*12px;[^}]*font-weight:\s*400;/);
@@ -254,6 +260,16 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /\.repair-field--line input,[\s\S]*?\.repair-field--line select,[\s\S]*?\.repair-field--line textarea\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/);
   assert.match(repairDetailCss, /\.repair-field--line\[hidden\]\s*\{[^}]*display:\s*none;/);
   assert.match(repairDetailCss, /\.repair-address-search-button:focus-visible\s*\{[^}]*width:\s*auto !important;[^}]*border:\s*0 !important;[^}]*background:\s*transparent !important;/);
+});
+
+test("repair receipt uses the request form line rhythm and an underlined ticket action", () => {
+  assert.match(repairHtml, /<h2>수선이 접수되었습니다\.<\/h2>/);
+  assert.match(repairHtml, /class="repair-request-success__lead">접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다\.<\/p>/);
+  assert.match(repairHtml, /class="repair-submit js-repair-success-ticket"[^>]*>Repair Ticket<\/a>/);
+  assert.doesNotMatch(repairHtml, /Submitted|Repair Ticket이 함께 생성되었습니다|새 수선 접수/);
+  assert.match(repairDetailCss, /\.repair-request-success\s*\{[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
+  assert.match(repairDetailCss, /\.repair-request-success__summary,[\s\S]*?\.repair-request-success__delivery\s*\{[^}]*min-height:\s*196px;[^}]*align-content:\s*center;[^}]*border-bottom:\s*1px solid #111;/);
+  assert.match(repairDetailCss, /\.repair-request-success__summary \.repair-submit\s*\{[^}]*background:\s*transparent;[^}]*font-size:\s*16px;[^}]*text-align:\s*left;[^}]*text-decoration:\s*underline;/);
 });
 
 test("repair content and accordion share one desktop sticky frame", () => {

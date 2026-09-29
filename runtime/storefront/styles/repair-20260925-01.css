@@ -601,6 +601,84 @@ body.repair-page .repair-form__status.is-error {
   }
 }
 
+/* Repair receipt follows the same line-field rhythm as the request form. */
+body.repair-page .repair-request-success {
+  display: grid;
+  gap: 0;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-request-success[hidden] {
+  display: none !important;
+}
+
+body.repair-page .repair-request-success :is(h2, p, address) {
+  margin: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: var(--type-body-leading, 1.55);
+}
+
+body.repair-page .repair-request-success > h2 {
+  font-weight: 600;
+}
+
+body.repair-page .repair-request-success__lead {
+  padding-bottom: 48px;
+}
+
+body.repair-page .repair-request-success__summary,
+body.repair-page .repair-request-success__delivery {
+  display: grid;
+  min-height: 196px;
+  align-content: center;
+  box-sizing: border-box;
+  padding: 24px 0;
+  border-bottom: 1px solid #111;
+}
+
+body.repair-page .repair-request-success__summary {
+  gap: 24px;
+  border-top: 1px solid #111;
+}
+
+body.repair-page .repair-request-success__delivery address {
+  font-style: normal;
+}
+
+body.repair-page .repair-request-success__summary .repair-submit {
+  display: inline-flex;
+  width: fit-content !important;
+  min-width: 0;
+  min-height: 0;
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+body.repair-page .repair-request-success__summary .repair-submit:is(:hover, :focus-visible, :active) {
+  border: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+}
+
 @media (max-width: 959px) {
   .repair-stage__sticky {
     display: contents;
