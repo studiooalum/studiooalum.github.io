@@ -662,7 +662,7 @@ body.repair-page .repair-request-success__delivery address {
   font-style: normal;
 }
 
-body.repair-page .repair-request-success__summary .repair-submit {
+body.repair-page .repair-request-success__summary .repair-request-success__ticket-link {
   display: inline-flex;
   width: fit-content !important;
   min-width: 0;
@@ -672,7 +672,8 @@ body.repair-page .repair-request-success__summary .repair-submit {
   align-self: start;
   margin: 0;
   margin-left: 0 !important;
-  padding: 0;
+  padding: 0 !important;
+  padding-inline: 0 !important;
   border: 0 !important;
   background: transparent !important;
   color: rgba(17, 17, 17, 0.85) !important;
@@ -687,7 +688,7 @@ body.repair-page .repair-request-success__summary .repair-submit {
   transform: none !important;
 }
 
-body.repair-page .repair-request-success__summary .repair-submit:is(:hover, :focus-visible, :active) {
+body.repair-page .repair-request-success__summary .repair-request-success__ticket-link:is(:hover, :focus-visible, :active) {
   border: 0 !important;
   background: transparent !important;
   color: rgba(17, 17, 17, 0.85) !important;

@@ -1,0 +1,75 @@
+.repair-ticket-shell {
+  --ticket-panel-gap: 72px;
+}
+
+.repair-ticket-summary {
+  gap: 0;
+}
+
+.repair-ticket-summary__head {
+  margin-bottom: var(--ticket-panel-gap);
+}
+
+.repair-ticket-facts {
+  gap: 4px;
+}
+
+.repair-ticket-facts > div {
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 36px;
+  align-items: center;
+  padding: 0;
+}
+
+.repair-ticket-facts dt,
+.repair-ticket-facts dd {
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.repair-ticket-request-images {
+  margin-top: var(--ticket-panel-gap);
+}
+
+.repair-ticket-composer .repair-ticket-file-button,
+.repair-ticket-composer__submit .repair-ticket-submit {
+  width: 25% !important;
+  max-width: 25%;
+  flex: 0 0 25%;
+}
+
+.repair-ticket-composer .repair-ticket-file-button,
+.repair-ticket-composer .repair-ticket-file-button:is(:hover, :focus-visible, :active),
+.repair-ticket-composer .repair-ticket-file-button.is-pointer-hover {
+  border-color: #111 !important;
+  background: #fff !important;
+  color: rgba(17, 17, 17, 0.85) !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+@media (min-width: 960px) {
+  .repair-ticket-thread {
+    padding-top: calc(48px + var(--ticket-panel-gap));
+  }
+}
+
+@media (max-width: 520px) {
+  .repair-ticket-facts > div {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+
+  .repair-ticket-composer .repair-ticket-file-button,
+  .repair-ticket-composer__submit .repair-ticket-submit {
+    width: 50% !important;
+    max-width: 50%;
+    flex-basis: 50%;
+  }
+}

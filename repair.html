@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260823-01.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260915-01.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260922-01.css?v=20260929-85">
-  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260930-success-03">
+  <link rel="stylesheet" href="./runtime/storefront/styles/repair-20260925-01.css?v=20260930-success-04">
 </head>
 <body class="repair-page">
   <nav class="gnb gnb--repair">
@@ -158,6 +158,20 @@
                 <span>메모</span>
                 <textarea name="issueDescription" rows="2" maxlength="4000" placeholder="어떤 제품의, 어떤 부분이 손상되었나요?" required></textarea>
               </label>
+              <label class="repair-field repair-field--line">
+                <span>제품 분류</span>
+                <select name="itemType" required>
+                  <option value="" selected disabled>제품 분류를 선택해주세요</option>
+                  <option value="자켓">자켓</option>
+                  <option value="상의">상의</option>
+                  <option value="하의">하의</option>
+                  <option value="데님">데님</option>
+                  <option value="니트">니트</option>
+                  <option value="가죽">가죽</option>
+                  <option value="특수소재">특수소재</option>
+                  <option value="기타">기타</option>
+                </select>
+              </label>
               <fieldset class="repair-choice-group repair-choice-group--line"><legend>원하시는 방향이 있나요?</legend><div><label><input type="radio" name="desiredResult" value="기존 모습과 비슷하게 수선" required> 기존 모습과 비슷하게 수선</label><label><input type="radio" name="desiredResult" value="수선 흔적을 살리고 싶어요"> 수선 흔적을 살리고 싶어요</label><label><input type="radio" name="desiredResult" value="디자인은 맡기고 싶어요"> 디자인은 맡기고 싶어요</label><label><input type="radio" name="desiredResult" value="잘 모르겠어요"> 잘 모르겠어요</label></div></fieldset>
             </div>
           </section>
@@ -199,7 +213,7 @@
           <p class="repair-request-success__lead"><span>접수 후 사진을 확인하고 수선 방향과 예상 가격을 안내드립니다.</span><span>오알룸 앞으로 택배를 보내주세요.</span></p>
           <div class="repair-request-success__summary">
             <p class="js-repair-success-copy"></p>
-            <a class="repair-submit js-repair-success-ticket" href="./account.html" hidden>Repair Ticket</a>
+            <a class="repair-request-success__ticket-link js-repair-success-ticket" href="./account.html" hidden>Repair Ticket</a>
           </div>
           <div class="repair-request-success__delivery">
             <address>서울특별시 동대문구 이문로42길 5<br>2층 201호<br>010-4746-5999<br>오알룸 앞</address>

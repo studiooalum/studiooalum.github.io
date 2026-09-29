@@ -157,7 +157,7 @@ function renderFacts(ticket) {
   const trackingUrl = safeUrl(repair.trackingUrl);
   const shippingText = [repair.carrier, repair.trackingNumber].filter(Boolean).join(" · ");
   const facts = [
-    ["수선 접수 조회번호", repair.requestNumber || "-"],
+    ["조회 번호", repair.requestNumber || "-"],
     ["신청자", repair.customerName || "-"],
     ["제품", repair.itemType || "-"],
     ["신청 내용", repair.issueDescription || "-"],
