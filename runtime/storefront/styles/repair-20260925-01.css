@@ -605,6 +605,7 @@ body.repair-page .repair-form__status.is-error {
 body.repair-page .repair-request-success {
   display: grid;
   gap: 0;
+  background: #fff;
   color: rgba(17, 17, 17, 0.85);
   font-family: "Pretendard", var(--font-kor-body, sans-serif);
   font-size: 16px;
@@ -640,12 +641,13 @@ body.repair-page .repair-request-success__delivery {
   align-content: center;
   box-sizing: border-box;
   padding: 24px 0;
-  border-bottom: 1px solid #111;
+  background: #fff;
 }
 
 body.repair-page .repair-request-success__summary {
   gap: 24px;
   border-top: 1px solid #111;
+  border-bottom: 1px solid #111;
 }
 
 body.repair-page .repair-request-success__delivery address {
@@ -660,9 +662,9 @@ body.repair-page .repair-request-success__summary .repair-submit {
   justify-content: flex-start;
   margin: 0;
   padding: 0;
-  border: 0;
-  background: transparent;
-  color: rgba(17, 17, 17, 0.85);
+  border: 0 !important;
+  background: transparent !important;
+  color: rgba(17, 17, 17, 0.85) !important;
   font-family: "Pretendard", var(--font-kor-body, sans-serif);
   font-size: 16px;
   font-weight: 400;
@@ -674,9 +676,9 @@ body.repair-page .repair-request-success__summary .repair-submit {
 }
 
 body.repair-page .repair-request-success__summary .repair-submit:is(:hover, :focus-visible, :active) {
-  border: 0;
-  background: transparent;
-  color: rgba(17, 17, 17, 0.85);
+  border: 0 !important;
+  background: transparent !important;
+  color: rgba(17, 17, 17, 0.85) !important;
 }
 
 @media (max-width: 959px) {
