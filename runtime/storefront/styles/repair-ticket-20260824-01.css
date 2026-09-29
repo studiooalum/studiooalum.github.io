@@ -35,8 +35,8 @@
 .repair-ticket-summary {
   display: grid;
   gap: 24px;
-  border-top: 1px solid #111;
-  padding-top: 16px;
+  border-top: 0;
+  padding-top: 0;
 }
 
 .repair-ticket-summary__head,
@@ -325,8 +325,15 @@
 }
 
 .repair-ticket-submit {
+  box-sizing: border-box;
+  width: 50%;
+  min-height: 48px;
   background: #111;
   color: #fff;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: var(--type-body-leading, 1.55);
 }
 
 .repair-ticket-submit:disabled {
@@ -347,9 +354,9 @@
 
 .repair-ticket-composer .repair-ticket-file-button,
 .repair-ticket-composer .repair-ticket-file-button:hover {
-  border-color: #111;
-  background: #fff;
-  color: rgba(17, 17, 17, 0.85);
+  border-color: #111 !important;
+  background: #fff !important;
+  color: rgba(17, 17, 17, 0.85) !important;
 }
 
 .repair-ticket-composer__submit .repair-ticket-submit,
@@ -421,7 +428,7 @@
 .repair-payment-dialog header { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
 .repair-payment-dialog h2 { font-size: 22px; font-weight: 500; }
 #repairPaymentClose { width: 40px; height: 40px; border: 0; background: transparent; font-size: 28px; cursor: pointer; }
-#repairPaymentConfirm { width: 100%; }
+#repairPaymentConfirm { width: 50%; }
 #repairPaymentDialogStatus { margin-top: 14px; font-size: 14px; line-height: 1.6; }
 @media (prefers-reduced-motion: no-preference) {
   .repair-ticket-shell { animation: ticket-reveal .25s ease-out; }

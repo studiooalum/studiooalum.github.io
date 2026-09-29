@@ -199,16 +199,21 @@ function renderMessages(ticket) {
     return;
   }
   const labels = { customer: "고객", admin: "Studio OALUM", system: "상태 안내" };
-  dom.messages.innerHTML = messages.map((message) => `
+  dom.messages.innerHTML = messages.map((message) => {
+    const body = message.authorType === "system" && String(message.body || "").startsWith("수선 접수가 완료")
+      ? "수선 접수가 완료 되었습니다. 확인 후 진행 방향과 예상 가격을 안내 드립니다."
+      : message.body || "";
+    return `
     <article class="repair-ticket-message repair-ticket-message--${escapeHtml(message.authorType)}">
       <div class="repair-ticket-message__meta">
         <span class="repair-ticket-message__author">${escapeHtml(labels[message.authorType] || message.authorType)}</span>
         <time>${escapeHtml(formatDate(message.createdAt))}</time>
       </div>
-      <p class="repair-ticket-message__body">${escapeHtml(message.body || "")}</p>
+      <p class="repair-ticket-message__body">${escapeHtml(body)}</p>
       ${(message.attachments || []).length ? `<div class="repair-ticket-message__attachments">${message.attachments.map((attachment) => `<img alt="${escapeHtml(attachment.filename || "첨부 이미지")}" data-protected-image-path="${escapeHtml(attachment.streamPath)}">`).join("")}</div>` : ""}
     </article>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function renderTicket() {
