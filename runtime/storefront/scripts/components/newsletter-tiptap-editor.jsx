@@ -227,28 +227,6 @@ const EDITOR_PROPS = {
   transformPastedHTML: cleanPastedHtml,
 };
 
-const PRIMARY_FONT_OPTIONS = [
-  { value: "Wanted Sans", label: "Wanted Sans · 제목" },
-  { value: "GothamBook", label: "Gotham Book · 영문" },
-  { value: "GothamLight", label: "Gotham Light" },
-  { value: "GothamMedium", label: "Gotham Medium" },
-  { value: "GothamBold", label: "Gotham Bold" },
-];
-
-const SECONDARY_FONT_OPTIONS = [
-  "system-ui",
-  "Arial",
-  "Helvetica",
-  "Verdana",
-  "Tahoma",
-  "Trebuchet MS",
-  "Gill Sans",
-  "Times New Roman",
-  "Georgia",
-  "Garamond",
-  "Courier New",
-];
-
 const MAX_GALLERY_IMAGES = 12;
 
 const STYLE_OPTIONS = [
@@ -449,16 +427,6 @@ export function NewsletterTiptapEditor({
   }, [disabled, editor, isUploading]);
 
   const isDisabled = disabled || isUploading || !editor;
-  const textStyleAttributes = editor?.getAttributes("textStyle") || {};
-  const currentFontFamily = String(textStyleAttributes.fontFamily || "");
-
-  function setFontFamily(value) {
-    if (!editor) return;
-    const chain = editor.chain().focus();
-    if (value) chain.setFontFamily(value).run();
-    else chain.unsetFontFamily().run();
-  }
-
   function updateLink() {
     if (!editor) return;
     const previousUrl = String(editor.getAttributes("link").href || "");
@@ -560,25 +528,8 @@ export function NewsletterTiptapEditor({
             <ToolIcon name="redo" />
           </ToolbarButton>
         </div>
-        <div className="newsletter-admin-tool-group newsletter-admin-tool-group--styles" aria-label="문단과 서체">
+        <div className="newsletter-admin-tool-group newsletter-admin-tool-group--styles" aria-label="문단 스타일">
           <StyleDropdown editor={editor} disabled={isDisabled} />
-          <label className="newsletter-admin-format-control newsletter-admin-format-control--font">
-            <span className="newsletter-admin-format-control__label">Font</span>
-            <select
-              aria-label="폰트"
-              value={currentFontFamily}
-              disabled={isDisabled}
-              onChange={(event) => setFontFamily(event.target.value)}
-            >
-              <option value="">Pretendard · 사이트 기본</option>
-              <optgroup label="OALUM 주요 폰트">
-                {PRIMARY_FONT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </optgroup>
-              <optgroup label="기타 폰트">
-                {SECONDARY_FONT_OPTIONS.map((font) => <option key={font} value={font}>{font}</option>)}
-              </optgroup>
-            </select>
-          </label>
         </div>
         <div className="newsletter-admin-tool-group" aria-label="글자 형식">
           <ToolbarButton label="굵게" active={editor?.isActive("bold")} disabled={isDisabled} onClick={() => editor.chain().focus().toggleBold().run()}><strong className="newsletter-admin-tool__letter">B</strong></ToolbarButton>

@@ -30,8 +30,9 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.match(editorSource, /imageAttributes\["data-progressive-image"\] = "false"/);
   assert.match(editorSource, /STYLE_OPTIONS[\s\S]*Normal text[\s\S]*Heading \$\{level\}/);
   assert.match(editorSource, /heading:\s*\{ levels:\s*\[1, 2, 3, 4, 5, 6\] \}/);
-  assert.match(editorSource, /Pretendard · 사이트 기본/);
-  assert.match(editorSource, /Wanted Sans · 제목[\s\S]*Gotham Book · 영문/);
+  assert.doesNotMatch(editorSource, /aria-label="폰트"/);
+  assert.doesNotMatch(editorSource, /PRIMARY_FONT_OPTIONS|SECONDARY_FONT_OPTIONS/);
+  assert.match(editorSource, /<StyleDropdown editor=\{editor\}/);
   assert.match(editorSource, /function ToolIcon/);
   assert.match(editorSource, /type:\s*"newsletterGallery"/);
   assert.match(editorSource, /data-image-gallery/);
@@ -46,8 +47,10 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.match(stylesheet, /\.newsletter-admin-style-menu__popover/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\]/);
   assert.match(stylesheet, /\.newsletter-admin-editor p,[\s\S]*?\.newsletter-admin-preview p\s*\{\s*margin:\s*0;/);
-  assert.match(stylesheet, /\.newsletter-admin-editor\s*\{[\s\S]*?font-size:\s*19px;[\s\S]*?line-height:\s*1\.65;/);
-  assert.match(stylesheet, /\.newsletter-admin-preview\s*\{[\s\S]*?font-size:\s*19px;[\s\S]*?line-height:\s*1\.65;/);
+  assert.match(stylesheet, /\.newsletter-admin-editor\s*\{[\s\S]*?font-family:\s*"Pretendard", sans-serif;[\s\S]*?font-size:\s*19px;[\s\S]*?line-height:\s*1\.65;/);
+  assert.match(stylesheet, /\.newsletter-admin-preview\s*\{[\s\S]*?font-family:\s*"Pretendard", sans-serif;[\s\S]*?font-size:\s*19px;[\s\S]*?line-height:\s*1\.65;/);
+  assert.match(stylesheet, /@media \(min-width:\s*960px\)[\s\S]*?\.newsletter-admin-editor\s*\{[^}]*width:\s*min\(100%, 760px\);/);
+  assert.match(stylesheet, /\.newsletter-admin-editor > img,[\s\S]*?\.newsletter-admin-editor > \[data-resize-container\] img\s*\{\s*width:\s*100% !important;/);
   assert.match(stylesheet, /\.newsletter-admin-editor p \+ p,[\s\S]*?margin-top:\s*0;/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor-20260910-01.js", root)));
