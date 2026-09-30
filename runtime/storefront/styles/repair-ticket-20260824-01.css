@@ -143,14 +143,6 @@
   background: #f3f3f1;
 }
 
-.repair-ticket-closed {
-  margin: 0;
-  border-left: 3px solid #111;
-  padding: 10px 12px;
-  background: #f3f3f1;
-  font-size: 12px;
-  line-height: 1.6;
-}
 
 .repair-ticket-thread {
   display: grid;
@@ -446,7 +438,6 @@
 .repair-ticket-facts dt,
 .repair-ticket-facts dd,
 .repair-ticket-request-images h2,
-.repair-ticket-closed,
 .repair-ticket-empty,
 .repair-ticket-message__meta,
 .repair-ticket-message__author,

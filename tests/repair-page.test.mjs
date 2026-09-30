@@ -215,7 +215,9 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
   assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-08/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-07/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-09/);
+  assert.doesNotMatch(repairTicketHtml, /종료된 Ticket입니다|js-repair-ticket-closed/);
+  assert.match(repairTicketSource, /section\.hidden = paid \|\| !repair\.onlinePaymentAvailable/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
   assert.match(repairTicketCss, /\.repair-ticket-submit\s*\{[^}]*width:\s*50%;[^}]*min-height:\s*48px;/);

@@ -19,7 +19,6 @@ const dom = {
   facts: document.querySelector(".js-repair-ticket-facts"),
   requestImages: document.querySelector(".js-repair-ticket-request-images"),
   requestImagesGrid: document.querySelector(".js-repair-ticket-request-images-grid"),
-  closed: document.querySelector(".js-repair-ticket-closed"),
   messages: document.querySelector(".js-repair-ticket-messages"),
   refresh: document.querySelector(".js-repair-ticket-refresh"),
   form: document.querySelector(".js-repair-ticket-form"),
@@ -252,7 +251,6 @@ function renderTicket() {
   renderMessages(ticket);
   void loadProtectedImages();
   const closed = ticket.status === "closed";
-  dom.closed.hidden = !closed;
   dom.form.hidden = closed;
   if (adminMode) dom.back.href = "./repair-admin.html";
   dom.shell.hidden = false;
@@ -264,7 +262,7 @@ function renderPayment(repair) {
   const button = document.getElementById("repairTicketPayButton");
   const status = document.getElementById("repairTicketPaymentStatus");
   const paid = Boolean(repair.paymentConfirmedAt);
-  section.hidden = !repair.onlinePaymentAvailable && !paid;
+  section.hidden = paid || !repair.onlinePaymentAvailable;
   document.getElementById("repairTicketPaymentAmount").textContent = formatPrice(repair.finalAmount);
   button.hidden = !repair.onlinePaymentAvailable || adminMode;
   button.disabled = repair.paymentStatus === "processing";
