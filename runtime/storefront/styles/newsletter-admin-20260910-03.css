@@ -960,6 +960,11 @@
 @media (min-width: 960px) {
   .newsletter-admin-editor {
     width: min(100%, 730px);
+    font-size: 16px;
+  }
+
+  .newsletter-admin-preview {
+    font-size: 16px;
   }
 
   .newsletter-admin-shell {

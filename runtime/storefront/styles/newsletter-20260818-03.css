@@ -344,6 +344,10 @@
 }
 
 @media (min-width: 960px) {
+  .newsletter-entry__content {
+    font-size: 16px;
+  }
+
   .newsletter-entry-mode .newsletter-entry__tags {
     grid-column: 2;
   }

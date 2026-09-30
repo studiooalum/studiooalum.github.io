@@ -50,6 +50,7 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.match(stylesheet, /\.newsletter-admin-editor\s*\{[\s\S]*?font-family:\s*"Pretendard", sans-serif;[\s\S]*?font-size:\s*18px;[\s\S]*?font-weight:\s*300;[\s\S]*?line-height:\s*1\.65;/);
   assert.match(stylesheet, /\.newsletter-admin-preview\s*\{[\s\S]*?font-family:\s*"Pretendard", sans-serif;[\s\S]*?font-size:\s*18px;[\s\S]*?font-weight:\s*300;[\s\S]*?line-height:\s*1\.65;/);
   assert.match(stylesheet, /@media \(min-width:\s*960px\)[\s\S]*?\.newsletter-admin-editor\s*\{[^}]*width:\s*min\(100%, 730px\);/);
+  assert.match(stylesheet, /@media \(min-width:\s*960px\)[\s\S]*?\.newsletter-admin-editor\s*\{[^}]*font-size:\s*16px;[\s\S]*?\.newsletter-admin-preview\s*\{[^}]*font-size:\s*16px;/);
   assert.match(stylesheet, /\.newsletter-admin-editor > img,[\s\S]*?\.newsletter-admin-editor > \[data-resize-container\] img\s*\{\s*width:\s*100% !important;/);
   assert.match(stylesheet, /\.newsletter-admin-editor p \+ p,[\s\S]*?margin-top:\s*0;/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
@@ -64,12 +65,13 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
     read("runtime/storefront/styles/newsletter-20260818-01.css"),
   ]);
 
-  assert.match(html, /newsletter-20260818-03\.css\?v=20260930-04/);
+  assert.match(html, /newsletter-20260818-03\.css\?v=20260930-05/);
   assert.match(html, /newsletter-20260818-02\.js\?v=20260915-01/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 730px\) minmax\(0, 1fr\)/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry > \*[\s\S]*grid-column:\s*2/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*grid-template-columns:\s*repeat\(2/);
   assert.match(stylesheet, /\.newsletter-entry__content\s*\{[^}]*font-family:\s*"Pretendard", sans-serif;[^}]*font-size:\s*18px;[^}]*font-weight:\s*300;[^}]*line-height:\s*1\.65;/);
+  assert.match(stylesheet, /@media \(min-width:\s*960px\)[\s\S]*?\.newsletter-entry__content\s*\{[^}]*font-size:\s*16px;/);
   assert.match(controller, /function enhanceEntryImages/);
   assert.match(controller, /data-newsletter-lightbox-close/);
   assert.match(controller, /lockBodyScroll\("newsletter-lightbox"\)/);
