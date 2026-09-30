@@ -35,6 +35,29 @@
   margin-top: var(--ticket-panel-gap);
 }
 
+.repair-ticket-message__meta-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.repair-ticket-message__delete,
+.repair-ticket-message__delete:is(:hover, :focus-visible, :active) {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: none;
+}
+
 .repair-ticket-composer .repair-ticket-photo-picker,
 .repair-ticket-composer__submit .repair-ticket-submit {
   width: 25% !important;

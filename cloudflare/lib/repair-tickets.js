@@ -585,6 +585,44 @@ export async function createRepairTicketMessage(env, input, attachments = []) {
   return { duplicate: false, messageId, notificationIds: notifications.map((notification) => notification.id) };
 }
 
+export async function deleteRepairTicketMessage(env, input) {
+  const database = requireDb(env);
+  const ticketId = cleanText(input.ticketId, 80);
+  const messageId = cleanText(input.messageId, 80);
+  const actorType = input.viewerType === "admin" ? "admin" : "customer";
+  const ticket = await database.prepare(`SELECT status FROM repair_tickets WHERE id = ? LIMIT 1`).bind(ticketId).first();
+  if (!ticket) throw Object.assign(new Error("Repair Ticket을 찾을 수 없습니다."), { status: 404 });
+  if (ticket.status === "closed") throw Object.assign(new Error("종료된 Repair Ticket의 메시지는 삭제할 수 없습니다."), { status: 409 });
+  const message = await database.prepare(`
+    SELECT id, author_type
+    FROM repair_ticket_messages
+    WHERE id = ? AND ticket_id = ?
+    LIMIT 1
+  `).bind(messageId, ticketId).first();
+  if (!message) throw Object.assign(new Error("삭제할 메시지를 찾을 수 없습니다."), { status: 404 });
+  if (message.author_type !== actorType) throw Object.assign(new Error("작성한 메시지만 삭제할 수 있습니다."), { status: 403 });
+  const attachmentResult = await database.prepare(`
+    SELECT r2_key FROM repair_ticket_message_attachments WHERE message_id = ?
+  `).bind(messageId).all();
+  const now = nowIso();
+  await database.batch([
+    database.prepare(`DELETE FROM repair_ticket_message_attachments WHERE message_id = ?`).bind(messageId),
+    database.prepare(`DELETE FROM repair_ticket_messages WHERE id = ? AND ticket_id = ?`).bind(messageId, ticketId),
+    database.prepare(`
+      UPDATE repair_tickets
+      SET unread_customer_count = (SELECT COUNT(*) FROM repair_ticket_messages WHERE ticket_id = ? AND author_type = 'admin' AND read_at IS NULL),
+          unread_admin_count = (SELECT COUNT(*) FROM repair_ticket_messages WHERE ticket_id = ? AND author_type = 'customer' AND read_at IS NULL),
+          last_message_at = COALESCE((SELECT MAX(created_at) FROM repair_ticket_messages WHERE ticket_id = ?), created_at),
+          updated_at = ?
+      WHERE id = ?
+    `).bind(ticketId, ticketId, ticketId, now, ticketId),
+  ]);
+  return {
+    deleted: true,
+    r2Keys: (attachmentResult?.results || []).map((row) => row.r2_key).filter(Boolean),
+  };
+}
+
 export async function readRepairTicketAttachment(env, attachmentId) {
   const database = requireDb(env);
   const row = await database.prepare(`

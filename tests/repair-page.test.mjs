@@ -27,6 +27,7 @@ const repairTicketHtml = await readFile(new URL("../repair-ticket.html", import.
 const repairTicketCss = await readFile(new URL("../runtime/storefront/styles/repair-ticket-20260824-01.css", import.meta.url), "utf8");
 const repairTicketLayoutCss = await readFile(new URL("../runtime/storefront/styles/repair-ticket-20260930-01.css", import.meta.url), "utf8");
 const repairTicketsSource = await readFile(new URL("../cloudflare/lib/repair-tickets.js", import.meta.url), "utf8");
+const repairTicketApiSource = await readFile(new URL("../functions/api/repairs/tickets/[id].js", import.meta.url), "utf8");
 const repairAdminHtml = await readFile(new URL("../repair-admin.html", import.meta.url), "utf8");
 const middlewareSource = await readFile(new URL("../functions/_middleware.js", import.meta.url), "utf8");
 
@@ -202,7 +203,7 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
   assert.match(repairTicketHtml, /js-repair-ticket-request-images/);
   assert.match(repairTicketSource, /repair\.requestImages/);
   assert.match(repairTicketSource, /data-protected-image-path/);
-  assert.match(repairTicketSource, /trackingNumber \? \[\["운송장 번호", shippingText\]\] : \[\]/);
+  assert.match(repairTicketSource, /\["Ticket 종료일",[\s\S]*?\["운송장 번호", trackingNumber \? shippingText : ""\]/);
   assert.doesNotMatch(repairTicketSource, /배송 조회 열기/);
   assert.doesNotMatch(repairTicketSource, /\["배송",[^\n]+\|\| "미발송"\]/);
 });
@@ -211,8 +212,8 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
-  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-04/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-05/);
+  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-05/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-06/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
   assert.match(repairTicketCss, /\.repair-ticket-submit\s*\{[^}]*width:\s*50%;[^}]*min-height:\s*48px;/);
@@ -240,6 +241,11 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketLayoutCss, /@media \(max-width:\s*959px\)[\s\S]*?\.repair-ticket-facts\s*\{[^}]*gap:\s*0;[\s\S]*?\.repair-ticket-facts > div\s*\{[^}]*min-height:\s*48px;[\s\S]*?\.repair-ticket-facts dt,[\s\S]*?line-height:\s*1\.45;/);
   assert.match(repairTicketHtml, /cart-20260818-02\.css/);
   assert.match(repairTicketHtml, /initCartUI\(\)/);
+  assert.match(repairTicketSource, /data-message-delete="\$\{escapeHtml\(message\.id\)\}"/);
+  assert.match(repairTicketSource, /method:\s*"DELETE"/);
+  assert.match(repairTicketLayoutCss, /\.repair-ticket-message__delete,[\s\S]*?background:\s*transparent;/);
+  assert.match(repairTicketsSource, /export async function deleteRepairTicketMessage/);
+  assert.match(repairTicketApiSource, /export async function onRequestDelete/);
 });
 
 test("guest repair lookup number is provided consistently", () => {

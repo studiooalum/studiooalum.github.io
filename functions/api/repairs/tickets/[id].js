@@ -2,6 +2,7 @@ import { authorizeRepairTicketAccess } from "../../../../cloudflare/lib/repair-a
 import {
   createRepairTicketAttachmentId,
   createRepairTicketMessage,
+  deleteRepairTicketMessage,
   markRepairTicketRead,
   readRepairTicketById,
 } from "../../../../cloudflare/lib/repair-tickets.js";
@@ -117,5 +118,27 @@ export async function onRequestPost(context) {
       return json(context.env, { ok: false, error: "Repair Ticket을 찾을 수 없습니다." }, { status: 404 });
     }
     return errorResponse(context.env, error, "Repair Ticket 메시지를 등록하지 못했습니다.");
+  }
+}
+
+export async function onRequestDelete(context) {
+  try {
+    const access = await authorizeRepairTicketAccess(context, context.params?.id);
+    const payload = await context.request.json().catch(() => ({}));
+    const result = await deleteRepairTicketMessage(context.env, {
+      ticketId: access.ticket.id,
+      messageId: String(payload.messageId || ""),
+      viewerType: access.viewerType,
+    });
+    if (context.env?.OALUM_R2 && result.r2Keys.length) {
+      await Promise.allSettled(result.r2Keys.map((key) => context.env.OALUM_R2.delete(key)));
+    }
+    const current = await readRepairTicketById(context.env, access.ticket.id);
+    return json(context.env, { ok: true, viewerType: access.viewerType, ticket: current.ticket });
+  } catch (error) {
+    if ([401, 403, 404].includes(Number(error?.status))) {
+      return json(context.env, { ok: false, error: error.message || "메시지를 삭제할 수 없습니다." }, { status: Number(error?.status) || 404 });
+    }
+    return errorResponse(context.env, error, "메시지를 삭제하지 못했습니다.");
   }
 }

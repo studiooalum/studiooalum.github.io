@@ -164,9 +164,9 @@ function renderFacts(ticket) {
     ["예상 가격", formatPrice(repair.quoteAmount)],
     ["최종 가격", formatPrice(repair.finalAmount)],
     ["입금 안내", [repair.bankAccount, repair.paymentInstructions].filter(Boolean).join("\n") || "미정"],
-    ...(trackingNumber ? [["운송장 번호", shippingText]] : []),
     ["Ticket 생성일", formatDate(ticket.createdAt)],
     ["Ticket 종료일", ticket.closedAt ? formatDate(ticket.closedAt) : "진행 중"],
+    ["운송장 번호", trackingNumber ? shippingText : ""],
   ];
   dom.facts.innerHTML = facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 }
@@ -199,6 +199,7 @@ function renderMessages(ticket) {
   }
   const labels = { customer: "고객", admin: "Studio OALUM", system: "상태 안내" };
   dom.messages.innerHTML = messages.map((message) => {
+    const canDelete = message.authorType === state.viewerType && message.authorType !== "system";
     const body = message.authorType === "system" && String(message.body || "").startsWith("수선 접수가 완료")
       ? "수선 접수가 완료 되었습니다. 확인 후 진행 방향과 예상 가격을 안내 드립니다."
       : message.body || "";
@@ -206,13 +207,36 @@ function renderMessages(ticket) {
     <article class="repair-ticket-message repair-ticket-message--${escapeHtml(message.authorType)}">
       <div class="repair-ticket-message__meta">
         <span class="repair-ticket-message__author">${escapeHtml(labels[message.authorType] || message.authorType)}</span>
-        <time>${escapeHtml(formatDate(message.createdAt))}</time>
+        <span class="repair-ticket-message__meta-actions">
+          <time>${escapeHtml(formatDate(message.createdAt))}</time>
+          ${canDelete ? `<button type="button" class="repair-ticket-message__delete" data-message-delete="${escapeHtml(message.id)}" aria-label="메시지 삭제">×</button>` : ""}
+        </span>
       </div>
       <p class="repair-ticket-message__body">${escapeHtml(body)}</p>
       ${(message.attachments || []).length ? `<div class="repair-ticket-message__attachments">${message.attachments.map((attachment) => `<img alt="${escapeHtml(attachment.filename || "첨부 이미지")}" data-protected-image-path="${escapeHtml(attachment.streamPath)}">`).join("")}</div>` : ""}
     </article>
   `;
   }).join("");
+}
+
+async function deleteMessage(messageId) {
+  if (!messageId || !window.confirm("이 메시지를 삭제할까요?")) return;
+  setFormStatus("메시지를 삭제하는 중입니다.");
+  try {
+    const response = await fetch(`/api/repairs/tickets/${encodeURIComponent(ticketId)}`, {
+      method: "DELETE",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ messageId }),
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok) throw new Error(payload?.error || "메시지를 삭제하지 못했습니다.");
+    state.ticket = payload.ticket;
+    renderTicket();
+    setFormStatus("메시지를 삭제했습니다.", "success");
+  } catch (error) {
+    setFormStatus(error.message || "메시지를 삭제하지 못했습니다.", "error");
+  }
 }
 
 function renderTicket() {
@@ -357,6 +381,11 @@ async function load() {
 dom.form?.addEventListener("submit", (event) => {
   event.preventDefault();
   void submitMessage();
+});
+
+dom.messages?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-message-delete]");
+  if (button) void deleteMessage(button.dataset.messageDelete);
 });
 
 dom.form?.elements.attachments?.addEventListener("change", () => {
