@@ -49,7 +49,7 @@ test("repair page keeps the Figma accordion content contract", () => {
     "<li><span>특수소재</span><span>30,000원</span></li>",
     '<span class="repair-method-price-list__amounts"><span>70,000원</span><span>100,000원</span><span>150,000원</span></span>',
     '<span class="repair-method-price-list__name">사시코</span>',
-    "수선 기법은 작업 면적에 따라 S/M/L 로 구분되며, 가격은 크기 순으로 표기되어 있습니다.",
+    "수선 기법은 작업 면적에 따라 S/M/L 소·중·대로 구분되며, 가격은 크기 순으로 표기되어 있습니다.",
     "하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.",
     "신청폼 접수 후 답변은 1~2 영업일 정도 소요되고 있으니 양해 부탁드립니다.",
     "왕복 배송비는 고객 부담입니다.",
@@ -103,7 +103,7 @@ test("pricing notes use the same black body typography without gray metadata", (
   assert.match(repairDetailCss, /\.repair-price-notes\s*\{[^}]*gap:\s*0;[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\);[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.equal((repairHtml.match(/class="repair-price-notes(?: repair-price-notes--methods)?"/g) || []).length, 2);
   assert.match(repairHtml, /data-repair-price-panel="basic"[\s\S]*?위 가격은 모두 시작 가격이며/);
-  assert.match(repairHtml, /data-repair-price-panel="methods"[\s\S]*?수선 기법은 작업 면적에 따라 S\/M\/L 로 구분되며/);
+  assert.match(repairHtml, /data-repair-price-panel="methods"[\s\S]*?수선 기법은 작업 면적에 따라 S\/M\/L 소·중·대로 구분되며/);
 });
 
 test("repair accordion omits section divider lines at every viewport", () => {
@@ -183,14 +183,14 @@ test("repair request keeps Korea as plain fixed text", () => {
   assert.doesNotMatch(repairHtml, /<select class="js-repair-country"|name="countryCustom"|목록에 없는 국가 직접 입력/);
 });
 
-test("repair request uses separate address and photo consent boxes", () => {
+test("repair request keeps address consent and submits photo consent without a visible checkbox", () => {
   assert.doesNotMatch(repairHtml, /name="budgetNote"/);
   assert.match(repairHtml, /name="addressConsent" required/);
   assert.match(repairHtml, /개인정보 보호 방침에 따라 주소 정보를 사용하는 데 동의/);
-  assert.match(repairHtml, /사진을 수집·이용하는 것에 동의/);
+  assert.doesNotMatch(repairHtml, /사진을 수집·이용하는 것에 동의/);
   assert.doesNotMatch(repairHtml, /name="archiveConsentChoice"/);
   assert.doesNotMatch(repairHtml, /작업 사진 기록/);
-  assert.match(repairHtml, /name="privacyConsent" required/);
+  assert.match(repairHtml, /type="hidden" name="privacyConsent" value="true"/);
   assert.match(repairAdminSource, /archiveConsentStatus === "declined" \? "공개하지 않음" : "동의 확인 없음"/);
 });
 
@@ -202,7 +202,8 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
   assert.match(repairTicketHtml, /js-repair-ticket-request-images/);
   assert.match(repairTicketSource, /repair\.requestImages/);
   assert.match(repairTicketSource, /data-protected-image-path/);
-  assert.match(repairTicketSource, /trackingUrl \? `<div><dt>운송장 번호<\/dt>/);
+  assert.match(repairTicketSource, /trackingNumber \? \[\["운송장 번호", shippingText\]\] : \[\]/);
+  assert.doesNotMatch(repairTicketSource, /배송 조회 열기/);
   assert.doesNotMatch(repairTicketSource, /\["배송",[^\n]+\|\| "미발송"\]/);
 });
 
@@ -210,8 +211,8 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
-  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-02/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-04/);
+  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-03/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-05/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
   assert.match(repairTicketCss, /\.repair-ticket-submit\s*\{[^}]*width:\s*50%;[^}]*min-height:\s*48px;/);
@@ -236,6 +237,7 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketLayoutCss, /\.repair-ticket-composer \.repair-ticket-photo-picker,[\s\S]*?width:\s*25% !important;[^}]*max-width:\s*25%;[^}]*flex:\s*0 0 25%;/);
   assert.match(repairTicketLayoutCss, /\.repair-ticket-photo-picker:is\(:hover, :focus-visible, :active\)\s*\{[^}]*background:\s*#fff !important;/);
   assert.match(repairTicketLayoutCss, /@media \(min-width:\s*960px\)[\s\S]*?\.repair-ticket-thread\s*\{[^}]*padding-top:\s*52px;/);
+  assert.match(repairTicketLayoutCss, /@media \(max-width:\s*959px\)[\s\S]*?\.repair-ticket-facts\s*\{[^}]*gap:\s*0;[\s\S]*?\.repair-ticket-facts > div\s*\{[^}]*min-height:\s*24px;/);
   assert.match(repairTicketHtml, /cart-20260818-02\.css/);
   assert.match(repairTicketHtml, /initCartUI\(\)/);
 });

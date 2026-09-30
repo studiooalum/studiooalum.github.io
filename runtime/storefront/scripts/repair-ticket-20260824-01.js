@@ -154,8 +154,8 @@ async function fetchTicket() {
 
 function renderFacts(ticket) {
   const repair = ticket.repair || {};
-  const trackingUrl = safeUrl(repair.trackingUrl);
-  const shippingText = [repair.carrier, repair.trackingNumber].filter(Boolean).join(" · ");
+  const trackingNumber = String(repair.trackingNumber || "").trim();
+  const shippingText = [repair.carrier, trackingNumber].filter(Boolean).join(" · ");
   const facts = [
     ["조회 번호", repair.requestNumber || "-"],
     ["신청자", repair.customerName || "-"],
@@ -164,12 +164,11 @@ function renderFacts(ticket) {
     ["예상 가격", formatPrice(repair.quoteAmount)],
     ["최종 가격", formatPrice(repair.finalAmount)],
     ["입금 안내", [repair.bankAccount, repair.paymentInstructions].filter(Boolean).join("\n") || "미정"],
-    ...(shippingText ? [["배송", shippingText]] : []),
+    ...(trackingNumber ? [["운송장 번호", shippingText]] : []),
     ["Ticket 생성일", formatDate(ticket.createdAt)],
     ["Ticket 종료일", ticket.closedAt ? formatDate(ticket.closedAt) : "진행 중"],
   ];
-  dom.facts.innerHTML = facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")
-    + (trackingUrl ? `<div><dt>운송장 번호</dt><dd><a href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 열기</a></dd></div>` : "");
+  dom.facts.innerHTML = facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 }
 
 async function loadProtectedImages() {

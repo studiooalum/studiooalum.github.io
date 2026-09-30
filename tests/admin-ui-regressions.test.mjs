@@ -129,7 +129,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260929-account-02/);
+  assert.match(html, /account\.css\?v=20260930-account-03/);
   assert.match(html, /account\.js\?v=20260929-account-01/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
@@ -228,7 +228,7 @@ test("My Oalum keeps logout in the account page and removes it from the GNB", as
   assert.match(stylesheet, /\.account-overview__facts > div\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*gap:\s*0;/);
   assert.match(html, />REPAIRS<[\s\S]*?>ORDERS<[\s\S]*?>CLASSES<[\s\S]*?>POINTS</);
   assert.match(stylesheet, /\.account-overview__welcome p:last-child\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\)/);
-  assert.match(stylesheet, /\.account-overview__facts\s*\{[^}]*border-top:\s*1px solid #111/);
+  assert.match(stylesheet, /\.account-overview__facts\s*\{[^}]*border-top:\s*0/);
   assert.match(stylesheet, /\.account-overview__facts > div\s*\{[^}]*border-bottom:\s*1px solid #111/);
   assert.match(stylesheet, /\.account-overview__link\s*\{[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*text-decoration:\s*underline/);
   assert.match(stylesheet, /\.account-status\.is-success\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\)/);

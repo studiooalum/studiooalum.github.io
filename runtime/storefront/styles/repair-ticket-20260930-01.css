@@ -86,3 +86,18 @@
     flex-basis: 50%;
   }
 }
+
+@media (max-width: 959px) {
+  .repair-ticket-facts {
+    gap: 0;
+  }
+
+  .repair-ticket-facts > div {
+    min-height: 24px;
+  }
+
+  .repair-ticket-facts dt,
+  .repair-ticket-facts dd {
+    line-height: 1.2;
+  }
+}
