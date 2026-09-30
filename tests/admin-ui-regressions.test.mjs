@@ -46,7 +46,8 @@ test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   assert.match(stylesheet, /\.newsletter-admin-style-menu__popover/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\]/);
   assert.match(stylesheet, /\.newsletter-admin-editor p,[\s\S]*?\.newsletter-admin-preview p\s*\{\s*margin:\s*0;/);
-  assert.match(stylesheet, /\.newsletter-admin-editor\s*\{[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\);/);
+  assert.match(stylesheet, /\.newsletter-admin-editor\s*\{[\s\S]*?font-size:\s*19px;[\s\S]*?line-height:\s*1\.65;/);
+  assert.match(stylesheet, /\.newsletter-admin-preview\s*\{[\s\S]*?font-size:\s*19px;[\s\S]*?line-height:\s*1\.65;/);
   assert.match(stylesheet, /\.newsletter-admin-editor p \+ p,[\s\S]*?margin-top:\s*0;/);
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-admin.bundle.js", root)));
   await assert.rejects(access(new URL("runtime/storefront/scripts/newsletter-tiptap-editor-20260910-01.js", root)));
@@ -60,10 +61,11 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
     read("runtime/storefront/styles/newsletter-20260818-01.css"),
   ]);
 
-  assert.match(html, /newsletter-20260818-03\.css\?v=20260929-85/);
+  assert.match(html, /newsletter-20260818-03\.css\?v=20260930-01/);
   assert.match(html, /newsletter-20260818-02\.js\?v=20260915-01/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry > \*[\s\S]*grid-column:\s*2/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*grid-template-columns:\s*repeat\(2/);
+  assert.match(stylesheet, /\.newsletter-entry__content\s*\{[^}]*font-size:\s*19px;[^}]*line-height:\s*1\.65;/);
   assert.match(controller, /function enhanceEntryImages/);
   assert.match(controller, /data-newsletter-lightbox-close/);
   assert.match(controller, /lockBodyScroll\("newsletter-lightbox"\)/);

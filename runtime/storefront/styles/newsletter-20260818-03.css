@@ -55,6 +55,8 @@
 
 .newsletter-entry__content {
   overflow-wrap: anywhere;
+  font-size: 19px;
+  line-height: 1.65;
 }
 
 .newsletter-entry__content h1,
