@@ -20,7 +20,7 @@
 
   .newsletter-entry-mode .newsletter-entry {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 760px) minmax(0, 1fr);
     column-gap: var(--grid-gap);
     width: 100%;
     max-width: none;
