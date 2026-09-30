@@ -159,7 +159,7 @@ test("repair request follows the compact line-form reference", () => {
   assert.doesNotMatch(repairHtml, /어떤 제품인가요\?|어떤 부분이 손상되었나요\?<\/span>|기타 요청사항/);
   for (const [name, placeholder] of [
     ["customerName", "이름"],
-    ["phone", "전화번호"],
+    ["phone", "010-0000-0000"],
     ["email", "이메일"],
     ["addressLine1", "주소"],
     ["addressLine2", "상세 주소"],
@@ -172,7 +172,8 @@ test("repair request supports postcode search, account autofill, and KR phone fo
   assert.match(repairRequestSource, /new window\.daum\.Postcode/);
   assert.match(repairRequestSource, /dom\.postalCode\.readOnly = korean/);
   assert.match(repairRequestSource, /dom\.addressLine1\.readOnly = korean/);
-  assert.match(repairHtml, /name="phone"[^>]+inputmode="numeric"[^>]+maxlength="11"[^>]+pattern="010\[0-9\]\{8\}"[^>]+required/);
+  assert.match(repairHtml, /name="phone"[^>]+inputmode="numeric"[^>]+maxlength="13"[^>]+pattern="010-\[0-9\]\{4\}-\[0-9\]\{4\}"[^>]+placeholder="010-0000-0000"[^>]+required/);
+  assert.match(repairRequestSource, /return `\$\{digits\.slice\(0, 3\)\}-\$\{digits\.slice\(3, 7\)\}-\$\{digits\.slice\(7\)\}`/);
   assert.match(repairRequestSource, /dom\.phoneInput\.value = isKoreanAddress\(\)[\s\S]*?replace\(\/\\D\/g, ""\)/);
   assert.match(repairRequestSource, /accountUser\.fullName/);
   assert.match(repairRequestSource, /accountUser\.phone/);

@@ -129,7 +129,7 @@
               </label>
               <label class="repair-field repair-field--line">
                 <span>전화번호</span>
-                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="010[0-9]{8}" placeholder="전화번호" required>
+                <input class="js-repair-phone-input" type="tel" name="phone" autocomplete="tel" inputmode="numeric" maxlength="13" pattern="010-[0-9]{4}-[0-9]{4}" placeholder="010-0000-0000" required>
               </label>
               <label class="repair-field repair-field--line js-repair-email-field">
                 <span>이메일</span>
@@ -225,7 +225,7 @@
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";
-    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260930-success-03";
+    import { initRepairRequest } from "./runtime/storefront/scripts/repair-20260823-02.js?v=20260930-phone-01";
 
     initSiteChrome();
     initCartUI();

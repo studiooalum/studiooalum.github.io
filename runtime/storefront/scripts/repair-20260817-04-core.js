@@ -212,7 +212,10 @@ function clearAccountAutofill() {
 function normalizeKoreanPhone(value) {
   let digits = String(value || "").replace(/\D/g, "");
   if (digits.startsWith("82")) digits = `0${digits.slice(2)}`;
-  return digits.slice(0, 11);
+  digits = digits.slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
 function isKoreanAddress() {
@@ -231,9 +234,9 @@ function syncAddressMode() {
   if (dom.addressLine1) dom.addressLine1.readOnly = korean;
   if (dom.addressSearch) dom.addressSearch.hidden = !korean;
   if (dom.phoneInput) {
-    dom.phoneInput.placeholder = korean ? "01000000000" : "국가번호를 포함해 숫자만 입력";
-    dom.phoneInput.pattern = korean ? "010[0-9]{8}" : "[0-9]{7,15}";
-    dom.phoneInput.maxLength = korean ? 11 : 15;
+    dom.phoneInput.placeholder = korean ? "010-0000-0000" : "국가번호를 포함해 숫자만 입력";
+    dom.phoneInput.pattern = korean ? "010-[0-9]{4}-[0-9]{4}" : "[0-9]{7,15}";
+    dom.phoneInput.maxLength = korean ? 13 : 15;
     dom.phoneInput.value = korean
       ? normalizeKoreanPhone(dom.phoneInput.value)
       : String(dom.phoneInput.value || "").replace(/\D/g, "").slice(0, 15);
