@@ -6,6 +6,15 @@ import { getWorkshopPoster } from "./utils/workshops.js";
 const PAGE_SIZE = 4;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function formatKoreanPhone(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("82")) digits = `0${digits.slice(2)}`;
+  digits = digits.slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -912,7 +921,7 @@ export function initAccountPage() {
 
     profileForm.elements.email.value = user.email || "";
     profileForm.elements.fullName.value = user.fullName || "";
-    profileForm.elements.phone.value = user.phone || "";
+    profileForm.elements.phone.value = formatKoreanPhone(user.phone || "");
     profileForm.elements.zipcode.value = user.zipcode || "";
     profileForm.elements.address1.value = user.address1 || "";
     profileForm.elements.address2.value = user.address2 || "";
@@ -927,7 +936,7 @@ export function initAccountPage() {
     if (overviewNameEl) overviewNameEl.textContent = fullName || "-";
     if (overviewEmailEl) overviewEmailEl.textContent = user.email || "-";
     if (overviewAddressEl) overviewAddressEl.textContent = [user.zipcode, user.address1, user.address2].filter(Boolean).join(" ") || "-";
-    if (overviewPhoneEl) overviewPhoneEl.textContent = user.phone || "-";
+    if (overviewPhoneEl) overviewPhoneEl.textContent = formatKoreanPhone(user.phone || "") || "-";
     if (dashboardRepairsEl) dashboardRepairsEl.textContent = activeRepairs.toLocaleString("ko-KR");
     if (dashboardOrdersEl) dashboardOrdersEl.textContent = orders.length.toLocaleString("ko-KR");
     if (dashboardClassesEl) dashboardClassesEl.textContent = workshops.length.toLocaleString("ko-KR");
@@ -1136,6 +1145,10 @@ export function initAccountPage() {
     } finally {
       setButtonLoading(submitButton, false, "저장 중…");
     }
+  });
+
+  profileForm.elements.phone?.addEventListener("input", (event) => {
+    event.currentTarget.value = formatKoreanPhone(event.currentTarget.value);
   });
 
   guestForm.addEventListener("submit", async (event) => {

@@ -14,13 +14,14 @@ const [html, css, checkoutScript, archiveSource, accountHtml, accountCss] = awai
 ]);
 
 test("checkout follows the three-column repair form layout", () => {
-  assert.match(html, /checkout\.css\?v=20260929-85/);
+  assert.match(html, /checkout\.css\?v=20260930-validation-01/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
   assert.doesNotMatch(html, /<span class="required">\*<\/span>/);
   assert.match(html, /checkout-field__value">대한민국/);
   assert.match(html, />주소검색<\/button>/);
   assert.match(html, /placeholder="쿠폰 코드 입력하기"/);
+  assert.match(html, /name="phone"[^>]+placeholder="010-0000-0000"[^>]+maxlength="13"[^>]+pattern="010-\[0-9\]\{4\}-\[0-9\]\{4\}"/);
   assert.match(css, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.checkout-summary \{ grid-column: 1;/);
   assert.match(css, /\.checkout-form-section \{ grid-column: 2;/);
@@ -50,10 +51,14 @@ test("checkout follows the three-column repair form layout", () => {
   assert.match(checkoutScript, /imageUrl\(image, \{ width: 512 \}\)/);
   assert.match(checkoutScript, /couponRow\.hidden = false/);
   assert.match(checkoutScript, /pointsRow\.hidden = false/);
+  assert.match(checkoutScript, /function formatKoreanPhone\(value\)/);
+  assert.match(checkoutScript, /form\.classList\.toggle\("is-validation-visible"/);
+  assert.doesNotMatch(checkoutScript, /alert\("필수 항목을 모두 입력해주세요\."\)/);
+  assert.match(css, /\.checkout-form\.is-validation-visible \.checkout-field\.is-invalid/);
 });
 
 test("account and checkout share the standard page-top spacing", () => {
-  assert.match(accountHtml, /account\.css\?v=20260929-account-02/);
+  assert.match(accountHtml, /account\.css\?v=20260930-account-03/);
   assert.match(accountCss, /@media \(max-width: 959px\)[\s\S]*?\.account-main \{\s*padding-top: calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\);/);
 });
 

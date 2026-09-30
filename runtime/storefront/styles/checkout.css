@@ -65,6 +65,20 @@ body.checkout-page #searchZipBtn { width: auto !important; inline-size: auto !im
 body.checkout-page #searchZipBtn:is(:hover, :focus-visible, :active, .is-pointer-hover) { border: 0 !important; background: transparent !important; color: rgba(17, 17, 17, 0.85) !important; text-decoration: underline; text-underline-offset: 3px; }
 .checkout-field__memo-custom, .checkout-field__email-custom { grid-column: 2; margin: 0 0 10px; }
 
+.checkout-form.is-validation-visible .checkout-field.is-invalid {
+  border-bottom-color: var(--color-error);
+}
+.checkout-form.is-validation-visible .checkout-field.is-invalid :is(label, input, select),
+.checkout-form.is-validation-visible .checkout-field.is-invalid input::placeholder,
+.checkout-form.is-validation-visible .checkout-field.is-invalid select:invalid,
+.checkout-form.is-validation-visible .checkout-field.is-invalid #searchZipBtn,
+.checkout-form.is-validation-visible .checkout-agree__item.is-invalid {
+  color: var(--color-error) !important;
+}
+.checkout-form.is-validation-visible .checkout-agree__item.is-invalid input[type="checkbox"] {
+  border-color: var(--color-error);
+}
+
 .checkout-save-address { margin-top: 12px; color: rgba(17, 17, 17, 0.85); font-size: 16px; }
 .checkout-save-address[hidden] { display: none; }
 .checkout-save-address label, .checkout-agree__item { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }

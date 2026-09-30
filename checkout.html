@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css?v=20260930-error-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css?v=20260929-85">
-  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260929-85">
+  <link rel="stylesheet" href="./runtime/storefront/styles/checkout.css?v=20260930-validation-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/storefront-actions-20260925-02.css?v=20260929-85">
@@ -78,7 +78,7 @@
         </div>
         <div class="checkout-field">
           <label for="phone">전화번호</label>
-          <input type="tel" id="phone" name="phone" required placeholder="전화번호" autocomplete="tel" />
+          <input type="tel" id="phone" name="phone" required placeholder="010-0000-0000" autocomplete="tel" inputmode="numeric" maxlength="13" pattern="010-[0-9]{4}-[0-9]{4}" />
         </div>
         <div class="checkout-field">
           <label for="email">이메일</label>
@@ -135,7 +135,7 @@
   </main>
 
   <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <script type="module" src="./runtime/storefront/scripts/checkout-20260802-01.js?v=20260927-02"></script>
+  <script type="module" src="./runtime/storefront/scripts/checkout-20260802-01.js?v=20260930-phone-02"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";

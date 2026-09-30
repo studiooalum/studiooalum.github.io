@@ -174,7 +174,7 @@
             </label>
             <label class="account-field">
               <span>휴대전화</span>
-              <input type="tel" name="phone" value="" autocomplete="tel" />
+              <input type="tel" name="phone" value="" autocomplete="tel" inputmode="numeric" maxlength="13" pattern="010-[0-9]{4}-[0-9]{4}" placeholder="010-0000-0000" />
             </label>
             <label class="account-field">
               <span>우편번호</span>
@@ -236,7 +236,7 @@
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260929-account-01";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20260930-phone-02";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";
 
     initSiteChrome();

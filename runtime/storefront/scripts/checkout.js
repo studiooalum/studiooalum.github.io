@@ -27,6 +27,13 @@ const checkoutState = {
 
 let pricingQuoteTimer = null;
 
+function formatKoreanPhone(value) {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 function formatWon(value) {
   return `${Math.max(0, Math.round(Number(value) || 0)).toLocaleString("ko-KR")}원`;
 }
@@ -635,7 +642,7 @@ function fillShippingForm(user) {
   }
 
   if (user.phone && !form.phone.value.trim()) {
-    form.phone.value = user.phone;
+    form.phone.value = formatKoreanPhone(user.phone);
   }
 
   if (user.email && !form.email.value.trim()) {
@@ -778,8 +785,50 @@ function setupCouponField() {
 function setupForm() {
   const form = document.getElementById("checkoutForm");
 
+  const validateForm = ({ focusFirst = false } = {}) => {
+    const email = syncEmailCompositeField().trim();
+    const memoValue = form.memo.value === "custom" ? form.memoCustom.value.trim() : form.memo.value;
+    const checks = [
+      { control: form.name, valid: Boolean(form.name.value.trim()) },
+      { control: form.phone, valid: /^010-\d{4}-\d{4}$/.test(form.phone.value.trim()) },
+      { control: form.email, valid: EMAIL_REGEX.test(email) },
+      { control: form.zipcode, valid: Boolean(form.zipcode.value.trim()), focusTarget: document.getElementById("searchZipBtn") },
+      { control: form.address1, valid: Boolean(form.address1.value.trim()), focusTarget: document.getElementById("searchZipBtn") },
+      { control: form.address2, valid: Boolean(form.address2.value.trim()) },
+      { control: form.memo.value === "custom" ? form.memoCustom : form.memo, valid: Boolean(memoValue) },
+      { control: form.querySelector("#agreeTermsPrivacy"), valid: form.querySelector("#agreeTermsPrivacy")?.checked === true },
+    ];
+
+    for (const check of checks) {
+      const field = check.control?.closest(".checkout-field, .checkout-agree__item");
+      field?.classList.toggle("is-invalid", !check.valid);
+      check.control?.setAttribute("aria-invalid", String(!check.valid));
+    }
+    form.classList.toggle("is-validation-visible", checks.some((check) => !check.valid));
+
+    const firstInvalid = checks.find((check) => !check.valid);
+    if (focusFirst && firstInvalid) {
+      const target = firstInvalid.focusTarget || firstInvalid.control;
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      target?.focus({ preventScroll: true });
+    }
+    return !firstInvalid;
+  };
+
+  form.phone.addEventListener("input", () => {
+    form.phone.value = formatKoreanPhone(form.phone.value);
+  });
+  form.addEventListener("input", () => {
+    if (form.classList.contains("is-validation-visible")) validateForm();
+  });
+  form.addEventListener("change", () => {
+    if (form.classList.contains("is-validation-visible")) validateForm();
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (!validateForm({ focusFirst: true })) return;
 
     // Basic client-side validation
     const name = form.name.value.trim();
@@ -790,7 +839,6 @@ function setupForm() {
     const address2 = form.address2.value.trim();
     const memo = form.memo.value === "custom" ? form.memoCustom.value.trim() : form.memo.value;
     const saveAsDefaultAddress = form.saveAsDefaultAddress?.checked === true;
-    const agreedTermsPrivacy = form.querySelector("#agreeTermsPrivacy")?.checked === true;
     if (checkoutState.couponCode || checkoutState.appliedPoints > 0) {
       await requestPricingQuote();
     }
@@ -803,21 +851,6 @@ function setupForm() {
 
     if (checkoutState.couponCode && !totals.couponDiscountAmount && checkoutState.pricingQuoteError) {
       alert("쿠폰 적용이 실패했습니다. 코드를 다시 확인해주세요.");
-      return;
-    }
-
-    if (!name || !phone || !email || !zipcode || !address1 || !address2 || !memo) {
-      alert("필수 항목을 모두 입력해주세요.");
-      return;
-    }
-
-    if (!EMAIL_REGEX.test(email)) {
-      alert("이메일 주소를 다시 확인해주세요.");
-      return;
-    }
-
-    if (!agreedTermsPrivacy) {
-      alert("이용약관 및 개인정보 처리방침 동의가 필요합니다.");
       return;
     }
 
