@@ -50,7 +50,7 @@ test("repair page keeps the Figma accordion content contract", () => {
     "<li><span>특수소재</span><span>30,000원</span></li>",
     '<span class="repair-method-price-list__amounts"><span>70,000원</span><span>100,000원</span><span>150,000원</span></span>',
     '<span class="repair-method-price-list__name">사시코</span>',
-    "수선 기법은 작업 면적에 따라 S/M/L 소·중·대로 구분되며, 가격은 크기 순으로 표기되어 있습니다.",
+    "수선 기법은 작업 면적에 따라 소·중·대로 구분되며, 가격은 크기 순으로 표기되어 있습니다.",
     "하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.",
     "신청폼 접수 후 답변은 1~2 영업일 정도 소요되고 있으니 양해 부탁드립니다.",
     "왕복 배송비는 고객 부담입니다.",
@@ -104,7 +104,7 @@ test("pricing notes use the same black body typography without gray metadata", (
   assert.match(repairDetailCss, /\.repair-price-notes\s*\{[^}]*gap:\s*0;[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\);[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;[^}]*line-height:\s*var\(--type-body-leading, 1\.55\)/);
   assert.equal((repairHtml.match(/class="repair-price-notes(?: repair-price-notes--methods)?"/g) || []).length, 2);
   assert.match(repairHtml, /data-repair-price-panel="basic"[\s\S]*?위 가격은 모두 시작 가격이며/);
-  assert.match(repairHtml, /data-repair-price-panel="methods"[\s\S]*?수선 기법은 작업 면적에 따라 S\/M\/L 소·중·대로 구분되며/);
+  assert.match(repairHtml, /data-repair-price-panel="methods"[\s\S]*?수선 기법은 작업 면적에 따라 소·중·대로 구분되며/);
 });
 
 test("repair accordion omits section divider lines at every viewport", () => {
