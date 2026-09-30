@@ -1,4 +1,4 @@
-@import url("./newsletter-20260818-02.css?v=20260930-02");
+@import url("./newsletter-20260818-02.css?v=20260930-03");
 
 .newsletter-post-card.is-pointer-hover .newsletter-post-card__image {
   transform: scale(1.025);
@@ -55,7 +55,9 @@
 
 .newsletter-entry__content {
   overflow-wrap: anywhere;
+  font-family: "Pretendard", sans-serif;
   font-size: 19px;
+  font-weight: 300;
   line-height: 1.65;
 }
 

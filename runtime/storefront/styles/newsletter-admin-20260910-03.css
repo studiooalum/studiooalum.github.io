@@ -488,6 +488,7 @@
   outline: 0;
   font-family: "Pretendard", sans-serif;
   font-size: 19px;
+  font-weight: 300;
   line-height: 1.65;
   letter-spacing: var(--tracking-korean);
 }
@@ -923,6 +924,7 @@
   margin-top: 18px;
   font-family: "Pretendard", sans-serif;
   font-size: 19px;
+  font-weight: 300;
   line-height: 1.65;
 }
 
@@ -957,7 +959,7 @@
 
 @media (min-width: 960px) {
   .newsletter-admin-editor {
-    width: min(100%, 760px);
+    width: min(100%, 700px);
   }
 
   .newsletter-admin-shell {
