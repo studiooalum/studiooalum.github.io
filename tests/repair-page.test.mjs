@@ -149,7 +149,7 @@ test("repair request follows the compact line-form reference", () => {
   assert.match(repairHtml, /name="addressLine2"[^>]+required/);
   assert.match(repairHtml, /<span>제품 분류<\/span>\s*<select name="itemType" required>/);
   assert.ok(repairHtml.indexOf('name="itemType"') < repairHtml.indexOf("원하시는 방향이 있나요?"));
-  assert.match(repairHtml, /name="issueDescription"[^>]+placeholder="어떤 제품의, 어떤 부분이 손상되었나요\?"[^>]+required/);
+  assert.match(repairHtml, /name="issueDescription"[^>]+placeholder="어떤 부분이 손상되었나요\?"[^>]+required/);
   assert.match(repairHtml, /<legend>원하시는 방향이 있나요\?<\/legend>/);
   assert.match(repairHtml, /name="desiredResult" value="디자인은 맡기고 싶어요"/);
   assert.match(repairHtml, /<h3>제품 사진을 올려주세요<\/h3>/);
@@ -202,7 +202,7 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
   assert.match(repairTicketHtml, /js-repair-ticket-request-images/);
   assert.match(repairTicketSource, /repair\.requestImages/);
   assert.match(repairTicketSource, /data-protected-image-path/);
-  assert.match(repairTicketSource, /trackingUrl \? `<div><dt>배송 조회<\/dt>/);
+  assert.match(repairTicketSource, /trackingUrl \? `<div><dt>운송장 번호<\/dt>/);
   assert.doesNotMatch(repairTicketSource, /\["배송",[^\n]+\|\| "미발송"\]/);
 });
 
@@ -210,8 +210,8 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
-  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-01/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-03/);
+  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-02/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-04/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
   assert.match(repairTicketCss, /\.repair-ticket-submit\s*\{[^}]*width:\s*50%;[^}]*min-height:\s*48px;/);
@@ -233,8 +233,9 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketCss, /\.repair-ticket-composer \.repair-ticket-file-button:hover\s*\{[^}]*background:\s*#fff !important;[^}]*box-shadow:\s*none !important;[^}]*transform:\s*none !important;[^}]*transition:\s*none !important;/);
   assert.match(repairTicketLayoutCss, /\.repair-ticket-facts\s*\{[^}]*gap:\s*4px;/);
   assert.match(repairTicketLayoutCss, /\.repair-ticket-request-images\s*\{[^}]*margin-top:\s*var\(--ticket-panel-gap\)/);
-  assert.match(repairTicketLayoutCss, /\.repair-ticket-composer \.repair-ticket-file-button,[\s\S]*?width:\s*25% !important;[^}]*max-width:\s*25%;[^}]*flex:\s*0 0 25%;/);
-  assert.match(repairTicketLayoutCss, /\.repair-ticket-file-button\.is-pointer-hover\s*\{[^}]*background:\s*#fff !important;/);
+  assert.match(repairTicketLayoutCss, /\.repair-ticket-composer \.repair-ticket-photo-picker,[\s\S]*?width:\s*25% !important;[^}]*max-width:\s*25%;[^}]*flex:\s*0 0 25%;/);
+  assert.match(repairTicketLayoutCss, /\.repair-ticket-photo-picker:is\(:hover, :focus-visible, :active\)\s*\{[^}]*background:\s*#fff !important;/);
+  assert.match(repairTicketLayoutCss, /@media \(min-width:\s*960px\)[\s\S]*?\.repair-ticket-thread\s*\{[^}]*padding-top:\s*52px;/);
   assert.match(repairTicketHtml, /cart-20260818-02\.css/);
   assert.match(repairTicketHtml, /initCartUI\(\)/);
 });

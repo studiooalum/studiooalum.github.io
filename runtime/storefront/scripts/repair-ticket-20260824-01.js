@@ -169,7 +169,7 @@ function renderFacts(ticket) {
     ["Ticket 종료일", ticket.closedAt ? formatDate(ticket.closedAt) : "진행 중"],
   ];
   dom.facts.innerHTML = facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")
-    + (trackingUrl ? `<div><dt>배송 조회</dt><dd><a href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 열기</a></dd></div>` : "");
+    + (trackingUrl ? `<div><dt>운송장 번호</dt><dd><a href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 열기</a></dd></div>` : "");
 }
 
 async function loadProtectedImages() {
