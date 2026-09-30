@@ -166,7 +166,7 @@ function renderFacts(ticket) {
     ["입금 안내", [repair.bankAccount, repair.paymentInstructions].filter(Boolean).join("\n") || "미정"],
     ["Ticket 생성일", formatDate(ticket.createdAt)],
     ["Ticket 종료일", ticket.closedAt ? formatDate(ticket.closedAt) : "진행 중"],
-    ["운송장 번호", trackingNumber ? shippingText : ""],
+    ["운송장 번호", trackingNumber ? shippingText : "배송 전"],
   ];
   dom.facts.innerHTML = facts.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 }

@@ -154,10 +154,6 @@
                 <span>상세 주소</span>
                 <input class="js-repair-address-line2" type="text" name="addressLine2" autocomplete="address-line2" maxlength="180" placeholder="상세 주소" required>
               </label>
-              <label class="repair-field repair-field--line repair-field--memo">
-                <span>메모</span>
-                <textarea name="issueDescription" rows="2" maxlength="4000" placeholder="어떤 부분이 손상되었나요?" required></textarea>
-              </label>
               <label class="repair-field repair-field--line">
                 <span>제품 분류</span>
                 <select name="itemType" required>
@@ -171,6 +167,10 @@
                   <option value="특수소재">특수소재</option>
                   <option value="기타">기타</option>
                 </select>
+              </label>
+              <label class="repair-field repair-field--line repair-field--memo">
+                <span>메모</span>
+                <textarea name="issueDescription" rows="2" maxlength="4000" placeholder="어떤 부분이 손상되었나요?" required></textarea>
               </label>
               <fieldset class="repair-choice-group repair-choice-group--line"><legend>원하시는 방향이 있나요?</legend><div><label><input type="radio" name="desiredResult" value="기존 모습과 비슷하게 수선" required> 기존 모습과 비슷하게 수선</label><label><input type="radio" name="desiredResult" value="수선 흔적을 살리고 싶어요"> 수선 흔적을 살리고 싶어요</label><label><input type="radio" name="desiredResult" value="디자인은 맡기고 싶어요"> 디자인은 맡기고 싶어요</label><label><input type="radio" name="desiredResult" value="잘 모르겠어요"> 잘 모르겠어요</label></div></fieldset>
             </div>

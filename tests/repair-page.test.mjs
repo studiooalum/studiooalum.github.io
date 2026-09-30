@@ -149,6 +149,7 @@ test("repair request follows the compact line-form reference", () => {
   assert.doesNotMatch(repairHtml, /접수 후 물건을 보내주시면 상태를 확인하고/);
   assert.match(repairHtml, /name="addressLine2"[^>]+required/);
   assert.match(repairHtml, /<span>제품 분류<\/span>\s*<select name="itemType" required>/);
+  assert.ok(repairHtml.indexOf('name="itemType"') < repairHtml.indexOf('name="issueDescription"'));
   assert.ok(repairHtml.indexOf('name="itemType"') < repairHtml.indexOf("원하시는 방향이 있나요?"));
   assert.match(repairHtml, /name="issueDescription"[^>]+placeholder="어떤 부분이 손상되었나요\?"[^>]+required/);
   assert.match(repairHtml, /<legend>원하시는 방향이 있나요\?<\/legend>/);
@@ -203,7 +204,7 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
   assert.match(repairTicketHtml, /js-repair-ticket-request-images/);
   assert.match(repairTicketSource, /repair\.requestImages/);
   assert.match(repairTicketSource, /data-protected-image-path/);
-  assert.match(repairTicketSource, /\["Ticket 종료일",[\s\S]*?\["운송장 번호", trackingNumber \? shippingText : ""\]/);
+  assert.match(repairTicketSource, /\["Ticket 종료일",[\s\S]*?\["운송장 번호", trackingNumber \? shippingText : "배송 전"\]/);
   assert.doesNotMatch(repairTicketSource, /배송 조회 열기/);
   assert.doesNotMatch(repairTicketSource, /\["배송",[^\n]+\|\| "미발송"\]/);
 });
@@ -213,7 +214,7 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
   assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-06/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-06/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-07/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
   assert.match(repairTicketCss, /\.repair-ticket-submit\s*\{[^}]*width:\s*50%;[^}]*min-height:\s*48px;/);
