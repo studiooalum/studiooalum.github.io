@@ -213,7 +213,7 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
-  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-06/);
+  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-08/);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-07/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
@@ -285,8 +285,8 @@ test("repair introduction and accordion follow the archive body typography", () 
   assert.match(repairDetailCss, /\.repair-image-preview-list:empty\s*\{[^}]*display:\s*none;/);
   assert.match(repairDetailCss, /\.repair-address-search-button:focus-visible\s*\{[^}]*text-decoration:\s*none;/);
   assert.match(repairDetailCss, /\.repair-checkbox input\s*\{[^}]*appearance:\s*none;[^}]*border:\s*1px solid #111;/);
-  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, select, textarea\)\s*\{[^}]*outline:\s*0;[^}]*color:\s*#c92a2a;/);
-  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*#c92a2a;/);
+  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, select, textarea\)\s*\{[^}]*outline:\s*0;[^}]*color:\s*var\(--color-error\);/);
+  assert.match(repairDetailCss, /\.repair-field\.is-invalid :is\(input, textarea\)::placeholder\s*\{[^}]*color:\s*var\(--color-error\);/);
   assert.match(repairDetailCss, /\.repair-request-form__section--images\.is-invalid[\s\S]*?outline:\s*0;/);
   assert.match(repairDetailCss, /\.repair-stage__content\s*\{[^}]*padding-top:\s*0;/);
   assert.match(repairDetailCss, /body\.repair-page \.repair-body-copy p,[\s\S]*?font-family:\s*var\(--font-kor-body\) !important;[\s\S]*?font-size:\s*16px !important;[\s\S]*?font-weight:\s*400 !important;[\s\S]*?line-height:\s*var\(--type-body-leading, 1\.55\) !important;/);

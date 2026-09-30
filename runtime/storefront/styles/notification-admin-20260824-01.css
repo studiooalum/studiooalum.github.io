@@ -295,7 +295,7 @@
 .notification-delivery-card__state[data-state="failed"],
 .notification-delivery-card__state[data-state="unknown"],
 .notification-delivery-card__state[data-state="dead_letter"] {
-  color: #ad2b2b;
+  color: var(--color-error);
 }
 
 .notification-delivery-card__state[data-state="sent"] {

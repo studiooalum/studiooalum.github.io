@@ -91,6 +91,11 @@
   opacity: 0;
 }
 
+.repair-ticket-page .repair-ticket-form-status.is-error,
+.repair-ticket-page #repairPaymentDialogStatus.is-error {
+  color: var(--color-error);
+}
+
 @media (min-width: 960px) {
   .repair-ticket-thread {
     padding-top: 52px;

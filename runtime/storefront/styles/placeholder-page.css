@@ -367,7 +367,7 @@
 }
 
 .placeholder-form__status.is-error {
-  color: #b85b4b;
+  color: var(--color-error);
 }
 
 .placeholder-form__status.is-success {

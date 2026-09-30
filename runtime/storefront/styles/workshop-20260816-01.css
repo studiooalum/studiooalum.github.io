@@ -635,7 +635,7 @@ body.workshop-booking-open .workshop-rail__panel {
 }
 
 .workshop-booking-form__feedback.is-error {
-  color: #b3261e;
+  color: var(--color-error);
 }
 
 .workshop-booking-form__feedback.is-success {

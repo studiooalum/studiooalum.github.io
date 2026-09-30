@@ -370,7 +370,7 @@
 }
 
 .repair-form__status.is-error {
-  color: #a52d1d;
+  color: var(--color-error);
 }
 
 .repair-form__status.is-success {

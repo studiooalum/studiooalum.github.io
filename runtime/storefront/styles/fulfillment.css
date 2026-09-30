@@ -116,7 +116,7 @@
 }
 
 .fulfillment-status.is-error {
-  color: #a63232;
+  color: var(--color-error);
 }
 
 .fulfillment-access-summary {

@@ -50,20 +50,20 @@ body.repair-page.is-scroll-locked {
 .repair-request-form.is-validation-visible .repair-field.is-invalid input,
 .repair-request-form.is-validation-visible .repair-field.is-invalid select,
 .repair-request-form.is-validation-visible .repair-field.is-invalid textarea {
-  border-color: #a52d1d;
-  outline: 1px solid #a52d1d;
+  border-color: var(--color-error);
+  outline: 1px solid var(--color-error);
   outline-offset: -1px;
 }
 
 .repair-request-form.is-validation-visible .repair-choice-group.is-invalid,
 .repair-request-form.is-validation-visible .repair-checkbox.is-invalid {
-  color: #a52d1d;
+  color: var(--color-error);
 }
 
 .repair-request-form.is-validation-visible .repair-choice-group.is-invalid,
 .repair-request-form.is-validation-visible .repair-checkbox.is-invalid,
 .repair-request-form.is-validation-visible .repair-request-form__section--images.is-invalid {
-  outline: 1px solid #a52d1d;
+  outline: 1px solid var(--color-error);
   outline-offset: 4px;
 }
 

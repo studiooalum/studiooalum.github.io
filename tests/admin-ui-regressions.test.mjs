@@ -8,6 +8,18 @@ async function read(relativePath) {
   return readFile(new URL(relativePath, root), "utf8");
 }
 
+test("sitewide validation uses the Toss red error token", async () => {
+  const [variables, accountHtml, repairHtml] = await Promise.all([
+    read("runtime/storefront/styles/variables-20260818-01.css"),
+    read("account.html"),
+    read("repair.html"),
+  ]);
+
+  assert.match(variables, /--color-error:\s*#f04452;/);
+  assert.match(accountHtml, /variables-20260818-01\.css\?v=20260930-error-01/);
+  assert.match(repairHtml, /variables-20260818-01\.css\?v=20260930-error-01/);
+});
+
 test("Newsletter Admin loads only the versioned Tiptap editor", async () => {
   const [html, controller, stylesheet, editorSource, bundle, packageJson] = await Promise.all([
     read("newsletter-admin.html"),
@@ -166,8 +178,8 @@ test("login and guest errors use red field text and underlines without an error 
   assert.match(controller, /setAuthFieldInvalid\(guestForm, "reference"\);\s*setAuthFieldInvalid\(guestForm, "email"\);\s*setStatus\(guestStatusEl, ""\);/);
   assert.doesNotMatch(controller, /setStatus\(loginStatusEl, "이메일 주소를 다시 확인해주세요\."/);
   assert.doesNotMatch(controller, /setStatus\(guestStatusEl, "이메일 주소를 다시 확인해주세요\."/);
-  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input\s*\{[^}]*border-bottom-color:\s*#c92a2a;[^}]*color:\s*#c92a2a;/);
-  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input::placeholder\s*\{[^}]*color:\s*#c92a2a;/);
+  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input\s*\{[^}]*border-bottom-color:\s*var\(--color-error\);[^}]*color:\s*var\(--color-error\);/);
+  assert.match(stylesheet, /\.account-auth-shell \.account-field\.is-invalid input::placeholder\s*\{[^}]*color:\s*var\(--color-error\);/);
   assert.match(stylesheet, /\.account-auth-shell \.account-status\.is-error\s*\{[^}]*visibility:\s*hidden;/);
 });
 

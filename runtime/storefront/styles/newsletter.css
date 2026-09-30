@@ -309,7 +309,7 @@
 }
 
 .newsletter-form__status.is-error {
-  color: #a63232;
+  color: var(--color-error);
 }
 
 .newsletter-form__status.is-success {

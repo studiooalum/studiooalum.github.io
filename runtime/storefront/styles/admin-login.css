@@ -61,7 +61,7 @@
 }
 
 .admin-login-status.is-error {
-  color: #a63232;
+  color: var(--color-error);
 }
 
 @media (max-width: 959px) {

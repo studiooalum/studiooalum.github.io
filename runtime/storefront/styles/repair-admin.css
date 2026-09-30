@@ -354,7 +354,7 @@
 .repair-admin-notification-state[data-status="failed"],
 .repair-admin-notification-state[data-status="dead_letter"],
 .repair-admin-notification-state[data-status="unknown"] {
-  color: #ad2b2b;
+  color: var(--color-error);
 }
 
 .repair-admin-notification-state[data-status="pending"],

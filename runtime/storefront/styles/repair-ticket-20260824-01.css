@@ -394,7 +394,7 @@
 }
 
 .repair-ticket-form-status.is-error {
-  color: #ad2b2b;
+  color: var(--color-error);
 }
 
 .repair-ticket-form-status.is-success {

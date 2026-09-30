@@ -29,8 +29,8 @@
 }
 
 .newsletter-admin-content[data-newsletter-editor-error] .newsletter-admin-boot-status {
-  border-color: #ad2b2b;
-  color: #ad2b2b;
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 .newsletter-admin-page .fulfillment-tabs {
