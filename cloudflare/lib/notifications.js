@@ -61,6 +61,15 @@ function decodeJson(value, fallback = []) {
   }
 }
 
+function normalizeRequiredVariables(template, variables) {
+  const templateKey = String(template.templateKey || template.template_key || "");
+  const area = String(template.area || "");
+  if (area === "repair" && templateKey.startsWith("repair.") && !templateKey.endsWith("_admin")) {
+    return variables.filter((variable) => variable !== "repair_number");
+  }
+  return variables;
+}
+
 function readChanges(result) {
   return Number(result?.meta?.changes ?? result?.changes ?? 0);
 }
@@ -205,7 +214,7 @@ function formatTemplateRow(row) {
     defaultSubject: row.default_subject || "",
     defaultBody: row.default_body || "",
     allowedVariables: decodeJson(row.allowed_variables_json, []),
-    requiredVariables: decodeJson(row.required_variables_json, []),
+    requiredVariables: normalizeRequiredVariables(row, decodeJson(row.required_variables_json, [])),
     maxLength: Number(row.max_length || 0),
     isEnabled: Boolean(row.is_enabled),
     activatedAt: row.activated_at || "",
@@ -238,7 +247,10 @@ export function validateNotificationTemplate(template, values = {}) {
   const subject = cleanText(values.subject ?? values.draftSubject ?? template.draftSubject ?? template.draft_subject, 500);
   const body = cleanText(values.body ?? values.draftBody ?? template.draftBody ?? template.draft_body, 6000);
   const allowedVariables = template.allowedVariables || decodeJson(template.allowed_variables_json, []);
-  const requiredVariables = template.requiredVariables || decodeJson(template.required_variables_json, []);
+  const requiredVariables = normalizeRequiredVariables(
+    template,
+    template.requiredVariables || decodeJson(template.required_variables_json, []),
+  );
   const usedVariables = unique([...extractVariables(subject), ...extractVariables(body)]);
   const unsupportedVariables = usedVariables.filter((variable) => !allowedVariables.includes(variable));
   const missingVariables = requiredVariables.filter((variable) => !usedVariables.includes(variable));

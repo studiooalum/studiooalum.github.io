@@ -211,7 +211,7 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
-  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-03/);
+  assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-04/);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20260930-ticket-05/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
   assert.match(repairTicketCss, /\.repair-ticket-summary\s*\{[^}]*border-top:\s*0;[^}]*padding-top:\s*0;/);
@@ -237,7 +237,7 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketLayoutCss, /\.repair-ticket-composer \.repair-ticket-photo-picker,[\s\S]*?width:\s*25% !important;[^}]*max-width:\s*25%;[^}]*flex:\s*0 0 25%;/);
   assert.match(repairTicketLayoutCss, /\.repair-ticket-photo-picker:is\(:hover, :focus-visible, :active\)\s*\{[^}]*background:\s*#fff !important;/);
   assert.match(repairTicketLayoutCss, /@media \(min-width:\s*960px\)[\s\S]*?\.repair-ticket-thread\s*\{[^}]*padding-top:\s*52px;/);
-  assert.match(repairTicketLayoutCss, /@media \(max-width:\s*959px\)[\s\S]*?\.repair-ticket-facts\s*\{[^}]*gap:\s*0;[\s\S]*?\.repair-ticket-facts > div\s*\{[^}]*min-height:\s*24px;/);
+  assert.match(repairTicketLayoutCss, /@media \(max-width:\s*959px\)[\s\S]*?\.repair-ticket-facts\s*\{[^}]*gap:\s*0;[\s\S]*?\.repair-ticket-facts > div\s*\{[^}]*min-height:\s*48px;[\s\S]*?\.repair-ticket-facts dt,[\s\S]*?line-height:\s*1\.45;/);
   assert.match(repairTicketHtml, /cart-20260818-02\.css/);
   assert.match(repairTicketHtml, /initCartUI\(\)/);
 });
