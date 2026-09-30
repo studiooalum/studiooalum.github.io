@@ -116,11 +116,11 @@
   }
 
   .repair-ticket-facts > div {
-    min-height: 48px;
+    min-height: 32px;
   }
 
   .repair-ticket-facts dt,
   .repair-ticket-facts dd {
-    line-height: 1.45;
+    line-height: 1.3;
   }
 }
