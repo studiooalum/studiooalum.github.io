@@ -150,7 +150,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
   ]);
 
   assert.match(html, /account\.css\?v=20261002-orders-01/);
-  assert.match(html, /account\.js\?v=20261002-orders-01/);
+  assert.match(html, /account\.js\?v=20261002-orders-02/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
   assert.match(html, /placeholder="비밀번호"/);
@@ -256,7 +256,7 @@ test("My Oalum keeps logout in the account page and removes it from the GNB", as
   assert.match(siteChrome, /document\.querySelectorAll\("\.gnb \[data-auth-toggle='logout'\]"\)/);
 });
 
-test("completed order history hides cancelled orders and uses the revised card layout", async () => {
+test("order history preserves terminal order states and uses the revised card layout", async () => {
   const [html, controller, stylesheet] = await Promise.all([
     read("account.html"),
     read("runtime/storefront/scripts/account.js"),
@@ -264,9 +264,10 @@ test("completed order history hides cancelled orders and uses the revised card l
   ]);
 
   assert.match(html, /<h2 class="account-heading">주문 내역<\/h2>/);
-  assert.match(controller, /function isCompletedAccountOrder\(order\)/);
-  assert.match(controller, /const completedOrders = orders\.filter\(isCompletedAccountOrder\)/);
-  assert.match(controller, /renderOrders\(completedOrders\)/);
+  assert.doesNotMatch(controller, /isCompletedAccountOrder/);
+  assert.match(controller, /renderOrders\(orders\)/);
+  assert.match(controller, /return "부분 환불"/);
+  assert.match(controller, /const statusLabel = formatOrderStatus\(order\)/);
   assert.match(controller, /account-record account-record--order/);
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order\s*\{[^}]*grid-template-columns:\s*160px minmax\(0, 1fr\);/);
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-record__thumb,[\s\S]*?border:\s*0;/);

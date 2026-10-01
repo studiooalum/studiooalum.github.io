@@ -4,6 +4,7 @@ import { confirmTossPayment, cancelTossPayment, getTossConfig } from "../cloudfl
 import { resolveOrderItems } from "../cloudflare/lib/commerce.js";
 import { assertSameOrigin } from "../cloudflare/lib/request-security.js";
 import { readJson, json, errorResponse } from "../cloudflare/lib/http.js";
+import { onRequestGet as paymentConfig } from "../functions/api/payments/config.js";
 
 const env = { TOSS_CLIENT_KEY: "test_gck_fixture", TOSS_SECRET_KEY: "test_gsk_fixture" };
 test("API responses are private and cross-origin mutations are rejected", async () => {
@@ -36,6 +37,14 @@ test("Toss keys must use the same mode and checkout needs a server key", () => {
   assert.equal(getTossConfig(env).isClientReady, true);
   assert.equal(getTossConfig({ TOSS_CLIENT_KEY: "live_gck_fixture", TOSS_SECRET_KEY: env.TOSS_SECRET_KEY }).isClientReady, false);
   assert.equal(getTossConfig({ TOSS_CLIENT_KEY: env.TOSS_CLIENT_KEY }).isClientReady, false);
+});
+
+test("public payment configuration never exposes a secret placed in the client setting", async () => {
+  const response = paymentConfig({ env: { TOSS_CLIENT_KEY: "live_sk_private", TOSS_SECRET_KEY: "live_sk_private" } });
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).clientKey, "");
+  assert.equal(getTossConfig({ TOSS_CLIENT_KEY: "live_gck_fixture", TOSS_SECRET_KEY: "live_gsk_fixture" }).isClientReady, true);
+  assert.equal(getTossConfig({ TOSS_CLIENT_KEY: "live_ck_fixture", TOSS_SECRET_KEY: "live_sk_fixture" }).isClientReady, true);
 });
 
 test("Toss confirmation validates exact provider data and sends a stable idempotency key", async (context) => {

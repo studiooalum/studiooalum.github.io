@@ -7,13 +7,19 @@ function getTossCancelUrl(paymentKey) {
 export function getTossConfig(env) {
   const clientKey = String(env?.TOSS_CLIENT_KEY || env?.NEXT_PUBLIC_TOSS_CLIENT_KEY || "").trim();
   const secretKey = String(env?.TOSS_SECRET_KEY || "").trim();
-  const clientMode = /^(test|live)_/.exec(clientKey)?.[1] || "";
-  const serverMode = /^(test|live)_/.exec(secretKey)?.[1] || "";
+  // Never return a secret accidentally entered in the client-key setting.
+  const clientMode = /^(test|live)_(?:gck|ck)_/.exec(clientKey)?.[1] || "";
+  const serverMode = /^(test|live)_(?:gsk|sk)_/.exec(secretKey)?.[1] || "";
   const consistent = Boolean(serverMode && (!clientKey || clientMode === serverMode));
+  const configurationError = !clientKey || !secretKey ? "토스 클라이언트 키와 시크릿 키를 모두 설정해주세요."
+    : !clientMode ? "TOSS_CLIENT_KEY에 토스 클라이언트 키(live_gck_ 또는 live_ck_)를 입력해주세요."
+    : !serverMode ? "TOSS_SECRET_KEY에 토스 시크릿 키(live_gsk_ 또는 live_sk_)를 입력해주세요."
+    : !consistent ? "토스 클라이언트 키와 시크릿 키의 테스트/라이브 모드가 다릅니다." : "";
 
   return {
     clientKey,
     secretKey,
+    configurationError,
     mode: serverMode || clientMode,
     isClientReady: Boolean(clientMode && consistent),
     isServerReady: consistent,
@@ -109,14 +115,14 @@ function assertPaymentResult(payload, { paymentKey, orderId, amount, status }) {
   }
 }
 
-async function tossRequest(config, url, body, idempotencyKey) {
+async function tossRequest(config, url, body, idempotencyKey, timeoutMs = 15000) {
   let response;
   try {
     response = await fetch(url, {
       method: body ? "POST" : "GET",
       headers: { Authorization: `Basic ${btoa(`${config.secretKey}:`)}`, "Content-Type": "application/json", ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw Object.assign(new Error("결제사 응답을 확인 중입니다. 잠시 후 다시 확인해주세요."), { status: 503, retryable: true });
@@ -131,8 +137,8 @@ async function tossRequest(config, url, body, idempotencyKey) {
   return payload;
 }
 
-export async function readTossPayment(env, paymentKey) {
+export async function readTossPayment(env, paymentKey, { timeoutMs = 15000 } = {}) {
   const config = getTossConfig(env);
   if (!config.isServerReady || !paymentKey) throw Object.assign(new Error("결제 조회 설정을 확인해주세요."), { status: 503 });
-  return tossRequest(config, `https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}`);
+  return tossRequest(config, `https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}`, undefined, undefined, timeoutMs);
 }

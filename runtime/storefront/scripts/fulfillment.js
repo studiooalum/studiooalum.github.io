@@ -355,7 +355,13 @@ async function verifyAdminSession() {
 
 function resolveShipmentLabel(order) {
   const shipment = order?.shipment || null;
-  const status = String(shipment?.status || order?.paymentStatus || order?.status || "confirmed").trim();
+  const orderStatus = String(order?.status || "").trim().toLowerCase();
+  const paymentStatus = String(order?.paymentStatus || order?.payment?.status || "").trim().toLowerCase();
+  if (["partially_refunded"].includes(orderStatus) || ["partial_refunded", "partial-canceled", "partial_canceled"].includes(paymentStatus)) return "부분 환불";
+  if (["refunded"].includes(orderStatus) || ["refunded", "refund"].includes(paymentStatus)) return "환불 완료";
+  if (["cancelled", "canceled"].includes(orderStatus) || ["cancelled", "canceled"].includes(paymentStatus)) return "취소 완료";
+  if (["payment_failed"].includes(orderStatus) || ["failed", "aborted", "expired"].includes(paymentStatus)) return "결제 실패";
+  const status = String(shipment?.status || paymentStatus || orderStatus || "confirmed").trim();
   const labels = {
     confirmed: "주문 확인 완료",
     ready: "배송 준비 중",

@@ -137,6 +137,11 @@ function getPaymentLifecycle(status, { defaultToPending = false } = {}) {
       };
     case "PARTIAL_CANCELED":
     case "PARTIAL_CANCELLED":
+      return {
+        orderStatus: "partially_refunded",
+        paymentStatus: "partial_refunded",
+        eventType: "payment.partially_refunded",
+      };
     case "REFUND":
     case "REFUNDED":
       return {
@@ -1116,7 +1121,14 @@ export async function readFulfillmentOrders(env, { query = "", limit = 20 } = {}
     .prepare(`
       SELECT id
       FROM orders
-      WHERE (? = '' OR lower(id) LIKE ? OR lower(order_name) LIKE ? OR lower(customer_name) LIKE ? OR lower(customer_email) LIKE ? OR lower(coupon_code) LIKE ?)
+      WHERE NOT (
+        lower(status) = 'created'
+        AND lower(payment_status) = 'pending'
+        AND active_payment_key IS NULL
+        AND NOT EXISTS (SELECT 1 FROM payments WHERE payments.order_id = orders.id)
+        AND NOT EXISTS (SELECT 1 FROM shipments WHERE shipments.order_id = orders.id)
+      )
+        AND (? = '' OR lower(id) LIKE ? OR lower(order_name) LIKE ? OR lower(customer_name) LIKE ? OR lower(customer_email) LIKE ? OR lower(coupon_code) LIKE ?)
       ORDER BY created_at DESC
       LIMIT ?
     `)
@@ -1158,7 +1170,7 @@ export async function deleteUnpaidOrder(env, orderId) {
   if (!order) {
     throw Object.assign(new Error("주문 정보를 찾을 수 없습니다."), { status: 404 });
   }
-  const protectedOrderStatuses = new Set(["paid", "completed", "fulfilled", "refunded"]);
+  const protectedOrderStatuses = new Set(["paid", "completed", "fulfilled", "partially_refunded", "refunded", "cancelled", "payment_failed"]);
   const protectedPaymentStatuses = new Set(["paid", "done", "completed", "refunded", "partial_refunded"]);
   if (order.paid_at
     || protectedOrderStatuses.has(String(order.status || "").toLowerCase())
@@ -1198,8 +1210,8 @@ export async function deleteUnpaidOrder(env, orderId) {
 }
 
 function shouldApplyOrderLifecycle({ currentStatus, activePaymentKey, paymentKey, lifecycle }) {
-  if (["cancelled", "refunded"].includes(currentStatus) && ["paid", "payment_pending"].includes(lifecycle?.orderStatus)) return false;
-  if (currentStatus === "paid" && lifecycle?.orderStatus !== "cancelled" && lifecycle?.paymentStatus !== "refunded") {
+  if (["cancelled", "partially_refunded", "refunded"].includes(currentStatus) && ["paid", "payment_pending"].includes(lifecycle?.orderStatus)) return false;
+  if (currentStatus === "paid" && lifecycle?.orderStatus !== "cancelled" && !["partial_refunded", "refunded"].includes(lifecycle?.paymentStatus)) {
     return activePaymentKey === paymentKey && lifecycle?.orderStatus === "paid";
   }
   if (!paymentKey || !lifecycle) {
@@ -1296,7 +1308,7 @@ async function upsertPaymentRecord(database, input) {
   }
 
   const approvedAmount =
-    input.lifecycle.paymentStatus === "confirmed" || input.lifecycle.paymentStatus === "refunded"
+    ["confirmed", "partial_refunded", "refunded"].includes(input.lifecycle.paymentStatus)
       ? roundAmount(input.amount) || roundAmount(existing?.approved_amount)
       : roundAmount(existing?.approved_amount) || null;
 
@@ -1311,7 +1323,7 @@ async function upsertPaymentRecord(database, input) {
       : normalizeTimestamp(existing?.failed_at);
 
   const cancelledAt =
-    input.lifecycle.paymentStatus === "cancelled" || input.lifecycle.paymentStatus === "refunded"
+    ["cancelled", "partial_refunded", "refunded"].includes(input.lifecycle.paymentStatus)
       ? normalizeTimestamp(input.cancelledAt) || now
       : normalizeTimestamp(existing?.cancelled_at);
 

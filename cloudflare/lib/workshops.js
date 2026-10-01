@@ -2035,7 +2035,7 @@ async function readReservationForCheckout(database, checkoutId) {
     .first();
 }
 
-function buildCheckoutResponse(reservation, paymentOrder, workshop, clientKey) {
+function buildCheckoutResponse(reservation, paymentOrder, workshop, clientKey, env) {
   return {
     checkoutId: reservation.checkout_token,
     order: formatWorkshopPaymentOrder(paymentOrder),
@@ -2049,6 +2049,8 @@ function buildCheckoutResponse(reservation, paymentOrder, workshop, clientKey) {
       phone: reservation.phone,
     },
     clientKey,
+    paymentVariantKey: env.TOSS_PAYMENT_VARIANT_KEY || "DEFAULT",
+    agreementVariantKey: env.TOSS_AGREEMENT_VARIANT_KEY || "AGREEMENT",
   };
 }
 
@@ -2094,7 +2096,7 @@ export async function createWorkshopCheckout(env, { checkoutId }) {
 
   if (existingOrder && !isExpired(existingOrder.checkout_expires_at)) {
     if (existingOrder.status === "processing") throw Object.assign(new Error("결제 확인 중입니다. 잠시 후 다시 확인해주세요."), { status: 409 });
-    return buildCheckoutResponse(reservation, existingOrder, workshop, tossConfig.clientKey);
+    return buildCheckoutResponse(reservation, existingOrder, workshop, tossConfig.clientKey, env);
   }
   if (existingOrder) {
     await markReservationExpired(database, reservation.id, existingOrder.id);
@@ -2125,7 +2127,7 @@ export async function createWorkshopCheckout(env, { checkoutId }) {
 
   const paymentOrder = await database.prepare(`SELECT * FROM workshop_payment_orders WHERE id = ? LIMIT 1`).bind(paymentOrderId).first();
   const updatedReservation = await database.prepare(`SELECT * FROM workshop_reservations WHERE id = ? LIMIT 1`).bind(reservation.id).first();
-  return buildCheckoutResponse(updatedReservation, paymentOrder, workshop, tossConfig.clientKey);
+  return buildCheckoutResponse(updatedReservation, paymentOrder, workshop, tossConfig.clientKey, env);
 }
 
 export async function confirmWorkshopPayment(env, { checkoutId, paymentKey, orderId, amount }) {
@@ -2206,7 +2208,7 @@ export async function settleWorkshopPayment(env, payment) {
       WHERE id = ?
         AND status IN ('pending','processing')
     `)
-    .bind(payment.paymentKey, payment.status, payment.approvedAt || now, encodeJson(payment.rawResponse, {}), now, paymentOrder.id),
+    .bind(payment.paymentKey, payment.status, payment.approvedAt || now, encodeJson(payment.rawResponse || payment, {}), now, paymentOrder.id),
     database.prepare(`
       UPDATE workshop_reservations
       SET status = 'confirmed',
@@ -2261,24 +2263,39 @@ export async function refundWorkshopPayment(env, { reservationId, cancelReason =
     amount: paymentOrder.amount,
     cancelReason: cleanText(cancelReason, 200) || "관리자 요청으로 워크숍 결제를 취소했습니다.",
   });
+  return settleWorkshopRefund(env, cancellation.rawResponse);
+}
+
+// A verified cancellation is a fact to persist, never a request to cancel again.
+export async function settleWorkshopRefund(env, payment) {
+  const database = requireDb(env);
+  const paymentOrder = await database.prepare("SELECT * FROM workshop_payment_orders WHERE order_id = ?").bind(payment.orderId).first();
+  const reservation = paymentOrder && await database.prepare("SELECT * FROM workshop_reservations WHERE id = ?").bind(paymentOrder.reservation_id).first();
+  if (!reservation || payment.status !== "CANCELED" || payment.currency !== "KRW" || payment.balanceAmount !== 0
+    || payment.totalAmount !== Number(paymentOrder.amount) || !payment.paymentKey
+    || (paymentOrder.payment_key && paymentOrder.payment_key !== payment.paymentKey)) {
+    throw Object.assign(new Error("워크숍 환불 내역이 주문과 일치하지 않습니다."), { status: 409 });
+  }
   const now = nowIso();
+  const cancelledAt = payment.cancels?.at(-1)?.canceledAt || now;
   await database.batch([
     database.prepare(`
       UPDATE workshop_payment_orders
       SET status = 'refunded',
+          payment_key = ?,
           provider_status = ?,
           cancelled_at = ?,
           raw_response = ?,
           updated_at = ?
       WHERE id = ?
     `)
-    .bind(cancellation.status, cancellation.cancelledAt || now, encodeJson(cancellation.rawResponse, {}), now, paymentOrder.id),
+    .bind(payment.paymentKey, payment.status, cancelledAt, encodeJson(payment, {}), now, paymentOrder.id),
     database.prepare(`
       UPDATE workshop_reservations
       SET status = 'cancelled', payment_status = 'refunded', cancelled_at = ?, updated_at = ?
       WHERE id = ?
     `)
-    .bind(now, now, reservation.id),
+    .bind(cancelledAt, now, reservation.id),
   ]);
 
   const updatedOrder = await database.prepare(`SELECT * FROM workshop_payment_orders WHERE id = ? LIMIT 1`).bind(paymentOrder.id).first();
@@ -2385,9 +2402,11 @@ export async function maintainWorkshopOperations(env, { now = new Date() } = {})
   for (const order of processing.results || []) {
     try {
       const payment = await readTossPayment(env, order.payment_key);
+      if (payment.orderId !== order.order_id || payment.paymentKey !== order.payment_key || payment.totalAmount !== order.amount || payment.currency !== "KRW") continue;
       if (payment.status === "DONE" && payment.currency === "KRW") await settleWorkshopPayment(env, { ...payment, amount: payment.totalAmount });
+      else if (payment.status === "CANCELED") await settleWorkshopRefund(env, payment);
       else if (["ABORTED", "EXPIRED"].includes(payment.status)) {
-        await database.prepare("UPDATE workshop_payment_orders SET status = 'pending', updated_at = ? WHERE id = ? AND status = 'processing'").bind(nowText, order.id).run();
+        await database.prepare("UPDATE workshop_payment_orders SET status = 'pending', payment_key = NULL, updated_at = ? WHERE id = ? AND status = 'processing'").bind(nowText, order.id).run();
       }
     } catch (error) { console.error("Workshop payment reconciliation pending", { orderId: order.order_id, status: error.status }); }
   }

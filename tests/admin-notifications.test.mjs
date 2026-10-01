@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DatabaseSync } from "node:sqlite";
 
-import { persistOrder } from "../cloudflare/lib/d1.js";
+import { persistOrder, readFulfillmentOrders } from "../cloudflare/lib/d1.js";
 import {
   enqueueOrderCompletedAdminNotification,
   enqueueWorkshopReservationAdminNotification,
@@ -17,6 +17,7 @@ import {
 } from "../cloudflare/lib/workshops.js";
 import { onRequestPost as confirmPayment } from "../functions/api/payments/confirm.js";
 import { onRequestPost as createWorkshopReservation } from "../functions/api/workshops/reservations.js";
+import { onRequestPost as tossWebhook } from "../functions/api/webhooks/toss.js";
 
 class D1BoundStatement {
   constructor(statement, values) {
@@ -48,6 +49,7 @@ class D1Database {
     this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0037_operational_notifications.sql", import.meta.url), "utf8"));
     this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0035_workshop_operations.sql", import.meta.url), "utf8"));
     this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0038_payment_reservation_guards.sql", import.meta.url), "utf8"));
+    this.database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0042_payment_review_notification.sql", import.meta.url), "utf8"));
   }
 
   prepare(sql) { return new D1Statement(this.database, sql); }
@@ -269,4 +271,177 @@ test("notification admin page exposes customer and administrator views", () => {
   assert.match(html, /data-notification-audience="admin"[^>]*>관리자 알림</);
   assert.match(script, /endsWith\("_admin"\)/);
   assert.match(script, /includes\("_to_admin"\)/);
+});
+
+test("verified Shop webhooks recover failed outbox writes and deduplicate both audiences", async (t) => {
+  const { database, env } = createEnvironment({ TOSS_CLIENT_KEY: "live_gck_fixture", TOSS_SECRET_KEY: "live_gsk_fixture" });
+  t.after(() => database.close());
+  await persistOrder(env, createOrder("ORDER_WEBHOOK"));
+  const payment = { paymentKey: "webhook-key", orderId: "ORDER_WEBHOOK", totalAmount: 42000, currency: "KRW", status: "DONE", approvedAt: new Date().toISOString() };
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async (_url, options) => {
+    assert.equal(options.method, "GET");
+    return Response.json(payment);
+  };
+  const originalPrepare = database.prepare.bind(database);
+  let failOnce = true;
+  database.prepare = (sql) => {
+    if (failOnce && /INSERT.*INTO notification_outbox/s.test(sql)) {
+      failOnce = false;
+      throw new Error("simulated outbox write failure");
+    }
+    return originalPrepare(sql);
+  };
+  const delivery = () => {
+    const { context } = createContext(env, "/api/webhooks/toss", { eventType: "PAYMENT_STATUS_CHANGED", data: { paymentKey: payment.paymentKey, status: "CANCELED", totalAmount: 1 } });
+    context.request.headers.set("tosspayments-webhook-transmission-id", "delivery-fixture");
+    return context;
+  };
+  assert.equal((await tossWebhook(delivery())).status, 500);
+  assert.equal((await tossWebhook(delivery())).status, 200);
+  assert.equal((await tossWebhook(delivery())).status, 200);
+  assert.equal(database.prepare("SELECT status FROM orders WHERE id = 'ORDER_WEBHOOK'").first().status, "paid");
+  assert.equal(readAdminOutbox(database, "shop.order_completed").length, 1);
+  assert.equal(readAdminOutbox(database, "shop.order_completed_admin").length, 1);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM payment_events WHERE delivery_id = 'delivery-fixture'").first().count, 1);
+
+  payment.status = "CANCELED";
+  payment.balanceAmount = 0;
+  payment.cancels = [{ canceledAt: new Date().toISOString(), cancelAmount: 42000 }];
+  assert.equal((await tossWebhook(delivery())).status, 200);
+  assert.equal((await tossWebhook(delivery())).status, 200);
+  assert.equal(database.prepare("SELECT status FROM orders WHERE id = 'ORDER_WEBHOOK'").first().status, "cancelled");
+  assert.equal(readAdminOutbox(database, "shop.order_cancelled").length, 1);
+  assert.equal(readAdminOutbox(database, "shop.refund_completed_admin").length, 1);
+  assert.equal(database.prepare("SELECT status FROM shipments WHERE order_id = 'ORDER_WEBHOOK'").first().status, "cancelled");
+});
+
+test("Shop order lifecycle keeps one order across failed, partial refund, and cancelled states", async (t) => {
+  const { database, env } = createEnvironment({ TOSS_CLIENT_KEY: "live_gck_fixture", TOSS_SECRET_KEY: "live_gsk_fixture" });
+  t.after(() => database.close());
+  await persistOrder(env, createOrder("ORDER_LIFECYCLE"));
+  await persistOrder(env, createOrder("ORDER_DRAFT_ONLY"));
+
+  const payment = {
+    paymentKey: "lifecycle-payment-key",
+    orderId: "ORDER_LIFECYCLE",
+    totalAmount: 42000,
+    balanceAmount: 42000,
+    currency: "KRW",
+    status: "ABORTED",
+    lastTransactionKey: "transaction-failed",
+  };
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => Response.json(payment);
+
+  const deliver = async (deliveryId) => {
+    const { context } = createContext(env, "/api/webhooks/toss", {
+      eventType: "PAYMENT_STATUS_CHANGED",
+      data: { paymentKey: payment.paymentKey },
+    });
+    context.request.headers.set("tosspayments-webhook-transmission-id", deliveryId);
+    return tossWebhook(context);
+  };
+
+  assert.equal((await deliver("delivery-failed")).status, 200);
+  assert.deepEqual({ ...database.prepare("SELECT status, payment_status FROM orders WHERE id = 'ORDER_LIFECYCLE'").first() }, {
+    status: "payment_failed",
+    payment_status: "failed",
+  });
+
+  payment.status = "DONE";
+  payment.approvedAt = new Date().toISOString();
+  payment.lastTransactionKey = "transaction-approved";
+  assert.equal((await deliver("delivery-approved")).status, 200);
+
+  payment.status = "PARTIAL_CANCELED";
+  payment.balanceAmount = 21000;
+  payment.lastTransactionKey = "transaction-partial";
+  payment.cancels = [{ canceledAt: new Date().toISOString(), cancelAmount: 21000, transactionKey: "transaction-partial" }];
+  assert.equal((await deliver("delivery-partial")).status, 200);
+  assert.deepEqual({ ...database.prepare("SELECT status, payment_status FROM orders WHERE id = 'ORDER_LIFECYCLE'").first() }, {
+    status: "partially_refunded",
+    payment_status: "partial_refunded",
+  });
+
+  payment.status = "CANCELED";
+  payment.balanceAmount = 0;
+  payment.lastTransactionKey = "transaction-cancelled";
+  payment.cancels.push({ canceledAt: new Date().toISOString(), cancelAmount: 21000, transactionKey: "transaction-cancelled" });
+  assert.equal((await deliver("delivery-cancelled")).status, 200);
+  assert.deepEqual({ ...database.prepare("SELECT status, payment_status FROM orders WHERE id = 'ORDER_LIFECYCLE'").first() }, {
+    status: "cancelled",
+    payment_status: "cancelled",
+  });
+
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM orders WHERE id = 'ORDER_LIFECYCLE'").first().count, 1);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM payment_events WHERE order_id = 'ORDER_LIFECYCLE'").first().count, 5);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM payment_events WHERE order_id = 'ORDER_LIFECYCLE' AND event_type = 'payment.partially_refunded'").first().count, 1);
+  assert.deepEqual((await readFulfillmentOrders(env)).map((order) => order.orderId), ["ORDER_LIFECYCLE"]);
+});
+
+test("Workshop cancellation webhook settles a processing order without another cancel API call", async (t) => {
+  const { database, env } = createEnvironment({ TOSS_CLIENT_KEY: "live_gck_fixture", TOSS_SECRET_KEY: "live_gsk_fixture", TOSS_PAYMENT_VARIANT_KEY: "CUSTOM", TOSS_AGREEMENT_VARIANT_KEY: "CUSTOM_AGREEMENT" });
+  t.after(() => database.close());
+  await upsertWorkshopContent(env, {
+    slug: "webhook-workshop", title: "웹훅 워크숍", status: "published", price: 50000,
+    scheduleSlots: [{ _key: "slot", date: "2099-10-02", startTime: "14:00", endTime: "17:00", capacity: 4 }], galleryImages: [],
+    bookingConfig: { workshopType: "event", fixedPrice: 50000, minParticipants: 1, maxParticipants: 4, paymentDeadlineHours: 48 },
+  });
+  const available = await readWorkshopAvailability(env, "webhook-workshop");
+  const { context } = createContext(env, "/api/workshops/reservations", { slug: "webhook-workshop", slotKey: available.scheduleSlots[0].key, fullName: "검증", email: "customer@example.com", phone: "01012345678", attendeeCount: 1 });
+  const reservation = await (await createWorkshopReservation(context)).json();
+  const checkout = await createWorkshopCheckout(env, { checkoutId: reservation.checkoutId });
+  assert.equal(checkout.paymentVariantKey, "CUSTOM");
+  assert.equal(checkout.agreementVariantKey, "CUSTOM_AGREEMENT");
+  database.prepare("UPDATE workshop_payment_orders SET status = 'processing', payment_key = 'workshop-webhook-key'").run();
+  const payment = { paymentKey: "workshop-webhook-key", orderId: checkout.order.orderId, totalAmount: 50000, currency: "KRW", status: "CANCELED", balanceAmount: 0, cancels: [{ canceledAt: new Date().toISOString(), cancelAmount: 50000 }] };
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async (_url, options) => {
+    assert.equal(options.method, "GET", "webhooks must not initiate another refund");
+    return Response.json(payment);
+  };
+  const delivery = () => createContext(env, "/api/webhooks/toss", { eventType: "PAYMENT_STATUS_CHANGED", data: { paymentKey: payment.paymentKey } }).context;
+  assert.equal((await tossWebhook(delivery())).status, 200);
+  assert.equal((await tossWebhook(delivery())).status, 200);
+  assert.equal(database.prepare("SELECT status FROM workshop_payment_orders").first().status, "refunded");
+  assert.equal(database.prepare("SELECT payment_status FROM workshop_reservations").first().payment_status, "refunded");
+  assert.equal(readAdminOutbox(database, "workshop.refund_completed").length, 1);
+  assert.equal(readAdminOutbox(database, "workshop.refund_completed_admin").length, 1);
+});
+
+test("forged webhook amounts and unknown orders cannot mutate paid state", async (t) => {
+  const { database, env } = createEnvironment({ TOSS_SECRET_KEY: "live_gsk_fixture" });
+  t.after(() => database.close());
+  await persistOrder(env, createOrder("ORDER_MISMATCH"));
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => Response.json({ paymentKey: "key", orderId: "ORDER_MISMATCH", status: "DONE", currency: "KRW", totalAmount: 1 });
+  const { context } = createContext(env, "/api/webhooks/toss", { data: { paymentKey: "key", totalAmount: 42000 } });
+  assert.equal((await tossWebhook(context)).status, 409);
+  assert.equal(database.prepare("SELECT status FROM orders WHERE id = 'ORDER_MISMATCH'").first().status, "created");
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_outbox").first().count, 0);
+});
+
+test("partial refunds update the same order and send one administrator review alert instead of a full refund receipt", async (t) => {
+  const { database, env } = createEnvironment({ TOSS_SECRET_KEY: "live_gsk_fixture" });
+  t.after(() => database.close());
+  await persistOrder(env, createOrder("ORDER_PARTIAL"));
+  database.prepare("UPDATE orders SET status = 'paid', payment_status = 'confirmed', active_payment_key = 'partial-key' WHERE id = 'ORDER_PARTIAL'").run();
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const payment = { paymentKey: "partial-key", orderId: "ORDER_PARTIAL", status: "PARTIAL_CANCELED", currency: "KRW", totalAmount: 42000, balanceAmount: 21000 };
+  globalThis.fetch = async () => Response.json(payment);
+  for (let index = 0; index < 2; index++) {
+    const { context } = createContext(env, "/api/webhooks/toss", { eventType: "PAYMENT_STATUS_CHANGED", data: { paymentKey: "partial-key" } });
+    assert.equal((await tossWebhook(context)).status, 200);
+  }
+  assert.equal(database.prepare("SELECT status FROM orders WHERE id = 'ORDER_PARTIAL'").first().status, "partially_refunded");
+  assert.equal(readAdminOutbox(database, "shop.refund_completed").length, 0);
+  assert.equal(readAdminOutbox(database, "shop.payment_review_required_admin").length, 1);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM payment_events WHERE event_type = 'payment.partial_refund_review'").first().count, 1);
+  assert.match(database.prepare("SELECT body_text FROM notification_outbox WHERE template_key = 'shop.payment_review_required_admin'").first().body_text, /21,000원/);
 });

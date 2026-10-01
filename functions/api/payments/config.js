@@ -10,6 +10,6 @@ export function onRequestGet(context) {
     mode: config.mode,
     paymentVariantKey: context.env.TOSS_PAYMENT_VARIANT_KEY || "DEFAULT",
     agreementVariantKey: context.env.TOSS_AGREEMENT_VARIANT_KEY || "AGREEMENT",
-    error: config.isClientReady ? undefined : "결제 설정이 준비되지 않았습니다.",
+    error: config.isClientReady ? undefined : config.configurationError || "결제 설정이 준비되지 않았습니다.",
   }, { status: config.isClientReady ? 200 : 503 });
 }

@@ -104,7 +104,11 @@ function formatOrderStatus(order) {
     return "주문 취소";
   }
 
-  if (["refunded", "refund"].includes(orderValue) || ["refunded", "refund", "partial_refunded", "partial-refunded"].includes(value)) {
+  if (["partially_refunded"].includes(orderValue) || ["partial_refunded", "partial-refunded"].includes(value)) {
+    return "부분 환불";
+  }
+
+  if (["refunded", "refund"].includes(orderValue) || ["refunded", "refund"].includes(value)) {
     return "환불 완료";
   }
 
@@ -161,48 +165,6 @@ function formatOrderStatus(order) {
   }
 
   return "주문 접수";
-}
-
-function isCompletedAccountOrder(order) {
-  const shipmentStatus = String(order?.shipment?.status || "").trim().toLowerCase();
-  const orderStatus = String(order?.status || "").trim().toLowerCase();
-  const paymentStatus = String(order?.paymentStatus || "").trim().toLowerCase();
-  const cancellationStatus = String(order?.cancellation?.status || "").trim().toLowerCase();
-  const excludedStatuses = new Set([
-    "cancelled",
-    "canceled",
-    "refund",
-    "refunded",
-    "partial_refunded",
-    "partial-refunded",
-    "failed",
-    "expired",
-    "pending",
-    "waiting",
-    "waiting_for_deposit",
-    "payment_pending",
-  ]);
-
-  if ([shipmentStatus, orderStatus, paymentStatus, cancellationStatus].some((status) => excludedStatuses.has(status))) {
-    return false;
-  }
-
-  const completedStatuses = new Set([
-    "confirmed",
-    "done",
-    "paid",
-    "completed",
-    "success",
-    "succeeded",
-    "ready",
-    "packing",
-    "shipped",
-    "delivered",
-    "processing",
-    "in_progress",
-  ]);
-
-  return [shipmentStatus, orderStatus, paymentStatus].some((status) => completedStatuses.has(status));
 }
 
 function buildOrderCancellationNote(cancellation) {
@@ -712,7 +674,7 @@ export function initAccountPage() {
     const href = getEditionHref(primaryItem?.slug);
     const thumbUrl = resolveImageUrl(getResolvedOrderItemImage(primaryItem), { width: 160, height: 160 });
     const title = escapeHtml(order?.orderName || primaryItem?.title || "주문 상품");
-    const statusLabel = "주문 완료";
+    const statusLabel = formatOrderStatus(order);
     const secondaryItems = items.slice(1);
     const itemsMarkup = secondaryItems.length > 0
       ? `
@@ -942,7 +904,6 @@ export function initAccountPage() {
   function renderAuthenticated(account) {
     const user = account?.user || {};
     const orders = Array.isArray(account?.orders) ? account.orders : [];
-    const completedOrders = orders.filter(isCompletedAccountOrder);
     const workshops = Array.isArray(account?.workshopReservations) ? account.workshopReservations : [];
     const repairs = Array.isArray(account?.repairRequests) ? account.repairRequests : [];
     const fullName = String(user.fullName || "").trim();
@@ -979,11 +940,11 @@ export function initAccountPage() {
     if (overviewAddressEl) overviewAddressEl.textContent = [user.zipcode, user.address1, user.address2].filter(Boolean).join(" ") || "-";
     if (overviewPhoneEl) overviewPhoneEl.textContent = formatKoreanPhone(user.phone || "") || "-";
     if (dashboardRepairsEl) dashboardRepairsEl.textContent = activeRepairs.toLocaleString("ko-KR");
-    if (dashboardOrdersEl) dashboardOrdersEl.textContent = completedOrders.length.toLocaleString("ko-KR");
+    if (dashboardOrdersEl) dashboardOrdersEl.textContent = orders.length.toLocaleString("ko-KR");
     if (dashboardClassesEl) dashboardClassesEl.textContent = workshops.length.toLocaleString("ko-KR");
     if (dashboardPointsEl) dashboardPointsEl.textContent = pointsBalance.toLocaleString("ko-KR");
     pointsEl.textContent = `${pointsBalance.toLocaleString("ko-KR")} 포인트`;
-    renderOrders(completedOrders);
+    renderOrders(orders);
     renderWorkshopReservations(workshops);
     renderRepairRequests(repairs);
     document.documentElement.classList.remove("account-session-pending");

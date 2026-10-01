@@ -76,6 +76,7 @@ export function getOrderSyncEventType(status) {
       return "payment.pending";
     case "PARTIAL_CANCELED":
     case "PARTIAL_CANCELLED":
+      return "payment.partially_refunded";
     case "REFUND":
     case "REFUNDED":
       return "payment.refunded";
@@ -95,6 +96,7 @@ export function shouldEmailForOrderSyncEvent(eventType) {
   return eventType === "payment.confirmed"
     || eventType === "payment.failed"
     || eventType === "payment.cancelled"
+    || eventType === "payment.partially_refunded"
     || eventType === "payment.refunded";
 }
 
