@@ -181,6 +181,35 @@ function orderInput(orderId, overrides = {}) {
   };
 }
 
+test("customer order history hides failed and abandoned payments but keeps paid lifecycle orders", async (context) => {
+  const { database, env } = environment();
+  context.after(() => database.close());
+  const now = new Date().toISOString();
+  database.prepare(`INSERT INTO users (id, email, email_normalized, full_name, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)`)
+    .bind("USER_ORDER_HISTORY", "orders@example.com", "orders@example.com", "Order Customer", now, now).run();
+
+  for (const orderId of ["ORDER_PAID", "ORDER_CANCELLED", "ORDER_FAILED", "ORDER_ABANDONED"]) {
+    await persistOrder(env, orderInput(orderId, {
+      userId: "USER_ORDER_HISTORY",
+      shipping: { ...orderInput(orderId).shipping, email: "orders@example.com" },
+    }));
+  }
+
+  database.prepare("UPDATE orders SET status = 'paid', payment_status = 'confirmed' WHERE id = 'ORDER_PAID'").run();
+  database.prepare("UPDATE orders SET status = 'cancelled', payment_status = 'cancelled' WHERE id = 'ORDER_CANCELLED'").run();
+  database.prepare("UPDATE orders SET status = 'payment_failed', payment_status = 'failed' WHERE id = 'ORDER_FAILED'").run();
+  database.prepare(`INSERT INTO payments (
+      order_id, payment_key, provider, provider_mode, status, requested_amount, approved_amount,
+      raw_request, raw_response, requested_at, approved_at, cancelled_at, created_at, updated_at
+    ) VALUES (?, ?, 'toss', 'live', 'cancelled', 10000, 10000, '{}', '{}', ?, ?, ?, ?, ?)`)
+    .bind("ORDER_CANCELLED", "payment-cancelled", now, now, now, now, now).run();
+
+  const account = await readAccount(env, "USER_ORDER_HISTORY");
+  assert.deepEqual(account.orders.map((order) => order.orderId).sort(), ["ORDER_CANCELLED", "ORDER_PAID"]);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM orders").first().count, 4);
+});
+
 test("shop confirmation rejects client amount tampering before contacting Toss", async (context) => {
   const { database, env } = environment();
   context.after(() => database.close());

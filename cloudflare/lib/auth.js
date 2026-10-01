@@ -678,21 +678,25 @@ function hasAccountOrderShipment(row) {
   return Boolean(String(row?.shipment_status || "").trim());
 }
 
-function hasAccountOrderPaymentActivity(row) {
-  return Boolean(
-    String(row?.active_payment_key || "").trim()
-      || Number(row?.payment_attempt_count) > 0,
-  );
-}
-
-function isPendingAccountDraftOrder(row) {
+function isCustomerVisibleAccountOrder(row) {
   const orderStatus = String(row?.status || "").trim().toLowerCase();
   const paymentStatus = String(row?.payment_status || "").trim().toLowerCase();
+  const failedOrderStatuses = new Set(["payment_failed", "failed", "expired"]);
+  const failedPaymentStatuses = new Set(["failed", "aborted", "expired"]);
+  const paidOrderStatuses = new Set(["paid", "confirmed"]);
+  const paidPaymentStatuses = new Set([
+    "confirmed", "paid", "done", "completed", "success", "succeeded",
+  ]);
 
-  return !hasAccountOrderShipment(row)
-    && !hasAccountOrderPaymentActivity(row)
-    && orderStatus === "created"
-    && paymentStatus === "pending";
+  if (failedOrderStatuses.has(orderStatus) || failedPaymentStatuses.has(paymentStatus)) {
+    return false;
+  }
+
+  if (hasAccountOrderShipment(row) || Number(row?.payment_confirmed_count) > 0) {
+    return true;
+  }
+
+  return paidOrderStatuses.has(orderStatus) || paidPaymentStatuses.has(paymentStatus);
 }
 
 function formatOrderItem(row) {
@@ -750,6 +754,16 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
           FROM payments
           WHERE payments.order_id = orders.id
         ) AS payment_attempt_count,
+        (
+          SELECT COUNT(1)
+          FROM payments
+          WHERE payments.order_id = orders.id
+            AND (
+              payments.approved_at IS NOT NULL
+              OR COALESCE(payments.approved_amount, 0) > 0
+              OR payments.status IN ('confirmed', 'partial_refunded', 'partially_refunded', 'refunded', 'cancelled', 'canceled')
+            )
+        ) AS payment_confirmed_count,
         shipments.status AS shipment_status,
         shipments.carrier AS shipment_carrier,
         shipments.tracking_number AS shipment_tracking_number,
@@ -767,7 +781,7 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
     .bind(userId || null, emailNormalized, limit)
     .all();
 
-  const rows = (result?.results || []).filter((row) => !isPendingAccountDraftOrder(row));
+  const rows = (result?.results || []).filter(isCustomerVisibleAccountOrder);
   const orders = [];
 
   for (const row of rows) {
@@ -1585,6 +1599,16 @@ export async function lookupGuestOrder(env, { orderId, email }) {
           FROM payments
           WHERE payments.order_id = orders.id
         ) AS payment_attempt_count,
+        (
+          SELECT COUNT(1)
+          FROM payments
+          WHERE payments.order_id = orders.id
+            AND (
+              payments.approved_at IS NOT NULL
+              OR COALESCE(payments.approved_amount, 0) > 0
+              OR payments.status IN ('confirmed', 'partial_refunded', 'partially_refunded', 'refunded', 'cancelled', 'canceled')
+            )
+        ) AS payment_confirmed_count,
         shipments.status AS shipment_status,
         shipments.carrier AS shipment_carrier,
         shipments.tracking_number AS shipment_tracking_number,
@@ -1607,8 +1631,8 @@ export async function lookupGuestOrder(env, { orderId, email }) {
     });
   }
 
-  if (isPendingAccountDraftOrder(order)) {
-    throw Object.assign(new Error("아직 결제가 완료되지 않은 주문입니다. 결제 완료 후 다시 확인해주세요."), {
+  if (!isCustomerVisibleAccountOrder(order)) {
+    throw Object.assign(new Error("결제가 성립되지 않은 주문입니다. 결제 완료 후 다시 확인해주세요."), {
       status: 409,
     });
   }

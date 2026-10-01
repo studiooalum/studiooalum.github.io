@@ -149,7 +149,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20261002-orders-01/);
+  assert.match(html, /account\.css\?v=20261002-orders-02/);
   assert.match(html, /account\.js\?v=20261002-orders-04/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
