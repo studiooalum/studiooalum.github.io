@@ -280,6 +280,37 @@
   background: #dbd6ce;
 }
 
+/* Completed order actions follow the storefront purchase-action hierarchy. */
+.confirm-success .payment-result__actions {
+  align-items: flex-start;
+}
+
+.confirm-success .payment-btn--secondary {
+  width: 50%;
+}
+
+.confirm-success .payment-btn--outline {
+  width: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  line-height: 1.45;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: none;
+}
+
+.confirm-success .payment-btn--outline:is(:hover, :focus-visible, :active) {
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+}
+
 /* ---- Confirm states ---- */
 .confirm-loading {
   gap: 8px;
