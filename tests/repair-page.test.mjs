@@ -215,7 +215,7 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
   assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-08/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20261002-ticket-10/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20261002-ticket-11/);
   assert.doesNotMatch(repairTicketHtml, /종료된 Ticket입니다|js-repair-ticket-closed/);
   assert.match(repairTicketSource, /section\.hidden = paid \|\| !repair\.onlinePaymentAvailable/);
   assert.doesNotMatch(repairTicketSource, /\["신청일"|\["최근 업데이트"/);
@@ -225,8 +225,8 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketCss, /\.repair-ticket-composer \.repair-ticket-file-button:hover\s*\{[^}]*background:\s*#fff !important;/);
   assert.match(repairTicketCss, /\.repair-ticket-composer__submit \.repair-ticket-submit:hover\s*\{[^}]*background:\s*#111;/);
   assert.match(repairTicketSource, /상태 안내/);
-  assert.match(repairTicketSource, /수선 접수가 완료되었습니다\. 확인 후 진행 방향과 예상 가격을 안내 드립니다\.\\n오알룸 앞으로 택배를 보내주세요\.\\n\(02412\)서울특별시 동대문구 이문로42길 5 201호\\n010-4746-5999/);
-  assert.match(repairTicketsSource, /body: "수선 접수가 완료되었습니다\. 확인 후 진행 방향과 예상 가격을 안내 드립니다\.\\n오알룸 앞으로 택배를 보내주세요\.\\n\(02412\)서울특별시 동대문구 이문로42길 5 201호\\n010-4746-5999"/);
+  assert.match(repairTicketSource, /수선 접수가 완료 되었습니다\. 확인 후 진행 방향과 예상 가격을 안내 드립니다\.\\n오알룸 배송지\\n\(02412\)서울특별시 동대문구 이문로42길 5 201호\\n010-4746-5999/);
+  assert.match(repairTicketsSource, /body: "수선 접수가 완료 되었습니다\. 확인 후 진행 방향과 예상 가격을 안내 드립니다\.\\n오알룸 배송지\\n\(02412\)서울특별시 동대문구 이문로42길 5 201호\\n010-4746-5999"/);
   assert.match(repairTicketCss, /\.repair-ticket-composer\s*\{[^}]*gap:\s*6px;/);
   assert.match(repairTicketCss, /\.repair-ticket-loading,[\s\S]*?#repairPaymentDialogStatus\s*\{[^}]*color:\s*rgba\(17, 17, 17, 0\.85\);[^}]*font-family:\s*"Pretendard"[^}]*font-size:\s*16px;[^}]*font-weight:\s*400;/);
   assert.match(repairTicketCss, /\.repair-ticket-summary h1,[\s\S]*?\.repair-ticket-status\s*\{[^}]*font-weight:\s*600;/);

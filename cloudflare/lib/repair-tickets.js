@@ -411,7 +411,7 @@ export async function prepareInitialRepairTicketBundle(env, request, eventId, cr
         ticketId,
         sourceEventId: eventId,
         authorType: "system",
-        body: "수선 접수가 완료되었습니다. 확인 후 진행 방향과 예상 가격을 안내 드립니다.\n오알룸 앞으로 택배를 보내주세요.\n(02412)서울특별시 동대문구 이문로42길 5 201호\n010-4746-5999",
+        body: "수선 접수가 완료 되었습니다. 확인 후 진행 방향과 예상 가격을 안내 드립니다.\n오알룸 배송지\n(02412)서울특별시 동대문구 이문로42길 5 201호\n010-4746-5999",
         createdAt,
       }),
       ...notifications.map((notification) => createNotificationOutboxStatement(database, notification)),
