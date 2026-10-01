@@ -17,6 +17,15 @@ const SHOP_TAGS = [
   { value: "home", label: "home" },
 ];
 
+const HIDDEN_SHOP_PRODUCT_NAMES = new Set([
+  "patchwork strap beanie",
+]);
+
+function isVisibleShopProduct(product) {
+  const { baseName } = parseProductTitle(product?.title);
+  return !HIDDEN_SHOP_PRODUCT_NAMES.has(String(baseName || "").trim().toLowerCase());
+}
+
 /** Group products by base name. Returns Map<baseName, product[]> */
 function groupProducts(products) {
   const groups = new Map();
@@ -136,7 +145,7 @@ function renderTags() {
 }
 
 function renderProducts(products) {
-  const safeProducts = Array.isArray(products) ? products : [];
+  const safeProducts = Array.isArray(products) ? products.filter(isVisibleShopProduct) : [];
   const allGroups = groupProducts(safeProducts);
   const filteredProducts =
     activeTag === "all"
