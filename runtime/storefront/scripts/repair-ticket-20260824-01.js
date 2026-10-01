@@ -200,7 +200,7 @@ function renderMessages(ticket) {
   dom.messages.innerHTML = messages.map((message) => {
     const canDelete = message.authorType === state.viewerType && message.authorType !== "system";
     const body = message.authorType === "system" && String(message.body || "").startsWith("수선 접수가 완료")
-      ? "수선 접수가 완료 되었습니다. 확인 후 진행 방향과 예상 가격을 안내 드립니다.\n오알룸 배송지\n(02412)서울특별시 동대문구 이문로42길 5 201호\n010-4746-5999"
+      ? "수선 접수가 완료 되었습니다. 확인 후 진행 방향과 예상 가격을 안내 드립니다.\n\n오알룸 배송지\n(02412)서울특별시 동대문구 이문로42길 5 201호\n010-4746-5999"
       : message.body || "";
     return `
     <article class="repair-ticket-message repair-ticket-message--${escapeHtml(message.authorType)}">
