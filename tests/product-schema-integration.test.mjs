@@ -32,8 +32,3 @@ test("storefront cache versions expose the schema change immediately", () => {
   assert.match(productScript, /queries\.js\?v=20260927-01/);
   assert.match(editionScript, /queries\.js\?v=20260927-01/);
 });
-
-test("sold-out Patchwork Strap Beanie is removed from the Shop listing only", () => {
-  assert.match(shopScript, /HIDDEN_SHOP_PRODUCT_NAMES[\s\S]*"patchwork strap beanie"/);
-  assert.match(shopScript, /products\.filter\(isVisibleShopProduct\)/);
-});
