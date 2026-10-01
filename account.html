@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/reset.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/variables-20260818-01.css?v=20260930-error-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css?v=20260929-85">
-  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20261002-orders-04">
+  <link rel="stylesheet" href="./runtime/storefront/styles/account.css?v=20261002-history-01">
   <link rel="stylesheet" href="./runtime/storefront/styles/cart-20260818-02.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css?v=20260929-85">
   <link rel="stylesheet" href="./runtime/storefront/styles/storefront-actions-20260925-02.css?v=20260929-85">
@@ -224,8 +224,10 @@
 
         <section class="account-panel account-panel--points" data-account-detail="points">
           <h2 class="account-heading">POINTS</h2>
-          <p class="account-points js-account-points">0 포인트</p>
-          <p class="account-copy">상품 구매 시 결제 금액의 3%가 적립되며, 1,000 포인트부터 사용할 수 있습니다.</p>
+          <div class="account-points-record">
+            <p class="account-points js-account-points">0 포인트</p>
+            <p class="account-copy">상품 구매 시 결제 금액의 3%가 적립되며, 1,000 포인트부터 사용할 수 있습니다.</p>
+          </div>
         </section>
       </section>
 
@@ -236,7 +238,7 @@
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initSiteFooter } from "./runtime/storefront/scripts/components/siteFooter.js?v=20260914-01";
-    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20261002-orders-05";
+    import { initAccountPage } from "./runtime/storefront/scripts/account.js?v=20261002-history-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";
 
     initSiteChrome();

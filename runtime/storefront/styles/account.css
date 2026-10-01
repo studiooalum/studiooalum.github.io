@@ -1606,3 +1606,176 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
     row-gap: 7px;
   }
 }
+
+/* Unified account history: repairs, classes, and points follow order history. */
+:is(.account-panel--repairs, .account-panel--workshops, .account-panel--points),
+:is(.account-panel--repairs, .account-panel--workshops, .account-panel--points) :is(.account-heading, .account-record, .account-record a, .account-record strong, .account-record span, .account-points, .account-copy) {
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-detail-shell :is(.account-panel--repairs, .account-panel--workshops, .account-panel--points) {
+  max-width: none;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops, .account-panel--points) .account-heading {
+  font-family: var(--font-kor-body);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-orders {
+  gap: 0;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) {
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 40px;
+  min-height: 228px;
+  padding: 36px 0;
+  align-items: center;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop):first-child {
+  padding-top: 36px;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop):last-of-type {
+  border-bottom: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) :is(.account-record__media, .account-record__thumb-link, .account-record__thumb, .account-record__fallback) {
+  width: 160px;
+  height: 160px;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) :is(.account-record__thumb, .account-record__fallback) {
+  border: 0;
+  background: transparent;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) .account-record__body {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    "summary date total state"
+    "items items items items"
+    "actions actions actions actions";
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  align-self: stretch;
+  align-items: center;
+  column-gap: 36px;
+  row-gap: 8px;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-summary {
+  grid-area: summary;
+  display: grid;
+  align-self: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-record__title {
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-record__title-link {
+  border-bottom-color: rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-date {
+  grid-area: date;
+  align-self: center;
+  white-space: nowrap;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-total {
+  grid-area: total;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-state {
+  grid-area: state;
+  align-self: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-order-id, .account-order-date, .account-record__status-detail) {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-record__items {
+  grid-area: items;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record__actions, .account-record__notice) {
+  grid-area: actions;
+}
+
+.account-panel--points .account-points-record {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  min-height: 228px;
+  padding: 36px 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--points .account-points {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.account-panel--points .account-points-record .account-copy {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+@media (max-width: 719px) {
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop),
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop):first-child {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 18px;
+    min-height: 176px;
+    padding: 24px 0;
+  }
+
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) :is(.account-record__media, .account-record__thumb-link, .account-record__thumb, .account-record__fallback) {
+    width: 112px;
+    height: 112px;
+  }
+
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) .account-record__body {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "summary summary summary"
+      "date total state"
+      "items items items"
+      "actions actions actions";
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    column-gap: 12px;
+    row-gap: 7px;
+  }
+
+  .account-panel--points .account-points-record {
+    min-height: 176px;
+    padding: 24px 0;
+  }
+}

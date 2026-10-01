@@ -149,8 +149,8 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20261002-orders-04/);
-  assert.match(html, /account\.js\?v=20261002-orders-05/);
+  assert.match(html, /account\.css\?v=20261002-history-01/);
+  assert.match(html, /account\.js\?v=20261002-history-01/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
   assert.match(html, /placeholder="비밀번호"/);
@@ -279,4 +279,8 @@ test("order history preserves terminal order states and uses the revised card la
   assert.match(stylesheet, /grid-template-areas:\s*"summary date total state"/);
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-record__status-detail\s*\{[^}]*font-size:\s*12px;[^}]*line-height:\s*1\.45;[^}]*color:\s*rgba\(17, 17, 17, 0\.62\);/);
   assert.match(controller, /account-order-id[\s\S]*renderOrderStatusDetail\(order, "account-record__status-detail"\)[\s\S]*account-order-date/);
+  assert.match(controller, /account-record account-record--workshop[\s\S]*account-order-summary[\s\S]*account-order-date[\s\S]*account-order-total[\s\S]*account-order-state/);
+  assert.match(controller, /account-record account-record--repair[\s\S]*repairImageUrl[\s\S]*account-order-summary[\s\S]*account-order-date[\s\S]*account-order-total[\s\S]*account-order-state/);
+  assert.match(stylesheet, /Unified account history:[\s\S]*\.account-panel--repairs[\s\S]*\.account-panel--workshops[\s\S]*grid-template-areas:\s*"summary date total state"/);
+  assert.match(html, /class="account-points-record"[\s\S]*js-account-points[\s\S]*3%가 적립/);
 });

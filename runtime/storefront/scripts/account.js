@@ -726,16 +726,14 @@ export function initAccountPage() {
           ${href ? "</a>" : "</div>"}
         </div>
         <div class="account-record__body">
-          <div class="account-record__top">
+          <div class="account-order-summary">
             <p class="account-record__title">${href ? `<a class="account-record__title-link" href="${href}">${title}</a>` : title}</p>
-            <strong class="account-order-total">${escapeHtml(formatWorkshopTime(reservation))}</strong>
-          </div>
-          <div class="account-record__meta">
             <span class="account-order-id">${escapeHtml(reservation?.reservationNumber || reservation?.reservationId || "-")}</span>
-            <span class="account-order-id">${escapeHtml(formatDate(reservation?.slotDate))}</span>
-            <span class="account-order-date">${escapeHtml(reservation?.workshopLocation || "Studio OALUM")}</span>
-            <span class="account-order-state">${escapeHtml(formatWorkshopStatus(reservation))}</span>
+            <span class="account-record__status-detail">${escapeHtml(reservation?.workshopLocation || "Studio OALUM")}</span>
           </div>
+          <span class="account-order-date">${escapeHtml(formatDate(reservation?.slotDate))}</span>
+          <strong class="account-order-total">${escapeHtml(formatWorkshopTime(reservation))}</strong>
+          <span class="account-order-state">${escapeHtml(formatWorkshopStatus(reservation))}</span>
         </div>
       </article>
     `;
@@ -757,23 +755,25 @@ export function initAccountPage() {
       ? `/t/${encodeURIComponent(request.ticketShortCode)}`
       : request?.ticketId ? `/repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}` : "";
     const unread = Number(request?.unreadCustomerCount || 0);
+    const repairImage = Array.isArray(request?.images) ? request.images[0] : null;
+    const repairImageUrl = String(repairImage?.streamPath || "").trim();
+    const displayAmount = request?.finalAmount ?? request?.quoteAmount;
+    const repairDetails = [quoteMarkup, paymentMarkup].filter(Boolean).join("");
     return `
       <article class="account-record account-record--repair">
         <div class="account-record__media">
-          <span class="account-record__fallback">Repair</span>
+          ${repairImageUrl ? `<img class="account-record__thumb" src="${escapeHtml(repairImageUrl)}" alt="${escapeHtml(request?.itemType || "수선 의뢰")}" loading="lazy" />` : '<span class="account-record__fallback">Repair</span>'}
         </div>
         <div class="account-record__body">
-          <div class="account-record__top">
+          <div class="account-order-summary">
             <p class="account-record__title">${escapeHtml(request?.itemType || "수선 의뢰")}</p>
-            <strong class="account-order-total">${escapeHtml(formatRepairStatus(request))}</strong>
-          </div>
-          <div class="account-record__meta">
             <span class="account-order-id">${escapeHtml(request?.ticketNumberLabel || request?.requestNumber || "-")}</span>
-            <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
+            ${trackingMarkup}
           </div>
-          ${quoteMarkup}
-          ${paymentMarkup}
-          ${trackingMarkup}
+          <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
+          <strong class="account-order-total">${displayAmount !== null && displayAmount !== undefined ? escapeHtml(formatOrderPrice(displayAmount)) : "미정"}</strong>
+          <span class="account-order-state">${escapeHtml(formatRepairStatus(request))}</span>
+          ${repairDetails ? `<div class="account-record__items">${repairDetails}</div>` : ""}
           ${ticketHref ? `<div class="account-record__actions"><a class="account-btn account-btn--secondary" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}" data-repair-ticket-code="${escapeHtml(request.ticketShortCode || "")}">Repair Ticket${unread ? ` · 새 메시지 ${unread}` : ""}</a></div>` : ""}
           ${request?.isReadOnly ? '<p class="account-record__notice">완료된 수선 내역과 대화는 읽기 전용으로 보관됩니다.</p>' : ""}
         </div>
