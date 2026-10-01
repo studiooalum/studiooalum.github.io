@@ -1499,14 +1499,13 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 }
 
 .account-panel--orders .account-record--order .account-record__body {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   grid-template-areas:
-    "state state state"
-    "summary date total"
-    "detail detail detail"
-    "items items items"
-    "actions actions actions";
-  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    "summary state date total"
+    "detail detail detail detail"
+    "items items items items"
+    "actions actions actions actions";
+  grid-template-rows: minmax(0, 1fr) auto auto auto;
   align-self: stretch;
   align-items: center;
   column-gap: 36px;
@@ -1515,7 +1514,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 
 .account-panel--orders .account-record--order .account-order-state {
   grid-area: state;
-  align-self: start;
+  align-self: center;
   font-size: 16px;
   font-weight: 500;
   line-height: 1.45;
@@ -1594,15 +1593,14 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   }
 
   .account-panel--orders .account-record--order .account-record__body {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "state state"
-      "summary summary"
-      "date total"
-      "detail detail"
-      "items items"
-      "actions actions";
-    grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
+      "summary summary summary"
+      "state date total"
+      "detail detail detail"
+      "items items items"
+      "actions actions actions";
+    grid-template-rows: minmax(0, 1fr) auto auto auto auto;
     column-gap: 12px;
     row-gap: 7px;
   }
