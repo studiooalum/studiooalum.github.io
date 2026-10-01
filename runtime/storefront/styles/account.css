@@ -1502,24 +1502,34 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   grid-template-columns: minmax(0, 1fr) auto auto;
   grid-template-areas:
     "state state state"
-    "title date total"
-    "meta meta meta"
+    "summary date total"
     "detail detail detail"
     "items items items"
     "actions actions actions";
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  align-self: stretch;
   align-items: center;
   column-gap: 36px;
-  row-gap: 14px;
+  row-gap: 8px;
 }
 
 .account-panel--orders .account-record--order .account-order-state {
   grid-area: state;
+  align-self: start;
   font-size: 16px;
+  font-weight: 500;
   line-height: 1.45;
 }
 
+.account-panel--orders .account-record--order .account-order-summary {
+  grid-area: summary;
+  display: grid;
+  align-self: center;
+  gap: 2px;
+  min-width: 0;
+}
+
 .account-panel--orders .account-record--order .account-record__title {
-  grid-area: title;
   font-family: var(--font-kor-body);
   font-size: 16px;
   line-height: 1.45;
@@ -1533,21 +1543,18 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   grid-area: total;
   font-family: var(--font-kor-body);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
   line-height: 1.45;
   white-space: nowrap;
 }
 
-.account-panel--orders .account-record--order .account-record__meta {
-  display: contents;
-}
-
 .account-panel--orders .account-record--order .account-order-id {
-  grid-area: meta;
+  display: block;
 }
 
 .account-panel--orders .account-record--order .account-order-date {
   grid-area: date;
+  align-self: center;
   white-space: nowrap;
 }
 
@@ -1590,12 +1597,12 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "state state"
-      "title title"
-      "meta meta"
+      "summary summary"
       "date total"
       "detail detail"
       "items items"
       "actions actions";
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
     column-gap: 12px;
     row-gap: 7px;
   }

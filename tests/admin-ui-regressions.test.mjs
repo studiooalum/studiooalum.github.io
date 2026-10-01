@@ -150,7 +150,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
   ]);
 
   assert.match(html, /account\.css\?v=20261002-orders-01/);
-  assert.match(html, /account\.js\?v=20261002-orders-02/);
+  assert.match(html, /account\.js\?v=20261002-orders-03/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
   assert.match(html, /placeholder="비밀번호"/);
@@ -268,9 +268,12 @@ test("order history preserves terminal order states and uses the revised card la
   assert.match(controller, /renderOrders\(orders\)/);
   assert.match(controller, /return "부분 환불"/);
   assert.match(controller, /const statusLabel = formatOrderStatus\(order\)/);
+  assert.match(controller, /function formatOrderPrice\(value\)[\s\S]*?toLocaleString\("ko-KR"\)\}원/);
+  assert.match(controller, /class="account-order-summary"/);
   assert.match(controller, /account-record account-record--order/);
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order\s*\{[^}]*grid-template-columns:\s*160px minmax\(0, 1fr\);/);
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-record__thumb,[\s\S]*?border:\s*0;/);
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-record__title\s*\{[^}]*font-size:\s*16px;/);
-  assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-order-total\s*\{[^}]*font-weight:\s*600;/);
+  assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-order-total\s*\{[^}]*font-weight:\s*400;/);
+  assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-order-state\s*\{[^}]*font-weight:\s*500;/);
 });

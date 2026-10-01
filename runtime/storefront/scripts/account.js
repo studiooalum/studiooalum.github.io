@@ -39,6 +39,10 @@ function formatDate(value) {
   }).format(date);
 }
 
+function formatOrderPrice(value) {
+  return `${Number(value || 0).toLocaleString("ko-KR")}원`;
+}
+
 function isValidEmail(value) {
   return EMAIL_PATTERN.test(String(value || "").trim());
 }
@@ -694,12 +698,12 @@ export function initAccountPage() {
         </div>
         <div class="account-record__body">
           <span class="account-order-state">${escapeHtml(statusLabel)}</span>
-          <p class="account-record__title">${href ? `<a class="account-record__title-link" href="${href}">${title}</a>` : title}</p>
-          <strong class="account-order-total">${escapeHtml(formatPrice(order?.totalAmount || 0))}</strong>
-          <div class="account-record__meta">
+          <div class="account-order-summary">
+            <p class="account-record__title">${href ? `<a class="account-record__title-link" href="${href}">${title}</a>` : title}</p>
             <span class="account-order-id">주문번호 ${escapeHtml(order?.orderNumber || order?.orderId || "-")}</span>
-            <span class="account-order-date">${escapeHtml(formatDate(order?.createdAt))}</span>
           </div>
+          <span class="account-order-date">${escapeHtml(formatDate(order?.createdAt))}</span>
+          <strong class="account-order-total">${escapeHtml(formatOrderPrice(order?.totalAmount || 0))}</strong>
           ${renderOrderStatusDetail(order, "account-record__status-detail")}
           ${itemsMarkup}
           ${renderOrderCancellationControls(order)}
