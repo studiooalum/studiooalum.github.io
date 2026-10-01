@@ -1447,3 +1447,156 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
     transition: none;
   }
 }
+
+/* Completed order history */
+.account-panel--orders,
+.account-panel--orders :is(.account-heading, .account-record, .account-record a, .account-record strong, .account-record span) {
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-detail-shell .account-panel--orders {
+  max-width: none;
+}
+
+.account-panel--orders .account-heading {
+  font-family: var(--font-kor-body);
+}
+
+.account-panel--orders .account-orders {
+  gap: 0;
+}
+
+.account-panel--orders .account-record--order {
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 40px;
+  min-height: 228px;
+  padding: 36px 0;
+  align-items: center;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order:first-child {
+  padding-top: 36px;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order:last-of-type {
+  border-bottom: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order .account-record__media,
+.account-panel--orders .account-record--order .account-record__thumb-link,
+.account-panel--orders .account-record--order .account-record__thumb,
+.account-panel--orders .account-record--order .account-record__fallback {
+  width: 160px;
+  height: 160px;
+}
+
+.account-panel--orders .account-record--order .account-record__thumb,
+.account-panel--orders .account-record--order .account-record__fallback {
+  border: 0;
+  background: transparent;
+}
+
+.account-panel--orders .account-record--order .account-record__body {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "state state state"
+    "title date total"
+    "meta meta meta"
+    "detail detail detail"
+    "items items items"
+    "actions actions actions";
+  align-items: center;
+  column-gap: 36px;
+  row-gap: 14px;
+}
+
+.account-panel--orders .account-record--order .account-order-state {
+  grid-area: state;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.account-panel--orders .account-record--order .account-record__title {
+  grid-area: title;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.account-panel--orders .account-record--order .account-record__title-link {
+  border-bottom-color: rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order .account-order-total {
+  grid-area: total;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.account-panel--orders .account-record--order .account-record__meta {
+  display: contents;
+}
+
+.account-panel--orders .account-record--order .account-order-id {
+  grid-area: meta;
+}
+
+.account-panel--orders .account-record--order .account-order-date {
+  grid-area: date;
+  white-space: nowrap;
+}
+
+.account-panel--orders .account-record--order :is(.account-order-id, .account-order-date) {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.account-panel--orders .account-record--order .account-record__status-detail {
+  grid-area: detail;
+}
+
+.account-panel--orders .account-record--order .account-record__items {
+  grid-area: items;
+}
+
+.account-panel--orders .account-record--order .account-record__actions,
+.account-panel--orders .account-record--order .account-record__notice {
+  grid-area: actions;
+}
+
+@media (max-width: 719px) {
+  .account-panel--orders .account-record--order,
+  .account-panel--orders .account-record--order:first-child {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 18px;
+    min-height: 176px;
+    padding: 24px 0;
+  }
+
+  .account-panel--orders .account-record--order .account-record__media,
+  .account-panel--orders .account-record--order .account-record__thumb-link,
+  .account-panel--orders .account-record--order .account-record__thumb,
+  .account-panel--orders .account-record--order .account-record__fallback {
+    width: 112px;
+    height: 112px;
+  }
+
+  .account-panel--orders .account-record--order .account-record__body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "state state"
+      "title title"
+      "meta meta"
+      "date total"
+      "detail detail"
+      "items items"
+      "actions actions";
+    column-gap: 12px;
+    row-gap: 7px;
+  }
+}

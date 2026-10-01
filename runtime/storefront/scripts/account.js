@@ -163,6 +163,48 @@ function formatOrderStatus(order) {
   return "주문 접수";
 }
 
+function isCompletedAccountOrder(order) {
+  const shipmentStatus = String(order?.shipment?.status || "").trim().toLowerCase();
+  const orderStatus = String(order?.status || "").trim().toLowerCase();
+  const paymentStatus = String(order?.paymentStatus || "").trim().toLowerCase();
+  const cancellationStatus = String(order?.cancellation?.status || "").trim().toLowerCase();
+  const excludedStatuses = new Set([
+    "cancelled",
+    "canceled",
+    "refund",
+    "refunded",
+    "partial_refunded",
+    "partial-refunded",
+    "failed",
+    "expired",
+    "pending",
+    "waiting",
+    "waiting_for_deposit",
+    "payment_pending",
+  ]);
+
+  if ([shipmentStatus, orderStatus, paymentStatus, cancellationStatus].some((status) => excludedStatuses.has(status))) {
+    return false;
+  }
+
+  const completedStatuses = new Set([
+    "confirmed",
+    "done",
+    "paid",
+    "completed",
+    "success",
+    "succeeded",
+    "ready",
+    "packing",
+    "shipped",
+    "delivered",
+    "processing",
+    "in_progress",
+  ]);
+
+  return [shipmentStatus, orderStatus, paymentStatus].some((status) => completedStatuses.has(status));
+}
+
 function buildOrderCancellationNote(cancellation) {
   if (!cancellation?.message) {
     return "";
@@ -670,7 +712,7 @@ export function initAccountPage() {
     const href = getEditionHref(primaryItem?.slug);
     const thumbUrl = resolveImageUrl(getResolvedOrderItemImage(primaryItem), { width: 160, height: 160 });
     const title = escapeHtml(order?.orderName || primaryItem?.title || "주문 상품");
-    const statusLabel = formatOrderStatus(order);
+    const statusLabel = "주문 완료";
     const secondaryItems = items.slice(1);
     const itemsMarkup = secondaryItems.length > 0
       ? `
@@ -682,21 +724,19 @@ export function initAccountPage() {
       : "";
 
     return `
-      <article class="account-record">
+      <article class="account-record account-record--order">
         <div class="account-record__media">
           ${href ? `<a class="account-record__thumb-link" href="${href}">` : '<div class="account-record__thumb-link">'}
             ${thumbUrl ? `<img class="account-record__thumb" src="${thumbUrl}" alt="${escapeHtml(primaryItem?.title || order?.orderName || "주문 상품")}" loading="lazy" />` : '<span class="account-record__fallback" aria-hidden="true"></span>'}
           ${href ? "</a>" : "</div>"}
         </div>
         <div class="account-record__body">
-          <div class="account-record__top">
-            <p class="account-record__title">${href ? `<a class="account-record__title-link" href="${href}">${title}</a>` : title}</p>
-            <strong class="account-order-total">${escapeHtml(formatPrice(order?.totalAmount || 0))}</strong>
-          </div>
+          <span class="account-order-state">${escapeHtml(statusLabel)}</span>
+          <p class="account-record__title">${href ? `<a class="account-record__title-link" href="${href}">${title}</a>` : title}</p>
+          <strong class="account-order-total">${escapeHtml(formatPrice(order?.totalAmount || 0))}</strong>
           <div class="account-record__meta">
             <span class="account-order-id">주문번호 ${escapeHtml(order?.orderNumber || order?.orderId || "-")}</span>
             <span class="account-order-date">${escapeHtml(formatDate(order?.createdAt))}</span>
-            <span class="account-order-state">${escapeHtml(statusLabel)}</span>
           </div>
           ${renderOrderStatusDetail(order, "account-record__status-detail")}
           ${itemsMarkup}
@@ -902,6 +942,7 @@ export function initAccountPage() {
   function renderAuthenticated(account) {
     const user = account?.user || {};
     const orders = Array.isArray(account?.orders) ? account.orders : [];
+    const completedOrders = orders.filter(isCompletedAccountOrder);
     const workshops = Array.isArray(account?.workshopReservations) ? account.workshopReservations : [];
     const repairs = Array.isArray(account?.repairRequests) ? account.repairRequests : [];
     const fullName = String(user.fullName || "").trim();
@@ -938,11 +979,11 @@ export function initAccountPage() {
     if (overviewAddressEl) overviewAddressEl.textContent = [user.zipcode, user.address1, user.address2].filter(Boolean).join(" ") || "-";
     if (overviewPhoneEl) overviewPhoneEl.textContent = formatKoreanPhone(user.phone || "") || "-";
     if (dashboardRepairsEl) dashboardRepairsEl.textContent = activeRepairs.toLocaleString("ko-KR");
-    if (dashboardOrdersEl) dashboardOrdersEl.textContent = orders.length.toLocaleString("ko-KR");
+    if (dashboardOrdersEl) dashboardOrdersEl.textContent = completedOrders.length.toLocaleString("ko-KR");
     if (dashboardClassesEl) dashboardClassesEl.textContent = workshops.length.toLocaleString("ko-KR");
     if (dashboardPointsEl) dashboardPointsEl.textContent = pointsBalance.toLocaleString("ko-KR");
     pointsEl.textContent = `${pointsBalance.toLocaleString("ko-KR")} 포인트`;
-    renderOrders(orders);
+    renderOrders(completedOrders);
     renderWorkshopReservations(workshops);
     renderRepairRequests(repairs);
     document.documentElement.classList.remove("account-session-pending");

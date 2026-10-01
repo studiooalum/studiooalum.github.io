@@ -149,8 +149,8 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20260930-account-03/);
-  assert.match(html, /account\.js\?v=20260930-phone-02/);
+  assert.match(html, /account\.css\?v=20261002-orders-01/);
+  assert.match(html, /account\.js\?v=20261002-orders-01/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
   assert.match(html, /placeholder="비밀번호"/);
@@ -254,4 +254,22 @@ test("My Oalum keeps logout in the account page and removes it from the GNB", as
   assert.match(stylesheet, /\.account-status\.is-success\s*\{[^}]*color:\s*rgba\(17,\s*17,\s*17,\s*0\.85\)/);
   assert.match(stylesheet, /@media \(max-width:\s*959px\)[\s\S]*?data-account-view="dashboard"[\s\S]*?\.account-overview\s*\{[\s\S]*?display:\s*none !important/);
   assert.match(siteChrome, /document\.querySelectorAll\("\.gnb \[data-auth-toggle='logout'\]"\)/);
+});
+
+test("completed order history hides cancelled orders and uses the revised card layout", async () => {
+  const [html, controller, stylesheet] = await Promise.all([
+    read("account.html"),
+    read("runtime/storefront/scripts/account.js"),
+    read("runtime/storefront/styles/account.css"),
+  ]);
+
+  assert.match(html, /<h2 class="account-heading">주문 내역<\/h2>/);
+  assert.match(controller, /function isCompletedAccountOrder\(order\)/);
+  assert.match(controller, /const completedOrders = orders\.filter\(isCompletedAccountOrder\)/);
+  assert.match(controller, /renderOrders\(completedOrders\)/);
+  assert.match(controller, /account-record account-record--order/);
+  assert.match(stylesheet, /\.account-panel--orders \.account-record--order\s*\{[^}]*grid-template-columns:\s*160px minmax\(0, 1fr\);/);
+  assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-record__thumb,[\s\S]*?border:\s*0;/);
+  assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-record__title\s*\{[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-order-total\s*\{[^}]*font-weight:\s*600;/);
 });
