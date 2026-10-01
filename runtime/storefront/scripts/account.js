@@ -701,10 +701,10 @@ export function initAccountPage() {
           <div class="account-order-summary">
             <p class="account-record__title">${href ? `<a class="account-record__title-link" href="${href}">${title}</a>` : title}</p>
             <span class="account-order-id">주문번호 ${escapeHtml(order?.orderNumber || order?.orderId || "-")}</span>
+            ${renderOrderStatusDetail(order, "account-record__status-detail")}
           </div>
           <span class="account-order-date">${escapeHtml(formatDate(order?.createdAt))}</span>
           <strong class="account-order-total">${escapeHtml(formatOrderPrice(order?.totalAmount || 0))}</strong>
-          ${renderOrderStatusDetail(order, "account-record__status-detail")}
           ${itemsMarkup}
           ${renderOrderCancellationControls(order)}
         </div>

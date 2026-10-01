@@ -1502,10 +1502,9 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   grid-template-columns: minmax(0, 1fr) auto auto auto;
   grid-template-areas:
     "summary date total state"
-    "detail detail detail detail"
     "items items items items"
     "actions actions actions actions";
-  grid-template-rows: minmax(0, 1fr) auto auto auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   align-self: stretch;
   align-items: center;
   column-gap: 36px;
@@ -1563,7 +1562,10 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 }
 
 .account-panel--orders .account-record--order .account-record__status-detail {
-  grid-area: detail;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.62);
 }
 
 .account-panel--orders .account-record--order .account-record__items {
@@ -1597,10 +1599,9 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
     grid-template-areas:
       "summary summary summary"
       "date total state"
-      "detail detail detail"
       "items items items"
       "actions actions actions";
-    grid-template-rows: minmax(0, 1fr) auto auto auto auto;
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
     column-gap: 12px;
     row-gap: 7px;
   }

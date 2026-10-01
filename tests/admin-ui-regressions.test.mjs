@@ -149,8 +149,8 @@ test("account entry uses compact line fields and the revised guest lookup copy",
     read("runtime/storefront/styles/account.css"),
   ]);
 
-  assert.match(html, /account\.css\?v=20261002-orders-03/);
-  assert.match(html, /account\.js\?v=20261002-orders-04/);
+  assert.match(html, /account\.css\?v=20261002-orders-04/);
+  assert.match(html, /account\.js\?v=20261002-orders-05/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
   assert.match(html, /placeholder="비밀번호"/);
@@ -277,4 +277,6 @@ test("order history preserves terminal order states and uses the revised card la
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-order-total\s*\{[^}]*font-weight:\s*400;/);
   assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-order-state\s*\{[^}]*font-weight:\s*500;/);
   assert.match(stylesheet, /grid-template-areas:\s*"summary date total state"/);
+  assert.match(stylesheet, /\.account-panel--orders \.account-record--order \.account-record__status-detail\s*\{[^}]*font-size:\s*12px;[^}]*line-height:\s*1\.45;[^}]*color:\s*rgba\(17, 17, 17, 0\.62\);/);
+  assert.match(controller, /account-order-id[\s\S]*renderOrderStatusDetail\(order, "account-record__status-detail"\)[\s\S]*account-order-date/);
 });
