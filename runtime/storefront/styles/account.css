@@ -1501,7 +1501,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 .account-panel--orders .account-record--order .account-record__body {
   grid-template-columns: minmax(0, 1fr) auto auto auto;
   grid-template-areas:
-    "summary state date total"
+    "summary date total state"
     "detail detail detail detail"
     "items items items items"
     "actions actions actions actions";
@@ -1596,7 +1596,7 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
       "summary summary summary"
-      "state date total"
+      "date total state"
       "detail detail detail"
       "items items items"
       "actions actions actions";
