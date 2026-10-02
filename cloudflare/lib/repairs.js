@@ -495,7 +495,7 @@ function formatRepairRequestForCustomer(request) {
     id: request.id,
     requestNumber: request.requestNumber,
     ticketNumber,
-    ticketNumberLabel: ticketNumber > 0 ? `#${String(ticketNumber).padStart(3, "0")}` : "수선 접수",
+    ticketNumberLabel: ticketNumber > 0 ? `#${String(ticketNumber).padStart(3, "0")}` : "#PENDING",
     customerName: request.customerName,
     itemType: request.itemType,
     issueDescription: request.issueDescription,

@@ -741,16 +741,18 @@ export function initAccountPage() {
 
   function renderRepairCard(request) {
     const trackingUrl = getSafeTrackingUrl(request?.trackingUrl);
-    const quoteMarkup = request?.quoteAmount !== null && request?.quoteAmount !== undefined
-      ? `<p class="account-record__status-detail">예상 가격 ${escapeHtml(formatPrice(request.quoteAmount))}</p>`
-      : "";
-    const paymentMarkup = request?.finalAmount !== null && request?.finalAmount !== undefined
-      ? `<p class="account-record__status-detail">최종 금액 ${escapeHtml(formatPrice(request.finalAmount))}${request.bankAccount ? ` · ${escapeHtml(request.bankAccount)}` : ""}</p>`
-      : "";
+    const quoteText = request?.quoteAmount !== null && request?.quoteAmount !== undefined
+      ? formatPrice(request.quoteAmount)
+      : "미정";
+    const finalAmountText = request?.finalAmount !== null && request?.finalAmount !== undefined
+      ? formatPrice(request.finalAmount)
+      : "미정";
     const trackingText = [request?.carrier, request?.trackingNumber].filter(Boolean).join(" / ");
-    const trackingMarkup = trackingText
-      ? `<p class="account-record__status-detail">${trackingUrl ? `<a class="account-inline-link" href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">배송 조회 ${escapeHtml(trackingText)}</a>` : `운송장 ${escapeHtml(trackingText)}`}</p>`
-      : "";
+    const trackingValueMarkup = trackingText
+      ? trackingUrl
+        ? `<a class="account-repair-meta__link" href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">${escapeHtml(trackingText)}</a>`
+        : escapeHtml(trackingText)
+      : "배송 전";
     const ticketHref = request?.ticketShortCode
       ? `/t/${encodeURIComponent(request.ticketShortCode)}`
       : request?.ticketId ? `/repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}` : "";
@@ -758,7 +760,9 @@ export function initAccountPage() {
     const repairImage = Array.isArray(request?.images) ? request.images[0] : null;
     const repairImageUrl = String(repairImage?.streamPath || "").trim();
     const displayAmount = request?.finalAmount ?? request?.quoteAmount;
-    const repairDetails = [quoteMarkup, paymentMarkup].filter(Boolean).join("");
+    const ticketNumberLabel = request?.ticketNumberLabel && request.ticketNumberLabel !== "수선 접수"
+      ? request.ticketNumberLabel
+      : "#PENDING";
     return `
       <article class="account-record account-record--repair">
         <div class="account-record__media">
@@ -766,15 +770,18 @@ export function initAccountPage() {
         </div>
         <div class="account-record__body">
           <div class="account-order-summary">
-            <p class="account-record__title">${escapeHtml(request?.itemType || "수선 의뢰")}</p>
-            <span class="account-order-id">${escapeHtml(request?.ticketNumberLabel || request?.requestNumber || "-")}</span>
-            ${trackingMarkup}
+            <div class="account-repair-meta__head">
+              <span class="account-order-id">${escapeHtml(ticketNumberLabel)}</span>
+              <span class="account-repair-category">${escapeHtml(request?.itemType || "수선 의뢰")}</span>
+            </div>
+            <p class="account-record__status-detail"><span>운송장</span><span>${trackingValueMarkup}</span></p>
+            <p class="account-record__status-detail"><span>예상 가격</span><span>${escapeHtml(quoteText)}</span></p>
+            <p class="account-record__status-detail"><span>최종 금액</span><span>${escapeHtml(finalAmountText)}</span></p>
           </div>
           <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
           <strong class="account-order-total">${displayAmount !== null && displayAmount !== undefined ? escapeHtml(formatOrderPrice(displayAmount)) : "미정"}</strong>
           <span class="account-order-state">${escapeHtml(formatRepairStatus(request))}</span>
-          ${repairDetails ? `<div class="account-record__items">${repairDetails}</div>` : ""}
-          ${ticketHref ? `<div class="account-record__actions"><a class="account-btn account-btn--secondary" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}" data-repair-ticket-code="${escapeHtml(request.ticketShortCode || "")}">Repair Ticket${unread ? ` · 새 메시지 ${unread}` : ""}</a></div>` : ""}
+          ${ticketHref ? `<div class="account-record__actions account-repair-ticket-action"><a class="account-btn account-btn--secondary account-repair-ticket-button" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}" data-repair-ticket-code="${escapeHtml(request.ticketShortCode || "")}">Repair Ticket</a>${unread ? `<span class="account-repair-unread">새 메시지 ${unread}</span>` : ""}</div>` : ""}
           ${request?.isReadOnly ? '<p class="account-record__notice">완료된 수선 내역과 대화는 읽기 전용으로 보관됩니다.</p>' : ""}
         </div>
       </article>

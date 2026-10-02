@@ -1723,6 +1723,71 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   grid-area: actions;
 }
 
+.account-panel--repairs .account-record--repair .account-order-summary {
+  gap: 3px;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-meta__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-category {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-panel--repairs .account-record--repair :is(.account-repair-category, .account-order-id) {
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+.account-panel--repairs .account-record--repair .account-record__status-detail {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-meta__link {
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-ticket-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  padding-top: 6px;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-ticket-button {
+  width: 160px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-unread {
+  color: rgba(17, 17, 17, 0.85);
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
 .account-panel--points .account-points-record {
   display: grid;
   align-content: center;
@@ -1772,6 +1837,15 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
     grid-template-rows: minmax(0, 1fr) auto auto auto;
     column-gap: 12px;
     row-gap: 7px;
+  }
+
+  .account-panel--repairs .account-record--repair .account-repair-ticket-action {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .account-panel--repairs .account-record--repair .account-repair-ticket-button {
+    width: 120px;
   }
 
   .account-panel--points .account-points-record {
