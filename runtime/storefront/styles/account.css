@@ -1737,9 +1737,10 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
 }
 
 .account-panel--repairs .account-record--repair .account-repair-meta__head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  justify-items: start;
   min-width: 0;
 }
 
@@ -1754,19 +1755,6 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   font-weight: 400;
   line-height: 1.45;
   color: rgba(17, 17, 17, 0.85);
-}
-
-.account-panel--repairs .account-record--repair .account-record__status-detail {
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
-  gap: 8px;
-}
-
-.account-panel--repairs .account-record--repair .account-repair-meta__link {
-  color: inherit;
-  font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .account-panel--repairs .account-record--repair .account-repair-ticket-action {
@@ -1786,11 +1774,16 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   height: 42px;
   padding: 0 12px;
   border-color: #111;
-  background: #111;
-  color: #fff;
+  background: #fff;
+  color: rgba(17, 17, 17, 0.85);
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-ticket-button:is(:hover, :focus-visible) {
+  background: #111;
+  color: #fff;
 }
 
 .account-panel--repairs .account-record--repair .account-repair-unread {

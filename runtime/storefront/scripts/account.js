@@ -740,19 +740,6 @@ export function initAccountPage() {
   }
 
   function renderRepairCard(request) {
-    const trackingUrl = getSafeTrackingUrl(request?.trackingUrl);
-    const quoteText = request?.quoteAmount !== null && request?.quoteAmount !== undefined
-      ? formatPrice(request.quoteAmount)
-      : "미정";
-    const finalAmountText = request?.finalAmount !== null && request?.finalAmount !== undefined
-      ? formatPrice(request.finalAmount)
-      : "미정";
-    const trackingText = [request?.carrier, request?.trackingNumber].filter(Boolean).join(" / ");
-    const trackingValueMarkup = trackingText
-      ? trackingUrl
-        ? `<a class="account-repair-meta__link" href="${escapeHtml(trackingUrl)}" target="_blank" rel="noreferrer">${escapeHtml(trackingText)}</a>`
-        : escapeHtml(trackingText)
-      : "배송 전";
     const ticketHref = request?.ticketShortCode
       ? `/t/${encodeURIComponent(request.ticketShortCode)}`
       : request?.ticketId ? `/repair-ticket.html?ticket=${encodeURIComponent(request.ticketId)}` : "";
@@ -774,9 +761,6 @@ export function initAccountPage() {
               <span class="account-order-id">${escapeHtml(ticketNumberLabel)}</span>
               <span class="account-repair-category">${escapeHtml(request?.itemType || "수선 의뢰")}</span>
             </div>
-            <p class="account-record__status-detail"><span>운송장</span><span>${trackingValueMarkup}</span></p>
-            <p class="account-record__status-detail"><span>예상 가격</span><span>${escapeHtml(quoteText)}</span></p>
-            <p class="account-record__status-detail"><span>최종 금액</span><span>${escapeHtml(finalAmountText)}</span></p>
           </div>
           <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
           <strong class="account-order-total">${displayAmount !== null && displayAmount !== undefined ? escapeHtml(formatOrderPrice(displayAmount)) : "미정"}</strong>
