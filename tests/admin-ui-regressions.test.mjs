@@ -130,7 +130,7 @@ test("My Oalum waits for the account response before revealing an auth view", as
   const [html, controller, stylesheet] = await Promise.all([
     read("account.html"),
     read("runtime/storefront/scripts/account.js"),
-    read("runtime/storefront/styles/account-20261002-06.css"),
+    read("runtime/storefront/styles/account-20261002-07.css"),
   ]);
 
   assert.match(html, /document\.documentElement\.classList\.add\("account-session-pending"\)/);
@@ -146,10 +146,10 @@ test("My Oalum waits for the account response before revealing an auth view", as
 test("account entry uses compact line fields and the revised guest lookup copy", async () => {
   const [html, stylesheet] = await Promise.all([
     read("account.html"),
-    read("runtime/storefront/styles/account-20261002-06.css"),
+    read("runtime/storefront/styles/account-20261002-07.css"),
   ]);
 
-  assert.match(html, /account-20261002-06\.css/);
+  assert.match(html, /account-20261002-07\.css/);
   assert.match(html, /account\.js\?v=20261002-repairs-05/);
   assert.match(html, /<h1 class="account-heading">로그인<\/h1>/);
   assert.match(html, /placeholder="이메일"/);
@@ -168,7 +168,7 @@ test("account entry uses compact line fields and the revised guest lookup copy",
 test("login and guest errors use red field text and underlines without an error sentence", async () => {
   const [controller, stylesheet] = await Promise.all([
     read("runtime/storefront/scripts/account.js"),
-    read("runtime/storefront/styles/account-20261002-06.css"),
+    read("runtime/storefront/styles/account-20261002-07.css"),
   ]);
 
   assert.match(controller, /const setAuthFieldInvalid = \(form, fieldName, invalid = true\)/);
@@ -222,7 +222,7 @@ test("password recovery follows the signup line-form and action rules", async ()
 test("My Oalum keeps logout in the account page and removes it from the GNB", async () => {
   const [html, stylesheet, siteChrome] = await Promise.all([
     read("account.html"),
-    read("runtime/storefront/styles/account-20261002-06.css"),
+    read("runtime/storefront/styles/account-20261002-07.css"),
     read("runtime/storefront/scripts/components/siteChrome-20260818-05.js"),
   ]);
 
@@ -260,7 +260,7 @@ test("order history preserves terminal order states and uses the revised card la
   const [html, controller, stylesheet] = await Promise.all([
     read("account.html"),
     read("runtime/storefront/scripts/account.js"),
-    read("runtime/storefront/styles/account-20261002-06.css"),
+    read("runtime/storefront/styles/account-20261002-07.css"),
   ]);
 
   assert.match(html, /<h2 class="account-heading">주문 내역<\/h2>/);
@@ -288,8 +288,8 @@ test("order history preserves terminal order states and uses the revised card la
   assert.match(stylesheet, /\.account-panel--repairs \.account-record--repair \.account-repair-ticket-action\s*\{[^}]*justify-content:\s*center/);
   assert.match(stylesheet, /\.account-panel--repairs \.account-record--repair :is\(\.account-repair-category, \.account-order-id\)\s*\{[^}]*font-size:\s*16px;[^}]*color:\s*rgba\(17, 17, 17, 0\.85\)/);
   assert.match(stylesheet, /\.account-panel--repairs \.account-record--repair \.account-repair-meta__head\s*\{[^}]*display:\s*grid/);
-  assert.match(stylesheet, /\.account-panel--repairs \.account-record--repair \.account-repair-ticket-button\s*\{[^}]*width:\s*100%;[^}]*background:\s*#fff !important;[^}]*color:\s*rgba\(17, 17, 17, 0\.85\) !important;[^}]*font-size:\s*16px/);
-  assert.match(stylesheet, /body\.account-page \.account-panel--repairs \.account-record--repair \.account-repair-ticket-button:is\(:hover, :focus-visible, :active, \.is-pointer-hover\)\s*\{[^}]*background:\s*#111 !important;[^}]*color:\s*#fff !important/);
+  assert.match(stylesheet, /\.account-panel--repairs \.account-record--repair \.account-repair-ticket-button\s*\{[^}]*width:\s*auto !important;[^}]*border:\s*0 !important;[^}]*background:\s*transparent !important;[^}]*font-size:\s*16px;[^}]*text-decoration:\s*underline/);
+  assert.match(stylesheet, /body\.account-page \.account-panel--repairs \.account-record--repair \.account-repair-ticket-button:is\(:hover, :focus-visible, :active, \.is-pointer-hover\)\s*\{[^}]*background:\s*transparent !important;[^}]*color:\s*rgba\(17, 17, 17, 0\.85\) !important/);
   assert.match(stylesheet, /\.account-panel--repairs \.account-record--repair \.account-repair-unread\s*\{[^}]*font-size:\s*16px/);
   assert.match(stylesheet, /Unified account history:[\s\S]*\.account-panel--repairs[\s\S]*\.account-panel--workshops[\s\S]*grid-template-areas:\s*"summary date total state"/);
   assert.match(html, /class="account-points-record"[\s\S]*js-account-points[\s\S]*3%가 적립/);
