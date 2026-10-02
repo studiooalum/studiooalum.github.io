@@ -48,7 +48,7 @@ test("repair page keeps the Figma accordion content contract", () => {
     "<li><span>자켓</span><span>25,000원</span></li>",
     "<li><span>가죽</span><span>50,000원</span></li>",
     "<li><span>특수소재</span><span>30,000원</span></li>",
-    '<span class="repair-method-price-list__amounts"><span>70,000원</span><span>100,000원</span><span>150,000원</span></span>',
+    '<span class="repair-method-price-list__amounts"><span>80,000원</span><span>120,000원</span><span>180,000원</span></span>',
     '<span class="repair-method-price-list__name">사시코</span>',
     "수선 기법은 작업 면적에 따라 소·중·대로 구분되며, 가격은 크기 순으로 표기되어 있습니다.",
     "하나의 제품에 여러 가지 리페어 기법이 함께 사용되는 경우 별도 견적이 진행될 수 있습니다.",
