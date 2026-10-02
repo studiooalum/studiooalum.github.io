@@ -1,0 +1,1872 @@
+.account-page {
+  min-height: 100vh;
+  background: #fff;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: var(--font-kor-body);
+  letter-spacing: var(--tracking-korean);
+}
+
+.account-session-pending .account-auth-shell,
+.account-session-pending .account-layout {
+  visibility: hidden;
+}
+
+.account-main {
+  padding: calc(var(--gnb-height, 40px) + var(--page-top-space)) var(--page-gutter) 80px;
+}
+
+.account-auth-shell,
+.account-layout {
+  display: grid;
+  gap: var(--grid-gap);
+  align-items: start;
+}
+
+.account-auth-tabs {
+  display: none;
+}
+
+.account-auth-tab {
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.22);
+  background: transparent;
+  color: rgba(17, 17, 17, 0.56);
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.account-auth-tab.is-active {
+  border-bottom-color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-panel {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding-top: 12px;
+  border-top: 1px solid #111;
+}
+
+.account-auth-shell > .account-panel {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.account-panel[hidden] {
+  display: none !important;
+}
+
+.account-page:not(.is-authenticated) [data-account-protected] {
+  display: none !important;
+}
+
+.account-page [hidden] {
+  display: none !important;
+}
+
+.account-column {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+}
+
+.account-heading {
+  margin: 0;
+  display: inline-block;
+  width: fit-content;
+  padding-bottom: 10px;
+  border-bottom: 0;
+  font-family: var(--font-kor-heading);
+  font-size: var(--type-section-title, 20px);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.account-form {
+  display: grid;
+  gap: 12px;
+}
+
+.account-guest-lookup-help {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.account-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.account-panel-actions--auth > * {
+  flex: 1 1 160px;
+}
+
+.account-field {
+  display: grid;
+  gap: 8px;
+  font-family: var(--font-kor-body);
+  line-height: 1.4;
+}
+
+.account-field > span {
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.account-field input,
+.account-field textarea {
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid #111;
+  background: #fff;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+}
+
+.account-field input {
+  height: 46px;
+}
+
+.account-field textarea {
+  min-height: 76px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.account-field input[readonly] {
+  background: transparent;
+  color: rgba(17, 17, 17, 0.68);
+}
+
+.account-field-note {
+  margin: -4px 0 0;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(17, 17, 17, 0.56);
+}
+
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 92px;
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  text-decoration: none;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.account-btn[disabled] {
+  opacity: 0.56;
+  cursor: wait;
+}
+
+.account-btn--secondary {
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-btn--signup {
+  background: transparent;
+  border-color: rgba(17, 17, 17, 0.8);
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-inline-link-row {
+  margin: -2px 0 0;
+}
+
+.account-inline-link {
+  color: rgba(17, 17, 17, 0.85);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  border-bottom: 0;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.account-auth-shell > .account-panel .account-heading {
+  padding-bottom: 0;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: -0.03em;
+}
+
+.account-auth-shell .account-form {
+  gap: 22px;
+}
+
+.account-auth-shell .account-field {
+  position: relative;
+  display: block;
+}
+
+.account-auth-shell .account-field > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.account-auth-shell .account-field input {
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #111;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.03em;
+}
+
+.account-auth-shell .account-field input::placeholder {
+  color: rgba(17, 17, 17, 0.3);
+  opacity: 1;
+}
+
+.account-auth-shell .account-field input:focus,
+.account-auth-shell .account-field input:focus-visible {
+  border-bottom-width: 1px;
+  outline: 0;
+  box-shadow: none;
+}
+
+.account-auth-shell .account-field.is-invalid input {
+  border-bottom-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.account-auth-shell .account-field.is-invalid input::placeholder {
+  color: var(--color-error);
+}
+
+.account-auth-shell .account-status.is-error {
+  visibility: hidden;
+}
+
+.signup-page .account-panel--signup,
+.signup-page .account-panel--signup :is(input, button, a) {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.signup-page .account-panel--signup .account-copy {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.85);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.signup-page .account-panel--signup .account-field input::placeholder {
+  color: rgba(17, 17, 17, 0.3);
+  opacity: 1;
+}
+
+.signup-page .account-panel--signup .account-field-note {
+  color: rgba(17, 17, 17, 0.85);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.signup-page .account-panel--signup .account-consent-list {
+  gap: 4px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.signup-page .account-panel--signup .account-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(17, 17, 17, 0.85);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.signup-page .account-panel--signup .account-checkbox input {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #111;
+  border-radius: 0;
+  background: #fff;
+}
+
+.signup-page .account-panel--signup .account-checkbox input:checked {
+  background-color: rgba(17, 17, 17, 0.8);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.2 6.7 11.3 12.7 4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.signup-page .account-panel--signup .account-checkbox-copy {
+  gap: 6px;
+}
+
+.signup-page .account-panel--signup .account-consent-prefix {
+  color: rgba(17, 17, 17, 0.85);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: inherit;
+}
+
+.signup-page .account-panel--signup .account-actions .account-btn,
+.signup-page .account-panel--signup .account-panel-actions--auth > button.account-btn {
+  width: 50%;
+  min-width: 0;
+  background: #111;
+  color: #fff;
+}
+
+.signup-page .account-panel--signup .account-panel-actions--auth {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.signup-page .account-panel--signup .account-btn--signup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  max-width: none;
+  min-width: 0;
+  height: auto;
+  margin-left: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.account-auth-shell .account-btn {
+  height: 42px;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.account-panel--login .account-panel-actions--auth {
+  width: 100%;
+}
+
+.account-panel--login .account-panel-actions--auth > .account-btn {
+  flex: 0 0 50%;
+}
+
+.account-auth-links {
+  display: grid;
+  justify-items: start;
+  gap: 0;
+}
+
+.account-status {
+  min-height: 18px;
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.account-status.is-success {
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-status.is-error {
+  color: var(--color-error);
+}
+
+.account-orders {
+  display: grid;
+  gap: 14px;
+}
+
+.account-guest-result {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid #111;
+}
+
+.account-guest-head,
+.account-guest-meta,
+.account-guest-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.account-guest-items {
+  display: grid;
+  gap: 8px;
+}
+
+.account-guest-item-title,
+.account-guest-item-price {
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.account-guest-item-price,
+.account-order-total {
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+}
+
+.account-order {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 17, 17, 0.28);
+}
+
+.account-order:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.account-order-head,
+.account-order-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.account-order-name,
+.account-order-id {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.account-order-id,
+.account-order-date,
+.account-order-state,
+.account-guest-meta {
+  color: rgba(17, 17, 17, 0.62);
+}
+
+.account-order-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.account-address-tools {
+  display: grid;
+  gap: 10px;
+}
+
+.account-address-tools .account-btn {
+  width: fit-content;
+}
+
+.account-provider-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-provider-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  color: rgba(17, 17, 17, 0.76);
+}
+
+.account-empty,
+.account-copy {
+  font-family: var(--font-kor-body);
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.account-copy--quiet {
+  color: rgba(17, 17, 17, 0.56);
+}
+
+.account-consent-list {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 17, 17, 0.28);
+}
+
+.account-consent-prefix {
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(17, 17, 17, 0.56);
+}
+
+.account-phase {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 17, 17, 0.28);
+}
+
+.account-debug-code {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(17, 17, 17, 0.56);
+}
+
+.account-checkbox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(17, 17, 17, 0.76);
+}
+
+.account-checkbox input {
+  margin-top: 3px;
+}
+
+.account-checkbox-copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.account-layout {
+  gap: 48px;
+}
+
+.account-menu {
+  display: grid;
+  gap: 18px;
+}
+
+.account-menu__heading {
+  margin: 0;
+  font-family: var(--font-english-ui);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.account-menu__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 620px);
+}
+
+.account-menu__item {
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  padding: clamp(14px, 3vw, 24px);
+  border: 1px solid #111;
+  color: rgba(17, 17, 17, 0.85);
+  text-decoration: none;
+}
+
+.account-menu__item span,
+.account-menu__item small {
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.account-menu__item strong {
+  align-self: center;
+  font-family: var(--font-english-ui);
+  font-size: clamp(17px, 3vw, 26px);
+  font-weight: 400;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.account-menu__item:hover,
+.account-menu__item:focus-visible {
+  background: #111;
+  color: #fff;
+}
+
+.account-layout .account-panel {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.account-column--history {
+  gap: 48px;
+}
+
+.account-record {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.account-record:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.account-record__media {
+  width: 72px;
+}
+
+.account-record__thumb-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.account-record__thumb,
+.account-record__fallback {
+  display: block;
+  width: 72px;
+  height: 72px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: rgba(17, 17, 17, 0.04);
+}
+
+.account-record__thumb {
+  object-fit: cover;
+}
+
+.account-record--repair .account-record__fallback {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-english-ui);
+  font-size: 10px;
+}
+
+.account-repair-inquiries,
+.account-repair-inquiry-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(17, 17, 17, 0.14);
+}
+
+.account-repair-inquiries p {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.account-repair-inquiries strong {
+  font-family: var(--font-kor-meta);
+  font-weight: 500;
+}
+
+.account-repair-inquiry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-repair-inquiry-actions .account-status {
+  flex: 1 1 180px;
+}
+
+.account-record__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(135deg, rgba(17, 17, 17, 0.04), rgba(17, 17, 17, 0.08)),
+    repeating-linear-gradient(135deg, rgba(17, 17, 17, 0.04), rgba(17, 17, 17, 0.04) 8px, rgba(255, 255, 255, 0.16) 8px, rgba(255, 255, 255, 0.16) 16px);
+}
+
+.account-record__body {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.account-record__top,
+.account-record__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.account-record__title,
+.account-record__item {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.account-record__title-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.account-record__meta {
+  color: rgba(17, 17, 17, 0.62);
+}
+
+.account-order-id,
+.account-order-date,
+.account-order-state,
+.account-guest-meta span {
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.account-record__items {
+  display: grid;
+  gap: 4px;
+}
+
+.account-record__status-detail,
+.account-guest-status-detail {
+  margin: -2px 0 0;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.account-record__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.account-record__action-btn {
+  min-width: 112px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.account-record__notice {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.account-record__item--more {
+  color: rgba(17, 17, 17, 0.56);
+}
+
+.account-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.account-pagination__btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  background: transparent;
+  color: rgba(17, 17, 17, 0.72);
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.account-pagination__btn.is-active {
+  border-color: rgba(17, 17, 17, 0.8);
+  background: #111;
+  color: #fff;
+}
+
+.account-consent-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  font-family: var(--font-kor-button);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.account-consent-tag--required {
+  background: #111;
+  border-color: rgba(17, 17, 17, 0.8);
+  color: #fff;
+}
+
+.account-consent-tag--optional {
+  background: rgba(17, 17, 17, 0.04);
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-points {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 92px;
+  height: 30px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid #111;
+  font-family: var(--font-kor-button);
+  font-size: 14px;
+}
+
+@media (max-width: 959px) {
+  .account-main {
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+  }
+
+  .account-auth-shell {
+    gap: 20px;
+  }
+
+  .account-auth-tabs {
+    display: flex;
+    gap: 18px;
+  }
+
+  .account-auth-shell[data-active-panel="login"] .account-panel--guest,
+  .account-auth-shell[data-active-panel="guest"] .account-panel--login {
+    display: none;
+  }
+
+  .account-panel--login .account-heading,
+  .account-panel--guest .account-heading {
+    display: none;
+  }
+
+  .account-panel--login .account-panel-actions--auth {
+    width: 100%;
+  }
+
+  .account-panel--login .account-panel-actions--auth > * {
+    flex: 1 1 0;
+    width: auto;
+  }
+
+  .account-panel--login .account-form,
+  .account-panel--guest .account-form {
+    grid-template-rows: repeat(2, auto) auto minmax(32px, auto);
+    align-content: start;
+  }
+
+  .account-panel--guest .account-form > .account-btn {
+    width: calc((100% - 10px) / 2);
+    min-width: 0;
+  }
+
+  .account-panel--guest .account-form::after {
+    content: "";
+    display: block;
+  }
+
+  .account-record {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+
+  .account-record__media,
+  .account-record__thumb,
+  .account-record__fallback {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (min-width: 960px) {
+  .account-main {
+    padding-top: calc(var(--gnb-height, 40px) + var(--page-top-space));
+  }
+
+  .account-auth-tabs {
+    display: none;
+  }
+
+  .account-auth-shell {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .account-auth-shell--signup {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .account-panel--login,
+  .account-panel--signup,
+  .account-panel--recovery {
+    grid-column: 1;
+  }
+
+  .account-panel--guest {
+    grid-column: 2;
+  }
+
+  .account-panel--login .account-panel-actions--auth {
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: fit-content;
+  }
+
+  .account-panel--login .account-panel-actions--auth > * {
+    flex: 0 0 112px;
+    width: 112px;
+  }
+
+  .account-panel--guest .account-form > .account-btn {
+    width: 112px;
+    min-width: 112px;
+  }
+
+  .account-layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .account-menu {
+    grid-column: 1 / -1;
+  }
+
+  .account-panel--profile {
+    grid-column: 1;
+  }
+
+  .account-column--history {
+    grid-column: 2;
+    gap: 160px;
+  }
+
+  .account-panel--points {
+    grid-column: 3;
+  }
+}
+
+/* Auth action lock: mirrors the Edition add-to-cart link and half-width primary actions. */
+body:is(.signup-page, .forgot-password-page) .account-panel :is(.account-copy, .account-field-note) {
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+body:is(.signup-page, .forgot-password-page) .account-panel .account-field input::placeholder {
+  color: rgba(17, 17, 17, 0.3);
+  opacity: 1;
+}
+
+body:is(.signup-page, .forgot-password-page) .account-panel .account-actions > .account-btn,
+body:is(.signup-page, .forgot-password-page) .account-panel .account-panel-actions--auth > button.account-btn {
+  box-sizing: border-box;
+  flex: 0 0 50% !important;
+  width: 50% !important;
+  inline-size: 50% !important;
+  max-width: 50% !important;
+  max-inline-size: 50% !important;
+  min-width: 0 !important;
+  background: #111;
+  color: #fff;
+}
+
+body:is(.signup-page, .forgot-password-page) .account-panel .account-panel-actions--auth {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  width: 100%;
+}
+
+body:is(.signup-page, .forgot-password-page) .account-return-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-self: start;
+  width: auto !important;
+  inline-size: auto !important;
+  max-width: none !important;
+  max-inline-size: none !important;
+  min-width: 0;
+  height: auto;
+  margin-left: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :focus-visible, :active) {
+  border: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+}
+
+/* My Oalum dashboard */
+.account-layout.js-account-member-layout {
+  align-items: start;
+}
+
+.account-overview {
+  min-width: 0;
+}
+
+.account-dashboard-card__index,
+.account-dashboard-card h2,
+.account-detail-back {
+  font-family: var(--font-english-ui);
+  letter-spacing: var(--tracking-latin);
+}
+
+.account-overview__avatar {
+  position: relative;
+  display: grid;
+  width: 88px;
+  height: 88px;
+  aspect-ratio: 1;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: #f0f1f1;
+  color: #969ca3;
+  font-family: var(--font-kor-heading);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.account-overview__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.account-overview__avatar > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.account-overview__avatar:hover::after,
+.account-overview__avatar:focus-visible::after {
+  content: "사진 변경";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(17, 17, 17, 0.64);
+  color: #fff;
+  font-family: var(--font-kor-button);
+  font-size: 12px;
+}
+
+.account-overview__avatar:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.account-overview__welcome {
+  display: grid;
+  gap: 0;
+  margin-top: 24px;
+}
+
+.account-overview__welcome p {
+  margin: 0;
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  line-height: var(--type-body-leading, 1.55);
+}
+
+.account-overview__welcome p:last-child {
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-overview__facts {
+  width: 100%;
+  margin: 40px 0 0;
+  border-top: 0;
+}
+
+.account-overview__facts > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 11px 0;
+  border-bottom: 1px solid #111;
+}
+
+.account-overview__facts dt {
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-overview__facts dd {
+  min-width: 0;
+  margin: 0;
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.account-overview__actions {
+  display: grid;
+  justify-items: start;
+  gap: 0;
+  margin-top: 26px;
+}
+
+.account-overview__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.account-overview > .account-status {
+  margin-top: 16px;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", var(--font-kor-body, sans-serif);
+  font-size: 16px;
+}
+
+.account-dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--grid-gap);
+  min-width: 0;
+}
+
+.account-dashboard-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding: clamp(18px, 2vw, 32px);
+  overflow: hidden;
+  border: 1px solid #111;
+  color: rgba(17, 17, 17, 0.85);
+  text-decoration: none;
+}
+
+.account-dashboard-card--repairs {
+  border: 0;
+  background: #fff;
+}
+
+.account-dashboard-card--orders {
+  border-color: #e34234;
+  background: #e34234;
+  color: #fff;
+}
+
+.account-dashboard-card--classes {
+  border-color: #ffe74d;
+  background: #ffe74d;
+}
+
+.account-dashboard-card--points {
+  border-color: #c9d3d6;
+  background: #c9d3d6;
+}
+
+.account-dashboard-card__index {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+}
+
+.account-dashboard-card__arrow {
+  position: absolute;
+  top: clamp(16px, 2vw, 30px);
+  right: clamp(18px, 2vw, 32px);
+  font-size: 20px;
+  transition: transform 180ms ease;
+}
+
+.account-dashboard-card:hover .account-dashboard-card__arrow {
+  transform: translateX(5px);
+}
+
+.account-dashboard-card__body {
+  min-width: 0;
+}
+
+.account-dashboard-card__body > p {
+  margin: 0 0 14px;
+  font-size: clamp(11px, 1vw, 13px);
+  color: currentColor;
+  opacity: 0.62;
+}
+
+.account-dashboard-card__body > strong {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  margin: 0;
+  font-family: var(--font-kor-heading);
+  font-size: clamp(48px, 6vw, 92px);
+  font-weight: 300;
+  line-height: 0.78;
+  letter-spacing: -0.055em;
+}
+
+.account-dashboard-card__body > strong small {
+  padding-bottom: 2px;
+  font-family: var(--font-kor-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: var(--tracking-korean);
+  opacity: 0.68;
+}
+
+.account-dashboard-card--points .account-dashboard-card__body > strong {
+  font-size: clamp(42px, 5vw, 76px);
+}
+
+.account-dashboard-card h2 {
+  margin: clamp(20px, 2vw, 30px) 0 0;
+  font-size: clamp(18px, 1.65vw, 25px);
+  font-weight: 400;
+}
+
+.account-dashboard-card__copy {
+  display: block;
+  max-width: 280px;
+  margin-top: 12px;
+  font-size: clamp(11px, 0.95vw, 14px);
+  line-height: 1.6;
+  opacity: 0.64;
+}
+
+.account-detail-shell {
+  display: none;
+  min-width: 0;
+}
+
+.account-layout[data-account-view="profile"] .account-dashboard,
+.account-layout[data-account-view="repairs"] .account-dashboard,
+.account-layout[data-account-view="orders"] .account-dashboard,
+.account-layout[data-account-view="classes"] .account-dashboard,
+.account-layout[data-account-view="points"] .account-dashboard {
+  display: none;
+}
+
+.account-layout:not([data-account-view="dashboard"]) .account-detail-shell {
+  display: grid;
+  gap: 36px;
+}
+
+.account-detail-back {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: var(--font-book);
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.account-detail-shell [data-account-detail] {
+  display: none;
+}
+
+.account-layout[data-account-view="profile"] [data-account-detail="profile"],
+.account-layout[data-account-view="repairs"] [data-account-detail="repairs"],
+.account-layout[data-account-view="orders"] [data-account-detail="orders"],
+.account-layout[data-account-view="classes"] [data-account-detail="classes"],
+.account-layout[data-account-view="points"] [data-account-detail="points"] {
+  display: grid;
+}
+
+.account-detail-shell .account-panel {
+  max-width: 760px;
+}
+
+.account-data-cache {
+  display: none !important;
+}
+
+@media (min-width: 960px) {
+  .account-layout.js-account-member-layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .account-overview {
+    position: sticky;
+    top: calc(var(--gnb-height, 40px) + 32px);
+    grid-column: 1;
+  }
+
+  .account-dashboard,
+  .account-detail-shell {
+    grid-column: 2 / span 2;
+  }
+}
+
+@media (max-width: 959px) {
+  .account-layout.js-account-member-layout {
+    gap: 52px;
+  }
+
+  .account-overview__facts {
+    max-width: 520px;
+  }
+
+  .account-dashboard {
+    gap: 16px;
+  }
+
+  .account-layout:not([data-account-view="dashboard"]) .account-overview {
+    display: none !important;
+  }
+
+  .account-layout:not([data-account-view="dashboard"]) {
+    gap: 0;
+  }
+}
+
+@media (max-width: 519px) {
+  .account-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-dashboard-card__arrow,
+  .account-overview__link span,
+  .account-detail-back {
+    transition: none;
+  }
+}
+
+/* Completed order history */
+.account-panel--orders,
+.account-panel--orders :is(.account-heading, .account-record, .account-record a, .account-record strong, .account-record span) {
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-detail-shell .account-panel--orders {
+  max-width: none;
+}
+
+.account-panel--orders .account-heading {
+  font-family: var(--font-kor-body);
+}
+
+.account-panel--orders .account-orders {
+  gap: 0;
+}
+
+.account-panel--orders .account-record--order {
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 40px;
+  min-height: 228px;
+  padding: 36px 0;
+  align-items: center;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order:first-child {
+  padding-top: 36px;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order:last-of-type {
+  border-bottom: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order .account-record__media,
+.account-panel--orders .account-record--order .account-record__thumb-link,
+.account-panel--orders .account-record--order .account-record__thumb,
+.account-panel--orders .account-record--order .account-record__fallback {
+  width: 160px;
+  height: 160px;
+}
+
+.account-panel--orders .account-record--order .account-record__thumb,
+.account-panel--orders .account-record--order .account-record__fallback {
+  border: 0;
+  background: transparent;
+}
+
+.account-panel--orders .account-record--order .account-record__body {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    "summary date total state"
+    "items items items items"
+    "actions actions actions actions";
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  align-self: stretch;
+  align-items: center;
+  column-gap: 36px;
+  row-gap: 8px;
+}
+
+.account-panel--orders .account-record--order .account-order-state {
+  grid-area: state;
+  align-self: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.account-panel--orders .account-record--order .account-order-summary {
+  grid-area: summary;
+  display: grid;
+  align-self: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.account-panel--orders .account-record--order .account-record__title {
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.account-panel--orders .account-record--order .account-record__title-link {
+  border-bottom-color: rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--orders .account-record--order .account-order-total {
+  grid-area: total;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.account-panel--orders .account-record--order .account-order-id {
+  display: block;
+}
+
+.account-panel--orders .account-record--order .account-order-date {
+  grid-area: date;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.account-panel--orders .account-record--order :is(.account-order-id, .account-order-date) {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.account-panel--orders .account-record--order .account-record__status-detail {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+.account-panel--orders .account-record--order .account-record__items {
+  grid-area: items;
+}
+
+.account-panel--orders .account-record--order .account-record__actions,
+.account-panel--orders .account-record--order .account-record__notice {
+  grid-area: actions;
+}
+
+@media (max-width: 719px) {
+  .account-panel--orders .account-record--order,
+  .account-panel--orders .account-record--order:first-child {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 18px;
+    min-height: 176px;
+    padding: 24px 0;
+  }
+
+  .account-panel--orders .account-record--order .account-record__media,
+  .account-panel--orders .account-record--order .account-record__thumb-link,
+  .account-panel--orders .account-record--order .account-record__thumb,
+  .account-panel--orders .account-record--order .account-record__fallback {
+    width: 112px;
+    height: 112px;
+  }
+
+  .account-panel--orders .account-record--order .account-record__body {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "summary summary summary"
+      "date total state"
+      "items items items"
+      "actions actions actions";
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    column-gap: 12px;
+    row-gap: 7px;
+  }
+}
+
+/* Unified account history: repairs, classes, and points follow order history. */
+:is(.account-panel--repairs, .account-panel--workshops, .account-panel--points),
+:is(.account-panel--repairs, .account-panel--workshops, .account-panel--points) :is(.account-heading, .account-record, .account-record a, .account-record strong, .account-record span, .account-points, .account-copy) {
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-detail-shell :is(.account-panel--repairs, .account-panel--workshops, .account-panel--points) {
+  max-width: none;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops, .account-panel--points) .account-heading {
+  font-family: var(--font-kor-body);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-orders {
+  gap: 0;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) {
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 40px;
+  min-height: 228px;
+  padding: 36px 0;
+  align-items: center;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop):first-child {
+  padding-top: 36px;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop):last-of-type {
+  border-bottom: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) :is(.account-record__media, .account-record__thumb-link, .account-record__thumb, .account-record__fallback) {
+  width: 160px;
+  height: 160px;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) :is(.account-record__thumb, .account-record__fallback) {
+  border: 0;
+  background: transparent;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) .account-record__body {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    "summary date total state"
+    "items items items items"
+    "actions actions actions actions";
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  align-self: stretch;
+  align-items: center;
+  column-gap: 36px;
+  row-gap: 8px;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-summary {
+  grid-area: summary;
+  display: grid;
+  align-self: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-record__title {
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-record__title-link {
+  border-bottom-color: rgba(17, 17, 17, 0.85);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-date {
+  grid-area: date;
+  align-self: center;
+  white-space: nowrap;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-total {
+  grid-area: total;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-order-state {
+  grid-area: state;
+  align-self: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-order-id, .account-order-date, .account-record__status-detail) {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) .account-record__items {
+  grid-area: items;
+}
+
+:is(.account-panel--repairs, .account-panel--workshops) :is(.account-record__actions, .account-record__notice) {
+  grid-area: actions;
+}
+
+.account-panel--repairs .account-record--repair .account-order-summary {
+  gap: 3px;
+}
+
+.account-panel--repairs .account-record--repair .account-record__body {
+  grid-template-columns: minmax(210px, 1fr) minmax(260px, 1.25fr) auto auto auto;
+  grid-template-areas:
+    "summary actions date total state"
+    "notice notice notice notice notice";
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-meta__head {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  justify-items: start;
+  min-width: 0;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-category {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-panel--repairs .account-record--repair :is(.account-repair-category, .account-order-id) {
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--repairs .account-record--repair .account-repair-ticket-action {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-ticket-button {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border-color: #111 !important;
+  background: #fff !important;
+  color: rgba(17, 17, 17, 0.85) !important;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-ticket-button:is(:hover, :focus-visible) {
+  background: #111 !important;
+  color: #fff !important;
+}
+
+.account-panel--repairs .account-record--repair .account-repair-unread {
+  color: rgba(17, 17, 17, 0.85);
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.account-panel--repairs .account-record--repair .account-record__notice {
+  grid-area: notice;
+}
+
+.account-panel--points .account-points-record {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  min-height: 228px;
+  padding: 36px 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.85);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.85);
+}
+
+.account-panel--points .account-points {
+  margin: 0;
+  font-family: var(--font-kor-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.account-panel--points .account-points-record .account-copy {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+@media (max-width: 719px) {
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop),
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop):first-child {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 18px;
+    min-height: 176px;
+    padding: 24px 0;
+  }
+
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) :is(.account-record__media, .account-record__thumb-link, .account-record__thumb, .account-record__fallback) {
+    width: 112px;
+    height: 112px;
+  }
+
+  :is(.account-panel--repairs, .account-panel--workshops) :is(.account-record--repair, .account-record--workshop) .account-record__body {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "summary summary summary"
+      "date total state"
+      "items items items"
+      "actions actions actions";
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    column-gap: 12px;
+    row-gap: 7px;
+  }
+
+  .account-panel--repairs .account-record--repair .account-repair-ticket-action {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .account-panel--repairs .account-record--repair .account-record__body {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "summary summary summary"
+      "actions actions actions"
+      "date total state"
+      "notice notice notice";
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .account-panel--points .account-points-record {
+    min-height: 176px;
+    padding: 24px 0;
+  }
+}
