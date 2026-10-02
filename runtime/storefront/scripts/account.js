@@ -781,7 +781,7 @@ export function initAccountPage() {
           <span class="account-order-date">${escapeHtml(formatDate(request?.createdAt))}</span>
           <strong class="account-order-total">${displayAmount !== null && displayAmount !== undefined ? escapeHtml(formatOrderPrice(displayAmount)) : "미정"}</strong>
           <span class="account-order-state">${escapeHtml(formatRepairStatus(request))}</span>
-          ${ticketHref ? `<div class="account-record__actions account-repair-ticket-action"><a class="account-btn account-btn--secondary account-repair-ticket-button" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}" data-repair-ticket-code="${escapeHtml(request.ticketShortCode || "")}">Repair Ticket</a>${unread ? `<span class="account-repair-unread">새 메시지 ${unread}</span>` : ""}</div>` : ""}
+          ${ticketHref ? `<div class="account-record__actions account-repair-ticket-action"><a class="account-btn account-repair-ticket-button" href="${ticketHref}" data-repair-ticket-id="${escapeHtml(request.ticketId)}" data-repair-ticket-code="${escapeHtml(request.ticketShortCode || "")}">Repair Ticket</a>${unread ? `<span class="account-repair-unread">새 메시지 ${unread}</span>` : ""}</div>` : ""}
           ${request?.isReadOnly ? '<p class="account-record__notice">완료된 수선 내역과 대화는 읽기 전용으로 보관됩니다.</p>' : ""}
         </div>
       </article>
