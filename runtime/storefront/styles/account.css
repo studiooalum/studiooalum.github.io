@@ -1773,17 +1773,17 @@ body:is(.signup-page, .forgot-password-page) .account-return-link:is(:hover, :fo
   min-width: 0;
   height: 42px;
   padding: 0 12px;
-  border-color: #111;
-  background: #fff;
-  color: rgba(17, 17, 17, 0.85);
+  border-color: #111 !important;
+  background: #fff !important;
+  color: rgba(17, 17, 17, 0.85) !important;
   font-family: var(--font-kor-body);
   font-size: 16px;
   font-weight: 400;
 }
 
 .account-panel--repairs .account-record--repair .account-repair-ticket-button:is(:hover, :focus-visible) {
-  background: #111;
-  color: #fff;
+  background: #111 !important;
+  color: #fff !important;
 }
 
 .account-panel--repairs .account-record--repair .account-repair-unread {
