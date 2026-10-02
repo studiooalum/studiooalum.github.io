@@ -16,8 +16,6 @@ import { normalizeImageRgb } from "./image-colors.js";
 import { inferRepairCountryCode, normalizeRepairShippingAddress } from "./repair-address.js";
 import { buildRepairGalleryUrl } from "./r2.js";
 
-import { getTossConfig } from "./toss.js";
-
 function getDb(env) {
   return env?.OALUM_DB || null;
 }
@@ -32,6 +30,13 @@ function requireDb(env) {
 
 function cleanText(value, maxLength = 2000) {
   return String(value || "").trim().slice(0, maxLength);
+}
+
+const LEGACY_CARD_PAYMENT_GUIDE = "Repair Ticket에서 카드·간편결제로 결제할 수 있습니다.";
+
+function normalizePaymentInstructions(value) {
+  const normalized = cleanText(value, 2000);
+  return normalized === LEGACY_CARD_PAYMENT_GUIDE ? "" : normalized;
 }
 
 function normalizeEmail(value) {
@@ -125,9 +130,9 @@ function formatRepairRequest(row) {
   const archiveConsentStatus = ["agreed", "declined"].includes(row.archive_consent_status)
     ? row.archive_consent_status
     : archiveConsentAt ? "agreed" : "unrecorded";
-  const canDelete = ["received", "rejected", "cancelled"].includes(status)
+  const canDelete = status === "cancelled" || (["received", "rejected"].includes(status)
     && !row.payment_confirmed_at
-    && Math.max(0, Number(row.final_amount) || 0) === 0;
+    && Math.max(0, Number(row.final_amount) || 0) === 0);
 
   return {
     id: row.id,
@@ -171,7 +176,7 @@ function formatRepairRequest(row) {
     quoteAmount: row.quote_amount === null || row.quote_amount === undefined ? null : Number(row.quote_amount),
     finalAmount: row.final_amount === null || row.final_amount === undefined ? null : Number(row.final_amount),
     bankAccount: row.bank_account || "",
-    paymentInstructions: row.payment_instructions || "",
+    paymentInstructions: normalizePaymentInstructions(row.payment_instructions),
     paymentConfirmedAt: row.payment_confirmed_at || "",
     carrier: row.carrier || "",
     trackingNumber: row.tracking_number || "",
@@ -834,6 +839,7 @@ export async function deleteRepairRequest(env, requestId) {
   const statements = [
     database.prepare(`DELETE FROM guest_lookup_tokens WHERE resource_type = 'repair' AND resource_id = ?`).bind(normalizedId),
     database.prepare(`DELETE FROM notification_outbox WHERE entity_type = 'repair' AND entity_id = ?`).bind(normalizedId),
+    database.prepare(`DELETE FROM repair_payment_orders WHERE repair_id = ?`).bind(normalizedId),
   ];
   if (ticket?.id) {
     statements.push(database.prepare(`DELETE FROM repair_ticket_abuse_log WHERE ticket_id = ?`).bind(ticket.id));
@@ -932,8 +938,9 @@ export async function updateRepairRequest(env, input) {
   const quoteAmount = hasOwn(input, "quoteAmount") ? normalizeAmount(input.quoteAmount) : existing.quote_amount;
   const finalAmount = hasOwn(input, "finalAmount") ? normalizeAmount(input.finalAmount) : existing.final_amount;
   const bankAccount = hasOwn(input, "bankAccount") ? cleanText(input.bankAccount, 500) : existing.bank_account;
-  const paymentInstructions = (hasOwn(input, "paymentInstructions") ? cleanText(input.paymentInstructions, 2000) : existing.payment_instructions)
-    || (getTossConfig(env).isClientReady ? "Repair Ticket에서 카드·간편결제로 결제할 수 있습니다." : "");
+  const paymentInstructions = normalizePaymentInstructions(
+    hasOwn(input, "paymentInstructions") ? input.paymentInstructions : existing.payment_instructions,
+  );
   if (existing.payment_confirmed_at && finalAmount !== existing.final_amount) {
     throw Object.assign(new Error("결제 완료된 수선의 최종 금액은 변경할 수 없습니다."), { status: 409 });
   }
