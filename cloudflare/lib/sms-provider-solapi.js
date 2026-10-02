@@ -2,6 +2,7 @@ const SOLAPI_ENDPOINT = "https://api.solapi.com/messages/v4/send-many/fast";
 const SEND_TIMEOUT_MS = 12 * 1000;
 const SMS_MAX_BYTES = 90;
 const LMS_MAX_BYTES = 2000;
+const REPAIR_SMS_TITLE = "[Studio OALUM 수선 안내]";
 
 function cleanText(value, maxLength = 2400) {
   return String(value || "").trim().slice(0, maxLength);
@@ -33,6 +34,28 @@ export function getSolapiMessageType(text) {
   throw Object.assign(new Error("문자 본문은 LMS 허용 길이 2,000byte를 넘을 수 없습니다."), { status: 400 });
 }
 
+export function formatSolapiMessage(bodyText) {
+  const originalText = String(bodyText || "");
+  const originalType = getSolapiMessageType(originalText);
+  if (originalType.type !== "LMS") {
+    return { text: originalText, type: originalType.type, byteLength: originalType.byteLength, subject: "" };
+  }
+
+  const repairHeaderPattern = new RegExp(`^${REPAIR_SMS_TITLE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`);
+  if (!repairHeaderPattern.test(originalText)) {
+    return { text: originalText, type: originalType.type, byteLength: originalType.byteLength, subject: "" };
+  }
+
+  const text = originalText.replace(repairHeaderPattern, "");
+  const messageType = getSolapiMessageType(text);
+  return {
+    text,
+    type: "LMS",
+    byteLength: messageType.byteLength,
+    subject: REPAIR_SMS_TITLE,
+  };
+}
+
 export async function sendSolapiNotification(env, notification, fetchImpl = fetch) {
   const enabled = String(env?.SMS_ENABLED || "false").toLowerCase() === "true";
   const dryRun = String(env?.SMS_DRY_RUN ?? "true").toLowerCase() !== "false";
@@ -40,11 +63,11 @@ export async function sendSolapiNotification(env, notification, fetchImpl = fetc
   const apiSecret = cleanText(env?.SOLAPI_API_SECRET, 500);
   const sender = normalizePhone(env?.SOLAPI_SENDER_NUMBER);
   const recipient = normalizePhone(notification?.recipient);
-  const text = String(notification?.body_text || "");
-  const messageType = getSolapiMessageType(text);
+  const message = formatSolapiMessage(notification?.body_text);
+  const { text } = message;
 
   if (!enabled || dryRun) {
-    console.log(JSON.stringify({ event: "solapi_dry_run", type: messageType.type, bytes: messageType.byteLength }));
+    console.log(JSON.stringify({ event: "solapi_dry_run", type: message.type, bytes: message.byteLength }));
     return { disposition: "dry_run", providerMessageId: `dry-run:${notification?.id || "notification"}` };
   }
   if (!apiKey || !apiSecret || !sender) {
@@ -65,7 +88,13 @@ export async function sendSolapiNotification(env, notification, fetchImpl = fetc
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        messages: [{ to: recipient, from: sender, text, type: messageType.type }],
+        messages: [{
+          to: recipient,
+          from: sender,
+          text,
+          type: message.type,
+          ...(message.subject ? { subject: message.subject } : {}),
+        }],
       }),
       signal: controller.signal,
     });
