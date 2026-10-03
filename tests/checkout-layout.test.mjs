@@ -44,6 +44,7 @@ test("checkout follows the three-column repair form layout", () => {
   assert.match(css, /input\[type="number"\]::-webkit-inner-spin-button/);
   assert.match(html, /checkoutCouponSection[\s\S]*checkoutPointsSection[\s\S]*checkout-form-section/);
   assert.match(html, /checkoutPointsBalance">보유 포인트 0</);
+  assert.match(html, /data-checkout-policy="shipping">배송 환불 적립금 안내/);
   assert.match(html, /placeholder="포인트는 1,000포인트부터 사용할 수 있습니다"/);
   assert.doesNotMatch(html, /checkout-points__title|checkoutPointsCopy|checkoutPointsEarn|checkoutCouponCopy/);
   assert.match(checkoutScript, /`보유 포인트 \$\{availablePoints\.toLocaleString\("ko-KR"\)\}`/);

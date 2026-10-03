@@ -34,6 +34,7 @@ test("shop and workshop policies match the current service rules", () => {
   assert.equal(versionedSource, source);
   assert.match(source, /배송 비용 : 주문 1건당 4,000원/);
   assert.match(source, /왕복 배송비 8,000원/);
+  assert.match(source, /반품 상품을 반환받은 날부터 3영업일 이내/);
   assert.match(source, /별도로 고지하고 소비자의 전자 동의를 받은 경우/);
   assert.match(source, /제18조\(워크숍 예약·변경·취소\)/);
   assert.match(source, /워크숍 시작 전에 예약을 취소하는 경우 참가비 전액을 환급/);
