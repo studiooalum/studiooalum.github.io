@@ -4,16 +4,19 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-const [html, css, checkoutScript, archiveSource, accountHtml, accountCss] = await Promise.all([
+const [html, css, checkoutScript, versionedCheckoutScript, archiveSource, accountHtml, accountCss] = await Promise.all([
   read("../checkout.html"),
   read("../runtime/storefront/styles/checkout.css"),
   read("../runtime/storefront/scripts/checkout.js"),
+  read("../runtime/storefront/scripts/checkout-20261003-01.js"),
   read("../runtime/storefront/scripts/archive-20260816-06.js"),
   read("../account.html"),
   read("../runtime/storefront/styles/account.css"),
 ]);
 
 test("checkout follows the three-column repair form layout", () => {
+  assert.equal(versionedCheckoutScript, checkoutScript);
+  assert.match(html, /checkout-20261003-01\.js/);
   assert.match(html, /checkout\.css\?v=20260930-validation-01/);
   assert.match(html, />주문 내역</);
   assert.match(html, />배송 정보</);
@@ -48,6 +51,9 @@ test("checkout follows the three-column repair form layout", () => {
   assert.match(css, /input\[type="checkbox"\]:checked[^}]*background-image: url\("data:image\/svg\+xml/);
   assert.match(css, /padding: calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space, 72px\)\)/);
   assert.match(checkoutScript, /function formatWon\(value\)/);
+  assert.match(html, /checkoutShipping">4,000원</);
+  assert.match(checkoutScript, /const SHOP_SHIPPING_AMOUNT = 4000/);
+  assert.match(checkoutScript, /checkoutShipping"\)\.textContent = formatWon\(totals\.shippingAmount\)/);
   assert.match(checkoutScript, /imageUrl\(image, \{ width: 512 \}\)/);
   assert.match(checkoutScript, /couponRow\.hidden = false/);
   assert.match(checkoutScript, /pointsRow\.hidden = false/);
@@ -58,7 +64,7 @@ test("checkout follows the three-column repair form layout", () => {
 });
 
 test("account and checkout share the standard page-top spacing", () => {
-  assert.match(accountHtml, /account\.css\?v=20261002-history-01/);
+  assert.match(accountHtml, /account-20261002-07\.css/);
   assert.match(accountCss, /@media \(max-width: 959px\)[\s\S]*?\.account-main \{\s*padding-top: calc\(var\(--gnb-height, 40px\) \+ var\(--page-top-space\)\);/);
 });
 

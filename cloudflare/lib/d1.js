@@ -697,10 +697,12 @@ export async function prepareOrderPricing(env, {
   userId = null,
   email = "",
   subtotalAmount = 0,
+  shippingAmount = 0,
   requestedPoints = 0,
   coupon = null,
 } = {}) {
   const subtotal = roundAmount(subtotalAmount);
+  const shipping = roundAmount(shippingAmount);
   let pointsUsed = normalizePoints(requestedPoints);
   const activeCoupon = coupon || await prepareCouponPricing(env, {
     userId,
@@ -719,11 +721,12 @@ export async function prepareOrderPricing(env, {
 
     return {
       subtotalAmount: subtotal,
+      shippingAmount: shipping,
       discountAmount: 0,
       couponDiscountAmount: 0,
       coupon: null,
       couponReservationExpiresAt: null,
-      totalAmount: subtotal,
+      totalAmount: subtotal + shipping,
       pointsUsed: 0,
       pointsReservationExpiresAt: null,
       availablePoints: 0,
@@ -739,11 +742,12 @@ export async function prepareOrderPricing(env, {
   if (!userId || pointsUsed <= 0) {
     return {
       subtotalAmount: subtotal,
+      shippingAmount: shipping,
       discountAmount: couponDiscountAmount,
       couponDiscountAmount,
       coupon: activeCoupon,
       couponReservationExpiresAt: activeCoupon?.reservationExpiresAt || null,
-      totalAmount: Math.max(0, subtotal - couponDiscountAmount),
+      totalAmount: Math.max(0, subtotal + shipping - couponDiscountAmount),
       pointsUsed: 0,
       pointsReservationExpiresAt: null,
       availablePoints: userId ? await readUserPointBalance(env, userId) : 0,
@@ -773,11 +777,12 @@ export async function prepareOrderPricing(env, {
 
   return {
     subtotalAmount: subtotal,
+    shippingAmount: shipping,
     discountAmount: couponDiscountAmount + pointsUsed,
     couponDiscountAmount,
     coupon: activeCoupon,
     couponReservationExpiresAt: activeCoupon?.reservationExpiresAt || null,
-    totalAmount: Math.max(0, subtotal - couponDiscountAmount - pointsUsed),
+    totalAmount: Math.max(0, subtotal + shipping - couponDiscountAmount - pointsUsed),
     pointsUsed,
     pointsReservationExpiresAt: buildPointsReservationExpiry(now),
     availablePoints,
@@ -1523,7 +1528,7 @@ export async function persistOrder(env, order) {
       order.paymentStatus || "pending",
       "KRW",
       order.subtotalAmount ?? order.total,
-      0,
+      order.shippingAmount ?? 0,
       order.discountAmount ?? 0,
       order.pointsUsed ?? 0,
       order.pointsEarned ?? 0,

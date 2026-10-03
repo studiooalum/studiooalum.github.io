@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { confirmTossPayment, cancelTossPayment, getTossConfig } from "../cloudflare/lib/toss.js";
-import { resolveOrderItems } from "../cloudflare/lib/commerce.js";
+import { resolveOrderItems, SHOP_SHIPPING_AMOUNT } from "../cloudflare/lib/commerce.js";
+import { prepareOrderPricing } from "../cloudflare/lib/d1.js";
 import { assertSameOrigin } from "../cloudflare/lib/request-security.js";
 import { readJson, json, errorResponse } from "../cloudflare/lib/http.js";
 import { onRequestGet as paymentConfig } from "../functions/api/payments/config.js";
@@ -31,6 +32,16 @@ test("order prices and titles are resolved from published products, never the br
   assert.equal(items[0].title, "Published product");
   await assert.rejects(resolveOrderItems({}, [{ lineId: "missing", title: "Forged", price: 1, qty: 1 }]), { status: 409 });
   await assert.rejects(resolveOrderItems({}, [{ lineId: "product-1", title: "Forged", price: 1, qty: -1 }]), { status: 400 });
+});
+
+test("shop pricing adds the fixed shipping fee on the server", async () => {
+  const pricing = await prepareOrderPricing({}, {
+    subtotalAmount: 50000,
+    shippingAmount: SHOP_SHIPPING_AMOUNT,
+  });
+  assert.equal(pricing.subtotalAmount, 50000);
+  assert.equal(pricing.shippingAmount, 4000);
+  assert.equal(pricing.totalAmount, 54000);
 });
 
 test("Toss keys must use the same mode and checkout needs a server key", () => {

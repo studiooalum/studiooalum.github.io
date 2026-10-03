@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { readSession } from "../../../cloudflare/lib/auth.js";
-import { computeOrderAmount, resolveOrderItems } from "../../../cloudflare/lib/commerce.js";
+import { computeOrderAmount, resolveOrderItems, SHOP_SHIPPING_AMOUNT } from "../../../cloudflare/lib/commerce.js";
 import { prepareOrderPricing } from "../../../cloudflare/lib/d1.js";
 import { prepareCouponPricing } from "../../../cloudflare/lib/coupons.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
@@ -41,6 +41,7 @@ export async function onRequestPost(context) {
       userId: session?.user?.id || null,
       email: parsed.data.shippingEmail || "",
       subtotalAmount: subtotal,
+      shippingAmount: SHOP_SHIPPING_AMOUNT,
       requestedPoints: parsed.data.pointsUsed,
       coupon,
     });
@@ -49,6 +50,7 @@ export async function onRequestPost(context) {
       ok: true,
       quote: {
         subtotalAmount: pricing.subtotalAmount,
+        shippingAmount: pricing.shippingAmount,
         discountAmount: pricing.discountAmount,
         couponDiscountAmount: pricing.couponDiscountAmount || 0,
         couponCode: parsed.data.couponCode || "",

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const SHOP_SHIPPING_AMOUNT = 4000;
+
 const orderItemSchema = z.object({
   lineId: z.string().trim().min(1).max(160),
   _id: z.string().trim().max(160).optional(),

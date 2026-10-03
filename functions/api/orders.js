@@ -4,6 +4,7 @@ import {
   createOrderSchema,
   generateOrderId,
   resolveOrderItems,
+  SHOP_SHIPPING_AMOUNT,
 } from "../../cloudflare/lib/commerce.js";
 import { prepareCouponPricing } from "../../cloudflare/lib/coupons.js";
 import { readSession, updateAccount } from "../../cloudflare/lib/auth.js";
@@ -44,6 +45,7 @@ export async function onRequestPost(context) {
       userId: session?.user?.id || null,
       email: parsed.data.shipping?.email || "",
       subtotalAmount: subtotal,
+      shippingAmount: SHOP_SHIPPING_AMOUNT,
       requestedPoints: parsed.data.pointsUsed,
       coupon,
     });
@@ -52,6 +54,7 @@ export async function onRequestPost(context) {
       userId: session?.user?.id || null,
       orderName: buildOrderName(items),
       subtotalAmount: pricing.subtotalAmount,
+      shippingAmount: pricing.shippingAmount,
       discountAmount: pricing.discountAmount,
       total: pricing.totalAmount,
       couponId: pricing.coupon?.id || null,
