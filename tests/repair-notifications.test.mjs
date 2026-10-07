@@ -948,6 +948,43 @@ test("Repair Ticket API stores private R2 image attachments and deduplicates ret
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM repair_ticket_messages WHERE client_message_id = ?").bind(clientMessageId).first().count, 1);
 });
 
+test("Repair Ticket API accepts eight optimized photos and enforces count, size, and format limits", async (t) => {
+  let putCount = 0;
+  const bucket = { async put() { putCount += 1; }, async delete() {} };
+  const { database, env } = createEnvironment({ OALUM_R2: bucket });
+  t.after(() => database.close());
+  await createInitialRepair(env);
+  const ticket = (await readRepairTicketForRepair(env, "RPR_A")).ticket;
+  const accessToken = await createRepairTicketAccessToken(env, ticket.id);
+  const send = async (files, key) => {
+    const formData = new FormData();
+    formData.set("body", "수선 사진 첨부");
+    formData.set("client_message_id", key);
+    files.forEach((file) => formData.append("attachments", file));
+    return postRepairTicketMessage({
+      env, params: { id: ticket.id },
+      request: new Request(`https://studiooalum.test/api/repairs/tickets/${ticket.id}`, {
+        method: "POST", headers: { "X-Repair-Ticket-Access": accessToken }, body: formData,
+      }),
+    });
+  };
+  const photo = new File(["image"], "photo.jpg", { type: "image/jpeg" });
+  const largePhoto = new File([new Uint8Array(20 * 1024 * 1024)], "large.jpg", { type: "image/jpeg" });
+  const accepted = await send([largePhoto, ...Array(7).fill(photo)], "ticket:photos:accepted12345");
+  assert.equal(accepted.status, 201);
+  assert.equal(putCount, 8);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM repair_ticket_message_attachments").first().count, 8);
+  const tooMany = await send(Array(9).fill(photo), "ticket:photos:too-many12345");
+  assert.equal(tooMany.status, 400);
+  assert.match((await tooMany.json()).error, /최대 8장/);
+  const oversized = await send([new File([largePhoto, "x"], "large.jpg", { type: "image/jpeg" })], "ticket:photos:oversized12345");
+  assert.equal(oversized.status, 400);
+  assert.match((await oversized.json()).error, /20MB/);
+  const unconverted = await send([new File(["heic"], "photo.heic", { type: "image/heic" })], "ticket:photos:unconverted12345");
+  assert.equal(unconverted.status, 400);
+  assert.equal(putCount, 8);
+});
+
 test("Notification templates enforce variables and support draft activation and restore", async (t) => {
   const { database, env } = createEnvironment();
   t.after(() => database.close());

@@ -6,6 +6,7 @@ await build({
     "workshops-20260924": "runtime/storefront/scripts/workshops-20260816-03.js",
     "workshop-admin-20260924": "runtime/storefront/scripts/workshop-admin-20260816-02.js",
     "repair-ticket-20260924": "runtime/storefront/scripts/repair-ticket-20260824-01.js",
+    "repair-heic-decoder-20261007": "runtime/storefront/scripts/repair-heic-decoder.js",
     "payment-20260924": "runtime/storefront/scripts/payment.js",
     "archive-20260924": "runtime/storefront/scripts/archive-20260818-02.js",
     "signup-20260924": "runtime/storefront/scripts/signup.js",
@@ -16,7 +17,7 @@ await build({
   platform: "browser",
   target: "es2020",
   minify: true,
-  external: ["https://*"],
+  external: ["https://*", "./repair-heic-decoder-20261007.js"],
   logLevel: "info",
 });
 

@@ -9,9 +9,10 @@ import {
 import { processNotificationOutbox } from "../../../../cloudflare/lib/notifications.js";
 import { buildRepairTicketAttachmentKey } from "../../../../cloudflare/lib/r2.js";
 import { errorResponse, json, noContent } from "../../../../cloudflare/lib/http.js";
+import { MAX_REPAIR_PHOTOS, MAX_REPAIR_PHOTO_BYTES } from "../../../../shared/repair-photo-policy.js";
 
-const MAX_ATTACHMENTS = 4;
-const MAX_ATTACHMENT_SIZE = 8 * 1024 * 1024;
+const MAX_ATTACHMENTS = MAX_REPAIR_PHOTOS;
+const MAX_ATTACHMENT_SIZE = MAX_REPAIR_PHOTO_BYTES;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const CLIENT_MESSAGE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,119}$/;
 
@@ -26,7 +27,7 @@ function validateFiles(files) {
       throw Object.assign(new Error("JPG, PNG, WEBP, AVIF 이미지만 첨부할 수 있습니다."), { status: 400 });
     }
     if (Number(file.size || 0) > MAX_ATTACHMENT_SIZE) {
-      throw Object.assign(new Error("각 사진은 8MB 이하로 첨부해주세요."), { status: 400 });
+      throw Object.assign(new Error("각 사진은 20MB 이하로 첨부해주세요."), { status: 400 });
     }
   }
 }

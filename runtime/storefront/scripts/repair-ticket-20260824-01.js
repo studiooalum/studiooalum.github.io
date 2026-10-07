@@ -1,9 +1,9 @@
+import { prepareRepairPhotos, validateRepairPhotos } from "./repair-photo-upload.js";
+
 const ADMIN_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const GUEST_TOKEN_PREFIX = "studiooalum:repair-ticket-token:";
 const SIGNED_TOKEN_PREFIX = "studiooalum:repair-ticket-signed-access:";
 const MESSAGE_ID_PREFIX = "studiooalum:repair-ticket-message-id:";
-const MAX_FILES = 4;
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
 
 const params = new URLSearchParams(window.location.search);
 const ticketId = String(params.get("ticket") || "").trim();
@@ -33,6 +33,8 @@ const state = {
   files: [],
   objectUrls: [],
   clientMessageId: "",
+  preparingPhotos: false,
+  sending: false,
 };
 
 function escapeHtml(value) {
@@ -261,11 +263,14 @@ function renderFileList() {
 }
 
 function setLoading(loading) {
+  state.sending = loading;
   dom.submit.disabled = loading;
+  dom.form.elements.attachments.disabled = loading;
   dom.submit.textContent = loading ? "전송 중..." : "메시지 보내기";
 }
 
 async function submitMessage() {
+  if (state.preparingPhotos || state.sending) return;
   const body = String(dom.form.elements.body.value || "").trim();
   if (!body) {
     setFormStatus("메시지 내용을 입력해주세요.", "error");
@@ -328,16 +333,29 @@ dom.messages?.addEventListener("click", (event) => {
   if (button) void deleteMessage(button.dataset.messageDelete);
 });
 
-dom.form?.elements.attachments?.addEventListener("change", () => {
+dom.form?.elements.attachments?.addEventListener("change", async () => {
   const files = Array.from(dom.form.elements.attachments.files || []);
-  if (files.length > MAX_FILES || files.some((file) => file.size > MAX_FILE_SIZE)) {
-    setFormStatus("사진은 최대 4장, 장당 8MB까지 첨부할 수 있습니다.", "error");
-    dom.form.elements.attachments.value = "";
-    return;
-  }
-  state.files = files;
+  // Clear old selections so a failed conversion cannot send previous photos.
+  state.files = [];
   renderFileList();
-  setFormStatus("");
+  try {
+    validateRepairPhotos(files);
+    state.preparingPhotos = true;
+    dom.submit.disabled = true;
+    dom.form.elements.attachments.disabled = true;
+    state.files = await prepareRepairPhotos(files, (current, total) => {
+      setFormStatus(`사진을 준비하는 중입니다. ${current}/${total}`);
+    });
+    renderFileList();
+    setFormStatus(files.length ? `사진 ${files.length}장을 준비했습니다.` : "");
+  } catch (error) {
+    setFormStatus(error.message || "사진을 처리하지 못했습니다.", "error");
+  } finally {
+    dom.form.elements.attachments.value = "";
+    dom.form.elements.attachments.disabled = false;
+    state.preparingPhotos = false;
+    dom.submit.disabled = false;
+  }
 });
 
 dom.refresh?.addEventListener("click", () => void load());

@@ -53,9 +53,10 @@
           <div class="repair-ticket-composer__tools">
             <label class="repair-ticket-photo-picker">
               <span>사진 첨부</span>
-              <input type="file" name="attachments" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+              <input type="file" name="attachments" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.heif" aria-describedby="repairPhotoHelp" multiple>
             </label>
           </div>
+          <p id="repairPhotoHelp" class="repair-ticket-file-help">최대 8장 · 장당 20MB · HEIC 사진도 첨부할 수 있습니다.</p>
           <div class="repair-ticket-file-list js-repair-ticket-file-list"></div>
           <div class="repair-ticket-composer__submit">
             <button type="submit" class="repair-ticket-submit js-repair-ticket-submit">메시지 보내기</button>
@@ -66,7 +67,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/repair-ticket-20260924.js?v=20261002-ticket-13"></script>
+  <script type="module" src="./runtime/storefront/scripts/repair-ticket-20260924.js?v=20261007-photos-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
     import { initCartUI } from "./runtime/storefront/scripts/cart-20260818-02.js?v=20260926-02";
