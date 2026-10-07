@@ -26,6 +26,8 @@ export const NOTIFICATION_VARIABLES = Object.freeze({
   shipping_address: { label: "고객 발송지", sample: "서울특별시 동대문구 예시로 1" },
   quote_amount: { label: "예상 가격", sample: "35,000원" },
   final_amount: { label: "최종 가격", sample: "35,000원" },
+  shipping_amount: { label: "배송비", sample: "4,000원" },
+  payment_total_amount: { label: "총입금 금액", sample: "39,000원" },
   tracking_number: { label: "운송장 번호", sample: "1234567890" },
   tracking_url: { label: "배송 조회 링크", sample: "https://example.com/tracking" },
   repair_url: { label: "수선 조회 링크", sample: "https://studiooalum.com/account.html" },
@@ -209,6 +211,13 @@ function extractVariables(value) {
   return unique(Array.from(String(value || "").matchAll(VARIABLE_PATTERN), (match) => match[1]));
 }
 
+function allowedTemplateVariables(template) {
+  const variables = template.allowedVariables || decodeJson(template.allowed_variables_json, []);
+  return (template.templateKey || template.template_key) === "repair.repair_completed_quote_ready"
+    ? unique([...variables, "shipping_amount", "payment_total_amount"])
+    : variables;
+}
+
 function formatTemplateRow(row) {
   return {
     templateKey: row.template_key,
@@ -223,7 +232,7 @@ function formatTemplateRow(row) {
     draftBody: row.draft_body || "",
     defaultSubject: row.default_subject || "",
     defaultBody: row.default_body || "",
-    allowedVariables: decodeJson(row.allowed_variables_json, []),
+    allowedVariables: allowedTemplateVariables(row),
     requiredVariables: normalizeRequiredVariables(row, decodeJson(row.required_variables_json, [])),
     maxLength: Number(row.max_length || 0),
     isEnabled: Boolean(row.is_enabled),
@@ -256,7 +265,7 @@ export function validateNotificationTemplate(template, values = {}) {
   const channel = cleanText(values.channel || template.channel, 20);
   const subject = cleanText(values.subject ?? values.draftSubject ?? template.draftSubject ?? template.draft_subject, 500);
   const body = cleanText(values.body ?? values.draftBody ?? template.draftBody ?? template.draft_body, 6000);
-  const allowedVariables = template.allowedVariables || decodeJson(template.allowed_variables_json, []);
+  const allowedVariables = allowedTemplateVariables(template);
   const requiredVariables = normalizeRequiredVariables(
     template,
     template.requiredVariables || decodeJson(template.required_variables_json, []),
@@ -292,16 +301,7 @@ function renderNotification(template, payload, source = "active") {
   const selectedSubject = validation.valid ? subjectTemplate : template.default_subject;
   const selectedBody = validation.valid ? bodyTemplate : template.default_body;
   const subject = renderNotificationText(selectedSubject, payload);
-  let bodyText = renderNotificationText(selectedBody, payload);
-  if (template.template_key === "repair.repair_completed_quote_ready" && payload.repair_payment_details) {
-    const paymentDetails = String(payload.repair_payment_details);
-    // Add payment details only to the repair-completion notice, retaining its existing copy.
-    const paymentCopy = "결제 안내와 완료 사진은";
-    const insertion = template.channel === "email" ? bodyText.indexOf(paymentCopy) : -1;
-    bodyText = insertion >= 0
-      ? `${bodyText.slice(0, insertion)}${paymentDetails}\n\n${bodyText.slice(insertion)}`
-      : `${bodyText}\n\n${paymentDetails}`;
-  }
+  const bodyText = renderNotificationText(selectedBody, payload);
   const bodyHtml = template.channel === "email"
     ? renderEmailHtml(template, subject, bodyText, payload)
     : "";
@@ -467,7 +467,7 @@ export async function previewNotificationTemplate(env, input) {
   const candidate = { ...template, draft_subject: input.subject ?? template.draft_subject, draft_body: input.body ?? template.draft_body };
   const validation = validateNotificationTemplate(candidate, { channel: template.channel, subject: candidate.draft_subject, body: candidate.draft_body });
   if (!validation.valid) throw Object.assign(new Error(validation.errors.join("\n")), { status: 400, details: { errors: validation.errors } });
-  const payload = Object.fromEntries((decodeJson(template.allowed_variables_json, [])).map((variable) => [variable, NOTIFICATION_VARIABLES[variable]?.sample || variable]));
+  const payload = Object.fromEntries(allowedTemplateVariables(template).map((variable) => [variable, NOTIFICATION_VARIABLES[variable]?.sample || variable]));
   const rendered = renderNotification(candidate, payload, "draft");
   return {
     subject: rendered.subject,
@@ -908,7 +908,7 @@ export async function createNotificationTest(env, input, actorId = "") {
   const recipient = template.channel === "sms"
     ? testPhone || "01000000000"
     : cleanText(env?.NOTIFICATION_TEST_EMAIL || env?.REPAIR_ADMIN_EMAIL, 320) || "studio.oalum@gmail.com";
-  const payload = Object.fromEntries(decodeJson(template.allowed_variables_json, []).map((variable) => [variable, NOTIFICATION_VARIABLES[variable]?.sample || variable]));
+  const payload = Object.fromEntries(allowedTemplateVariables(template).map((variable) => [variable, NOTIFICATION_VARIABLES[variable]?.sample || variable]));
   if (template.channel === "email") payload.email = recipient;
   const now = nowIso();
   const notification = {

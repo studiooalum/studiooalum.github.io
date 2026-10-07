@@ -328,6 +328,8 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
     quote_amount: formatAmount(value("quoteAmount", "quote_amount")),
     final_amount: formatAmount(value("finalAmount", "final_amount")),
     ...(normalizeRepairStatus(value("status", "repair_status")) === "payment_pending" ? {
+      shipping_amount: formatAmount(4000),
+      payment_total_amount: formatAmount(Number(value("finalAmount", "final_amount")) + 4000),
       repair_payment_details: [
         "배송비: 4,000원",
         `총입금 금액: ${formatAmount(Number(value("finalAmount", "final_amount")) + 4000)}`,

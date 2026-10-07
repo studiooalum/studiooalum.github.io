@@ -890,10 +890,14 @@ test("Repair Ticket supports threaded messages, attachments, unread counts, and 
   );
 });
 
-test("only repair completion messages add the 4000 KRW shipping fee and existing bank account", async (t) => {
+test("repair completion sends exactly the editable template with shipping and total variables", async (t) => {
   for (const countryCode of ["KR", "US"]) {
     const { database, env } = createEnvironment({ SMS_COUNTRY_ALLOWLIST: "KR" });
     t.after(() => database.close());
+    database.prepare(`UPDATE notification_templates SET active_body = active_body || ?, draft_body = draft_body || ? WHERE template_key = 'repair.repair_completed_quote_ready'`).bind(
+      "\n배송비: {{shipping_amount}}\n총입금 금액: {{payment_total_amount}}\n입금 계좌: 국민 한아름 218301-04-144506",
+      "\n배송비: {{shipping_amount}}\n총입금 금액: {{payment_total_amount}}\n입금 계좌: 국민 한아름 218301-04-144506",
+    ).run();
     await createInitialRepair(env, countryCode, { countryCode });
     const repairId = `RPR_${countryCode}`;
     await updateRepairRequest(env, { id: repairId, expectedVersion: 1, status: "item_received", quoteAmount: 30000 });
@@ -908,6 +912,9 @@ test("only repair completion messages add the 4000 KRW shipping fee and existing
     assert.match(completion.body_text, /배송비: 4,000원/);
     assert.match(completion.body_text, /총입금 금액: 49,000원/);
     assert.match(completion.body_text, /입금 계좌: 국민 한아름 218301-04-144506/);
+    assert.equal(completion.body_text.match(/배송비:/g).length, 1);
+    assert.equal(completion.body_text.match(/입금 계좌:/g).length, 1);
+    assert.ok(!completion.body_text.includes("{{"));
     if (completion.channel === "email") {
       assert.match(completion.body_html, /배송비: 4,000원/);
       assert.match(completion.body_html, /49,000원/);
