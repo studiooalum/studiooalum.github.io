@@ -292,7 +292,16 @@ function renderNotification(template, payload, source = "active") {
   const selectedSubject = validation.valid ? subjectTemplate : template.default_subject;
   const selectedBody = validation.valid ? bodyTemplate : template.default_body;
   const subject = renderNotificationText(selectedSubject, payload);
-  const bodyText = renderNotificationText(selectedBody, payload);
+  let bodyText = renderNotificationText(selectedBody, payload);
+  if (template.template_key === "repair.repair_completed_quote_ready" && payload.repair_payment_details) {
+    const paymentDetails = String(payload.repair_payment_details);
+    // Add payment details only to the repair-completion notice, retaining its existing copy.
+    const paymentCopy = "결제 안내와 완료 사진은";
+    const insertion = template.channel === "email" ? bodyText.indexOf(paymentCopy) : -1;
+    bodyText = insertion >= 0
+      ? `${bodyText.slice(0, insertion)}${paymentDetails}\n\n${bodyText.slice(insertion)}`
+      : `${bodyText}\n\n${paymentDetails}`;
+  }
   const bodyHtml = template.channel === "email"
     ? renderEmailHtml(template, subject, bodyText, payload)
     : "";

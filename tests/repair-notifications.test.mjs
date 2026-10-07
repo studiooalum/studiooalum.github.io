@@ -890,6 +890,41 @@ test("Repair Ticket supports threaded messages, attachments, unread counts, and 
   );
 });
 
+test("only repair completion messages add the 4000 KRW shipping fee and existing bank account", async (t) => {
+  for (const countryCode of ["KR", "US"]) {
+    const { database, env } = createEnvironment({ SMS_COUNTRY_ALLOWLIST: "KR" });
+    t.after(() => database.close());
+    await createInitialRepair(env, countryCode, { countryCode });
+    const repairId = `RPR_${countryCode}`;
+    await updateRepairRequest(env, { id: repairId, expectedVersion: 1, status: "item_received", quoteAmount: 30000 });
+    await updateRepairRequest(env, { id: repairId, expectedVersion: 2, status: "in_progress" });
+    await updateRepairRequest(env, {
+      id: repairId, expectedVersion: 3, status: "payment_pending", finalAmount: 45000,
+      bankAccount: "국민 한아름 218301-04-144506",
+    });
+    const completion = database.prepare(`SELECT * FROM notification_outbox WHERE template_key = 'repair.repair_completed_quote_ready' AND entity_id = ?`).bind(repairId).first();
+    assert.equal(completion.channel, countryCode === "KR" ? "sms" : "email");
+    assert.match(completion.body_text, /45,000원/);
+    assert.match(completion.body_text, /배송비: 4,000원/);
+    assert.match(completion.body_text, /총입금 금액: 49,000원/);
+    assert.match(completion.body_text, /입금 계좌: 국민 한아름 218301-04-144506/);
+    if (completion.channel === "email") {
+      assert.match(completion.body_html, /배송비: 4,000원/);
+      assert.match(completion.body_html, /49,000원/);
+    }
+    const ticket = (await readRepairTicketForRepair(env, repairId)).ticket;
+    const message = ticket.messages.at(-1).body;
+    assert.match(message, /최종 수선비: 45,000원/);
+    assert.match(message, /배송비: 4,000원/);
+    assert.match(message, /총입금 금액: 49,000원/);
+    assert.match(message, /입금 계좌: 국민 한아름 218301-04-144506/);
+    assert.ok(ticket.messages.slice(0, -1).every(message => !message.body.includes("배송비: 4,000원")));
+    const otherNotifications = database.prepare(`SELECT body_text FROM notification_outbox WHERE template_key <> 'repair.repair_completed_quote_ready'`).all().results;
+    assert.ok(otherNotifications.every(row => !row.body_text.includes("배송비: 4,000원")));
+    assert.equal(database.prepare(`SELECT final_amount FROM repair_requests WHERE id = ?`).bind(repairId).first().final_amount, 45000);
+  }
+});
+
 test("Repair Ticket API stores private R2 image attachments and deduplicates retries", async (t) => {
   const objects = new Map();
   let putCount = 0;

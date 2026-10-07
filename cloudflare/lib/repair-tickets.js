@@ -327,6 +327,13 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
     shipping_address: value("shippingAddress", "shipping_address"),
     quote_amount: formatAmount(value("quoteAmount", "quote_amount")),
     final_amount: formatAmount(value("finalAmount", "final_amount")),
+    ...(normalizeRepairStatus(value("status", "repair_status")) === "payment_pending" ? {
+      repair_payment_details: [
+        "배송비: 4,000원",
+        `총입금 금액: ${formatAmount(Number(value("finalAmount", "final_amount")) + 4000)}`,
+        `입금 계좌: ${cleanText(value("bankAccount", "bank_account"), 500) || "국민 한아름 218301-04-144506"}`,
+      ].join("\n"),
+    } : {}),
     tracking_number: value("trackingNumber", "tracking_number"),
     tracking_url: value("trackingUrl", "tracking_url"),
     repair_url: `${normalizeSiteUrl(env)}/account.html`,
@@ -339,11 +346,11 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
   };
 }
 
-function getStatusSystemMessage(status) {
+function getStatusSystemMessage(status, payload = {}) {
   const labels = REPAIR_STATUS_LABELS;
   if (status === "item_received") return "수선 제품을 정상적으로 받았습니다.";
   if (status === "in_progress") return "수선 작업을 시작했습니다.";
-  if (status === "payment_pending") return "수선 작업이 완료되어 최종 가격과 결제 안내가 등록되었습니다.";
+  if (status === "payment_pending") return `수선 작업이 완료되어 최종 가격과 결제 안내가 등록되었습니다.\n\n최종 수선비: ${payload.final_amount}\n${payload.repair_payment_details}`;
   if (status === "shipping") return "입금을 확인하고 수선 제품 배송을 시작했습니다.";
   if (status === "closed") return "수선 제품 배송이 완료되어 Ticket이 종료되었습니다.";
   if (status === "cancelled") return "수선 신청이 취소되었습니다.";
@@ -459,7 +466,7 @@ export async function prepareRepairStatusTicketBundle(env, request, eventId, pre
         ticketId: ticket.id,
         sourceEventId: eventId,
         authorType: "system",
-        body: getStatusSystemMessage(nextStatus),
+        body: getStatusSystemMessage(nextStatus, payload),
         createdAt,
       }),
       database.prepare(`
