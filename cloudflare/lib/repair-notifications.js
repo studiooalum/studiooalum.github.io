@@ -1,3 +1,5 @@
+import { recordNotificationDelivery } from "./notification-delivery.js";
+import { reportNotificationFailure } from "./notification-failures.js";
 const PRIMARY_REPAIR_STATUSES = [
   "received",
   "item_received",
@@ -498,6 +500,12 @@ export async function processRepairNotificationOutbox(env, options = {}) {
 
     const outcome = await sendResendEmail(env, notification, fetchImpl);
     const settled = await settleNotification(database, notification, outcome, nowIso());
+    if (outcome.disposition === "sent") await recordNotificationDelivery(env, { sourceKey: `repair_notification_outbox:${notification.id}`,
+      templateKey: notification.event_type, channel: notification.channel, recipient: notification.recipient, providerMessageId: outcome.providerMessageId });
+    if (outcome.disposition !== "sent") {
+      await reportNotificationFailure(env, { sourceKey: `repair_notification_outbox:${notification.id}`, templateKey: notification.event_type,
+        channel: "email", recipient: notification.recipient, status: settled, error: outcome.error });
+    }
     if (settled === "dead_letter") summary.deadLetter += 1;
     else if (Object.prototype.hasOwnProperty.call(summary, settled)) summary[settled] += 1;
   }

@@ -104,6 +104,9 @@ export async function sendSolapiNotification(env, notification, fetchImpl = fetc
       payload = responseText ? JSON.parse(responseText) : null;
     } catch {}
     if (response.ok) {
+      if (payload?.failedMessageList?.length || Number(payload?.groupInfo?.count?.registeredFailed || 0) > 0) {
+        return { disposition: "failed", error: cleanText(payload?.failedMessageList?.[0]?.statusMessage || "SOLAPI 문자 접수가 거절되었습니다.") };
+      }
       return {
         disposition: "sent",
         providerMessageId: cleanText(payload?.groupInfo?.groupId || payload?.groupId || payload?.messageId, 240) || null,
@@ -122,4 +125,11 @@ export async function sendSolapiNotification(env, notification, fetchImpl = fetc
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+export async function createSolapiAuthorization(env) {
+  const date = new Date().toISOString();
+  const salt = crypto.randomUUID();
+  const signature = await hmacSha256(cleanText(env.SOLAPI_API_SECRET, 500), `${date}${salt}`);
+  return `HMAC-SHA256 apiKey=${cleanText(env.SOLAPI_API_KEY, 500)}, date=${date}, salt=${salt}, signature=${signature}`;
 }

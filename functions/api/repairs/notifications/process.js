@@ -1,3 +1,6 @@
+import { reconcileNotificationDeliveries } from "../../../../cloudflare/lib/notification-delivery.js";
+import { enqueueRepairReminders } from "../../../../cloudflare/lib/repair-reminders.js";
+import { reconcileNotificationFailures } from "../../../../cloudflare/lib/notification-failures.js";
 import { requireAdminAccess } from "../../../../cloudflare/lib/admin.js";
 import { errorResponse, json, noContent } from "../../../../cloudflare/lib/http.js";
 import { processNotificationOutbox } from "../../../../cloudflare/lib/notifications.js";
@@ -42,6 +45,17 @@ export function onRequestOptions(context) {
 export async function onRequestPost(context) {
   try {
     const access = await authorizeProcessor(context);
+    const reminders = await enqueueRepairReminders(context.env);
+    const deliveries = await reconcileNotificationDeliveries(context.env);
+    await reconcileNotificationFailures(context.env);
+    const processing = await processNotificationOutbox(context.env, {
+      limit: 25,
+      workerId: `repair-${access.method || "manual"}-${crypto.randomUUID()}`,
+    });
+    const legacyProcessing = await processRepairNotificationOutbox(context.env, {
+      limit: 10,
+      workerId: `repair-legacy-${access.method || "manual"}-${crypto.randomUUID()}`,
+    });
     const workshopOperations = await maintainWorkshopOperations(context.env);
     await reconcileRepairPayments(context.env);
     const pendingOrders = await context.env.OALUM_DB.prepare("SELECT id, active_payment_key, total_amount FROM orders WHERE status = 'payment_pending' AND active_payment_key IS NOT NULL ORDER BY updated_at LIMIT 15").all();
@@ -60,18 +74,10 @@ export async function onRequestPost(context) {
         }
       } catch (error) { console.error("Order payment reconciliation pending", { orderId: order.id, status: error.status }); }
     }
-    const processing = await processNotificationOutbox(context.env, {
-      limit: 25,
-      workerId: `repair-${access.method || "manual"}-${crypto.randomUUID()}`,
-    });
-    const legacyProcessing = await processRepairNotificationOutbox(context.env, {
-      limit: 10,
-      workerId: `repair-legacy-${access.method || "manual"}-${crypto.randomUUID()}`,
-    });
     await context.env.OALUM_DB.prepare("DELETE FROM api_rate_limits WHERE expires_at < ?").bind(Date.now()).run();
     await context.env.OALUM_DB.prepare("DELETE FROM notification_outbox WHERE entity_type = 'workshop_inquiry' AND entity_id IN (SELECT id FROM workshop_inquiries WHERE status = 'closed' AND julianday(updated_at) < julianday('now') - 365)").run();
     await context.env.OALUM_DB.prepare("DELETE FROM workshop_inquiries WHERE status = 'closed' AND julianday(updated_at) < julianday('now') - 365").run();
-    return json(context.env, { ok: true, processing, legacyProcessing, workshopOperations });
+    return json(context.env, { ok: true, processing, legacyProcessing, workshopOperations, reminders, deliveries });
   } catch (error) {
     return errorResponse(context.env, error, "수선 안내 발송 대기열을 처리하지 못했습니다.");
   }

@@ -1,3 +1,5 @@
+import { trackDirectEmailResponse } from "./notification-delivery.js";
+import { monitorDirectEmail } from "./notification-failures.js";
 import { persistPayment, readOrderSyncSnapshot, updateShipment } from "./d1.js";
 import { enqueueShopNotification } from "./notifications.js";
 import { dispatchOrderSync, getOrderSyncEventType, shouldEmailForOrderSyncEvent } from "./order-sync.js";
@@ -201,7 +203,7 @@ function buildApprovalEmailHtml({ order, request, user, origin }) {
   `;
 }
 
-async function sendResendEmail(env, { to, subject, html }) {
+async function sendResendEmailUnmonitored(env, { to, subject, html }) {
   const resendApiKey = String(env?.RESEND_API_KEY || "").trim();
   if (!resendApiKey) {
     throw Object.assign(new Error("RESEND_API_KEY가 설정되지 않아 승인 요청 메일을 보낼 수 없습니다."), {
@@ -218,6 +220,7 @@ async function sendResendEmail(env, { to, subject, html }) {
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(12000),
     headers: {
       Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
@@ -240,6 +243,8 @@ async function sendResendEmail(env, { to, subject, html }) {
       },
     });
   }
+  await trackDirectEmailResponse(env, response, "shop.cancellation_approval", to);
+
 }
 
 async function readOrderCancellationRequestByToken(database, token) {
@@ -809,4 +814,7 @@ export async function handleOrderCancellationDecision(context, {
       message: error?.message || "자동 취소 처리 중 오류가 발생했습니다.",
     };
   }
+}
+async function sendResendEmail(env, input) {
+  return monitorDirectEmail(env, { templateKey: "shop.cancellation_approval", recipient: Array.isArray(input.to) ? input.to.join(", ") : input.to }, () => sendResendEmailUnmonitored(env, input));
 }

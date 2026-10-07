@@ -1,3 +1,6 @@
+import { recordNotificationDelivery } from "./notification-delivery.js";
+import { REPAIR_REMINDER_TEMPLATE, guardRepairReminder } from "./repair-reminder-policy.js";
+import { FAILURE_ALERT_TEMPLATE, reportNotificationFailure } from "./notification-failures.js";
 import { sendResendNotification } from "./email-provider-resend.js";
 import { getSolapiMessageType, sendSolapiNotification } from "./sms-provider-solapi.js";
 
@@ -7,6 +10,13 @@ const VARIABLE_PATTERN = /\{\{\s*([a-z][a-z0-9_]*)\s*\}\}/g;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const NOTIFICATION_VARIABLES = Object.freeze({
+  notification_channel: { label: "발송 채널", sample: "sms" },
+  notification_type: { label: "알림 종류", sample: "ticket.unread_reminder" },
+  notification_recipient: { label: "마스킹된 수신자", sample: "*******5678" },
+  notification_id: { label: "실패 기록", sample: "notification_outbox:NOB_SAMPLE" },
+  notification_status: { label: "오류 상태", sample: "failed" },
+  notification_error: { label: "오류 원인", sample: "발신번호 설정을 확인해주세요." },
+  notification_admin_url: { label: "알림 관리 링크", sample: "https://studiooalum.com/notification-admin" },
   customer_name: { label: "고객명", sample: "홍길동" },
   customer_email: { label: "고객 이메일", sample: "customer@example.com" },
   customer_phone: { label: "고객 연락처", sample: "010-1234-5678" },
@@ -485,13 +495,13 @@ export async function prepareNotification(env, input) {
   };
 }
 
-export function createNotificationOutboxStatement(database, notification, { ignoreDuplicate = false } = {}) {
+export function createNotificationOutboxStatement(database, notification, { ignoreDuplicate = false, reminderTicketId = null } = {}) {
   return database.prepare(`
     INSERT ${ignoreDuplicate ? "OR IGNORE " : ""}INTO notification_outbox (
       id, event_key, entity_type, entity_id, channel, recipient, template_key,
       payload_json, subject, body_text, body_html, status, attempts, available_at,
       last_error, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) ${reminderTicketId ? "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM repair_ticket_reminders WHERE ticket_id = ?)" : "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"}
   `).bind(
     notification.id,
     notification.eventKey,
@@ -510,6 +520,7 @@ export function createNotificationOutboxStatement(database, notification, { igno
     notification.lastError,
     notification.createdAt,
     notification.updatedAt,
+    ...(reminderTicketId ? [reminderTicketId] : []),
   );
 }
 
@@ -521,7 +532,7 @@ export async function enqueueNotification(env, input) {
 }
 
 function isSmsTemplateAllowed(env, key) {
-  return ["repair.application_submitted", "repair.received", "repair.repair_completed_quote_ready", "repair.payment_confirmed_shipping_started"].includes(key)
+  return [REPAIR_REMINDER_TEMPLATE, "repair.application_submitted", "repair.received", "repair.repair_completed_quote_ready", "repair.payment_confirmed_shipping_started"].includes(key)
     || String(env.ADDITIONAL_SMS_ENABLED || "false") === "true";
 }
 
@@ -709,6 +720,13 @@ async function prepareSmsFallback(database, notification, now) {
 
 async function settleOutbox(database, notification, outcome, completedAt) {
   const attempts = Number(notification.attempts || 0) + 1;
+  if (notification.template_key === FAILURE_ALERT_TEMPLATE && ["failed", "unknown"].includes(outcome.disposition)) {
+    // Resend idempotency keeps alert retries safe during a temporary mail outage.
+    outcome = { ...outcome, disposition: "retry" };
+  }
+  if (notification.template_key === REPAIR_REMINDER_TEMPLATE && outcome.disposition === "retry") {
+    outcome = { ...outcome, disposition: "unknown", error: `중복 문자 방지를 위해 자동 재시도하지 않습니다. ${outcome.error}` };
+  }
   if (outcome.disposition === "sent" || outcome.disposition === "dry_run") {
     await database.prepare(`
       UPDATE notification_outbox
@@ -732,7 +750,7 @@ async function settleOutbox(database, notification, outcome, completedAt) {
     `).bind(attempts, outcome.error, completedAt, notification.id).run();
     return "failed";
   }
-  if (attempts >= MAX_ATTEMPTS) {
+  if (attempts >= (notification.template_key === FAILURE_ALERT_TEMPLATE ? 24 : MAX_ATTEMPTS)) {
     await database.prepare(`
       UPDATE notification_outbox SET status = 'dead_letter', attempts = ?, last_error = ?,
         locked_at = NULL, locked_by = NULL, updated_at = ? WHERE id = ? AND status = 'processing'
@@ -757,7 +775,9 @@ export async function processNotificationOutbox(env, options = {}) {
   const currentIso = nowIso(currentTime);
   const staleIso = nowIso(new Date(currentTime.getTime() - LOCK_TIMEOUT_MS));
   await database.prepare(`
-    UPDATE notification_outbox SET status = 'pending', locked_at = NULL, locked_by = NULL, updated_at = ?
+    UPDATE notification_outbox SET status = CASE WHEN channel = 'sms' THEN 'unknown' ELSE 'pending' END,
+      last_error = CASE WHEN channel = 'sms' THEN '발송 작업 중단: 중복 문자 방지를 위해 자동 재시도하지 않습니다.' ELSE last_error END,
+      locked_at = NULL, locked_by = NULL, updated_at = ?
     WHERE status = 'processing' AND locked_at < ?
   `).bind(currentIso, staleIso).run();
 
@@ -778,12 +798,28 @@ export async function processNotificationOutbox(env, options = {}) {
     `).bind(currentIso, workerId, currentIso, notification.id, currentIso).run();
     if (readChanges(claim) !== 1) continue;
     summary.claimed += 1;
-    const outcome = notification.channel === "sms"
-      ? await sendSolapiNotification(env, notification, fetchImpl)
-      : await sendResendNotification(env, notification, fetchImpl);
+    if (notification.template_key === REPAIR_REMINDER_TEMPLATE) {
+      const action = await guardRepairReminder(env, notification, options.now instanceof Date ? options.now : new Date());
+      if (action !== "send") continue;
+    }
+    let outcome;
+    try {
+      outcome = notification.channel === "sms"
+        ? await sendSolapiNotification(env, notification, fetchImpl)
+        : await sendResendNotification(env, notification, fetchImpl);
+    } catch (error) {
+      outcome = { disposition: "failed", error: String(error.message || "발송 오류") };
+    }
     const settled = await settleOutbox(database, notification, outcome, nowIso());
+    if (outcome.disposition === "sent") await recordNotificationDelivery(env, { sourceKey: `notification_outbox:${notification.id}`,
+      templateKey: notification.template_key, channel: notification.channel, recipient: notification.recipient, providerMessageId: outcome.providerMessageId });
     if (settled === "dead_letter") summary.deadLetter += 1;
     else summary[settled] += 1;
+    if (!["sent", "dry_run"].includes(outcome.disposition)) {
+      await reportNotificationFailure(env, { sourceKey: `notification_outbox:${notification.id}`, templateKey: notification.template_key,
+        channel: notification.channel, recipient: notification.recipient, status: settled, error: outcome.error });
+    }
+    if (notification.template_key === REPAIR_REMINDER_TEMPLATE) continue;
     if (notification.channel === "sms" && ["dry_run", "failed", "unknown"].includes(outcome.disposition)) {
       if (await prepareSmsFallback(database, notification, nowIso())) summary.fallback += 1;
     }
@@ -798,6 +834,9 @@ export async function createManualNotificationRetry(env, outboxId, actorId = "")
   const database = requireDb(env);
   const source = await database.prepare(`SELECT * FROM notification_outbox WHERE id = ? LIMIT 1`).bind(cleanText(outboxId, 80)).first();
   if (!source) throw Object.assign(new Error("재시도할 알림을 찾을 수 없습니다."), { status: 404 });
+  if (source.template_key === REPAIR_REMINDER_TEMPLATE) {
+    throw Object.assign(new Error("리마인더는 티켓당 1회만 발송하므로 재발송할 수 없습니다."), { status: 409 });
+  }
   const now = nowIso();
   if (["failed", "unknown", "dead_letter"].includes(source.status)) {
     const template = await readNotificationTemplate(env, source.template_key, source.channel);

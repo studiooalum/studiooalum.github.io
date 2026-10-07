@@ -1,3 +1,5 @@
+import { trackDirectEmailResponse } from "./notification-delivery.js";
+import { monitorDirectEmail } from "./notification-failures.js";
 import {
   getWorkshopBookingConfig,
   normalizeWorkshop,
@@ -1952,7 +1954,7 @@ export async function cancelWorkshopGroup(env, { groupId }) {
   return formatWorkshopGroup(await readWorkshopGroup(database, group.id));
 }
 
-async function sendWorkshopPaymentEmail(env, reservation, paymentUrl) {
+async function sendWorkshopPaymentEmailUnmonitored(env, reservation, paymentUrl) {
   const resendApiKey = String(env?.RESEND_API_KEY || "").trim();
   const from = String(env?.RESEND_FROM_EMAIL || "").trim();
   if (!resendApiKey && !from) return false;
@@ -1962,6 +1964,7 @@ async function sendWorkshopPaymentEmail(env, reservation, paymentUrl) {
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(12000),
     headers: {
       Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
@@ -1979,6 +1982,7 @@ async function sendWorkshopPaymentEmail(env, reservation, paymentUrl) {
     throw Object.assign(new Error(payload?.message || "워크숍 결제 요청 메일을 보내지 못했습니다."), { status: response.status || 502 });
   }
 
+  await trackDirectEmailResponse(env, response, "workshop.payment_request", reservation.email);
   return true;
 }
 
@@ -2459,3 +2463,7 @@ export async function maintainWorkshopOperations(env, { now = new Date() } = {})
 }
 
 export { WORKSHOP_TYPES, readPublicWorkshopCatalog, readStoredWorkshopCatalog };
+
+async function sendWorkshopPaymentEmail(env, reservation, paymentUrl) {
+  return monitorDirectEmail(env, { templateKey: "workshop.payment_request", recipient: reservation.email }, () => sendWorkshopPaymentEmailUnmonitored(env, reservation, paymentUrl));
+}

@@ -19,6 +19,8 @@ async function processRepairNotifications(env) {
   console.log(JSON.stringify({
     event: "repair_notification_cron",
     processing: payload.processing || {},
+    reminders: payload.reminders || {},
+    deliveries: payload.deliveries || {},
   }));
 }
 

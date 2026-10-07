@@ -1,3 +1,5 @@
+import { trackDirectEmailResponse } from "./notification-delivery.js";
+import { monitorDirectEmail } from "./notification-failures.js";
 import { constantTimeEqual } from "./request-security.js";
 
 const SESSION_COOKIE_NAME = "oalum_session";
@@ -580,7 +582,7 @@ function getDirectCodeEmailContent(mode, code) {
   };
 }
 
-async function sendLoginCode(env, { email, code, mode = "login" }) {
+async function sendLoginCodeUnmonitored(env, { email, code, mode = "login" }) {
   const debugMode = String(env?.AUTH_DEBUG || "").trim().toLowerCase() === "true";
   const resendApiKey = String(env?.RESEND_API_KEY || "").trim();
 
@@ -608,6 +610,7 @@ async function sendLoginCode(env, { email, code, mode = "login" }) {
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(12000),
     headers: {
       Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
@@ -637,6 +640,8 @@ async function sendLoginCode(env, { email, code, mode = "login" }) {
       },
     });
   }
+
+  await trackDirectEmailResponse(env, response, `auth.${mode}`, email);
 
   return {
     provider: "resend",
@@ -1675,4 +1680,8 @@ export async function lookupGuestOrder(env, { orderId, email }) {
       items: (itemsResult?.results || []).map(formatGuestOrderItem),
     },
   };
+}
+
+async function sendLoginCode(env, input) {
+  return monitorDirectEmail(env, { templateKey: `auth.${input.mode || "login"}`, recipient: input.email }, () => sendLoginCodeUnmonitored(env, input));
 }
