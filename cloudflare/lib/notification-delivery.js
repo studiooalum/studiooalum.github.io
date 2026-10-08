@@ -1,9 +1,11 @@
 import { FAILURE_ALERT_TEMPLATE, reportNotificationFailure } from "./notification-failures.js";
-import { createSolapiAuthorization } from "./sms-provider-solapi.js";
 
 export async function recordNotificationDelivery(env, input) {
   if (!input.providerMessageId || input.providerMessageId.startsWith("dry-run:") || input.templateKey === FAILURE_ALERT_TEMPLATE) return;
   const channel = input.channel || "email";
+  // SOLAPI's immediate send response is the final application-level outcome.
+  // Carrier/device delivery is intentionally outside Studio OALUM's scope.
+  if (channel === "sms") return;
   // Sending and delivery lookups intentionally use separate Resend keys. A
   // send-only key is enough for normal email delivery, but it cannot call the
   // retrieve-email endpoint. Do not create monitor jobs that can never run.
@@ -25,25 +27,32 @@ export async function reconcileNotificationDeliveries(env, { now = new Date(), f
   const db = env.OALUM_DB;
   const rows = await db.prepare(`SELECT * FROM notification_deliveries WHERE status='pending' AND next_check_at <= ? ORDER BY next_check_at LIMIT ?`)
     .bind(now.toISOString(), Math.min(20, limit)).all();
-  const summary = { checked: 0, failed: 0, delivered: 0, unmonitored: 0 };
+  const summary = { checked: 0, failed: 0, delivered: 0, unmonitored: 0, accepted: 0 };
   for (const row of rows.results || []) {
     const next = new Date(now.getTime() + 15 * 60000).toISOString();
     const claimed = await db.prepare(`UPDATE notification_deliveries SET next_check_at=? WHERE channel=? AND provider_id=? AND status='pending' AND next_check_at=?`)
       .bind(next, row.channel, row.provider_id, row.next_check_at).run();
     if (!claimed.meta.changes) continue;
+    // Close legacy SMS monitor rows without another provider request. The
+    // notification outbox already recorded whether SOLAPI accepted the send.
+    if (row.channel === "sms") {
+      await db.prepare(`UPDATE notification_deliveries SET status='accepted' WHERE channel=? AND provider_id=?`)
+        .bind(row.channel,row.provider_id).run();
+      summary.accepted++;
+      continue;
+    }
     let state = "pending", error = "";
     try {
-      const sms = row.channel === "sms";
       const monitorApiKey = String(env.RESEND_MONITOR_API_KEY || "").trim();
-      if (!sms && !monitorApiKey) {
+      if (!monitorApiKey) {
         state = "unmonitored";
         error = "이메일 전달 상태 조회 키가 설정되지 않아 발송 접수 상태까지만 기록합니다.";
       }
       if (state === "unmonitored") {
         summary.unmonitored++;
       } else {
-        const url = sms ? `https://api.solapi.com/messages/v4/groups/fast/${encodeURIComponent(row.provider_id)}` : `https://api.resend.com/emails/${encodeURIComponent(row.provider_id)}`;
-        const authorization = sms ? await createSolapiAuthorization(env) : `Bearer ${monitorApiKey}`;
+        const url = `https://api.resend.com/emails/${encodeURIComponent(row.provider_id)}`;
+        const authorization = `Bearer ${monitorApiKey}`;
         const response = await fetchImpl(url, { headers: { Authorization: authorization }, signal: AbortSignal.timeout(10000) });
         if (!response.ok) {
           if ([401,403].includes(response.status)) {
@@ -56,17 +65,10 @@ export async function reconcileNotificationDeliveries(env, { now = new Date(), f
         }
         const payload = await response.json();
         summary.checked++;
-        if (sms) {
-          const count = (payload.groupInfo || payload).count || {};
-          if (Number(count.sentFailed || 0) + Number(count.registeredFailed || 0) > 0) {
-            state = "failed"; error = "SOLAPI가 접수 이후 문자 전달 실패를 보고했습니다.";
-          } else if (Number(count.sentSuccess || 0) > 0 && Number(count.sentSuccess) >= Number(count.total || 1)) state = "delivered";
-        } else {
-          const event = payload.last_event;
-          if (["bounced", "failed", "suppressed", "canceled", "complained"].includes(event)) {
-            state = "failed"; error = `Resend 이메일 전달 결과: ${event}`;
-          } else if (["delivered", "opened", "clicked"].includes(event)) state = "delivered";
-        }
+        const event = payload.last_event;
+        if (["bounced", "failed", "suppressed", "canceled", "complained"].includes(event)) {
+          state = "failed"; error = `Resend 이메일 전달 결과: ${event}`;
+        } else if (["delivered", "opened", "clicked"].includes(event)) state = "delivered";
       }
     } catch (lookupError) {
       // Read failures never resend a customer message. Retry the read later.

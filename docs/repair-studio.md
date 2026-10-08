@@ -57,6 +57,7 @@
 2. Pages에 `OALUM_DB`, `OALUM_R2`, `ORDER_ADMIN_SECRET`, `RESEND_API_KEY`, `RESEND_MONITOR_API_KEY`, `RESEND_FROM_EMAIL`, `REPAIR_NOTIFICATION_CRON_SECRET`을 설정합니다. `RESEND_API_KEY`는 발송 전용 권한으로 두고, `RESEND_MONITOR_API_KEY`에는 이메일 전달 결과 조회가 가능한 Full access 권한을 사용합니다. 조회 키가 없으면 이메일 발송은 계속되지만 전달 상태 모니터링은 생략됩니다. Ticket 서명은 `REPAIR_TICKET_ACCESS_SECRET`, `AUTH_SECRET`, `ORDER_ADMIN_SECRET` 순으로 사용합니다.
 3. Scheduled Worker에도 같은 `REPAIR_NOTIFICATION_CRON_SECRET`을 secret으로 설정합니다.
 4. SOLAPI 운영 전 `SOLAPI_API_KEY`, `SOLAPI_API_SECRET`, `SOLAPI_SENDER_NUMBER`, `SOLAPI_TEST_PHONE`을 Pages secret으로 설정하고 `SMS_ENABLED=true`, `SMS_DRY_RUN=false`로 전환합니다.
+   문자 성공 여부는 SOLAPI 발송 API의 즉시 응답으로 확정합니다. HTTP 오류뿐 아니라 `failedMessageList`와 `registeredFailed`도 실패로 처리하며, 통신사·단말 최종 수신 결과를 위한 그룹 재조회는 수행하지 않습니다.
 5. `npm run cf:repair-notifications:deploy`로 5분 cron Worker를 배포합니다.
 6. `repair.html`, `repair-admin.html`, `repair-ticket.html`, `notification-admin.html`, `account.html`, `my-repairs.html`을 확인합니다.
 

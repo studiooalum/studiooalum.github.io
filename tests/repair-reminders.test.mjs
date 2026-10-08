@@ -113,13 +113,19 @@ test('migration is rerunnable and preserves the durable once-only ledger',async 
  assert.equal((await enqueueRepairReminders(env,{now})).queued,0);
 });
 
-test('post-acceptance SMS delivery failure updates history and sends exactly one admin alert',async t=>{
- const {recordNotificationDelivery,reconcileNotificationDeliveries}=await import('../cloudflare/lib/notification-delivery.js');
- const {env,db}=setup(t);await enqueueRepairReminders(env,{now});await dispatch(env,db);const row=reminder(db);
- db.prepare("UPDATE notification_deliveries SET next_check_at=?").bind(now.toISOString()).run();
- await reconcileNotificationDeliveries(env,{now,fetchImpl:async url=>{assert.match(url,/\/groups\/fast\/G$/);return Response.json({count:{total:1,sentFailed:1}});}});
- assert.equal(reminder(db).status,'failed');assert.equal(db.prepare("SELECT COUNT(*) n FROM notification_outbox WHERE template_key='notification.delivery_failed_admin'").first().n,1);
- await reconcileNotificationDeliveries(env,{now,fetchImpl:()=>{throw Error('already reconciled');}});
+test('accepted SMS is final and does not create a delivery lookup job',async t=>{
+ const {env,db}=setup(t);await enqueueRepairReminders(env,{now});await dispatch(env,db);
+ assert.equal(reminder(db).status,'sent');
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM notification_deliveries WHERE channel='sms'").first().n,0);
+});
+test('legacy SMS delivery jobs close as accepted without a provider lookup',async t=>{
+ const {reconcileNotificationDeliveries}=await import('../cloudflare/lib/notification-delivery.js');
+ const {env,db}=setup(t);
+ db.prepare(`INSERT INTO notification_deliveries(channel,provider_id,source_key,template_key,recipient,status,created_at,next_check_at)
+   VALUES ('sms','G-legacy','notification_outbox:legacy','repair.completed','01012345678','pending',?,?)`).bind(now.toISOString(),now.toISOString()).run();
+ const result=await reconcileNotificationDeliveries(env,{now,fetchImpl:()=>{throw Error('must not fetch');}});
+ assert.equal(result.accepted,1);assert.equal(db.prepare("SELECT status FROM notification_deliveries WHERE channel='sms'").first().status,'accepted');
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM notification_outbox WHERE template_key='notification.delivery_failed_admin'").first().n,0);
 });
 test('direct email bounce is monitored without saving the email body',async t=>{
  const {trackDirectEmailResponse,reconcileNotificationDeliveries}=await import('../cloudflare/lib/notification-delivery.js');
