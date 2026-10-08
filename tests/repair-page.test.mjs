@@ -213,9 +213,9 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
 test("Repair Ticket uses compact application-style actions and simplified copy", () => {
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20260930-ticket-05/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20261008-ticket-01/);
   assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-08/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20261007-photos-01/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20261008-ticket-01/);
   assert.doesNotMatch(repairTicketHtml, /종료된 Ticket입니다|js-repair-ticket-closed/);
   assert.doesNotMatch(repairTicketHtml, /repairTicketPayment|repairPaymentDialog|js\.tosspayments\.com|카드·간편결제/);
   assert.doesNotMatch(repairTicketSource, /onlinePaymentAvailable|TossPayments|\/api\/repairs\/payment/);
@@ -251,6 +251,12 @@ test("Repair Ticket uses compact application-style actions and simplified copy",
   assert.match(repairTicketSource, /data-message-delete="\$\{escapeHtml\(message\.id\)\}"/);
   assert.match(repairTicketSource, /method:\s*"DELETE"/);
   assert.match(repairTicketLayoutCss, /\.repair-ticket-message__delete,[\s\S]*?background:\s*transparent;/);
+  assert.match(repairTicketSource, /data-ticket-image-open/);
+  assert.match(repairTicketSource, /openImageLightbox/);
+  assert.match(repairTicketCss, /\.repair-ticket-image-button\s*\{[^}]*aspect-ratio:\s*1 \/ 1;/);
+  assert.match(repairTicketCss, /\.repair-ticket-image-button img\s*\{[^}]*object-fit:\s*contain;/);
+  assert.match(repairTicketCss, /\.repair-ticket-request-images__grid \.repair-ticket-image-button img\s*\{[^}]*object-fit:\s*cover;/);
+  assert.match(repairTicketCss, /\.repair-ticket-image-lightbox__image\s*\{[^}]*object-fit:\s*contain;/);
   assert.match(repairTicketsSource, /export async function deleteRepairTicketMessage/);
   assert.match(repairTicketApiSource, /export async function onRequestDelete/);
 });

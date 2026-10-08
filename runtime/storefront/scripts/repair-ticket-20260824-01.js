@@ -1,9 +1,11 @@
 import { prepareRepairPhotos, validateRepairPhotos } from "./repair-photo-upload.js";
+import { lockBodyScroll, unlockBodyScroll } from "./utils/scroll-lock.js";
 
 const ADMIN_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const GUEST_TOKEN_PREFIX = "studiooalum:repair-ticket-token:";
 const SIGNED_TOKEN_PREFIX = "studiooalum:repair-ticket-signed-access:";
 const MESSAGE_ID_PREFIX = "studiooalum:repair-ticket-message-id:";
+const IMAGE_LIGHTBOX_SCROLL_LOCK_KEY = "repair-ticket-image-lightbox";
 
 const params = new URLSearchParams(window.location.search);
 const ticketId = String(params.get("ticket") || "").trim();
@@ -36,6 +38,14 @@ const state = {
   preparingPhotos: false,
   sending: false,
 };
+
+let imageLightboxEl = null;
+let imageLightboxImageEl = null;
+let imageLightboxPrevEl = null;
+let imageLightboxNextEl = null;
+let imageLightboxPreviouslyFocused = null;
+let imageLightboxItems = [];
+let imageLightboxActiveIndex = 0;
 
 function escapeHtml(value) {
   return String(value || "")
@@ -137,8 +147,89 @@ function setFormStatus(message = "", type = "") {
 }
 
 function clearObjectUrls() {
+  closeImageLightbox();
   state.objectUrls.forEach((url) => URL.revokeObjectURL(url));
   state.objectUrls = [];
+}
+
+function normalizeImageLightboxIndex(index) {
+  if (!imageLightboxItems.length) return 0;
+  return (index + imageLightboxItems.length) % imageLightboxItems.length;
+}
+
+function updateImageLightbox() {
+  if (!imageLightboxImageEl || !imageLightboxItems.length) return;
+  const image = imageLightboxItems[imageLightboxActiveIndex];
+  imageLightboxImageEl.src = image.url;
+  imageLightboxImageEl.alt = image.alt || "첨부 이미지 원본";
+  const hasMultipleImages = imageLightboxItems.length > 1;
+  imageLightboxPrevEl?.toggleAttribute("hidden", !hasMultipleImages);
+  imageLightboxNextEl?.toggleAttribute("hidden", !hasMultipleImages);
+}
+
+function stepImageLightbox(offset) {
+  if (imageLightboxItems.length < 2) return;
+  imageLightboxActiveIndex = normalizeImageLightboxIndex(imageLightboxActiveIndex + offset);
+  updateImageLightbox();
+}
+
+function closeImageLightbox() {
+  if (!imageLightboxEl?.classList.contains("is-open")) return;
+  imageLightboxEl.classList.remove("is-open");
+  imageLightboxEl.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("repair-ticket-image-lightbox-open");
+  unlockBodyScroll(IMAGE_LIGHTBOX_SCROLL_LOCK_KEY);
+  if (imageLightboxPreviouslyFocused?.isConnected) imageLightboxPreviouslyFocused.focus();
+  imageLightboxPreviouslyFocused = null;
+}
+
+function ensureImageLightbox() {
+  if (imageLightboxEl) return;
+  imageLightboxEl = document.createElement("div");
+  imageLightboxEl.className = "repair-ticket-image-lightbox";
+  imageLightboxEl.setAttribute("aria-hidden", "true");
+  imageLightboxEl.innerHTML = `
+    <div class="repair-ticket-image-lightbox__backdrop" data-ticket-lightbox-close="true"></div>
+    <div class="repair-ticket-image-lightbox__dialog" role="dialog" aria-modal="true" aria-label="첨부 이미지 원본 보기">
+      <button type="button" class="repair-ticket-image-lightbox__nav repair-ticket-image-lightbox__nav--prev" aria-label="이전 이미지"><span aria-hidden="true">&lt;</span></button>
+      <div class="repair-ticket-image-lightbox__viewport">
+        <figure class="repair-ticket-image-lightbox__figure"><img class="repair-ticket-image-lightbox__image" alt=""></figure>
+      </div>
+      <button type="button" class="repair-ticket-image-lightbox__nav repair-ticket-image-lightbox__nav--next" aria-label="다음 이미지"><span aria-hidden="true">&gt;</span></button>
+      <button type="button" class="repair-ticket-image-lightbox__close" aria-label="원본 이미지 닫기"></button>
+    </div>`;
+  document.body.appendChild(imageLightboxEl);
+  imageLightboxImageEl = imageLightboxEl.querySelector(".repair-ticket-image-lightbox__image");
+  imageLightboxPrevEl = imageLightboxEl.querySelector(".repair-ticket-image-lightbox__nav--prev");
+  imageLightboxNextEl = imageLightboxEl.querySelector(".repair-ticket-image-lightbox__nav--next");
+  imageLightboxPrevEl?.addEventListener("click", () => stepImageLightbox(-1));
+  imageLightboxNextEl?.addEventListener("click", () => stepImageLightbox(1));
+  imageLightboxEl.querySelector(".repair-ticket-image-lightbox__close")?.addEventListener("click", closeImageLightbox);
+  imageLightboxEl.addEventListener("click", (event) => {
+    if (event.target.closest(".repair-ticket-image-lightbox__image, .repair-ticket-image-lightbox__nav, .repair-ticket-image-lightbox__close")) return;
+    if (event.target.closest("[data-ticket-lightbox-close], .repair-ticket-image-lightbox__viewport, .repair-ticket-image-lightbox__figure")) closeImageLightbox();
+  });
+}
+
+function openImageLightbox(trigger) {
+  const group = trigger.closest(".repair-ticket-message__attachments, .repair-ticket-request-images__grid");
+  if (!group) return;
+  const buttons = Array.from(group.querySelectorAll("[data-ticket-image-open]"));
+  imageLightboxItems = buttons.map((button) => {
+    const image = button.querySelector("img");
+    return { url: image?.currentSrc || image?.src || "", alt: image?.alt || "첨부 이미지 원본" };
+  }).filter((image) => image.url);
+  const activeIndex = buttons.indexOf(trigger);
+  if (!imageLightboxItems.length || activeIndex < 0) return;
+  ensureImageLightbox();
+  imageLightboxPreviouslyFocused = trigger;
+  imageLightboxActiveIndex = normalizeImageLightboxIndex(activeIndex);
+  updateImageLightbox();
+  imageLightboxEl.classList.add("is-open");
+  imageLightboxEl.setAttribute("aria-hidden", "false");
+  document.body.classList.add("repair-ticket-image-lightbox-open");
+  lockBodyScroll(IMAGE_LIGHTBOX_SCROLL_LOCK_KEY);
+  requestAnimationFrame(() => imageLightboxEl.querySelector(".repair-ticket-image-lightbox__close")?.focus());
 }
 
 async function fetchTicket() {
@@ -188,7 +279,9 @@ function renderRequestImages(ticket) {
   const images = Array.isArray(ticket.repair?.requestImages) ? ticket.repair.requestImages : [];
   dom.requestImages.hidden = images.length === 0;
   dom.requestImagesGrid.innerHTML = images.map((image) => `
-    <img alt="${escapeHtml(image.filename || "수선 신청 사진")}" data-protected-image-path="${escapeHtml(image.streamPath)}">
+    <button type="button" class="repair-ticket-image-button" data-ticket-image-open aria-label="${escapeHtml(image.filename || "수선 신청 사진")} 원본 보기">
+      <img alt="${escapeHtml(image.filename || "수선 신청 사진")}" data-protected-image-path="${escapeHtml(image.streamPath)}">
+    </button>
   `).join("");
 }
 
@@ -214,7 +307,7 @@ function renderMessages(ticket) {
         </span>
       </div>
       <p class="repair-ticket-message__body">${escapeHtml(body)}</p>
-      ${(message.attachments || []).length ? `<div class="repair-ticket-message__attachments">${message.attachments.map((attachment) => `<img alt="${escapeHtml(attachment.filename || "첨부 이미지")}" data-protected-image-path="${escapeHtml(attachment.streamPath)}">`).join("")}</div>` : ""}
+      ${(message.attachments || []).length ? `<div class="repair-ticket-message__attachments">${message.attachments.map((attachment) => `<button type="button" class="repair-ticket-image-button" data-ticket-image-open aria-label="${escapeHtml(attachment.filename || "첨부 이미지")} 원본 보기"><img alt="${escapeHtml(attachment.filename || "첨부 이미지")}" data-protected-image-path="${escapeHtml(attachment.streamPath)}"></button>`).join("")}</div>` : ""}
     </article>
   `;
   }).join("");
@@ -329,8 +422,25 @@ dom.form?.addEventListener("submit", (event) => {
 });
 
 dom.messages?.addEventListener("click", (event) => {
+  const imageButton = event.target.closest("[data-ticket-image-open]");
+  if (imageButton) {
+    openImageLightbox(imageButton);
+    return;
+  }
   const button = event.target.closest("[data-message-delete]");
   if (button) void deleteMessage(button.dataset.messageDelete);
+});
+
+dom.requestImagesGrid?.addEventListener("click", (event) => {
+  const imageButton = event.target.closest("[data-ticket-image-open]");
+  if (imageButton) openImageLightbox(imageButton);
+});
+
+window.addEventListener("keydown", (event) => {
+  if (!imageLightboxEl?.classList.contains("is-open")) return;
+  if (event.key === "Escape") closeImageLightbox();
+  if (event.key === "ArrowLeft") stepImageLightbox(-1);
+  if (event.key === "ArrowRight") stepImageLightbox(1);
 });
 
 dom.form?.elements.attachments?.addEventListener("change", async () => {

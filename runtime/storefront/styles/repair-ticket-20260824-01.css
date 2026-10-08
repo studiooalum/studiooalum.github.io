@@ -135,12 +135,27 @@
   gap: 4px;
 }
 
-.repair-ticket-request-images__grid img {
+.repair-ticket-image-button {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
   background: #f3f3f1;
+  cursor: zoom-in;
+}
+
+.repair-ticket-image-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #f3f3f1;
+}
+
+.repair-ticket-request-images__grid .repair-ticket-image-button img {
+  object-fit: cover;
 }
 
 
@@ -245,17 +260,107 @@
 
 .repair-ticket-message__attachments {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 220px));
   gap: 8px;
 }
 
-.repair-ticket-message__attachments img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  border: 1px solid rgba(17, 17, 17, 0.14);
-  object-fit: cover;
+.repair-ticket-image-lightbox-open {
+  overflow: hidden;
 }
+
+.repair-ticket-image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: none;
+}
+
+.repair-ticket-image-lightbox.is-open {
+  display: block;
+}
+
+.repair-ticket-image-lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+}
+
+.repair-ticket-image-lightbox__dialog,
+.repair-ticket-image-lightbox__viewport,
+.repair-ticket-image-lightbox__figure {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.repair-ticket-image-lightbox__dialog {
+  z-index: 1;
+}
+
+.repair-ticket-image-lightbox__viewport,
+.repair-ticket-image-lightbox__figure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repair-ticket-image-lightbox__viewport {
+  box-sizing: border-box;
+  padding: 56px clamp(52px, 10vw, 120px);
+}
+
+.repair-ticket-image-lightbox__image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.repair-ticket-image-lightbox__nav,
+.repair-ticket-image-lightbox__close {
+  position: absolute;
+  z-index: 2;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(17, 17, 17, 0.85);
+  cursor: pointer;
+}
+
+.repair-ticket-image-lightbox__nav {
+  top: 0;
+  bottom: 0;
+  width: clamp(52px, 8vw, 88px);
+  font-size: 28px;
+}
+
+.repair-ticket-image-lightbox__nav--prev { left: 0; }
+.repair-ticket-image-lightbox__nav--next { right: 0; }
+.repair-ticket-image-lightbox__nav[hidden] { display: none; }
+
+.repair-ticket-image-lightbox__close {
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+}
+
+.repair-ticket-image-lightbox__close::before,
+.repair-ticket-image-lightbox__close::after {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: 8px;
+  width: 20px;
+  height: 1px;
+  background: currentColor;
+}
+
+.repair-ticket-image-lightbox__close::before { transform: rotate(45deg); }
+.repair-ticket-image-lightbox__close::after { transform: rotate(-45deg); }
 
 .repair-ticket-composer {
   display: grid;
@@ -504,6 +609,6 @@
   }
 
   .repair-ticket-message__attachments {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
