@@ -1069,6 +1069,9 @@ test("customer notification copy is readable, branded, and remains within LMS li
   database.exec(migration);
   database.exec(migration);
   database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0030_repair_ticket_lifecycle.sql", import.meta.url), "utf8"));
+  const carrierMigration = readFileSync(new URL("../cloudflare/d1/migrations/0044_repair_shipping_carrier_notification.sql", import.meta.url), "utf8");
+  database.exec(carrierMigration);
+  database.exec(carrierMigration);
 
   const smsTemplateKeys = [
     "repair.application_submitted",
@@ -1088,6 +1091,9 @@ test("customer notification copy is readable, branded, and remains within LMS li
       body: row.draft_body,
     });
     assert.match(preview.body, /^\[Studio OALUM 수선 안내\]\n/);
+    if (templateKey === "repair.payment_confirmed_shipping_started") {
+      assert.match(preview.body, /택배회사: CJ대한통운/);
+    }
     assert.match(preview.body, /\n\n/);
     assert.equal(preview.messageType.type, "LMS");
     assert.ok(preview.messageType.byteLength > 90);
@@ -1117,6 +1123,9 @@ test("customer notification copy is readable, branded, and remains within LMS li
       assert.doesNotMatch(preview.subject, /#001/);
     } else {
       assert.match(preview.subject, /#001/);
+    }
+    if (templateKey === "repair.payment_confirmed_shipping_started") {
+      assert.match(preview.body, /택배회사: CJ대한통운/);
     }
     assert.match(preview.body, /^안녕하세요, 홍길동님\.\n\n/);
     assert.match(preview.body, /Studio OALUM/);

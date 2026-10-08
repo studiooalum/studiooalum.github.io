@@ -28,6 +28,7 @@ export const NOTIFICATION_VARIABLES = Object.freeze({
   final_amount: { label: "최종 가격", sample: "35,000원" },
   shipping_amount: { label: "배송비", sample: "4,000원" },
   payment_total_amount: { label: "총입금 금액", sample: "39,000원" },
+  carrier: { label: "택배회사", sample: "CJ대한통운" },
   tracking_number: { label: "운송장 번호", sample: "1234567890" },
   tracking_url: { label: "배송 조회 링크", sample: "https://example.com/tracking" },
   repair_url: { label: "수선 조회 링크", sample: "https://studiooalum.com/account.html" },

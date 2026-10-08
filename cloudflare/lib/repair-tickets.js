@@ -336,6 +336,7 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
         `입금 계좌: ${cleanText(value("bankAccount", "bank_account"), 500) || "국민 한아름 218301-04-144506"}`,
       ].join("\n"),
     } : {}),
+    carrier: value("carrier"),
     tracking_number: value("trackingNumber", "tracking_number"),
     tracking_url: value("trackingUrl", "tracking_url"),
     repair_url: `${normalizeSiteUrl(env)}/account.html`,

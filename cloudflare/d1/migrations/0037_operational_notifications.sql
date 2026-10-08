@@ -24,7 +24,7 @@ INSERT INTO notification_templates (
   default_subject, default_body, allowed_variables_json, required_variables_json, max_length, is_enabled, activated_at, created_at, updated_at
 )
 SELECT template_key, channel, area, name, name, '[Studio OALUM] ' || name, body, '[Studio OALUM] ' || name, body, '[Studio OALUM] ' || name, body,
-  '["customer_name","customer_email","customer_phone","order_number","order_url","final_amount","tracking_number","tracking_url","workshop_name","reservation_number","attendee_count","schedule_label","workshop_url","workshop_location","minimum_count","repair_number","repair_ticket_url","repair_admin_url"]',
+  '["customer_name","customer_email","customer_phone","order_number","order_url","final_amount","carrier","tracking_number","tracking_url","workshop_name","reservation_number","attendee_count","schedule_label","workshop_url","workshop_location","minimum_count","repair_number","repair_ticket_url","repair_admin_url"]',
   '[]', CASE WHEN channel = 'sms' THEN 2000 ELSE 0 END, CASE WHEN channel = 'email' THEN 1 ELSE 0 END,
   '2026-09-24T00:00:00.000Z', '2026-09-24T00:00:00.000Z', '2026-09-24T00:00:00.000Z'
 FROM seed CROSS JOIN channels WHERE true
