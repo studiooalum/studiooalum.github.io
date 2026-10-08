@@ -20,7 +20,7 @@ class D1 {
 const now=new Date('2026-10-07T01:00:00.000Z');
 function setup(t) {
  const db=new D1();t.after(()=>db.db.close());
- const env={OALUM_DB:db,AUTH_SECRET:'test',PUBLIC_SITE_URL:'https://studiooalum.test',SMS_ENABLED:'true',SMS_DRY_RUN:'false',SOLAPI_API_KEY:'test',SOLAPI_API_SECRET:'test',SOLAPI_SENDER_NUMBER:'01011112222',RESEND_API_KEY:'test',RESEND_FROM_EMAIL:'sender@example.com',REPAIR_ADMIN_EMAIL:'admin@example.com'};
+ const env={OALUM_DB:db,AUTH_SECRET:'test',PUBLIC_SITE_URL:'https://studiooalum.test',SMS_ENABLED:'true',SMS_DRY_RUN:'false',SOLAPI_API_KEY:'test',SOLAPI_API_SECRET:'test',SOLAPI_SENDER_NUMBER:'01011112222',RESEND_API_KEY:'send-key',RESEND_MONITOR_API_KEY:'monitor-key',RESEND_FROM_EMAIL:'sender@example.com',REPAIR_ADMIN_EMAIL:'admin@example.com'};
  db.prepare(`INSERT INTO repair_requests(id,request_number,customer_name,email,email_normalized,phone,country_code,terms_accepted_at,privacy_consent_at,created_at,updated_at) VALUES ('R','REP','고객','c@example.com','c@example.com','01012345678','KR',?,?,?,?)`).bind(now.toISOString(),now.toISOString(),now.toISOString(),now.toISOString()).run();
  db.prepare(`INSERT INTO repair_tickets(id,repair_id,short_code,status,created_at,updated_at) VALUES ('T','R','short-code','open',?,?)`).bind(now.toISOString(),now.toISOString()).run();
  db.prepare(`INSERT INTO repair_ticket_messages(id,ticket_id,author_type,body,created_at) VALUES ('M','T','admin','확인 부탁드립니다.','2026-10-06T01:00:00.000Z')`).run();
@@ -128,6 +128,37 @@ test('direct email bounce is monitored without saving the email body',async t=>{
  await reconcileNotificationDeliveries(env,{now,fetchImpl:async()=>Response.json({last_event:'bounced'})});
  assert.equal(db.prepare('SELECT status FROM notification_deliveries').first().status,'failed');
  assert.match(db.prepare('SELECT body_text FROM notification_outbox').first().body_text,/bounced/);
+});
+test('email delivery lookup uses the dedicated monitor key',async t=>{
+ const {trackDirectEmailResponse,reconcileNotificationDeliveries}=await import('../cloudflare/lib/notification-delivery.js');
+ const {env,db}=setup(t);await trackDirectEmailResponse(env,Response.json({id:'email-key'}),'auth.signup','customer@example.com');
+ db.prepare("UPDATE notification_deliveries SET next_check_at=?").bind(now.toISOString()).run();
+ await reconcileNotificationDeliveries(env,{now,fetchImpl:async(_url,options)=>{assert.equal(options.headers.Authorization,'Bearer monitor-key');return Response.json({last_event:'delivered'});}});
+ assert.equal(db.prepare('SELECT status FROM notification_deliveries').first().status,'delivered');
+});
+test('email sends are not enrolled in delivery monitoring without a monitor key',async t=>{
+ const {trackDirectEmailResponse}=await import('../cloudflare/lib/notification-delivery.js');
+ const {env,db}=setup(t);delete env.RESEND_MONITOR_API_KEY;
+ await trackDirectEmailResponse(env,Response.json({id:'email-unmonitored'}),'auth.signup','customer@example.com');
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM notification_deliveries').first().n,0);
+});
+test('legacy pending email is closed without an alert when monitoring is not configured',async t=>{
+ const {trackDirectEmailResponse,reconcileNotificationDeliveries}=await import('../cloudflare/lib/notification-delivery.js');
+ const {env,db}=setup(t);await trackDirectEmailResponse(env,Response.json({id:'email-legacy'}),'auth.signup','customer@example.com');
+ delete env.RESEND_MONITOR_API_KEY;db.prepare("UPDATE notification_deliveries SET next_check_at=?").bind(now.toISOString()).run();
+ const result=await reconcileNotificationDeliveries(env,{now,fetchImpl:()=>{throw Error('must not fetch');}});
+ assert.equal(result.unmonitored,1);assert.equal(db.prepare('SELECT status FROM notification_deliveries').first().status,'unmonitored');
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM notification_outbox WHERE template_key='notification.delivery_failed_admin'").first().n,0);
+});
+test('monitor permission errors are not described as customer message failures',async t=>{
+ const {trackDirectEmailResponse,reconcileNotificationDeliveries}=await import('../cloudflare/lib/notification-delivery.js');
+ const {env,db}=setup(t);await trackDirectEmailResponse(env,Response.json({id:'email-forbidden'}),'auth.signup','customer@example.com');
+ db.prepare("UPDATE notification_deliveries SET next_check_at=?").bind(now.toISOString()).run();
+ const result=await reconcileNotificationDeliveries(env,{now,fetchImpl:async()=>new Response('',{status:401})});
+ const alert=db.prepare("SELECT subject,body_text FROM notification_outbox WHERE template_key='notification.delivery_failed_admin'").first();
+ assert.equal(result.unmonitored,1);assert.equal(db.prepare('SELECT status FROM notification_deliveries').first().status,'unmonitored');
+ assert.match(alert.subject,/전달 상태 확인 실패/);assert.doesNotMatch(alert.subject,/메시지 발송 실패/);
+ assert.match(alert.body_text,/발송 요청은 공급자에게 정상 접수/);
 });
 test('delivery API rate limits retry only the lookup, never the customer send',async t=>{
  const {trackDirectEmailResponse,reconcileNotificationDeliveries}=await import('../cloudflare/lib/notification-delivery.js');

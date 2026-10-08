@@ -22,14 +22,28 @@ export async function reportNotificationFailure(env, input) {
     notification_admin_url: `${String(env.PUBLIC_SITE_URL || env.SITE_URL || "https://studiooalum.com").replace(/\/$/, "")}/notification-admin`,
   };
   const render = text => String(text).replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (_, key) => variables[key] || "");
-  const body = render(template.active_body);
+  const isMonitorError = input.status === "monitor_error";
+  const subject = isMonitorError
+    ? `[Studio OALUM] 전달 상태 확인 실패 · ${variables.notification_channel}`
+    : render(template.active_subject);
+  const body = isMonitorError
+    ? [
+        "메시지 발송 요청은 공급자에게 정상 접수되었지만 전달 상태를 확인하지 못했습니다.",
+        `종류: ${variables.notification_type}`,
+        `기록: ${variables.notification_id}`,
+        `원인: ${variables.notification_error}`,
+        "",
+        "알림 관리에서 확인해주세요.",
+        variables.notification_admin_url,
+      ].join("\n")
+    : render(template.active_body);
   // Both statements run in a transaction; purging the outbox cannot re-alert a failure.
   await db.batch([
     db.prepare(`INSERT OR IGNORE INTO notification_outbox
       (id,event_key,entity_type,entity_id,channel,recipient,template_key,payload_json,subject,body_text,body_html,status,attempts,available_at,created_at,updated_at)
       SELECT ?,?,'notification_failure',?,'email',?,?,?, ?,?,?,'pending',0,?,?,?
       WHERE NOT EXISTS (SELECT 1 FROM notification_failure_events WHERE event_key = ?)`)
-      .bind(`NFA_${crypto.randomUUID()}`,eventKey,input.sourceKey,recipient,FAILURE_ALERT_TEMPLATE,JSON.stringify(variables),render(template.active_subject),body,`<p>${escapeHtml(body).replace(/\n/g,"<br>")}</p>`,now,now,now,eventKey),
+      .bind(`NFA_${crypto.randomUUID()}`,eventKey,input.sourceKey,recipient,FAILURE_ALERT_TEMPLATE,JSON.stringify(variables),subject,body,`<p>${escapeHtml(body).replace(/\n/g,"<br>")}</p>`,now,now,now,eventKey),
     db.prepare(`INSERT OR IGNORE INTO notification_failure_events(event_key,created_at) VALUES (?,?)`).bind(eventKey,now),
   ]);
 }

@@ -77,6 +77,7 @@ npm run web:dev
 - `AUTH_SECRET`: 세션 및 비밀번호 기반 인증 해시에 쓰는 시크릿 문자열 권장
 - `AUTH_COOKIE_INSECURE=true`: 로컬 HTTP 개발 환경에서만 필요할 수 있음
 - `RESEND_API_KEY`, `RESEND_FROM_EMAIL`: 비밀번호 찾기 이메일 인증과 기존 이메일 코드 플로우에 필요
+- `RESEND_MONITOR_API_KEY`: 선택 사항. Resend Full access 키를 설정하면 발송 이후 전달·반송 상태를 조회한다. 설정하지 않아도 이메일 발송은 정상 동작한다.
 - `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`: 카카오 로그인 재활성화 시 필요
 - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`: 네이버 로그인 재활성화 시 필요
 - `NAVER_SITE_VERIFICATION`: 네이버 Search Advisor 메타 검증 토큰. 설정하면 `npm run cf:build` 시 `dist/index.html` head에 `naver-site-verification` 메타를 주입
