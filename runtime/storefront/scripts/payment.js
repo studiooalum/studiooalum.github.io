@@ -1,3 +1,4 @@
+import { createTossCheckout } from "./utils/toss-checkout.js";
 /* =========================
    payment.js — Toss Payment Widget integration
    Reads order data from localStorage, renders Toss widget, handles payment request.
@@ -100,7 +101,6 @@ async function initPayment() {
   }
 
   const config = await getPaymentConfig();
-  const tossPayments = TossPayments(config.clientKey);
   const paymentOrderId = order.orderId;
   if (!paymentOrderId || !order.persisted) throw new Error("주문서에서 주문을 다시 확인해주세요.");
 
@@ -110,28 +110,11 @@ async function initPayment() {
     orderName,
   });
 
-  // Use anonymous customer (no login required)
-  const widgets = tossPayments.widgets({
-    customerKey: TossPayments.ANONYMOUS,
+  const widgets = await createTossCheckout({
+    clientKey: config.clientKey, amount: order.total,
+    methodsSelector: "#payment-method", agreementSelector: "#agreement",
+    paymentVariantKey: config.paymentVariantKey, agreementVariantKey: config.agreementVariantKey,
   });
-
-  // Set the payment amount
-  await widgets.setAmount({
-    currency: "KRW",
-    value: order.total,
-  });
-
-  // Render payment methods + agreement in parallel
-  await Promise.all([
-    widgets.renderPaymentMethods({
-      selector: "#payment-method",
-      variantKey: config.paymentVariantKey,
-    }),
-    widgets.renderAgreement({
-      selector: "#agreement",
-      variantKey: config.agreementVariantKey,
-    }),
-  ]);
 
   // Enable the pay button once widgets are rendered
   const payBtn = document.getElementById("payment-request-button");
@@ -155,6 +138,7 @@ async function initPayment() {
     } catch (err) {
       // User cancelled or SDK error
       console.error("Payment error:", err);
+      if (err.code !== "USER_CANCEL") alert(err.message || "결제를 시작하지 못했습니다.");
       payBtn.disabled = false;
       payBtn.textContent = "결제하기";
     }

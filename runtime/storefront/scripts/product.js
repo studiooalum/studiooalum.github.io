@@ -1,4 +1,5 @@
 import client from "./sanity/client.js?v=20260520-03";
+import {applyInventory} from './utils/inventory.js';
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js?v=20260927-01";
 import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
 import { getFirstParagraph, parseProductTitle, pickRepresentativeEdition } from "./utils/catalog.js";
@@ -139,7 +140,7 @@ function renderEditionGrid(editions) {
 
 async function init() {
   try {
-    const allProducts = await client.fetch(ALL_PRODUCTS_QUERY);
+    const allProducts = await applyInventory(await client.fetch(ALL_PRODUCTS_QUERY));
     const editions = (allProducts || []).filter((p) => {
       const { baseName } = parseProductTitle(p.title);
       return baseName === productName;

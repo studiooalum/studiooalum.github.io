@@ -67,20 +67,24 @@ export async function cancelTossPayment(env, {
   orderId,
   amount,
   cancelReason,
+  cancelAmount = amount,
+  idempotencyKey = `cancel-${orderId}-${cancelAmount}`,
 }) {
   const config = getTossConfig(env);
   assertPaymentInput(config, paymentKey, orderId, amount);
+  if (!Number.isSafeInteger(cancelAmount) || cancelAmount <= 0 || cancelAmount > amount) throw Object.assign(new Error('환불 금액을 확인해주세요.'), {status:400});
   let payload;
   try {
     payload = await tossRequest(config, getTossCancelUrl(paymentKey), {
       cancelReason: String(cancelReason || "고객 요청으로 주문이 취소되었습니다.").trim(),
-      cancelAmount: amount,
-    }, `cancel-${orderId}-${amount}`);
+      cancelAmount,
+    }, idempotencyKey);
   } catch (error) {
     if (!error.retryable && error.providerCode !== "ALREADY_CANCELED_PAYMENT") throw error;
     payload = await tossRequest(config, `https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}`);
   }
-  assertPaymentResult(payload, { paymentKey, orderId, amount, status: "CANCELED" });
+  assertPaymentResult(payload, { paymentKey, orderId, amount, status: cancelAmount === amount ? 'CANCELED' : 'PARTIAL_CANCELED' });
+  if (payload.balanceAmount !== amount - cancelAmount) throw Object.assign(new Error('환불 잔액이 일치하지 않습니다. 결제 내역 확인이 필요합니다.'), {status:502});
 
   const cancels = Array.isArray(payload?.cancels) ? payload.cancels : [];
   const latestCancel = cancels[cancels.length - 1] || null;

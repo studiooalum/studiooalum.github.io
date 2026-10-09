@@ -5,7 +5,7 @@ import { errorResponse, json, noContent, readJson, validationError } from "../..
 const SANITY_PROJECT_ID = "9bsud0bl";
 const SANITY_DATASET = "production";
 const SANITY_API_VERSION = "2023-01-01";
-const SANITY_USE_CDN = true;
+const SANITY_USE_CDN = false;
 
 const querySchema = z.object({
   query: z.string().min(1),

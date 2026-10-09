@@ -4,6 +4,7 @@ import { errorResponse, json, noContent, readJson, validationError } from "../..
 import { enqueueOrderCompletedAdminNotification, enqueueShopNotification } from "../../../cloudflare/lib/notifications.js";
 import { dispatchOrderSync, getOrderSyncEventType, shouldEmailForOrderSyncEvent } from "../../../cloudflare/lib/order-sync.js";
 import { confirmTossPayment, getTossConfig } from "../../../cloudflare/lib/toss.js";
+import { assertManualEditionAvailability } from '../../../cloudflare/lib/inventory.js';
 
 export function onRequestOptions(context) {
   return noContent(context.env);
@@ -33,7 +34,8 @@ export async function onRequestPost(context) {
       });
     }
 
-    await assertStoredOrderPayment(context.env, data);
+    const storedOrder=await assertStoredOrderPayment(context.env, data);
+    if (!storedOrder.active_payment_key && storedOrder.status!=='paid') await assertManualEditionAvailability(context.env,data.orderId);
     if (!getTossConfig(context.env).isServerReady) throw Object.assign(new Error("결제 설정이 준비되지 않았습니다."), { status: 503 });
     const claim = await context.env.OALUM_DB.prepare(`UPDATE orders SET active_payment_key = ?, updated_at = ?,
       status = CASE WHEN status = 'paid' THEN status ELSE 'payment_pending' END
@@ -113,6 +115,9 @@ export async function onRequestPost(context) {
       warnings,
     });
   } catch (error) {
+    if (/EDITION_UNAVAILABLE|EDITION_QUANTITY_ONE/.test(error?.message || '')) {
+      return errorResponse(context.env, Object.assign(new Error('이미 판매되었거나 결제 확인 중인 에디션입니다. 각 에디션은 한 점만 구매할 수 있습니다.'), { status: 409 }));
+    }
     return errorResponse(context.env, error, "Failed to confirm payment.");
   }
 }

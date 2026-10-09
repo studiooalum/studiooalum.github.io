@@ -136,6 +136,9 @@ export async function lookupGuestResource(env, request, { reference, email }) {
   if (resourceType === "order") {
     const result = await lookupGuestOrder(env, { orderId: getOrderId(normalizedReference), email: emailNormalized });
     resource = result.order;
+    const {customerReturnState,latestReturn}=await import('./shop-returns.js');
+    const {getCustomerOrderCancellationState}=await import('./order-cancellation.js');
+    resource.cancellation=customerReturnState(resource,await latestReturn(database,resource.orderId)) || getCustomerOrderCancellationState(resource);
     resourceId = resource.orderId;
   } else if (resourceType === "workshop") {
     resource = await lookupGuestWorkshopReservation(env, { reference: normalizedReference, email: emailNormalized });

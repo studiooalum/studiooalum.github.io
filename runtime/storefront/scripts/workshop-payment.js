@@ -1,3 +1,5 @@
+import { createTossCheckout } from "./utils/toss-checkout.js";
+
 const dom = {
   layout: document.getElementById("workshopPaymentLayout"),
   orderName: document.getElementById("workshopPaymentOrderName"),
@@ -112,7 +114,7 @@ async function confirmReturnedPayment() {
     const payload = await requestJson("./api/workshops/payment-confirm", {
       body: { checkoutId, paymentKey, orderId, amount },
     });
-    renderResult("워크숍 신청이 확정되었습니다.", `${payload?.reservation?.workshopTitle || "워크숍"} 결제가 완료되었습니다.`);
+    renderResult("Studio OALUM 워크숍 신청이 확정되었습니다.", `${payload?.reservation?.workshopTitle || "워크숍"} 결제가 완료되었습니다. 카드 승인 문자·이용내역은 카드사에 따라 온라인상거래 또는 결제대행사 이름으로 표시될 수 있습니다.`);
   } catch (error) {
     renderResult("결제를 확정하지 못했습니다.", error.message || "관리자에게 문의해주세요.", true);
   }
@@ -158,13 +160,11 @@ async function renderCheckout() {
       throw new Error("결제 모듈을 불러오지 못했습니다. 페이지를 새로고침해주세요.");
     }
 
-    const tossPayments = TossPayments(checkout.clientKey);
-    const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
-    await widgets.setAmount({ currency: "KRW", value: checkout.order.amount });
-    await Promise.all([
-      widgets.renderPaymentMethods({ selector: "#workshop-payment-method", variantKey: "DEFAULT" }),
-      widgets.renderAgreement({ selector: "#workshop-agreement", variantKey: "AGREEMENT" }),
-    ]);
+    const widgets = await createTossCheckout({
+      clientKey: checkout.clientKey, amount: checkout.order.amount,
+      methodsSelector: "#workshop-payment-method", agreementSelector: "#workshop-agreement",
+      paymentVariantKey: checkout.paymentVariantKey, agreementVariantKey: checkout.agreementVariantKey,
+    });
 
     setStatus("결제 수단을 선택해주세요.");
     dom.requestButton.disabled = false;
@@ -174,7 +174,7 @@ async function renderCheckout() {
       try {
         await widgets.requestPayment({
           orderId: checkout.order.orderId,
-          orderName: `${checkout.workshop.title} 워크숍`,
+          orderName: `Studio OALUM · ${checkout.workshop.title} 워크숍`.slice(0,100),
           successUrl: buildResultUrl(),
           failUrl: buildResultUrl(),
           customerEmail: checkout.customer.email,

@@ -22,14 +22,15 @@
   <main class="payment-result-layout">
     <section class="payment-result confirm-loading" id="confirmLoading">
       <img src="https://static.toss.im/lotties/loading-spot-apng.png" width="100" height="100" alt="loading" />
-      <h2 class="payment-result__title">결제 요청까지 성공했어요</h2>
-      <p class="payment-result__desc">결제를 승인하고 완료해보세요.</p>
-      <button id="confirmPaymentButton" class="payment-submit-btn">결제 승인하기</button>
+      <h2 class="payment-result__title">결제를 확인하고 있습니다</h2>
+      <p class="payment-result__desc">잠시만 기다려주세요. 결제 결과를 확인한 뒤 주문을 완료합니다.</p>
+      <button id="confirmPaymentButton" class="payment-submit-btn" disabled>결제 확인 중</button>
     </section>
 
     <section class="payment-result confirm-success" id="confirmSuccess" style="display:none;">
       <img src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png" width="100" height="100" alt="success" />
-      <h2 class="payment-result__title">결제를 완료했어요</h2>
+      <h2 class="payment-result__title">Studio OALUM 결제가 완료되었습니다</h2>
+      <p class="payment-result__note">카드사에 따라 승인 문자에 ‘온라인상거래’ 등으로 표시될 수 있습니다. 오알룸 주문 내역에서 상품과 결제 금액을 확인해주세요.</p>
 
       <div class="payment-result__details">
         <div class="payment-result__row"><span class="payment-result__label">결제 금액</span><span class="payment-result__value" id="resultAmount">—</span></div>

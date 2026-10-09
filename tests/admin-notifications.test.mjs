@@ -162,7 +162,7 @@ test("payment confirmation queues the paid-order administrator alert", async (t)
   const { database, env } = createEnvironment({ TOSS_CLIENT_KEY: "test_gck_fixture", TOSS_SECRET_KEY: "test_gsk_fixture" });
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });
-  globalThis.fetch = async () => Response.json({ paymentKey: "fixture-payment", orderId: "ORD-PAID-ADMIN", totalAmount: 42000, currency: "KRW", status: "DONE", approvedAt: new Date().toISOString() });
+  globalThis.fetch = async url => String(url).includes('.sanity.io/') ? Response.json({result:[{_id:'product-1',soldOut:false}]}) : Response.json({ paymentKey: "fixture-payment", orderId: "ORD-PAID-ADMIN", totalAmount: 42000, currency: "KRW", status: "DONE", approvedAt: new Date().toISOString() });
   t.after(() => database.close());
   await persistOrder(env, createOrder("ORD-PAID-ADMIN"));
 
@@ -190,6 +190,7 @@ test("competing payment keys cannot approve the same shop order twice", async (c
   context.after(() => { globalThis.fetch = originalFetch; });
   let calls = 0;
   globalThis.fetch = async (url, options) => {
+    if(String(url).includes('.sanity.io/')) return Response.json({result:[{_id:'product-1',soldOut:false}]});
     calls += 1;
     const body = JSON.parse(options.body);
     return Response.json({ ...body, totalAmount: 42000, currency: "KRW", status: "DONE", approvedAt: new Date().toISOString() });

@@ -44,7 +44,9 @@ function formatWon(value) {
 ========================= */
 
 function getCart() {
-  return readStoredJson(CART_KEY, []);
+  const items = [...new Map(readStoredJson(CART_KEY, []).map(item => [item.lineId || item._id, { ...item, qty: 1 }])).values()];
+  writeStoredJson(CART_KEY, items);
+  return items;
 }
 
 function getCartSubtotal() {
@@ -418,9 +420,7 @@ function renderOrderSummary() {
           <div class="checkout-item__meta">${formatWon(item.price)}</div>
           <div class="checkout-item__controls">
             <div class="checkout-item__qty">
-              <button type="button" class="checkout-item__qty-btn" data-checkout-qty="dec" data-id="${item.lineId || item._id}">−</button>
-              <span class="checkout-item__qty-value">${item.qty}</span>
-              <button type="button" class="checkout-item__qty-btn" data-checkout-qty="inc" data-id="${item.lineId || item._id}">+</button>
+              <span class="checkout-item__qty-value">1점 · 단일 에디션</span>
             </div>
           </div>
         </div>

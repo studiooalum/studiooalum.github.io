@@ -12,6 +12,7 @@ const PASSWORD_HASH_ITERATIONS = 100000;
 
 import { readUserPointBalance, settleExpiredPointReservations } from "./d1.js";
 import { getCustomerOrderCancellationState, readLatestOrderCancellationRequest } from "./order-cancellation.js";
+import { customerReturnState,latestReturn } from './shop-returns.js';
 import { linkGuestWorkshopReservationsToUser, readWorkshopReservationsForIdentity } from "./workshops.js";
 
 function getDb(env) {
@@ -804,12 +805,17 @@ async function readOrdersForUser(database, { userId, emailNormalized }, limit = 
       orderId: row.id,
     });
 
-    orders.push(formatOrder({
+    const formatted=formatOrder({
       ...row,
       items: (itemsResult?.results || []).map(formatOrderItem),
     }, {
       cancellationRequest,
-    }));
+    });
+    const returnRequest=await latestReturn(database,row.id);
+    formatted.cancellation=customerReturnState(formatted,returnRequest) || formatted.cancellation;
+    if(formatted.cancellationRequest) delete formatted.cancellationRequest.token;
+    if(formatted.cancellation?.request) delete formatted.cancellation.request.token;
+    orders.push(formatted);
   }
 
   return orders;

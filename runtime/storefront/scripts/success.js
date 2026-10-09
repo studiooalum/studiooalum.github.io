@@ -4,15 +4,14 @@
    Calls confirmation API to finalize payment.
 ========================= */
 
-import { CART_KEY, ORDER_KEY, readStoredJson } from "./utils/storage.js";
+import { CART_KEY, ORDER_KEY } from "./utils/storage.js";
 
 // ---- Read URL params from Toss redirect ----
 const urlParams  = new URLSearchParams(window.location.search);
 const paymentKey = urlParams.get("paymentKey");
 const orderId    = urlParams.get("orderId");
-const amount     = urlParams.get("amount");
+const amount     = Number(urlParams.get("amount"));
 const PAYMENT_CONFIRM_ENDPOINT = "/api/payments/confirm";
-const pendingOrder = readStoredJson(ORDER_KEY, null);
 
 // ---- DOM refs ----
 const loadingSection = document.getElementById("confirmLoading");
@@ -20,22 +19,6 @@ const successSection = document.getElementById("confirmSuccess");
 const errorSection   = document.getElementById("confirmError");
 const orderStatusEl = document.getElementById("resultOrderStatus");
 const orderStatusDetailEl = document.getElementById("resultOrderStatusDetail");
-
-/* =========================
-   CONFIRM PAYMENT
-   In production, this should call YOUR backend which then calls Toss's
-   confirmation API with the secret key. The secret key must never be
-   exposed client-side.
-
-  In the current static Pages environment, this endpoint will usually be absent
-  and a preview order can still bypass confirmation only when the current host
-  does not provide the backend route.
-========================= */
-
-function canUsePreviewFallback() {
-  const providerMode = String(pendingOrder?.providerMode || "").trim();
-  return providerMode === "local-preview" || providerMode === "preview-no-db";
-}
 
 function resolveOrderStatusSummary(payment, order) {
   const shipmentValue = String(order?.shipment?.status || "").trim().toLowerCase();
@@ -92,25 +75,18 @@ function resolveOrderStatusSummary(payment, order) {
   };
 }
 
+let confirming = false;
 async function confirmPayment() {
+  if (confirming) return;
+  confirming = true;
+  const confirmBtn = document.getElementById("confirmPaymentButton");
+  confirmBtn.disabled = true;
   try {
-    // ---- Production: call your backend ----
-    // const response = await fetch("https://your-backend.com/api/payments/confirm", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ paymentKey, orderId, amount }),
-    // });
-
     const response = await fetch(PAYMENT_CONFIRM_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ paymentKey, orderId, amount }),
     });
-
-    if ((response.status === 404 || response.status === 405) && canUsePreviewFallback()) {
-      showSuccess();
-      return;
-    }
 
     const payload = await response.json().catch(() => null);
 
@@ -123,12 +99,10 @@ async function confirmPayment() {
   } catch (err) {
     console.error("Payment confirmation error:", err);
 
-    if (err?.name === "TypeError" && canUsePreviewFallback()) {
-      showSuccess();
-      return;
-    }
-
     showError(err?.message || "결제 확인에 실패했습니다. 관리자에게 문의해주세요.");
+  } finally {
+    confirming = false;
+    confirmBtn.disabled = false;
   }
 }
 
@@ -175,10 +149,10 @@ function showError(message) {
 ========================= */
 
 // If no payment params, something went wrong
-if (!paymentKey || !orderId || !amount) {
+if (!paymentKey || !orderId || !Number.isSafeInteger(amount) || amount <= 0) {
   showError("결제 정보가 올바르지 않습니다.");
 } else {
-  // Auto-confirm (or wait for button click)
   const confirmBtn = document.getElementById("confirmPaymentButton");
   confirmBtn.addEventListener("click", confirmPayment);
+  confirmPayment();
 }

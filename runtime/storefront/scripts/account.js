@@ -103,6 +103,7 @@ function formatOrderStatus(order) {
   const shipmentValue = String(order?.shipment?.status || "").trim().toLowerCase();
   const orderValue = String(order?.status || "").trim().toLowerCase();
   const value = String(order?.paymentStatus || order?.status || "").trim().toLowerCase();
+  if (orderValue === 'refunded') return '환불 완료';
 
   if (["cancelled", "canceled"].includes(shipmentValue) || ["cancelled", "canceled"].includes(orderValue) || ["cancelled", "canceled"].includes(value)) {
     return "주문 취소";
@@ -621,6 +622,7 @@ export function initAccountPage() {
 
   repairsEl.addEventListener("click", preserveGuestTicketToken);
   guestResultEl.addEventListener("click", preserveGuestTicketToken);
+  guestResultEl.addEventListener('click',event=>{const button=event.target.closest('[data-account-cancel]');if(button)void handleOrderCancellation(button);});
 
   function createPaginationMarkup(pageType, currentPage, totalPages) {
     if (totalPages <= 1) {
@@ -660,15 +662,15 @@ export function initAccountPage() {
     }
 
     return `
-      <div class="account-record__actions">
+      <div class="account-record__actions account-return-actions">
         <button
           type="button"
           class="account-btn account-btn--secondary account-record__action-btn"
           data-account-cancel="${escapeHtml(order?.orderId || "")}" 
           data-account-cancel-mode="${escapeHtml(cancellation.action)}"
         >${escapeHtml(cancellation.buttonLabel)}</button>
+        ${noteMarkup}
       </div>
-      ${noteMarkup}
     `;
   }
 
@@ -857,6 +859,7 @@ export function initAccountPage() {
         <span>${escapeHtml(statusLabel)}</span>
       </div>
       ${renderOrderStatusDetail(order, "account-guest-status-detail")}
+      ${renderOrderCancellationControls(order)}
       ${itemsMarkup}
       <p class="account-copy">${escapeHtml(order.customerName || "주문자")}${order.customerPhone ? ` / ${escapeHtml(order.customerPhone)}` : ""}</p>
       <p class="account-copy">${escapeHtml([order.zipcode, order.address1, order.address2].filter(Boolean).join(" "))}</p>
@@ -1031,6 +1034,30 @@ export function initAccountPage() {
     }
   }
 
+  function collectReturnReason() {
+    return new Promise(resolve=>{
+      const dialog=document.createElement('dialog');
+      dialog.className='account-return-dialog';
+      dialog.setAttribute('aria-labelledby','returnDialogTitle');
+      dialog.innerHTML=`<form method="dialog">
+        <h2 id="returnDialogTitle">반품·환불 요청</h2>
+        <label>사유 <select name="reasonCode" required>
+          <option value="">선택해주세요</option><option value="change_of_mind">단순 변심</option><option value="size">사이즈·착용감</option>
+          <option value="defect">상품 하자</option><option value="wrong_item">오배송</option><option value="other">기타</option></select></label>
+        <label>상세 사유 (기타 선택 시 필수)<textarea name="reason" maxlength="400" rows="4"></textarea></label>
+        <p>이 요청은 주문 전체에 적용됩니다. 일부 상품만 반품하려면 고객센터로 문의해주세요. 발송 전 취소는 전액 환불합니다. 발송 후 단순 변심·사이즈 반품은 상품 회수 확인 후 배송비 4,000원을 제외하고 환불합니다. 하자·오배송은 배송비를 공제하지 않습니다.</p>
+        <div class="account-return-dialog__actions"><button type="button" data-close>닫기</button><button type="submit">요청 내용 확인</button></div></form>`;
+      document.body.append(dialog);
+      let result=null;
+      const form=dialog.querySelector('form');
+      form.elements.reasonCode.addEventListener('change',()=>{form.elements.reason.required=form.elements.reasonCode.value==='other';form.elements.reason.minLength=form.elements.reason.required?2:0;});
+      dialog.querySelector('[data-close]').onclick=()=>dialog.close();
+      form.addEventListener('submit',event=>{event.preventDefault();if(!form.reportValidity())return;result={reasonCode:form.elements.reasonCode.value,reason:form.elements.reason.value.trim()};dialog.close();});
+      dialog.addEventListener('close',()=>{dialog.remove();resolve(result);},{once:true});
+      dialog.showModal();
+    });
+  }
+
   async function handleOrderCancellation(button) {
     const orderId = String(button?.dataset?.accountCancel || "").trim();
     const mode = String(button?.dataset?.accountCancelMode || "").trim();
@@ -1038,8 +1065,13 @@ export function initAccountPage() {
       return;
     }
 
+    let returnDetails={};
+    if(mode==='request_approval') {
+      returnDetails=await collectReturnReason();
+      if(!returnDetails) return;
+    }
     const confirmMessage = mode === "request_approval"
-      ? "배송 준비 단계 주문입니다. 판매자 승인 요청을 보내시겠어요? 승인되면 자동으로 주문 취소와 환불이 진행됩니다."
+      ? "반품·환불 요청을 접수할까요? 발송된 상품은 회수 확인 후 환불됩니다."
       : "이 주문을 취소하시겠어요? 결제도 함께 자동으로 취소됩니다.";
 
     if (!window.confirm(confirmMessage)) {
@@ -1051,15 +1083,22 @@ export function initAccountPage() {
     try {
       const payload = await requestJson("./api/auth/orders/cancel", {
         method: "POST",
+        headers:guestResultEl.contains(button)?{'X-Guest-Access-Token':state.guestAccessToken}:{},
         body: {
           orderId,
+          ...returnDetails,
         },
       });
 
-      await loadAccount({ silent: true });
-      setStatus(memberStatusEl, payload?.message || "주문 취소 요청을 처리했습니다.", "success");
+      if(guestResultEl.contains(button)) {
+        if(state.guestOrder) {state.guestOrder.cancellation={action:null,message:payload.message};renderGuestOrder(state.guestOrder);}
+        setStatus(guestStatusEl,payload.message,'success');
+      } else {
+        await loadAccount({ silent: true });
+        setStatus(memberStatusEl, payload?.message || "주문 취소 요청을 처리했습니다.", "success");
+      }
     } catch (error) {
-      setStatus(memberStatusEl, getFriendlyApiMessage(error, "주문 취소를 처리하지 못했습니다."), "error");
+      setStatus(guestResultEl.contains(button)?guestStatusEl:memberStatusEl, getFriendlyApiMessage(error, "주문 취소를 처리하지 못했습니다."), "error");
     } finally {
       setButtonLoading(button, false, mode === "request_approval" ? "요청 중…" : "취소 중…");
     }

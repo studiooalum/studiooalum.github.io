@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertEditionAvailability } from './inventory.js';
 
 export const SHOP_SHIPPING_AMOUNT = 4000;
 
@@ -60,7 +61,7 @@ export async function resolveOrderItems(env, inputItems) {
   const payload = await response.json().catch(() => null);
   if (!response.ok || !Array.isArray(payload?.result)) throw Object.assign(new Error("상품 가격을 확인할 수 없습니다. 잠시 후 다시 시도해주세요."), { status: 503 });
   const products = new Map(payload.result.map((product) => [product._id, product]));
-  return parsed.data.map((item, index) => {
+  const resolved = parsed.data.map((item, index) => {
     const product = products.get(identifiers[index]);
     if (!product || product.soldOut) throw Object.assign(new Error("판매가 종료되었거나 찾을 수 없는 상품이 있습니다."), { status: 409 });
     const basePrice = Number(product.price);
@@ -72,13 +73,14 @@ export async function resolveOrderItems(env, inputItems) {
     if (price <= 0 || price * item.qty > 100000000) throw Object.assign(new Error("결제 가능한 상품 금액을 확인해주세요."), { status: 409 });
     return { lineId: product._id, productId: product._id, title: product.title, slug: product.slug?.current || "", editionLabel: "", image: product.image || null, price, qty: item.qty };
   });
+  await assertEditionAvailability(env,resolved);
+  return resolved;
 }
 
 export function buildOrderName(items) {
   if (!items?.length) return "주문 상품 없음";
   const firstTitle = items[0]?.title || "상품";
-  if (items.length === 1) return firstTitle;
-  return `${firstTitle} 외 ${items.length - 1}건`;
+  return `Studio OALUM · ${firstTitle}${items.length > 1 ? ` 외 ${items.length - 1}건` : ''}`.slice(0,100);
 }
 
 export function generateOrderId() {

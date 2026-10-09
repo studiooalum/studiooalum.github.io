@@ -7,6 +7,7 @@ import { processNotificationOutbox } from "../../../../cloudflare/lib/notificati
 import { processRepairNotificationOutbox } from "../../../../cloudflare/lib/repair-notifications.js";
 import { maintainWorkshopOperations } from "../../../../cloudflare/lib/workshops.js";
 import { reconcileRepairPayments } from "../../../../cloudflare/lib/repair-payments.js";
+import { maintainShopReturns } from '../../../../cloudflare/lib/shop-returns.js';
 import { persistPayment, readOrderSyncSnapshot } from "../../../../cloudflare/lib/d1.js";
 import { readTossPayment } from "../../../../cloudflare/lib/toss.js";
 import { enqueueShopNotification, enqueueOrderCompletedAdminNotification } from "../../../../cloudflare/lib/notifications.js";
@@ -58,6 +59,7 @@ export async function onRequestPost(context) {
     });
     const workshopOperations = await maintainWorkshopOperations(context.env);
     await reconcileRepairPayments(context.env);
+    await maintainShopReturns(context.env);
     const pendingOrders = await context.env.OALUM_DB.prepare("SELECT id, active_payment_key, total_amount FROM orders WHERE status = 'payment_pending' AND active_payment_key IS NOT NULL ORDER BY updated_at LIMIT 15").all();
     for (const order of pendingOrders.results || []) {
       try {
@@ -68,6 +70,8 @@ export async function onRequestPost(context) {
           const snapshot = await readOrderSyncSnapshot(context.env, order.id);
           await enqueueShopNotification(context.env, snapshot, "order_completed");
           await enqueueOrderCompletedAdminNotification(context.env, snapshot);
+        } else if (payment.status === "CANCELED" && payment.balanceAmount === 0) {
+          await persistPayment(context.env, { ...payment, amount: payment.totalAmount, providerMode: "toss-reconciled", rawResponse: payment });
         } else if (["ABORTED", "EXPIRED"].includes(payment.status)) {
           await context.env.OALUM_DB.prepare("UPDATE orders SET active_payment_key = NULL, status = 'payment_failed', payment_status = 'failed', updated_at = ? WHERE id = ? AND status = 'payment_pending'")
             .bind(new Date().toISOString(), order.id).run();

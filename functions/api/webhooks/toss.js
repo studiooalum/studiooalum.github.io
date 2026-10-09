@@ -2,6 +2,7 @@ import { assertStoredOrderPayment, hasD1, persistWebhookEvent, readOrderSyncSnap
 import { errorResponse, json, noContent, readJson } from "../../../cloudflare/lib/http.js";
 import { dispatchOrderSync, getOrderSyncEventType, shouldEmailForOrderSyncEvent } from "../../../cloudflare/lib/order-sync.js";
 import { readTossPayment } from "../../../cloudflare/lib/toss.js";
+import { settleShopReturn } from '../../../cloudflare/lib/shop-returns.js';
 import { settleWorkshopPayment, settleWorkshopRefund } from "../../../cloudflare/lib/workshops.js";
 import { settleRepairPayment, refundRepairPayment } from "../../../cloudflare/lib/repair-payments.js";
 import { enqueueShopNotification, enqueueOrderCompletedAdminNotification, enqueueNotification, resolveNotificationAdminRecipient } from "../../../cloudflare/lib/notifications.js";
@@ -79,6 +80,7 @@ export async function onRequestPost(context) {
       return json(context.env, { ok: true, received: true });
     }
     await assertStoredOrderPayment(context.env, { orderId: verified.orderId, paymentKey, amount: verified.totalAmount }, { cancellation: ["CANCELED", "PARTIAL_CANCELED"].includes(verified.status) });
+    if (['CANCELED','PARTIAL_CANCELED'].includes(verified.status) && await settleShopReturn(context.env,verified)) return json(context.env,{ok:true,received:true,returnCompleted:true});
     if (verified.status === "PARTIAL_CANCELED") {
       await recordPartialRefund(context.env, verified);
     }

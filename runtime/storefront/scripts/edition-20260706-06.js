@@ -1,4 +1,5 @@
 import client from "./sanity/client.js?v=20260520-03";
+import { applyInventory } from './utils/inventory.js';
 import { ALL_PRODUCTS_QUERY, PRODUCT_BY_SLUG_QUERY } from "./sanity/queries.js?v=20260927-01";
 import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
 import { addToCart, addToCartSilent } from "./cart-20260818-02.js";
@@ -505,10 +506,11 @@ function renderRecommendations(allProducts, currentBaseName) {
 
 async function init() {
   try {
-    const [product, allProducts] = await Promise.all([
+    const [rawProduct, rawProducts] = await Promise.all([
       client.fetch(PRODUCT_BY_SLUG_QUERY, { slug }),
       client.fetch(ALL_PRODUCTS_QUERY),
     ]);
+    const [product, ...allProducts] = await applyInventory([rawProduct, ...rawProducts]);
 
     if (!product) {
       titleEl.textContent = "상품을 찾을 수 없습니다";

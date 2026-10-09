@@ -357,6 +357,7 @@ function resolveShipmentLabel(order) {
   const shipment = order?.shipment || null;
   const orderStatus = String(order?.status || "").trim().toLowerCase();
   const paymentStatus = String(order?.paymentStatus || order?.payment?.status || "").trim().toLowerCase();
+  if (orderStatus==='refunded') return '환불 완료';
   if (["partially_refunded"].includes(orderStatus) || ["partial_refunded", "partial-canceled", "partial_canceled"].includes(paymentStatus)) return "부분 환불";
   if (["refunded"].includes(orderStatus) || ["refunded", "refund"].includes(paymentStatus)) return "환불 완료";
   if (["cancelled", "canceled"].includes(orderStatus) || ["cancelled", "canceled"].includes(paymentStatus)) return "취소 완료";
@@ -527,6 +528,57 @@ function applyCouponPreset(presetKey) {
   syncCouponTargetField();
 }
 
+const returnReasonLabels={change_of_mind:'단순 변심',size:'사이즈·착용감',defect:'상품 하자',wrong_item:'오배송',other:'기타'};
+function renderReturnPanel(order) {
+  const r=order.returnRequest;
+  if(!r) return '';
+  const sent=!!order.shipment?.shippedAt || ['shipped','delivered','returned'].includes(order.shipment?.status);
+  const editable=['pending','awaiting_return'].includes(r.status);
+  const feeAllowed=sent && ['change_of_mind','size'].includes(r.reasonCode);
+  return `<section class="fulfillment-order-meta" data-return-id="${escapeHtml(r.id)}">
+    <h3>반품·환불 · ${escapeHtml(r.label)}</h3>
+    <p>사유: ${escapeHtml(returnReasonLabels[r.reasonCode]||'기타')} ${escapeHtml(r.reasonNote||'')}</p>
+    <p>${escapeHtml(r.decisionNote||'')}</p>
+    ${r.refundAmount!=null?`<p>환불 금액 ${formatPrice(r.refundAmount)} · 배송비 공제 ${formatPrice(r.shippingFee)}</p>`:''}
+    ${editable?`<label class="fulfillment-field">고객 안내 / 반려 사유<textarea data-return-note rows="3" maxlength="400" placeholder="발송 후 승인 시 반품 주소·회수 방법을 입력해주세요">${escapeHtml(r.decisionNote||'')}</textarea></label>
+      <label class="fulfillment-field">배송비 공제<select data-return-fee><option value="0">공제 없음 · 전액 환불</option>${feeAllowed?`<option value="4000" ${r.shippingFee===4000?'selected':''}>4,000원 · 단순 변심/사이즈 반품</option>`:''}</select></label>
+      <p>선택한 공제액을 제외하고 결제수단으로 환불합니다. 환불 완료 후 에디션이 다시 판매됩니다. 재판매 불가 상품은 먼저 Sanity에서 수동 품절로 설정해주세요.</p>
+      ${r.status==='awaiting_return'?'<label><input type="checkbox" data-return-received>반품 상품 회수 및 상태 확인 완료</label>':''}
+      <div class="fulfillment-actions"><button type="button" class="fulfillment-btn" data-return-action="${r.status==='awaiting_return'?'refund':'approve'}">${r.status==='awaiting_return'?'회수 확인·환불 실행':sent?'반품 승인·회수 안내':'승인·전액 환불'}</button>
+      <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-return-action="reject">반려</button></div>`:''}
+    ${['refunding','reconcile'].includes(r.status)?'<p>환불 결과를 확인 중입니다. 중복 환불을 실행하지 않습니다.</p><button type="button" class="fulfillment-btn" data-return-action="reconcile">토스 결과 재확인</button>':''}
+    <p data-return-status role="status"></p></section>`;
+}
+async function loadReturnQueue() {
+  if(!orderListEl) return;
+  let queue=document.querySelector('[data-return-queue]');
+  if(!queue) {queue=document.createElement('section');queue.dataset.returnQueue='';orderListEl.before(queue);}
+  const data=await requestFulfillment('/api/orders/returns');
+  queue.innerHTML=`<h3>반품·환불 대기 ${data.requests.length}건</h3>`+data.requests.map(r=>`<button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-return-order="${escapeHtml(r.orderId)}">${escapeHtml(r.orderId)} · ${escapeHtml(r.label)}</button>`).join('');
+  queue.onclick=async event=>{
+    const target=event.target.closest('[data-return-order]');if(!target)return;
+    try {const data=await requestFulfillment(`/api/orders/fulfillment?orderId=${encodeURIComponent(target.dataset.returnOrder)}`);applySelectedOrder(data.order);}
+    catch(error){setStatus(listStatusEl,error.message,'error');}
+  };
+}
+selectionEl?.addEventListener('click',async event=>{
+  const button=event.target.closest('[data-return-action]');if(!button)return;
+  const panel=button.closest('[data-return-id]');
+  const action=button.dataset.returnAction;
+  const shippingFee=Number(panel.querySelector('[data-return-fee]')?.value||0);
+  const received=!!panel.querySelector('[data-return-received]')?.checked;
+  const order=getSelectedOrder();
+  if(!window.confirm(action==='refund' || (action==='approve' && !order.shipment?.shippedAt && !['shipped','delivered','returned'].includes(order.shipment?.status))
+    ? `${formatPrice(order.totalAmount-shippingFee)}을 환불할까요?`:'요청을 처리할까요?'))return;
+  button.disabled=true;
+  try {
+    await requestFulfillment('/api/orders/returns',{method:'POST',body:{id:panel.dataset.returnId,action,shippingFee,received,note:panel.querySelector('[data-return-note]')?.value||''}});
+    const data=await requestFulfillment(`/api/orders/fulfillment?orderId=${encodeURIComponent(order.orderId)}`);
+    applySelectedOrder(data.order);await loadReturnQueue();
+  } catch(error) {panel.querySelector('[data-return-status]').textContent=error.message;}
+  finally {button.disabled=false;}
+});
+
 function renderSelection() {
   if (!selectionEl || !formEl) return;
 
@@ -581,6 +633,7 @@ function renderSelection() {
       <p>${escapeHtml([order.shipping?.zipcode, order.shipping?.address1, order.shipping?.address2].filter(Boolean).join(" "))}</p>
       ${benefitLines.map((line) => `<p class="fulfillment-copy fulfillment-copy--quiet">${escapeHtml(line)}</p>`).join("")}
       <ul class="fulfillment-order-items">${itemMarkup}</ul>
+      ${renderReturnPanel(order)}
       ${shipment?.trackerLastEventName || shipment?.trackerLastEventDescription ? `<p class="fulfillment-copy fulfillment-copy--quiet">최근 트래커 이벤트: ${escapeHtml([shipment.trackerLastEventName, shipment.trackerLastEventDescription].filter(Boolean).join(" / "))}</p>` : ""}
     </div>
   `;
@@ -635,6 +688,13 @@ async function loadOrders(query = "") {
     const payload = await requestFulfillment(`/api/orders/fulfillment?limit=20&query=${encodeURIComponent(query)}`);
     state.orders = Array.isArray(payload.orders) ? payload.orders : [];
     state.config = payload.config || null;
+    const requestedId=new URLSearchParams(location.search).get('orderId');
+    if(requestedId && !state.selectedOrderId) {
+      const detail=await requestFulfillment(`/api/orders/fulfillment?orderId=${encodeURIComponent(requestedId)}`);
+      if(!state.orders.some(order=>order.orderId===requestedId)) state.orders.unshift(detail.order);
+      state.selectedOrderId=requestedId;
+    }
+    await loadReturnQueue();
 
     if (state.selectedOrderId) {
       const stillSelected = state.orders.find((order) => order.orderId === state.selectedOrderId);

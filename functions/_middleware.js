@@ -6,8 +6,9 @@ const LIMITED_PATHS = new Map([
   ["/api/auth/verify", 15], ["/api/auth/password-reset/request", 5], ["/api/auth/password-reset/confirm", 10],
   ["/api/auth/profile-image", 12],
   ["/api/orders/admin-session", 10], ["/api/workshops/inquiries", 5], ["/api/workshops/reservations", 12],
-  ["/api/repairs", 6], ["/api/orders", 15], ["/api/orders/quote", 60], ["/api/sanity/query", 100],
+  ["/api/repairs", 20], ["/api/orders", 15], ["/api/orders/quote", 60], ["/api/sanity/query", 100],
   ["/api/payments/confirm", 30], ["/api/repairs/payment", 30], ["/api/workshops/payment-confirm", 30],
+  ['/api/auth/orders/cancel',10], ['/api/orders/returns',30],
 ]);
 
 export async function onRequest(context) {

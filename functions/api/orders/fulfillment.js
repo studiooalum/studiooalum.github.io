@@ -8,6 +8,7 @@ import {
   searchDeliveryTrackerCarriers,
 } from "../../../cloudflare/lib/delivery-tracker.js";
 import { requireAdminAccess } from "../../../cloudflare/lib/admin.js";
+import { latestReturn,publicReturn } from '../../../cloudflare/lib/shop-returns.js';
 import { enqueueShopNotification } from "../../../cloudflare/lib/notifications.js";
 import { deleteUnpaidOrder, readFulfillmentOrders, readOrderSyncSnapshot, updateShipment } from "../../../cloudflare/lib/d1.js";
 import { errorResponse, json, noContent, readJson, validationError } from "../../../cloudflare/lib/http.js";
@@ -112,12 +113,13 @@ export async function onRequestGet(context) {
 
       return json(context.env, {
         ok: true,
-        order,
+        order:{...order,returnRequest:publicReturn(await latestReturn(context.env.OALUM_DB,orderId))},
         config,
       });
     }
 
     const orders = await readFulfillmentOrders(context.env, { query, limit });
+    for(const order of orders) order.returnRequest=publicReturn(await latestReturn(context.env.OALUM_DB,order.orderId));
 
     return json(context.env, {
       ok: true,
@@ -141,6 +143,13 @@ export async function onRequestPost(context) {
     }
 
     const data = parsed.data;
+    const existingOrder=await readOrderSyncSnapshot(context.env,data.orderId);
+    if(!existingOrder) throw Object.assign(new Error('주문을 찾을 수 없습니다.'),{status:404});
+    if(data.status==='cancelled' && !['cancelled','refunded','payment_failed','created'].includes(existingOrder.status)) {
+      throw Object.assign(new Error('배송 상태만 취소로 바꾸면 결제는 환불되지 않습니다. 반품·환불 요청에서 승인해주세요.'),{status:409});
+    }
+    if(existingOrder.shipment?.shippedAt && ['confirmed','ready'].includes(data.status)) throw Object.assign(new Error('발송한 주문은 배송 준비 단계로 되돌릴 수 없습니다. 반품·환불 요청을 처리해주세요.'),{status:409});
+    if(['cancelled','refunded'].includes(existingOrder.status) && !['cancelled','returned'].includes(data.status)) throw Object.assign(new Error('취소·환불한 주문은 발송할 수 없습니다.'),{status:409});
     const config = getFulfillmentConfig(context.env);
     const trackerState = {
       attempted: false,
@@ -192,6 +201,7 @@ export async function onRequestPost(context) {
     }
 
     const order = await readOrderSyncSnapshot(context.env, parsed.data.orderId);
+    if(order) order.returnRequest=publicReturn(await latestReturn(context.env.OALUM_DB,order.orderId));
     if (order && ["shipped", "delivered"].includes(data.status)) {
       await enqueueShopNotification(context.env, order, data.status === "shipped" ? "shipping_started" : "delivered");
     }
@@ -204,6 +214,7 @@ export async function onRequestPost(context) {
       config,
     });
   } catch (error) {
+    if (/RETURN_PENDING/.test(error?.message || '')) error=Object.assign(new Error('반품·환불 요청이 있는 주문입니다. 요청을 먼저 처리해주세요.'),{status:409});
     return errorResponse(context.env, error, "Failed to update fulfillment status.");
   }
 }

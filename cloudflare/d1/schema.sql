@@ -1271,3 +1271,14 @@ CREATE TABLE IF NOT EXISTS notification_deliveries (
   PRIMARY KEY(channel,provider_id)
 );
 CREATE INDEX IF NOT EXISTS idx_notification_deliveries_pending ON notification_deliveries(status,next_check_at);
+-- Inventory and return guards/backfill are installed by migration 0045.
+CREATE TABLE IF NOT EXISTS shop_returns (
+ id TEXT PRIMARY KEY,order_id TEXT NOT NULL REFERENCES orders(id),reason_code TEXT NOT NULL,reason_note TEXT NOT NULL DEFAULT '',
+ status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','awaiting_return','refunding','reconcile','completed','rejected')),
+ shipping_fee INTEGER NOT NULL DEFAULT 0 CHECK(shipping_fee IN (0,4000)),refund_amount INTEGER,decision_note TEXT NOT NULL DEFAULT '',received_at TEXT,
+ created_at TEXT NOT NULL,updated_at TEXT NOT NULL,completed_at TEXT,notified_at TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS shop_returns_active ON shop_returns(order_id) WHERE status <> 'rejected';
+CREATE TABLE IF NOT EXISTS edition_claims (
+ product_id TEXT NOT NULL,order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,created_at TEXT NOT NULL,PRIMARY KEY(product_id,order_id)
+);

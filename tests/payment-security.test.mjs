@@ -27,7 +27,9 @@ function mockFetch(context, implementation) {
 
 test("order prices and titles are resolved from published products, never the browser", async (context) => {
   mockFetch(context, async () => Response.json({ result: [{ _id: "product-1", title: "Published product", price: 50000, discountRate: 10 }] }));
-  const items = await resolveOrderItems({}, [{ _id: "product-1", lineId: "product-1", title: "Forged", price: 1, qty: 2 }]);
+  const inventoryEnv = { OALUM_DB: { prepare: () => ({ all: async () => ({ results: [] }) }) } };
+  const items = await resolveOrderItems(inventoryEnv, [{ _id: "product-1", lineId: "product-1", title: "Forged", price: 1, qty: 1 }]);
+  await assert.rejects(resolveOrderItems(inventoryEnv, [{ lineId: "product-1", title: "Forged", price: 1, qty: 2 }]), { status: 409 });
   assert.equal(items[0].price, 45000);
   assert.equal(items[0].title, "Published product");
   await assert.rejects(resolveOrderItems({}, [{ lineId: "missing", title: "Forged", price: 1, qty: 1 }]), { status: 409 });

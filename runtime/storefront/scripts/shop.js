@@ -1,4 +1,5 @@
 import client from "./sanity/client.js?v=20260520-03";
+import {applyInventory} from './utils/inventory.js';
 import { ALL_PRODUCTS_QUERY } from "./sanity/queries.js?v=20260927-01";
 import { imageRgb, imageUrl } from "./sanity/image.js?v=20260818-01";
 import {
@@ -162,7 +163,7 @@ function renderProducts(products) {
 async function init() {
   try {
     renderTags();
-    const products = await client.fetch(ALL_PRODUCTS_QUERY);
+    const products = await applyInventory(await client.fetch(ALL_PRODUCTS_QUERY));
     renderProducts(products);
   } catch (err) {
     console.error("Failed to fetch products", err);

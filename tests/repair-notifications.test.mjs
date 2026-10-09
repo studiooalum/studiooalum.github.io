@@ -597,6 +597,29 @@ test("ticket lifecycle migration preserves the ledger through #004 and reclaims 
   assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 5);
 });
 
+test("repair inquiry migration removes legacy ticket number guards", () => {
+  const database = new DatabaseSync(":memory:");
+  try {
+    database.exec(`
+      CREATE TABLE repair_requests (
+        id TEXT PRIMARY KEY,
+        ticket_number INTEGER
+      );
+      CREATE TRIGGER trg_repair_requests_ticket_number_required
+      BEFORE INSERT ON repair_requests
+      WHEN NEW.ticket_number IS NULL
+      BEGIN
+        SELECT RAISE(ABORT, 'repair_ticket_number_required');
+      END;
+    `);
+    database.exec(readFileSync(new URL("../cloudflare/d1/migrations/0041_repair_inquiry_ticket_number_guard.sql", import.meta.url), "utf8"));
+    database.prepare("INSERT INTO repair_requests (id, ticket_number) VALUES (?, NULL)").run("RPR_NEW");
+    assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").get("RPR_NEW").ticket_number, null);
+  } finally {
+    database.close();
+  }
+});
+
 test("repair consent and historical ticket ledger migration preserves #005 as the next number", () => {
   const database = new DatabaseSync(":memory:");
   try {
@@ -1428,6 +1451,7 @@ test("admin deletion removes only eligible Repair requests", async (t) => {
     (error) => error.status === 409 && /결제 또는 최종 금액/.test(error.message),
   );
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM repair_requests WHERE id = 'RPR_DELETE_BLOCKED'").first().count, 1);
+
 });
 
 test("notification history can delete revisions and purges only terminal old outbox rows", async (t) => {

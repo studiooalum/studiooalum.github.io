@@ -28,7 +28,10 @@ function formatCartPrice(value) {
 ========================= */
 
 function getCart() {
-  return readStoredJson(CART_KEY, []);
+  const items = readStoredJson(CART_KEY, []);
+  const unique = [...new Map(items.map(item => [item.lineId || item._id, { ...item, qty: 1 }])).values()];
+  if (JSON.stringify(items) !== JSON.stringify(unique)) saveCart(unique);
+  return unique;
 }
 
 function saveCart(items) {
@@ -47,7 +50,7 @@ export function addToCart(product) {
   const lineId = product._id;
   const existing = items.find((i) => i.lineId === lineId);
   if (existing) {
-    existing.qty += 1;
+    existing.qty = 1;
   } else {
     items.push({
       lineId,
@@ -70,7 +73,7 @@ export function addToCartSilent(product) {
   const lineId = product._id;
   const existing = items.find((i) => i.lineId === lineId);
   if (existing) {
-    existing.qty += 1;
+    existing.qty = 1;
   } else {
     items.push({
       lineId,
@@ -95,7 +98,7 @@ export function updateQty(id, delta) {
   const items = getCart();
   const item = items.find((i) => (i.lineId || i._id) === id);
   if (!item) return;
-  item.qty = Math.max(1, item.qty + delta);
+  item.qty = 1;
   saveCart(items);
   renderCartPanel();
 }
@@ -246,9 +249,7 @@ export function renderCartPanel() {
             <div class="cart-item__title">${item.title}</div>
             <div class="cart-item__price">${formatCartPrice(item.price)}</div>
             <div class="cart-item__qty">
-              <button class="cart-item__qty-btn" data-action="dec" data-id="${item.lineId || item._id}">−</button>
-              <span>${item.qty}</span>
-              <button class="cart-item__qty-btn" data-action="inc" data-id="${item.lineId || item._id}">+</button>
+              <span>1점 · 단일 에디션</span>
             </div>
           </div>
           <button class="cart-item__remove" data-id="${item.lineId || item._id}" aria-label="삭제">&times;</button>

@@ -603,7 +603,7 @@ async function reverseEarnedPoints(database, order, now, note) {
   return true;
 }
 
-async function syncOrderPointsState(database, orderId, now, shipment = null) {
+export async function syncOrderPointsState(database, orderId, now, shipment = null) {
   const order = await findOrderRecord(database, orderId);
   if (!order || !order.user_id) {
     return false;

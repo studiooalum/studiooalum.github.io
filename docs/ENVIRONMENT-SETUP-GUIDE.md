@@ -1,5 +1,7 @@
 # 환경변수 설정 및 보안 가이드
 
+> 현재 Cloudflare Pages 결제 운영 기준은 [2026-09-30 결제 점검 기록](./payments-live-20260930.md)을 우선합니다. `TOSS_CLIENT_KEY`와 `TOSS_SECRET_KEY`를 Production에 저장하고 재배포해야 합니다. 아래의 과거 Next.js 배포 예시는 현재 Pages 결제 설정과 다릅니다.
+
 **업데이트:** 2026-06-30  
 **목적:** 환경변수 안전 관리 및 설정 자동화
 
@@ -62,8 +64,8 @@ cd /workspaces/studiooalum.github.io
 cat > .env.local << 'EOF'
 # 테스트 환경 결제
 AUTH_COOKIE_INSECURE=true
-NEXT_PUBLIC_TOSS_CLIENT_KEY=pk_test_[테스트 키]
-TOSS_SECRET_KEY=sk_test_[테스트 시크릿]
+NEXT_PUBLIC_TOSS_CLIENT_KEY=test_gck_[테스트 클라이언트 키]
+TOSS_SECRET_KEY=test_gsk_[테스트 시크릿 키]
 
 # CMS (공개 프로젝트)
 NEXT_PUBLIC_SANITY_PROJECT_ID=9bsud0bl
