@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { requireAdminAccess } from '../../../cloudflare/lib/admin.js';
 import { decideShopReturn, publicReturn } from '../../../cloudflare/lib/shop-returns.js';
 import { errorResponse,json,readJson,validationError } from '../../../cloudflare/lib/http.js';
-const schema=z.object({id:z.string().min(1).max(80),action:z.enum(['approve','reject','refund','reconcile']),shippingFee:z.union([z.literal(0),z.literal(4000)]).default(0),note:z.string().trim().max(400).default(''),received:z.boolean().default(false)});
+const schema=z.object({id:z.string().min(1).max(80),action:z.enum(['approve','reject','refund','reconcile']),shippingFee:z.literal(0).default(0),note:z.string().trim().max(400).default(''),received:z.boolean().default(false)});
 export async function onRequestGet(context) {
   try {
     await requireAdminAccess(context);

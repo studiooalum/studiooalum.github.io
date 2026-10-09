@@ -33,7 +33,8 @@ test("shop and workshop policies match the current service rules", () => {
 
   assert.equal(versionedSource, source);
   assert.match(source, /배송 비용 : 주문 1건당 4,000원/);
-  assert.match(source, /실제 결제 금액에서 배송비 4,000원을 공제/);
+  assert.match(source, /별도 배송비 공제 없이 실제 결제 금액 전액을 환불/);
+  assert.doesNotMatch(source, /배송비 4,000원을 공제/);
   assert.doesNotMatch(source, /왕복 배송비 8,000원/);
   assert.match(source, /반품 상품을 반환받은 날부터 3영업일 이내/);
   assert.match(source, /별도로 고지하고 소비자의 전자 동의를 받은 경우/);

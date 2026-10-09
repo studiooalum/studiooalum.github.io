@@ -534,15 +534,13 @@ function renderReturnPanel(order) {
   if(!r) return '';
   const sent=!!order.shipment?.shippedAt || ['shipped','delivered','returned'].includes(order.shipment?.status);
   const editable=['pending','awaiting_return'].includes(r.status);
-  const feeAllowed=sent && ['change_of_mind','size'].includes(r.reasonCode);
   return `<section class="fulfillment-order-meta" data-return-id="${escapeHtml(r.id)}">
     <h3>반품·환불 · ${escapeHtml(r.label)}</h3>
     <p>사유: ${escapeHtml(returnReasonLabels[r.reasonCode]||'기타')} ${escapeHtml(r.reasonNote||'')}</p>
     <p>${escapeHtml(r.decisionNote||'')}</p>
     ${r.refundAmount!=null?`<p>환불 금액 ${formatPrice(r.refundAmount)} · 배송비 공제 ${formatPrice(r.shippingFee)}</p>`:''}
     ${editable?`<label class="fulfillment-field">고객 안내 / 반려 사유<textarea data-return-note rows="3" maxlength="400" placeholder="발송 후 승인 시 반품 주소·회수 방법을 입력해주세요">${escapeHtml(r.decisionNote||'')}</textarea></label>
-      <label class="fulfillment-field">배송비 공제<select data-return-fee><option value="0">공제 없음 · 전액 환불</option>${feeAllowed?`<option value="4000" ${r.shippingFee===4000?'selected':''}>4,000원 · 단순 변심/사이즈 반품</option>`:''}</select></label>
-      <p>선택한 공제액을 제외하고 결제수단으로 환불합니다. 환불 완료 후 에디션이 다시 판매됩니다. 재판매 불가 상품은 먼저 Sanity에서 수동 품절로 설정해주세요.</p>
+      <p>환불 예정 금액 ${formatPrice(order.totalAmount)} · 별도 배송비 공제 없이 실제 결제 금액 전액을 환불합니다. 환불 완료 후 에디션이 다시 판매됩니다. 재판매 불가 상품은 먼저 Sanity에서 수동 품절로 설정해주세요.</p>
       ${r.status==='awaiting_return'?'<label><input type="checkbox" data-return-received>반품 상품 회수 및 상태 확인 완료</label>':''}
       <div class="fulfillment-actions"><button type="button" class="fulfillment-btn" data-return-action="${r.status==='awaiting_return'?'refund':'approve'}">${r.status==='awaiting_return'?'회수 확인·환불 실행':sent?'반품 승인·회수 안내':'승인·전액 환불'}</button>
       <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-return-action="reject">반려</button></div>`:''}
@@ -565,14 +563,13 @@ selectionEl?.addEventListener('click',async event=>{
   const button=event.target.closest('[data-return-action]');if(!button)return;
   const panel=button.closest('[data-return-id]');
   const action=button.dataset.returnAction;
-  const shippingFee=Number(panel.querySelector('[data-return-fee]')?.value||0);
   const received=!!panel.querySelector('[data-return-received]')?.checked;
   const order=getSelectedOrder();
   if(!window.confirm(action==='refund' || (action==='approve' && !order.shipment?.shippedAt && !['shipped','delivered','returned'].includes(order.shipment?.status))
-    ? `${formatPrice(order.totalAmount-shippingFee)}을 환불할까요?`:'요청을 처리할까요?'))return;
+    ? `${formatPrice(order.totalAmount)}을 전액 환불할까요?`:'요청을 처리할까요?'))return;
   button.disabled=true;
   try {
-    await requestFulfillment('/api/orders/returns',{method:'POST',body:{id:panel.dataset.returnId,action,shippingFee,received,note:panel.querySelector('[data-return-note]')?.value||''}});
+    await requestFulfillment('/api/orders/returns',{method:'POST',body:{id:panel.dataset.returnId,action,shippingFee:0,received,note:panel.querySelector('[data-return-note]')?.value||''}});
     const data=await requestFulfillment(`/api/orders/fulfillment?orderId=${encodeURIComponent(order.orderId)}`);
     applySelectedOrder(data.order);await loadReturnQueue();
   } catch(error) {panel.querySelector('[data-return-status]').textContent=error.message;}

@@ -13,7 +13,7 @@ try {
   await context.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
   const product={_id:'fixture-edition',title:'Patchwork Beanie (#Black 01)',slug:{current:'fixture-edition'},price:43000,shopTags:['hat'],images:[],soldOut:false};
   let unavailable=['fixture-edition'],submitted=null,decision=null;
-  const request={id:'RET_FIXTURE',status:'pending',label:'검토 대기',reasonCode:'change_of_mind',reasonNote:'착용감이 맞지 않습니다.',shippingFee:4000,decisionNote:''};
+  const request={id:'RET_FIXTURE',status:'pending',label:'검토 대기',reasonCode:'change_of_mind',reasonNote:'착용감이 맞지 않습니다.',shippingFee:0,decisionNote:''};
   const order={orderId:'OALUM-CF-BROWSER',orderName:'Studio OALUM · Patchwork Beanie (#Black 01)',createdAt:new Date().toISOString(),status:'paid',paymentStatus:'confirmed',totalAmount:47000,
    customer:{name:'테스트 고객',email:'test@example.com'},shipping:{zipcode:'01234',address1:'테스트 주소'},shipment:{status:'shipped',shippedAt:new Date().toISOString()},items:[{title:product.title,quantity:1}],returnRequest:request,
    cancellation:{available:true,action:'request_approval',buttonLabel:'반품·환불 요청',message:'사유를 선택해주세요.'}};
@@ -57,8 +57,9 @@ try {
   await page.locator('[data-return-note]').fill('반품 주소와 회수 방법을 안내드립니다.');
   await page.locator('[data-return-action=approve]').click();
   await page.locator('[data-return-received]').waitFor();
-  assert.equal(decision.action,'approve');assert.equal(decision.shippingFee,4000);
-  assert.equal(await page.locator('[data-return-fee]').inputValue(),'4000');
+  assert.equal(decision.action,'approve');assert.equal(decision.shippingFee,0);
+  assert.equal(await page.locator('[data-return-fee]').count(),0);
+  assert.match(await page.locator('[data-return-id]').textContent(),/47,000/);
   await page.screenshot({path:`${output}/admin-${width}.png`,fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false,'admin horizontal overflow');
   assert.deepEqual(errors,[]);

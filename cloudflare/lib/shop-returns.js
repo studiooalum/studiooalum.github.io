@@ -8,7 +8,6 @@ const labels = {pending:'검토 대기',awaiting_return:'반품 회수 대기',r
 const fail = (message,status=409) => {throw Object.assign(new Error(message),{status});};
 const now = () => new Date().toISOString();
 const shipped = order => ['shipped','delivered','returned'].includes(order?.shipment?.status) || !!order?.shipment?.shippedAt;
-export const suggestedReturnFee = (order,reason) => shipped(order) && ['change_of_mind','size'].includes(reason) ? 4000 : 0;
 export function publicReturn(row) {
   return row ? {id:row.id,status:row.status,label:labels[row.status],reasonCode:row.reason_code,reasonNote:row.reason_note,
     shippingFee:row.shipping_fee,refundAmount:row.refund_amount,decisionNote:row.decision_note,requestedAt:row.created_at,completedAt:row.completed_at} : null;
@@ -22,7 +21,7 @@ export function customerReturnState(order,request) {
   if (!['ready','packing','shipped','delivered','returned','cancelled'].includes(order?.shipment?.status) && !shipped(order)) return null;
   if (!['confirmed','paid','done','completed','success','succeeded'].includes(order?.paymentStatus)) return null;
   return {available:true,action:'request_approval',buttonLabel:'반품·환불 요청',status:'approval_required',
-    message:[request?.status==='rejected' ? `이전 요청 반려: ${request.decision_note}` : '', '사유를 접수하면 관리자가 확인합니다. 발송 후 단순 변심·사이즈 반품은 배송비 4,000원이 공제됩니다.'].filter(Boolean).join(' · '),request:publicReturn(request)};
+    message:[request?.status==='rejected' ? `이전 요청 반려: ${request.decision_note}` : '', '사유를 접수하면 관리자가 확인합니다. 별도 배송비 공제 없이 실제 결제 금액 전액을 환불합니다. 발송한 상품은 회수 확인 후 처리합니다.'].filter(Boolean).join(' · '),request:publicReturn(request)};
 }
 
 async function notifyReturn(env,row) {
@@ -51,7 +50,7 @@ export async function requestShopReturn(context,{order,reasonCode,reasonNote=''}
   const id=`RET_${crypto.randomUUID().replace(/-/g,'')}`;
   const date=now();
   await db.prepare(`INSERT OR IGNORE INTO shop_returns(id,order_id,reason_code,reason_note,shipping_fee,created_at,updated_at)
-    VALUES(?,?,?,?,?,?,?)`).bind(id,order.orderId,reasonCode,reasonNote,suggestedReturnFee(order,reasonCode),date,date).run();
+    VALUES(?,?,?,?,?,?,?)`).bind(id,order.orderId,reasonCode,reasonNote,0,date,date).run();
   existing=await latestReturn(db,order.orderId);
   // The request remains visible to the administrator even if notification storage is temporarily unavailable.
   try { await notifyReturn(context.env,existing); } catch(error) { console.error('Return notification queued for retry', {id:existing.id,message:error.message}); }
@@ -105,20 +104,19 @@ export async function decideShopReturn(context,{id,action,shippingFee=0,note='',
     return publicReturn(await latestReturn(db,row.order_id));
   }
   if(action==='reconcile' || row.status==='rejected') fail('처리 가능한 요청이 아닙니다.');
+  if(shippingFee!==0) fail('별도 배송비 공제 없이 실제 결제 금액 전액을 환불합니다. 화면을 새로고침해주세요.',400);
   if(action==='reject') {
     if(!String(note).trim()) fail('고객에게 안내할 반려 사유를 입력해주세요.',400);
     await db.prepare("UPDATE shop_returns SET status='rejected',decision_note=?,updated_at=?,notified_at=NULL WHERE id=? AND status IN ('pending','awaiting_return')").bind(String(note).trim().slice(0,400),now(),id).run();
   } else if(action==='approve' && shipped(order)) {
     if(row.status!=='pending') fail('이미 회수 대기 중입니다.');
     if(!String(note).trim()) fail('회수 방법과 주소 등 반품 안내를 입력해주세요.',400);
-    if(![0,4000].includes(shippingFee) || (shippingFee && !suggestedReturnFee(order,row.reason_code))) fail('이 사유에는 배송비를 공제할 수 없습니다.',400);
     await db.prepare("UPDATE shop_returns SET status='awaiting_return',shipping_fee=?,decision_note=?,updated_at=?,notified_at=NULL WHERE id=? AND status='pending'").bind(shippingFee,String(note).trim().slice(0,400),now(),id).run();
   } else {
     if(shipped(order) && (row.status!=='awaiting_return' || !received)) fail('반품 승인 후 상품 회수를 확인해야 환불할 수 있습니다.');
     if(!shipped(order) && row.status!=='pending') fail('처리 상태를 다시 확인해주세요.');
-    if(![0,4000].includes(shippingFee) || (shippingFee && !suggestedReturnFee(order,row.reason_code))) fail('발송 후 단순 변심·사이즈 반품만 4,000원을 공제할 수 있습니다.',400);
-    const amount=order.totalAmount-shippingFee;
-    if(amount<=0) fail('환불 금액이 0원 이하입니다. 배송비 면제 또는 별도 확인이 필요합니다.');
+    const amount=order.totalAmount;
+    if(amount<=0) fail('환불할 결제 금액을 확인해주세요.');
     const before=await readTossPayment(env,order.payment.paymentKey);
     if(before.orderId!==order.orderId || before.paymentKey!==order.payment.paymentKey || before.totalAmount!==order.totalAmount || before.currency!=='KRW'
       || before.status!=='DONE' || before.balanceAmount!==order.totalAmount) fail('이미 취소되었거나 부분 취소된 결제입니다. 토스 내역을 먼저 확인해주세요.');

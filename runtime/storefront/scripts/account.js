@@ -1045,7 +1045,7 @@ export function initAccountPage() {
           <option value="">선택해주세요</option><option value="change_of_mind">단순 변심</option><option value="size">사이즈·착용감</option>
           <option value="defect">상품 하자</option><option value="wrong_item">오배송</option><option value="other">기타</option></select></label>
         <label>상세 사유 (기타 선택 시 필수)<textarea name="reason" maxlength="400" rows="4"></textarea></label>
-        <p>이 요청은 주문 전체에 적용됩니다. 일부 상품만 반품하려면 고객센터로 문의해주세요. 발송 전 취소는 전액 환불합니다. 발송 후 단순 변심·사이즈 반품은 상품 회수 확인 후 배송비 4,000원을 제외하고 환불합니다. 하자·오배송은 배송비를 공제하지 않습니다.</p>
+        <p>이 요청은 주문 전체에 적용됩니다. 일부 상품만 반품하려면 고객센터로 문의해주세요. 별도 배송비 공제 없이 실제 결제 금액 전액을 환불합니다. 발송한 상품은 회수 확인 후 환불합니다.</p>
         <div class="account-return-dialog__actions"><button type="button" data-close>닫기</button><button type="submit">요청 내용 확인</button></div></form>`;
       document.body.append(dialog);
       let result=null;
