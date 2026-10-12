@@ -546,7 +546,7 @@ test("repair application copy migration uses reassuring receipt language", (t) =
   assert.doesNotMatch(customerTemplate.active_body, /수선 문의/);
 });
 
-test("Repair inquiries receive a ticket number only when work starts and require an estimate on receipt", async (t) => {
+test("Repair inquiries receive and retain a ticket number when the item is received", async (t) => {
   const { database, env } = createEnvironment();
   t.after(() => database.close());
   const receipt = await createInitialRepair(env, "LIFECYCLE");
@@ -565,8 +565,9 @@ test("Repair inquiries receive a ticket number only when work starts and require
     quoteAmount: 35000,
   });
   let row = database.prepare("SELECT ticket_number, quote_amount FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first();
-  assert.equal(row.ticket_number, null);
+  assert.equal(row.ticket_number, 1);
   assert.equal(row.quote_amount, 35000);
+  assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 2);
   const estimateNotice = database.prepare(`
     SELECT body_text FROM notification_outbox
     WHERE entity_id = ? AND template_key = 'repair.received'
@@ -577,6 +578,25 @@ test("Repair inquiries receive a ticket number only when work starts and require
   row = database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first();
   assert.equal(row.ticket_number, 1);
   assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 2);
+});
+
+test("ticket receipt backfill assigns stable numbers to received items and later stages", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  await createInitialRepair(env, "WAITING");
+  await createInitialRepair(env, "ARRIVED");
+  await createInitialRepair(env, "ACTIVE");
+  database.prepare("UPDATE repair_requests SET status = 'item_received', quote_amount = 25000 WHERE id = ?").bind("RPR_ARRIVED").run();
+  database.prepare("UPDATE repair_requests SET status = 'in_progress', quote_amount = 50000 WHERE id = ?").bind("RPR_ACTIVE").run();
+
+  const migration = readFileSync(new URL("../cloudflare/d1/migrations/0047_repair_ticket_number_on_receipt.sql", import.meta.url), "utf8");
+  database.exec(migration);
+  database.exec(migration);
+
+  assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_WAITING").first().ticket_number, null);
+  assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_ARRIVED").first().ticket_number, 1);
+  assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_ACTIVE").first().ticket_number, 2);
+  assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 3);
 });
 
 test("ticket lifecycle migration preserves the ledger through #004 and reclaims inquiry numbers", async (t) => {

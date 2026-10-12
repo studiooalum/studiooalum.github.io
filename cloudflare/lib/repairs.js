@@ -65,6 +65,14 @@ function normalizeStatus(value, fallback = "received") {
   return normalizeRepairStatus(value, fallback);
 }
 
+const TICKET_NUMBER_STATUSES = new Set([
+  "item_received",
+  "in_progress",
+  "payment_pending",
+  "shipping",
+  "closed",
+]);
+
 function normalizePreferredContact(value) {
   return cleanText(value, 20).toLowerCase() === "phone" ? "phone" : "email";
 }
@@ -974,7 +982,7 @@ export async function updateRepairRequest(env, input) {
   });
 
   const statusChanged = status !== currentStatus;
-  const shouldAssignTicketNumber = status === "in_progress" && !Number(existing.ticket_number || 0);
+  const shouldAssignTicketNumber = TICKET_NUMBER_STATUSES.has(status) && !Number(existing.ticket_number || 0);
   let assignedTicketNumber = Number(existing.ticket_number || 0) || null;
   if (shouldAssignTicketNumber) {
     const sequence = await database.prepare(`
