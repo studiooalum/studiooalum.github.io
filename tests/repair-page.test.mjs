@@ -210,12 +210,23 @@ test("Repair Ticket shows protected request images and hides lookup without a UR
   assert.doesNotMatch(repairTicketSource, /\["배송",[^\n]+\|\| "미발송"\]/);
 });
 
+test("Repair Ticket accumulates repeated mobile photo selections up to the shared limit", () => {
+  assert.match(repairTicketSource, /validateRepairPhotos\(\[\.\.\.state\.files, \.\.\.files\]\)/);
+  assert.match(repairTicketSource, /const preparedFiles = await prepareRepairPhotos\(files/);
+  assert.match(repairTicketSource, /state\.files = \[\.\.\.state\.files, \.\.\.preparedFiles\]/);
+  assert.match(repairTicketSource, /사진 \$\{state\.files\.length\}장을 준비했습니다\./);
+  assert.doesNotMatch(
+    repairTicketSource,
+    /attachments\?\.addEventListener\("change",[\s\S]{0,220}state\.files = \[\]/,
+  );
+});
+
 test("Repair Ticket uses compact application-style actions and simplified copy", () => {
   assert.doesNotMatch(repairTicketHtml, /Repair Case|Conversation/);
   assert.doesNotMatch(repairTicketHtml, /수선 접수가 완료 되었습니다\. 제품 확인 후 진행 방향과 예상 가격을 안내 드립니다\./);
   assert.match(repairTicketHtml, /repair-ticket-20260924\.css\?v=20261008-ticket-01/);
   assert.match(repairTicketHtml, /repair-ticket-20260930-01\.css\?v=20260930-ticket-08/);
-  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20261008-ticket-01/);
+  assert.match(repairTicketHtml, /repair-ticket-20260924\.js\?v=20261024-ticket-02/);
   assert.doesNotMatch(repairTicketHtml, /종료된 Ticket입니다|js-repair-ticket-closed/);
   assert.doesNotMatch(repairTicketHtml, /repairTicketPayment|repairPaymentDialog|js\.tosspayments\.com|카드·간편결제/);
   assert.doesNotMatch(repairTicketSource, /onlinePaymentAvailable|TossPayments|\/api\/repairs\/payment/);

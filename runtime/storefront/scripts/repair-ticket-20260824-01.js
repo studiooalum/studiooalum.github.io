@@ -445,19 +445,19 @@ window.addEventListener("keydown", (event) => {
 
 dom.form?.elements.attachments?.addEventListener("change", async () => {
   const files = Array.from(dom.form.elements.attachments.files || []);
-  // Clear old selections so a failed conversion cannot send previous photos.
-  state.files = [];
-  renderFileList();
   try {
-    validateRepairPhotos(files);
+    // Mobile photo pickers often return one photo at a time. Keep photos that
+    // were already prepared and validate the eight-photo limit cumulatively.
+    validateRepairPhotos([...state.files, ...files]);
     state.preparingPhotos = true;
     dom.submit.disabled = true;
     dom.form.elements.attachments.disabled = true;
-    state.files = await prepareRepairPhotos(files, (current, total) => {
+    const preparedFiles = await prepareRepairPhotos(files, (current, total) => {
       setFormStatus(`사진을 준비하는 중입니다. ${current}/${total}`);
     });
+    state.files = [...state.files, ...preparedFiles];
     renderFileList();
-    setFormStatus(files.length ? `사진 ${files.length}장을 준비했습니다.` : "");
+    setFormStatus(files.length ? `사진 ${state.files.length}장을 준비했습니다.` : "");
   } catch (error) {
     setFormStatus(error.message || "사진을 처리하지 못했습니다.", "error");
   } finally {
