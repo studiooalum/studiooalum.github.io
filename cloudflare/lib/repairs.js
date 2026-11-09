@@ -282,7 +282,7 @@ export async function createRepairRequest(env, input, images = []) {
   const archiveConsentStatus = ["agreed", "declined"].includes(cleanText(input.archiveConsentStatus, 20))
     ? cleanText(input.archiveConsentStatus, 20)
     : archiveConsentAt ? "agreed" : "unrecorded";
-  const bankAccount = cleanText(input.bankAccount, 500) || "국민 한아름 218301-04-144506";
+  const bankAccount = cleanText(input.bankAccount, 500) || "국민은행 053637-04-005533 / 예금주: 한아름(스튜디오오알룸)";
   const preferredContact = normalizePreferredContact(input.preferredContact || input.contactPreference);
   const material = cleanText(input.material || input.itemMaterial, 120);
   const issueDescription = cleanText(input.issueDescription || input.repairDetails, 4000);

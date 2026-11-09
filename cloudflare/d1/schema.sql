@@ -398,7 +398,7 @@ CREATE TABLE IF NOT EXISTS repair_requests (
   quote_amount INTEGER,
   final_amount INTEGER,
   version INTEGER NOT NULL DEFAULT 1,
-  bank_account TEXT NOT NULL DEFAULT '국민 한아름 218301-04-144506',
+  bank_account TEXT NOT NULL DEFAULT '국민은행 053637-04-005533 / 예금주: 한아름(스튜디오오알룸)',
   payment_instructions TEXT NOT NULL DEFAULT '',
   payment_confirmed_at TEXT,
   carrier TEXT NOT NULL DEFAULT '',

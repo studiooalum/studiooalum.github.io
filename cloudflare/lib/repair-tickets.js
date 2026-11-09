@@ -333,7 +333,7 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
       repair_payment_details: [
         "배송비: 4,000원",
         `총입금 금액: ${formatAmount(Number(value("finalAmount", "final_amount")) + 4000)}`,
-        `입금 계좌: ${cleanText(value("bankAccount", "bank_account"), 500) || "국민 한아름 218301-04-144506"}`,
+        `입금 계좌: ${cleanText(value("bankAccount", "bank_account"), 500) || "국민은행 053637-04-005533 / 예금주: 한아름(스튜디오오알룸)"}`,
       ].join("\n"),
     } : {}),
     carrier: value("carrier"),

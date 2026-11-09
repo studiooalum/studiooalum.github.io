@@ -198,7 +198,7 @@ test("repair request keeps address consent and submits photo consent without a v
 });
 
 test("Repair Admin defaults to the Studio OALUM payment account", () => {
-  assert.match(repairAdminHtml, /name="bankAccount"[^>]+value="국민 한아름 218301-04-144506"/);
+  assert.match(repairAdminHtml, /name="bankAccount"[^>]+value="국민은행 053637-04-005533 \/ 예금주: 한아름\(스튜디오오알룸\)"/);
 });
 
 test("Repair Ticket shows protected request images and hides lookup without a URL", () => {

@@ -938,23 +938,26 @@ test("repair completion sends exactly the editable template with shipping and to
     const { database, env } = createEnvironment({ SMS_COUNTRY_ALLOWLIST: "KR" });
     t.after(() => database.close());
     database.prepare(`UPDATE notification_templates SET active_body = active_body || ?, draft_body = draft_body || ? WHERE template_key = 'repair.repair_completed_quote_ready'`).bind(
-      "\n배송비: {{shipping_amount}}\n총입금 금액: {{payment_total_amount}}\n입금 계좌: 국민 한아름 218301-04-144506",
-      "\n배송비: {{shipping_amount}}\n총입금 금액: {{payment_total_amount}}\n입금 계좌: 국민 한아름 218301-04-144506",
+      "\n배송비: {{shipping_amount}}\n총입금 금액: {{payment_total_amount}}\n입금 계좌: KB국민은행 218301-04-144506 한아름",
+      "\n배송비: {{shipping_amount}}\n총입금 금액: {{payment_total_amount}}\n입금 계좌: KB국민은행 218301-04-144506 한아름",
     ).run();
+    const migration = readFileSync(new URL("../cloudflare/d1/migrations/0048_repair_business_bank_account.sql", import.meta.url), "utf8");
+    database.exec(migration);
+    database.exec(migration); // Reapplying must not duplicate the account label.
     await createInitialRepair(env, countryCode, { countryCode });
     const repairId = `RPR_${countryCode}`;
     await updateRepairRequest(env, { id: repairId, expectedVersion: 1, status: "item_received", quoteAmount: 30000 });
     await updateRepairRequest(env, { id: repairId, expectedVersion: 2, status: "in_progress" });
     await updateRepairRequest(env, {
       id: repairId, expectedVersion: 3, status: "payment_pending", finalAmount: 45000,
-      bankAccount: "국민 한아름 218301-04-144506",
     });
+    assert.equal(database.prepare("SELECT bank_account FROM repair_requests WHERE id = ?").bind(repairId).first().bank_account, "국민은행 053637-04-005533 / 예금주: 한아름(스튜디오오알룸)");
     const completion = database.prepare(`SELECT * FROM notification_outbox WHERE template_key = 'repair.repair_completed_quote_ready' AND entity_id = ?`).bind(repairId).first();
     assert.equal(completion.channel, countryCode === "KR" ? "sms" : "email");
     assert.match(completion.body_text, /45,000원/);
     assert.match(completion.body_text, /배송비: 4,000원/);
     assert.match(completion.body_text, /총입금 금액: 49,000원/);
-    assert.match(completion.body_text, /입금 계좌: 국민 한아름 218301-04-144506/);
+    assert.match(completion.body_text, /입금 계좌: 국민은행 053637-04-005533 \/ 예금주: 한아름\(스튜디오오알룸\)/);
     assert.equal(completion.body_text.match(/배송비:/g).length, 1);
     assert.equal(completion.body_text.match(/입금 계좌:/g).length, 1);
     assert.ok(!completion.body_text.includes("{{"));
@@ -967,7 +970,7 @@ test("repair completion sends exactly the editable template with shipping and to
     assert.match(message, /최종 수선비: 45,000원/);
     assert.match(message, /배송비: 4,000원/);
     assert.match(message, /총입금 금액: 49,000원/);
-    assert.match(message, /입금 계좌: 국민 한아름 218301-04-144506/);
+    assert.match(message, /입금 계좌: 국민은행 053637-04-005533 \/ 예금주: 한아름\(스튜디오오알룸\)/);
     assert.ok(ticket.messages.slice(0, -1).every(message => !message.body.includes("배송비: 4,000원")));
     const otherNotifications = database.prepare(`SELECT body_text FROM notification_outbox WHERE template_key <> 'repair.repair_completed_quote_ready'`).all().results;
     assert.ok(otherNotifications.every(row => !row.body_text.includes("배송비: 4,000원")));
