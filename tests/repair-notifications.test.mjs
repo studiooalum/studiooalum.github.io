@@ -568,7 +568,8 @@ test("Repair inquiries receive and retain a ticket number when the item is recei
     SELECT body_text FROM notification_outbox
     WHERE entity_id = ? AND template_key = 'repair.received'
   `).bind("RPR_LIFECYCLE").first();
-  assert.match(estimateNotice.body_text, /예상 가격: 35,000원/);
+  assert.match(estimateNotice.body_text, /수령 후 1~2일 내 예상 가격을 별도로 안내/);
+  assert.doesNotMatch(estimateNotice.body_text, /35,000원/);
 
   await updateRepairRequest(env, { id: "RPR_LIFECYCLE", expectedVersion: 2, status: "in_progress" });
   row = database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first();
@@ -594,7 +595,7 @@ test("receipt without a quote supports later quote and ticket message without re
   assert.ok(received.operation.notificationIds.length > 0);
   const receiptNotice = database.prepare("SELECT * FROM notification_outbox WHERE entity_id = ? AND template_key = 'repair.received'").bind(before.id).first();
   assert.equal(receiptNotice.status, "pending");
-  assert.match(receiptNotice.body_text, /제품 수령 후 1~2일 내 별도 안내 예정/);
+  assert.match(receiptNotice.body_text, /수령 후 1~2일 내 예상 가격을 별도로 안내/);
   assert.doesNotMatch(receiptNotice.body_text, /예상 가격: 0원/);
 
   const notificationCount = database.prepare("SELECT COUNT(*) AS count FROM notification_outbox").first().count;
