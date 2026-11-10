@@ -554,10 +554,6 @@ test("Repair inquiries receive and retain a ticket number when the item is recei
   assert.equal(receipt.ticketNumber, null);
   assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first().ticket_number, null);
 
-  await assert.rejects(
-    updateRepairRequest(env, { id: "RPR_LIFECYCLE", expectedVersion: 1, status: "item_received" }),
-    /예상 가격/,
-  );
   await updateRepairRequest(env, {
     id: "RPR_LIFECYCLE",
     expectedVersion: 1,
@@ -578,6 +574,67 @@ test("Repair inquiries receive and retain a ticket number when the item is recei
   row = database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind("RPR_LIFECYCLE").first();
   assert.equal(row.ticket_number, 1);
   assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 2);
+});
+
+test("receipt without a quote supports later quote and ticket message without renumbering or repeated notices", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  await createInitialRepair(env, "LATER");
+  const before = database.prepare("SELECT * FROM repair_requests WHERE id = 'RPR_LATER'").first();
+  const initialTicket = (await readRepairTicketForRepair(env, before.id)).ticket;
+
+  const received = await updateRepairRequest(env, {
+    id: before.id, expectedVersion: 1, status: "item_received", quoteAmount: null,
+  });
+  const row = database.prepare("SELECT * FROM repair_requests WHERE id = ?").bind(before.id).first();
+  assert.equal(row.status, "item_received");
+  assert.equal(row.quote_amount, null);
+  assert.equal(row.ticket_number, 1);
+  assert.equal(received.operation.statusChanged, true);
+  assert.ok(received.operation.notificationIds.length > 0);
+  const receiptNotice = database.prepare("SELECT * FROM notification_outbox WHERE entity_id = ? AND template_key = 'repair.received'").bind(before.id).first();
+  assert.equal(receiptNotice.status, "pending");
+  assert.match(receiptNotice.body_text, /제품 수령 후 1~2일 내 별도 안내 예정/);
+  assert.doesNotMatch(receiptNotice.body_text, /예상 가격: 0원/);
+
+  const notificationCount = database.prepare("SELECT COUNT(*) AS count FROM notification_outbox").first().count;
+  const quoted = await updateRepairRequest(env, { id: before.id, expectedVersion: 2, quoteAmount: 35000 });
+  assert.equal(quoted.operation.statusChanged, false);
+  assert.deepEqual(quoted.operation.notificationIds, []);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_outbox").first().count, notificationCount);
+  const body = "제품 확인 후 예상 가격은 35,000원으로 안내드립니다.";
+  await createRepairTicketMessage(env, {
+    ticketId: initialTicket.id, clientMessageId: "later:admin:1234567890",
+    authorType: "admin", clientKey: "admin-key", body,
+  });
+  const after = database.prepare("SELECT * FROM repair_requests WHERE id = ?").bind(before.id).first();
+  for (const key of ["id", "request_number", "customer_id", "customer_name", "email", "phone", "shipping_address", "created_at"]) {
+    assert.equal(after[key], before[key], key);
+  }
+  assert.equal(after.ticket_number, row.ticket_number);
+  assert.equal(after.status, "item_received");
+  assert.equal(after.quote_amount, 35000);
+  assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 2);
+  const ticket = (await readRepairTicketForRepair(env, before.id)).ticket;
+  assert.equal(ticket.id, initialTicket.id);
+  assert.equal(ticket.shortCode, initialTicket.shortCode);
+  assert.equal(ticket.repair.quoteAmount, 35000);
+  assert.equal(ticket.messages.at(-1).body, body);
+  assert.equal(ticket.messages.length, initialTicket.messages.length + 2);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM notification_outbox WHERE template_key = 'repair.received'").first().count, 1);
+  await assert.rejects(updateRepairRequest(env, { id: before.id, expectedVersion: 2, quoteAmount: 40000 }), { status: 409 });
+});
+
+test("rejected and cancelled inquiries never consume a ticket number", async (t) => {
+  const { database, env } = createEnvironment();
+  t.after(() => database.close());
+  for (const status of ["rejected", "cancelled"]) {
+    await createInitialRepair(env, status);
+    await updateRepairRequest(env, { id: `RPR_${status}`, expectedVersion: 1, status });
+    await updateRepairRequest(env, { id: `RPR_${status}`, expectedVersion: 2, quoteAmount: 35000 });
+    assert.equal(database.prepare("SELECT ticket_number FROM repair_requests WHERE id = ?").bind(`RPR_${status}`).first().ticket_number, null);
+  }
+  assert.equal(database.prepare("SELECT next_number FROM repair_ticket_number_sequence WHERE id = 1").first().next_number, 1);
 });
 
 test("ticket receipt backfill assigns stable numbers to received items and later stages", async (t) => {

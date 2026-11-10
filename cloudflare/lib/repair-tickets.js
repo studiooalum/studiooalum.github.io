@@ -325,7 +325,10 @@ async function buildNotificationPayload(env, source, ticket, overrides = {}) {
       : value("requestNumber", "request_number") || "수선 접수",
     repair_request: value("issueDescription", "repair_details"),
     shipping_address: value("shippingAddress", "shipping_address"),
-    quote_amount: formatAmount(value("quoteAmount", "quote_amount")),
+    quote_amount: formatAmount(value("quoteAmount", "quote_amount"))
+      || (normalizeRepairStatus(value("status", "repair_status")) === "item_received"
+        ? "제품 수령 후 1~2일 내 별도 안내 예정"
+        : ""),
     final_amount: formatAmount(value("finalAmount", "final_amount")),
     ...(normalizeRepairStatus(value("status", "repair_status")) === "payment_pending" ? {
       shipping_amount: formatAmount(4000),

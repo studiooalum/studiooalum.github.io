@@ -126,7 +126,7 @@
                 </select>
               </label>
               <label class="fulfillment-field">
-                <span>예상 가격 <em>수신 완료 시 필수</em></span>
+                <span>예상 가격 <em>선택 · 제품 수령 후 1~2일 내 안내</em></span>
                 <input type="number" name="quoteAmount" min="0" max="100000000" step="100" inputmode="numeric" placeholder="KRW">
               </label>
               <label class="fulfillment-field">
@@ -158,6 +158,8 @@
                 <input type="url" name="trackingUrl" maxlength="1000" inputmode="url" placeholder="https://">
               </label>
             </div>
+
+            <p>제품 수령 시에는 예상 가격 없이 저장할 수 있습니다. 수령 후 1~2일 내 예상 가격을 저장하고, Repair Ticket에서 고객 안내 메시지를 작성해주세요.</p>
 
             <label class="fulfillment-field">
               <span>내부 메모</span>
@@ -221,7 +223,7 @@
     </section>
   </main>
 
-  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20260922-02"></script>
+  <script type="module" src="./runtime/storefront/scripts/repair-admin.js?v=20261110-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
 

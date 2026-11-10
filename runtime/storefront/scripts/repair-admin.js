@@ -140,12 +140,6 @@ function getFormRequestPayload(request) {
 function updateStatusFields() {
   if (!dom.form) return;
   const status = String(dom.form.elements.status.value || "received");
-  const quoteInput = dom.form.elements.quoteAmount;
-  if (quoteInput) {
-    const required = status === "item_received";
-    quoteInput.required = required;
-    quoteInput.closest("label")?.classList.toggle("is-required", required);
-  }
   const finalInput = dom.form.elements.finalAmount;
   if (finalInput) {
     const required = status === "payment_pending";
@@ -499,11 +493,6 @@ async function saveRequest() {
   if (!request || !dom.form || request.isReadOnly) return;
 
   const requestPayload = getFormRequestPayload(request);
-  if (requestPayload.status === "item_received" && (!Number.isInteger(requestPayload.quoteAmount) || requestPayload.quoteAmount <= 0)) {
-    setStatus(dom.formStatus, "수선제품 수신 완료 단계에서는 예상 가격을 입력해주세요.", "error");
-    dom.form.elements.quoteAmount.focus();
-    return;
-  }
   if (requestPayload.quoteAmount !== null && (!Number.isInteger(requestPayload.quoteAmount) || requestPayload.quoteAmount < 0)) {
     setStatus(dom.formStatus, "견적 금액을 다시 확인해주세요.", "error");
     dom.form.elements.quoteAmount.focus();
