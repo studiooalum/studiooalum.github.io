@@ -276,7 +276,22 @@ function renderPostEntry(container, post, posts = []) {
   excerpt.textContent = post.excerpt || "";
   const tags = document.createElement("div");
   tags.className = "newsletter-entry__tags";
-  getPostCategories(post).forEach((category) => tags.append(createCategoryLink(category)));
+  const tagLabel = document.createElement("span");
+  tagLabel.className = "newsletter-entry__tag-label";
+  tagLabel.textContent = "태그";
+  const tagLinks = document.createElement("span");
+  tagLinks.className = "newsletter-entry__tag-links";
+  getPostCategories(post).forEach((category, index) => {
+    if (index) {
+      const separator = document.createElement("span");
+      separator.className = "newsletter-entry__tag-separator";
+      separator.textContent = " · ";
+      separator.setAttribute("aria-hidden", "true");
+      tagLinks.append(separator);
+    }
+    tagLinks.append(createCategoryLink(category));
+  });
+  tags.append(tagLabel, tagLinks);
   const content = document.createElement("div");
   content.className = "newsletter-entry__content";
   content.innerHTML = post.contentHtml || "";
