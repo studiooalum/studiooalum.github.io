@@ -13,10 +13,10 @@ const footerSources = [
   "workshops.html",
   "runtime/storefront/scripts/components/siteFooter.js",
 ];
-const expectedLogoSource = "./oalum-logo.png";
+const expectedLogoSource = "./oalum-footer-square.webp";
 
 test("every footer logo reference resolves to the ASCII asset", () => {
-  assert.ok(existsSync(path.join(rootDir, "oalum-logo.png")), "missing oalum-logo.png");
+  assert.ok(existsSync(path.join(rootDir, "oalum-footer-square.webp")), "missing oalum-footer-square.webp");
 
   for (const relativePath of footerSources) {
     const source = readFileSync(path.join(rootDir, relativePath), "utf8");
