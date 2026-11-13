@@ -118,7 +118,7 @@ function createPrimaryNavMarkup(activeKey) {
         <span></span>
       </button>
       <a href="${resolvePath("index.html")}" class="gnb__home" aria-label="Home">
-        <img src="${resolvePath("oalum_favicon.png")}" class="gnb__home-logo" alt="">
+        <img src="${resolvePath("oalum-nav-mark.png")}" class="gnb__home-logo" alt="">
       </a>
       ${mobileUtilities}
       <div class="gnb__menu" aria-label="Primary">${items}</div>
