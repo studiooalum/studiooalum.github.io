@@ -268,6 +268,7 @@ function renderPostEntry(container, post, posts = []) {
 
   const meta = document.createElement("p");
   meta.className = "newsletter-entry__meta";
+  meta.textContent = formatPublishedDate(post.publishedAt, { monthOnly: true });
   const title = document.createElement("h1");
   title.className = "newsletter-entry__title";
   title.textContent = post.title || "뉴스레터";
@@ -303,12 +304,9 @@ function renderPostEntry(container, post, posts = []) {
   const desktop = window.matchMedia("(min-width: 960px)");
   let cover = null;
   function syncEntryLayout() {
-    meta.textContent = formatPublishedDate(post.publishedAt, { monthOnly: !desktop.matches });
     if (desktop.matches) {
-      back.after(meta, title);
       cover?.remove();
     } else {
-      back.after(title, meta);
       if (!hasLeadImage && post.coverImageUrl) {
         if (!cover) {
           cover = document.createElement("img");
@@ -323,7 +321,7 @@ function renderPostEntry(container, post, posts = []) {
   }
 
   enhanceEntryImages(content);
-  container.append(back, meta, title, excerpt, tags, content);
+  container.append(back, title, meta, excerpt, tags, content);
   syncEntryLayout();
   desktop.addEventListener("change", syncEntryLayout);
   const recommendations = createRecommendations(posts, post.slug);
