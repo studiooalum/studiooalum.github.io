@@ -1,3 +1,5 @@
+import { imageUrl } from "./sanity/image-20260816-02.js";
+
 const ARCHIVE_QUERY = `
   *[_type == "archive"] | order(createdDate desc, _createdAt desc) {
     _id,
@@ -29,6 +31,8 @@ const ARCHIVE_QUERY = `
 `;
 
 const TAG_PRIORITY = ["all", "work", "repair", "collaboration", "exhibition", "research"];
+const COVER_WIDTHS = [360, 480, 640, 800, 960, 1200, 1600];
+const desktopArchive = window.matchMedia("(min-width: 960px)");
 
 const state = {
   items: [],
@@ -37,42 +41,47 @@ const state = {
 
 let archiveMasonryFrame = 0;
 
+function resetArchiveMasonry(board) {
+  board.classList.remove("is-masonry");
+  board.style.height = "";
+  board.querySelectorAll(":scope > .archive-card").forEach((card) => {
+    card.style.width = "";
+    card.style.transform = "";
+  });
+}
+
 function layoutArchiveMasonry(board) {
-  if (!board || !board.isConnected || board.querySelector(".archive-empty")) return;
+  if (!board.isConnected || !desktopArchive.matches) return;
   const cards = Array.from(board.querySelectorAll(":scope > .archive-card"));
   if (!cards.length) return;
 
-  board.classList.remove("is-masonry");
-  board.style.height = "";
-  cards.forEach((card) => {
-    card.style.width = "";
-    card.style.transform = "";
-    card.style.gridRowEnd = "";
-  });
-
   const boardStyle = window.getComputedStyle(board);
   const gap = Number.parseFloat(boardStyle.columnGap) || 0;
-  const columnCount = window.matchMedia("(min-width: 960px)").matches ? 3 : 1;
+  const columnCount = 3;
   const columnWidth = (board.clientWidth - gap * (columnCount - 1)) / columnCount;
   const columnHeights = Array.from({ length: columnCount }, () => 0);
 
   board.classList.add("is-masonry");
+  cards.forEach((card) => {
+    card.style.width = `${columnWidth}px`;
+  });
+  const cardHeights = cards.map((card) => card.getBoundingClientRect().height);
+
   cards.forEach((card, index) => {
     const columnIndex = index < columnCount
       ? index
       : columnHeights.indexOf(Math.min(...columnHeights));
     const x = columnIndex * (columnWidth + gap);
     const y = columnHeights[columnIndex];
-    card.style.width = `${columnWidth}px`;
     card.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    columnHeights[columnIndex] = y + card.getBoundingClientRect().height + gap;
+    columnHeights[columnIndex] = y + cardHeights[index] + gap;
   });
 
   board.style.height = `${Math.max(0, ...columnHeights) - gap}px`;
 }
 
 function scheduleArchiveMasonry(board) {
-  if (!board) return;
+  if (!board || !desktopArchive.matches) return;
   window.cancelAnimationFrame(archiveMasonryFrame);
   archiveMasonryFrame = window.requestAnimationFrame(() => {
     layoutArchiveMasonry(board);
@@ -221,7 +230,7 @@ function applyAverageColor(card, image) {
   }
 }
 
-function createArchiveCard(item, imageData) {
+function createArchiveCard(item, imageData, { related = false } = {}) {
   const card = document.createElement("a");
   card.className = "archive-card";
   card.href = `./archive.html?id=${encodeURIComponent(item.id)}`;
@@ -232,13 +241,27 @@ function createArchiveCard(item, imageData) {
   const image = document.createElement("img");
   image.className = "archive-card__image";
   if (imageData.rgb) image.dataset.imageColor = imageData.rgb;
-  image.src = imageData.src;
   image.alt = imageData.alt;
   image.loading = "lazy";
-  if (imageData.width) image.width = imageData.width;
-  if (imageData.height) image.height = imageData.height;
+  image.decoding = "async";
+
+  if (imageData.width > 0 && imageData.height > 0) {
+    image.width = imageData.width;
+    image.height = imageData.height;
+    if (!related) image.style.aspectRatio = `${imageData.width} / ${imageData.height}`;
+    const sanityImage = { asset: { url: imageData.src } };
+    const widths = [...new Set(COVER_WIDTHS.map((width) => Math.min(width, imageData.width)))];
+    image.sizes = related
+      ? "auto, (min-width: 960px) calc((100vw - 280px) / 6), calc((100vw - 48px) / 2)"
+      : "auto, (min-width: 960px) calc((100vw - 160px) / 3), calc(100vw - 32px)";
+    image.srcset = widths.map((width) => `${imageUrl(sanityImage, { width })} ${width}w`).join(", ");
+    image.src = imageUrl(sanityImage, { width: Math.min(960, imageData.width) });
+  } else {
+    image.src = imageData.src;
+    image.addEventListener("load", () => scheduleArchiveMasonry(card.closest(".archive-board")), { once: true });
+  }
+
   if (!imageData.rgb) image.addEventListener("load", () => applyAverageColor(card, image), { once: true });
-  image.addEventListener("load", () => scheduleArchiveMasonry(card.closest(".archive-board")), { once: true });
 
   const overlay = document.createElement("div");
   overlay.className = "archive-card__overlay";
@@ -307,7 +330,7 @@ function renderDetail(shell, item) {
     const grid = document.createElement("div");
     grid.className = "archive-related__grid";
     related.forEach((candidate) => {
-      if (candidate.images[0]) grid.append(createArchiveCard(candidate, candidate.images[0]));
+      if (candidate.images[0]) grid.append(createArchiveCard(candidate, candidate.images[0], { related: true }));
     });
     section.append(heading, grid);
     gallery.append(section);
@@ -346,6 +369,7 @@ function renderBoard(board, loadError = null) {
   board.innerHTML = "";
 
   if (!items.length) {
+    resetArchiveMasonry(board);
     const empty = document.createElement("section");
     empty.className = "archive-empty";
     const label = document.createElement("p");
@@ -421,5 +445,11 @@ export async function initArchiveBoard() {
     renderBoard(board);
   });
 
-  window.addEventListener("resize", () => scheduleArchiveMasonry(board), { passive: true });
+  if (!detailItem) {
+    desktopArchive.addEventListener("change", () => {
+      if (desktopArchive.matches) scheduleArchiveMasonry(board);
+      else resetArchiveMasonry(board);
+    });
+    window.addEventListener("resize", () => scheduleArchiveMasonry(board), { passive: true });
+  }
 }
