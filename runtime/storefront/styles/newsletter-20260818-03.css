@@ -42,8 +42,26 @@
   text-decoration: none;
 }
 
+.newsletter-entry > .newsletter-entry__title {
+  font-family: var(--font-book);
+  font-size: clamp(28px, 4vw, 54px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--tracking-latin);
+  overflow-wrap: anywhere;
+}
+
+.newsletter-entry > .newsletter-entry__meta {
+  font-family: var(--font-book);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
 .newsletter-entry__excerpt {
   margin-bottom: 14px;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1.45;
 }
 
 .newsletter-entry__tags {
@@ -53,10 +71,16 @@
   margin: 0 0 30px;
 }
 
+.newsletter-entry__tags .shop-tag {
+  font-family: var(--font-book);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 .newsletter-entry__content {
   overflow-wrap: anywhere;
   font-family: "Pretendard", sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 300;
   line-height: 1.65;
 }
@@ -344,10 +368,6 @@
 }
 
 @media (min-width: 960px) {
-  .newsletter-entry__content {
-    font-size: 16px;
-  }
-
   .newsletter-entry-mode .newsletter-entry__tags {
     grid-column: 2;
   }
@@ -358,6 +378,46 @@
 
   .newsletter-recommendation__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (width < 960px) {
+  .newsletter-entry > .newsletter-entry__title {
+    margin: 0 0 10px;
+  }
+
+  .newsletter-entry > .newsletter-entry__meta {
+    margin-bottom: 16px;
+  }
+
+  .newsletter-entry__excerpt:empty {
+    display: none;
+  }
+
+  .newsletter-entry__tags {
+    margin-bottom: 24px;
+  }
+
+  .newsletter-entry__content h1 { font-size: 28px; }
+  .newsletter-entry__content h2 { font-size: 24px; }
+  .newsletter-entry__content h3 { font-size: 21px; }
+
+  .newsletter-entry .newsletter-entry__content > .newsletter-entry__lead-image,
+  .newsletter-entry__content > .progressive-image:has(> .newsletter-entry__lead-image) {
+    float: none;
+    width: 100%;
+    margin: 0 0 var(--grid-gap);
+  }
+
+  .newsletter-entry__content :is(p, .progressive-image) > img.newsletter-entry__lead-image,
+  .newsletter-entry__content .newsletter-entry__lead-image:not([data-image-gallery]) img {
+    width: 100%;
+  }
+
+  .newsletter-entry > .newsletter-entry__cover {
+    width: 100%;
+    margin: 0 0 24px;
+    background: transparent;
   }
 }
 

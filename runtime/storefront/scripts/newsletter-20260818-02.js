@@ -127,13 +127,14 @@ function enhanceEntryImages(content) {
   });
 }
 
-function formatPublishedDate(value) {
+function formatPublishedDate(value, { monthOnly = false } = {}) {
+  if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "long",
-    day: "numeric",
+    ...(monthOnly ? { timeZone: "Asia/Seoul" } : { day: "numeric" }),
   }).format(date);
 }
 
@@ -267,8 +268,7 @@ function renderPostEntry(container, post, posts = []) {
 
   const meta = document.createElement("p");
   meta.className = "newsletter-entry__meta";
-  meta.textContent = formatPublishedDate(post.publishedAt);
-  const title = document.createElement("h2");
+  const title = document.createElement("h1");
   title.className = "newsletter-entry__title";
   title.textContent = post.title || "뉴스레터";
   const excerpt = document.createElement("p");
@@ -280,8 +280,37 @@ function renderPostEntry(container, post, posts = []) {
   const content = document.createElement("div");
   content.className = "newsletter-entry__content";
   content.innerHTML = post.contentHtml || "";
+  const firstBlock = content.firstElementChild;
+  const hasLeadImage = firstBlock?.matches("img, figure:has(img)")
+    || (firstBlock?.matches("p:has(img)") && !firstBlock.textContent.trim());
+  if (hasLeadImage) firstBlock.classList.add("newsletter-entry__lead-image");
+
+  const desktop = window.matchMedia("(min-width: 960px)");
+  let cover = null;
+  function syncEntryLayout() {
+    meta.textContent = formatPublishedDate(post.publishedAt, { monthOnly: !desktop.matches });
+    if (desktop.matches) {
+      back.after(meta, title);
+      cover?.remove();
+    } else {
+      back.after(title, meta);
+      if (!hasLeadImage && post.coverImageUrl) {
+        if (!cover) {
+          cover = document.createElement("img");
+          cover.className = "newsletter-entry__cover";
+          cover.dataset.progressiveImage = "false";
+          cover.src = post.coverImageUrl;
+          cover.alt = post.coverImageAlt || "";
+        }
+        tags.after(cover);
+      }
+    }
+  }
+
   enhanceEntryImages(content);
   container.append(back, meta, title, excerpt, tags, content);
+  syncEntryLayout();
+  desktop.addEventListener("change", syncEntryLayout);
   const recommendations = createRecommendations(posts, post.slug);
   if (recommendations) container.append(recommendations);
 }

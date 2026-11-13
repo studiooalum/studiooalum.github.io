@@ -77,13 +77,12 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
     read("runtime/storefront/styles/newsletter-20260818-01.css"),
   ]);
 
-  assert.match(html, /newsletter-20260818-03\.css\?v=20260930-06/);
-  assert.match(html, /newsletter-20260818-02\.js\?v=20260915-01/);
+  assert.match(html, /newsletter-20260818-03\.css\?v=20261113-01/);
+  assert.match(html, /newsletter-20260818-02\.js\?v=20261113-01/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 634px\) minmax\(0, 1fr\)/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry > \*[\s\S]*grid-column:\s*2/);
   assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*grid-template-columns:\s*repeat\(2/);
-  assert.match(stylesheet, /\.newsletter-entry__content\s*\{[^}]*font-family:\s*"Pretendard", sans-serif;[^}]*font-size:\s*18px;[^}]*font-weight:\s*300;[^}]*line-height:\s*1\.65;/);
-  assert.match(stylesheet, /@media \(min-width:\s*960px\)[\s\S]*?\.newsletter-entry__content\s*\{[^}]*font-size:\s*16px;/);
+  assert.match(stylesheet, /\.newsletter-entry__content\s*\{[^}]*font-family:\s*"Pretendard", sans-serif;[^}]*font-size:\s*16px;[^}]*font-weight:\s*300;[^}]*line-height:\s*1\.65;/);
   assert.match(controller, /function enhanceEntryImages/);
   assert.match(controller, /data-newsletter-lightbox-close/);
   assert.match(controller, /lockBodyScroll\("newsletter-lightbox"\)/);
