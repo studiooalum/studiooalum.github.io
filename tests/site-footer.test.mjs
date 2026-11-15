@@ -12,6 +12,7 @@ const footerSources = [
   "workshop.html",
   "workshops.html",
   "runtime/storefront/scripts/components/siteFooter.js",
+  "runtime/storefront/scripts/components/siteFooter-20261003-01.js",
 ];
 const expectedLogoSource = "./oalum-logo.png";
 
@@ -23,7 +24,9 @@ test("every footer logo reference resolves to the ASCII asset", () => {
     const logoReferences = [...source.matchAll(/<img\b[^>]*class="site-footer__logo-mark"[^>]*src="([^"]+)"[^>]*>/g)];
 
     assert.equal(logoReferences.length, 1, `${relativePath} should contain one footer logo`);
-    assert.equal(logoReferences[0][1], expectedLogoSource, `${relativePath} should use the ASCII logo path`);
+    const [assetPath, query] = logoReferences[0][1].split("?");
+    assert.equal(assetPath, expectedLogoSource, `${relativePath} should use the ASCII logo path`);
+    assert.match(query ?? "", /^v=[a-f0-9]{8}$/, `${relativePath} should version its logo URL`);
   }
 });
 

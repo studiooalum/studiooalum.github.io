@@ -12,6 +12,21 @@
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/oalum-logo.png
+  Cache-Control: public, max-age=0, must-revalidate
+
+/oalum-nav-mark.png
+  Cache-Control: public, max-age=0, must-revalidate
+
+/oalum_favicon.png
+  Cache-Control: public, max-age=0, must-revalidate
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=0, must-revalidate
+
+/favicon.ico
+  Cache-Control: public, max-age=0, must-revalidate
+
 /runtime/*
   Cache-Control: no-store
 

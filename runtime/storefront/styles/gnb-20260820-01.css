@@ -20,7 +20,7 @@
   content: "";
   width: 22px;
   height: 22px;
-  background: url("../../../oalum_favicon.png") center / contain no-repeat;
+  background: url("../../../oalum_favicon.png?v=f42f3f54") center / contain no-repeat;
 }
 
 .gnb:not(.is-ready) .gnb__title {
