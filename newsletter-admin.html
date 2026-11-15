@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./runtime/storefront/styles/layout-20260924.css">
   <link rel="stylesheet" href="./runtime/storefront/styles/gnb-20260818-05.css?v=20260926-10">
   <link rel="stylesheet" href="./runtime/storefront/styles/fulfillment.css?v=20260816-04">
-  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin-20260910-03.css?v=20260930-05">
+  <link rel="stylesheet" href="./runtime/storefront/styles/newsletter-admin-20260910-03.css?v=20261115-01">
   <script type="module" src="./runtime/storefront/scripts/admin-page-guard.js?v=20260816-01"></script>
 </head>
 <body class="fulfillment-page newsletter-admin-page">
@@ -87,10 +87,19 @@
                 <span>요약</span>
                 <textarea name="excerpt" rows="3" maxlength="500" placeholder="목록과 상세 상단에 표시할 짧은 소개"></textarea>
               </label>
-              <label class="fulfillment-field">
-                <span>카테고리 태그</span>
-                <input type="text" name="categories" maxlength="320" placeholder="예: repair, studio note, workshop">
-              </label>
+              <div class="fulfillment-field" data-newsletter-tags>
+                <label for="newsletter-tag-select">카테고리 태그</label>
+                <select id="newsletter-tag-select" name="categoryChoice">
+                  <option value="">태그 선택</option>
+                </select>
+                <div class="newsletter-admin-tags__selected" aria-label="선택한 태그" role="group" hidden></div>
+                <div class="newsletter-admin-tags__entry" hidden>
+                  <input type="text" name="newCategory" aria-label="새 태그 이름" placeholder="새 태그 이름" maxlength="40">
+                  <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-add-tag>추가</button>
+                  <button type="button" class="fulfillment-btn fulfillment-btn--secondary" data-cancel-tag>취소</button>
+                </div>
+                <p class="fulfillment-status newsletter-admin-tags__status" role="status" aria-live="polite"></p>
+              </div>
             </div>
 
             <section class="newsletter-admin-cover">
@@ -153,7 +162,7 @@
       status.textContent = "Tiptap 편집기를 불러오지 못했습니다. 페이지를 새로고침해주세요.";
     }, 8000);
   </script>
-  <script type="module" src="./runtime/storefront/scripts/newsletter-admin-20260910-04.js?v=20260930-02"></script>
+  <script type="module" src="./runtime/storefront/scripts/newsletter-admin-20260910-04.js?v=20261115-01"></script>
   <script type="module">
     import { initSiteChrome } from "./runtime/storefront/scripts/components/siteChrome-20260818-05.js?v=20260926-01";
 

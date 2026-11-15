@@ -3,6 +3,7 @@ import { mountNewsletterTiptapEditor } from "./components/newsletter-tiptap-edit
 
 const ADMIN_ACCESS_TOKEN_KEY = "studiooalum:order-admin-access-token";
 const ADMIN_ACCESS_EXPIRES_AT_KEY = "studiooalum:order-admin-access-expires-at";
+const MAX_CATEGORIES = 8;
 
 const dom = {
   authForm: document.querySelector(".js-newsletter-admin-auth-form"),
@@ -12,6 +13,7 @@ const dom = {
   postList: document.querySelector(".js-newsletter-admin-post-list"),
   newButton: document.querySelector(".js-newsletter-admin-new-btn"),
   form: document.querySelector(".js-newsletter-admin-form"),
+  tags: document.querySelector("[data-newsletter-tags]"),
   postStatus: document.querySelector(".js-newsletter-admin-post-status"),
   status: document.querySelector(".js-newsletter-admin-status"),
   coverInput: document.querySelector(".js-newsletter-admin-cover-input"),
@@ -33,6 +35,7 @@ const state = {
   accessExpiresAt: sessionStorage.getItem(ADMIN_ACCESS_EXPIRES_AT_KEY) || "",
   isAuthorized: false,
   posts: [],
+  categories: [],
   selectedSlug: "",
   isDirty: false,
   editorHtml: "",
@@ -235,6 +238,61 @@ function renderCover(post = {}) {
   if (dom.coverAlt) dom.coverAlt.hidden = !imageUrl;
 }
 
+function renderTags() {
+  const choice = dom.form.elements.categoryChoice;
+  const selected = dom.tags.querySelector(".newsletter-admin-tags__selected");
+  const choices = new Set(["inspiration", ...state.posts.flatMap((post) => post.categories || [])]);
+  choice.replaceChildren(new Option("태그 선택", ""));
+  for (const tag of [...choices].sort((a, b) => a.localeCompare(b, "ko"))) {
+    if (state.categories.includes(tag)) continue;
+    choice.add(new Option(tag, `tag:${tag}`));
+  }
+  choice.add(new Option("새 태그 추가…", "add"));
+  selected.replaceChildren();
+  selected.hidden = !state.categories.length;
+  for (const tag of state.categories) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = `${tag} ×`;
+    button.setAttribute("aria-label", `${tag} 태그 제거`);
+    button.addEventListener("click", () => {
+      state.categories = state.categories.filter((item) => item !== tag);
+      markEditorDirty();
+      renderTags();
+      choice.focus();
+    });
+    selected.append(button);
+  }
+}
+
+function closeTagEntry() {
+  dom.tags.querySelector(".newsletter-admin-tags__entry").hidden = true;
+  dom.form.elements.newCategory.value = "";
+  setStatus(dom.tags.querySelector(".newsletter-admin-tags__status"));
+}
+
+function addTag(value) {
+  const tag = value.trim().replace(/\s+/g, " ").toLowerCase();
+  const status = dom.tags.querySelector(".newsletter-admin-tags__status");
+  if (!tag || tag.length > 40 || tag === "all") {
+    setStatus(status, "‘all’을 제외한 1~40자의 태그 이름을 입력해주세요.", "error");
+    return;
+  }
+  if (state.categories.includes(tag)) {
+    setStatus(status, "이미 추가한 태그입니다.", "error");
+    return;
+  }
+  if (state.categories.length >= MAX_CATEGORIES) {
+    setStatus(status, `태그는 ${MAX_CATEGORIES}개까지 추가할 수 있습니다.`, "error");
+    return;
+  }
+  state.categories.push(tag);
+  markEditorDirty();
+  closeTagEntry();
+  renderTags();
+  dom.form.elements.categoryChoice.focus();
+}
+
 function resetForm(post = null) {
   if (!dom.form) return;
   const item = post || {};
@@ -242,7 +300,9 @@ function resetForm(post = null) {
   dom.form.elements.slug.value = item.slug || "";
   dom.form.elements.title.value = item.title || "";
   dom.form.elements.excerpt.value = item.excerpt || "";
-  dom.form.elements.categories.value = Array.isArray(item.categories) ? item.categories.join(", ") : "";
+  state.categories = Array.isArray(item.categories) ? [...item.categories] : [];
+  closeTagEntry();
+  renderTags();
   dom.form.elements.coverImageUrl.value = item.coverImageUrl || "";
   dom.form.elements.coverImageR2Key.value = item.coverImageR2Key || "";
   dom.form.elements.coverImageAlt.value = item.coverImageAlt || "";
@@ -278,7 +338,7 @@ function collectPost(status) {
     slug,
     title,
     excerpt: String(dom.form?.elements.excerpt.value || "").trim(),
-    categories: [...new Set(String(dom.form?.elements.categories.value || "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))].slice(0, 8),
+    categories: [...state.categories],
     contentHtml: String(editorController?.getHTML() ?? state.editorHtml).trim(),
     coverImageUrl: String(dom.form?.elements.coverImageUrl.value || "").trim(),
     coverImageR2Key: String(dom.form?.elements.coverImageR2Key.value || "").trim(),
@@ -329,6 +389,10 @@ async function loadPosts({ fatalOnAuthError = false } = {}) {
 
 async function savePost(status, button, { openPreview = false } = {}) {
   if (state.isSaving || state.isUploading) return null;
+  if (dom.form.elements.newCategory.value.trim()) {
+    focusField("newCategory", "입력한 태그를 먼저 추가하거나 취소해주세요.");
+    return null;
+  }
   const post = collectPost(status);
   if (!validatePost(post, status)) return null;
   setActionLoading(button, true, status === "published" ? "게시 중..." : "저장 중...");
@@ -544,8 +608,33 @@ function attachEvents() {
     markEditorDirty();
   });
 
-  dom.form?.addEventListener("input", markEditorDirty);
-  dom.form?.addEventListener("change", markEditorDirty);
+  const markFormDirty = (event) => {
+    if (!dom.tags.contains(event.target) || event.target === dom.form.elements.newCategory) markEditorDirty();
+  };
+  dom.form?.addEventListener("input", markFormDirty);
+  dom.form?.addEventListener("change", markFormDirty);
+
+  const { categoryChoice, newCategory } = dom.form.elements;
+  categoryChoice.addEventListener("change", () => {
+    const choice = categoryChoice.value;
+    categoryChoice.value = "";
+    if (choice === "add") {
+      dom.tags.querySelector(".newsletter-admin-tags__entry").hidden = false;
+      newCategory.focus();
+    } else if (choice.startsWith("tag:")) {
+      addTag(choice.slice(4));
+    }
+  });
+  newCategory.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing || event.keyCode === 229) return;
+    event.preventDefault();
+    addTag(newCategory.value);
+  });
+  dom.tags.querySelector("[data-add-tag]").addEventListener("click", () => addTag(newCategory.value));
+  dom.tags.querySelector("[data-cancel-tag]").addEventListener("click", () => {
+    closeTagEntry();
+    categoryChoice.focus();
+  });
 
   dom.coverUploadButton?.addEventListener("click", () => dom.coverInput?.click());
   dom.coverInput?.addEventListener("change", (event) => uploadCoverImage(event.target.files?.[0]));

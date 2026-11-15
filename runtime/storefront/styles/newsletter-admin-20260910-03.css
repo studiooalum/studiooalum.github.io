@@ -91,6 +91,33 @@
   gap: 14px;
 }
 
+.newsletter-admin-tags__selected,
+.newsletter-admin-tags__entry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.newsletter-admin-tags__selected[hidden],
+.newsletter-admin-tags__entry[hidden],
+.newsletter-admin-tags__status:empty {
+  display: none;
+}
+
+.newsletter-admin-tags__entry input {
+  flex: 1 1 10rem;
+}
+
+.newsletter-admin-tags__selected button {
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  padding: 4px 8px;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
 .newsletter-admin-page .fulfillment-field textarea {
   width: 100%;
   min-width: 0;
