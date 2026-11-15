@@ -17,6 +17,8 @@ const dom = {
   postStatus: document.querySelector(".js-newsletter-admin-post-status"),
   status: document.querySelector(".js-newsletter-admin-status"),
   coverInput: document.querySelector(".js-newsletter-admin-cover-input"),
+  coverPickButton: document.querySelector(".js-newsletter-admin-cover-pick"),
+  coverStatus: document.querySelector(".js-newsletter-admin-cover-status"),
   coverUploadButton: document.querySelector(".js-newsletter-admin-cover-upload"),
   coverRemoveButton: document.querySelector(".js-newsletter-admin-cover-remove"),
   coverPreview: document.querySelector(".js-newsletter-admin-cover-preview"),
@@ -39,6 +41,7 @@ const state = {
   selectedSlug: "",
   isDirty: false,
   editorHtml: "",
+  isPickingCover: false,
   isSaving: false,
   isUploading: false,
 };
@@ -109,6 +112,8 @@ function setButtonLoading(button, loading, label) {
 
 function setActionLoading(button, loading, label) {
   state.isSaving = loading;
+  if (loading) setCoverPicking(false);
+  if (dom.coverPickButton) dom.coverPickButton.disabled = state.isSaving || state.isUploading;
   setButtonLoading(button, loading, label);
   [dom.saveDraftButton, dom.publishButton, dom.archiveButton, dom.deleteButton].forEach((actionButton) => {
     if (actionButton) {
@@ -122,6 +127,8 @@ function setActionLoading(button, loading, label) {
 
 function setInlineUploadLoading(loading) {
   state.isUploading = loading;
+  if (loading) setCoverPicking(false);
+  if (dom.coverPickButton) dom.coverPickButton.disabled = state.isSaving || state.isUploading;
   [dom.saveDraftButton, dom.publishButton, dom.archiveButton, dom.deleteButton].forEach((actionButton) => {
     if (actionButton) {
       actionButton.disabled = state.isSaving
@@ -238,6 +245,47 @@ function renderCover(post = {}) {
   if (dom.coverAlt) dom.coverAlt.hidden = !imageUrl;
 }
 
+function setCoverImage({ url = "", key = "", alt = "" } = {}) {
+  const { coverImageUrl, coverImageR2Key, coverImageAlt } = dom.form.elements;
+  coverImageUrl.value = url;
+  coverImageR2Key.value = key;
+  coverImageAlt.value = alt;
+  renderCover({ coverImageUrl: url, coverImageAlt: alt });
+  markEditorDirty();
+}
+
+function setCoverPicking(active) {
+  state.isPickingCover = active;
+  dom.coverPickButton?.setAttribute("aria-pressed", String(active));
+  if (dom.coverPickButton) dom.coverPickButton.textContent = active ? "선택 취소" : "본문에서 고르기";
+  dom.editorRoot?.classList.toggle("newsletter-admin-cover-picking", active);
+  setStatus(dom.coverStatus, active ? "본문에서 커버로 쓸 사진을 클릭하세요." : "");
+}
+
+function pickCoverFromBody(event) {
+  if (!state.isPickingCover || state.isSaving || state.isUploading) return;
+  const image = event.target.closest(".newsletter-admin-editor img[src]");
+  if (!image) return;
+  event.preventDefault();
+  event.stopPropagation();
+
+  const source = image.getAttribute("src")?.trim();
+  const url = source && URL.canParse(source, location.href) ? new URL(source, location.href) : null;
+  if (!url || !["http:", "https:"].includes(url.protocol)) {
+    setStatus(dom.coverStatus, "이 사진을 커버로 사용할 수 없습니다. 다른 사진을 골라주세요.", "error");
+    return;
+  }
+  const sameOrigin = url.origin === location.origin;
+  const key = sameOrigin && url.pathname === "/api/r2" ? url.searchParams.get("key") || "" : "";
+  setCoverImage({
+    url: sameOrigin ? `${url.pathname}${url.search}${url.hash}` : url.href,
+    key: key.startsWith("newsletters/") ? key : "",
+    alt: image.alt.trim().slice(0, 200),
+  });
+  setCoverPicking(false);
+  setStatus(dom.coverStatus, "선택한 사진을 커버로 지정했습니다.", "success");
+}
+
 function renderTags() {
   const choice = dom.form.elements.categoryChoice;
   const selected = dom.tags.querySelector(".newsletter-admin-tags__selected");
@@ -306,6 +354,7 @@ function resetForm(post = null) {
   dom.form.elements.coverImageUrl.value = item.coverImageUrl || "";
   dom.form.elements.coverImageR2Key.value = item.coverImageR2Key || "";
   dom.form.elements.coverImageAlt.value = item.coverImageAlt || "";
+  setCoverPicking(false);
   dom.form.elements.publishedAt.value = formatDateTimeLocal(item.publishedAt);
   state.editorHtml = item.contentHtml || "";
   editorController?.setContent(state.editorHtml, item.id || item.slug || "new");
@@ -519,10 +568,7 @@ async function uploadCoverImage(file) {
   setButtonLoading(dom.coverUploadButton, true, "업로드 중...");
   try {
     const payload = await uploadImage(file, "cover");
-    dom.form.elements.coverImageUrl.value = payload.image?.url || "";
-    dom.form.elements.coverImageR2Key.value = payload.image?.key || "";
-    renderCover({ coverImageUrl: payload.image?.url || "", coverImageAlt: dom.form.elements.coverImageAlt.value });
-    markEditorDirty();
+    setCoverImage({ ...payload.image, alt: dom.form.elements.coverImageAlt.value });
     setStatus(dom.status, "커버 이미지를 추가했습니다.", "success");
   } catch (error) {
     setStatus(dom.status, error.message || "커버 이미지를 업로드하지 못했습니다.", "error");
@@ -636,14 +682,31 @@ function attachEvents() {
     categoryChoice.focus();
   });
 
-  dom.coverUploadButton?.addEventListener("click", () => dom.coverInput?.click());
+  dom.coverPickButton?.addEventListener("click", () => {
+    if (state.isPickingCover) {
+      setCoverPicking(false);
+    } else if (dom.editorRoot?.querySelector(".newsletter-admin-editor img[src]")) {
+      setCoverPicking(true);
+      dom.editorRoot.scrollIntoView({ block: "nearest" });
+    } else {
+      setStatus(dom.coverStatus, "본문에 사진을 먼저 추가해주세요.");
+    }
+  });
+  dom.editorRoot?.addEventListener("click", pickCoverFromBody, true);
+  dom.form?.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !state.isPickingCover) return;
+    event.preventDefault();
+    setCoverPicking(false);
+    dom.coverPickButton?.focus();
+  });
+  dom.coverUploadButton?.addEventListener("click", () => {
+    setCoverPicking(false);
+    dom.coverInput?.click();
+  });
   dom.coverInput?.addEventListener("change", (event) => uploadCoverImage(event.target.files?.[0]));
   dom.coverRemoveButton?.addEventListener("click", () => {
-    dom.form.elements.coverImageUrl.value = "";
-    dom.form.elements.coverImageR2Key.value = "";
-    dom.form.elements.coverImageAlt.value = "";
-    renderCover();
-    markEditorDirty();
+    setCoverPicking(false);
+    setCoverImage();
   });
 
   dom.saveDraftButton?.addEventListener("click", () => savePost("draft", dom.saveDraftButton));
