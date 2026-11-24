@@ -2,7 +2,8 @@ import { Component, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { Extension, Node as TiptapNode } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { NodeSelection, Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -156,6 +157,95 @@ const NewsletterImagePairing = Extension.create({
   },
 });
 
+const newsletterImageEditingKey = new PluginKey("newsletterImageEditing");
+
+function buildImageCaptionDecorations(documentNode) {
+  const decorations = [];
+  documentNode.descendants((node, position) => {
+    if (node.type.name !== "image") return;
+    const caption = String(node.attrs.caption || "").trim();
+    if (!caption) return;
+    decorations.push(Decoration.node(position, position + node.nodeSize, {
+      class: "newsletter-admin-image--captioned",
+      "data-image-caption": caption,
+    }));
+  });
+  return DecorationSet.create(documentNode, decorations);
+}
+
+function deleteSelectedImageAndFrame(view, event) {
+  if (!["Backspace", "Delete"].includes(event.key)) return false;
+  const { selection } = view.state;
+  if (!(selection instanceof NodeSelection)) return false;
+  if (!["image", "newsletterGallery"].includes(selection.node.type.name)) return false;
+
+  let transaction = view.state.tr;
+  if (selection.node.type.name === "newsletterGallery") {
+    transaction = transaction.delete(selection.from, selection.to);
+  } else {
+    let galleryDepth = -1;
+    for (let depth = selection.$from.depth; depth > 0; depth -= 1) {
+      if (selection.$from.node(depth).type.name === "newsletterGallery") {
+        galleryDepth = depth;
+        break;
+      }
+    }
+
+    if (galleryDepth < 0) {
+      transaction = transaction.delete(selection.from, selection.to);
+    } else {
+      const galleryNode = selection.$from.node(galleryDepth);
+      const galleryPosition = selection.$from.before(galleryDepth);
+      const selectedIndex = selection.$from.index(galleryDepth);
+      const remainingImages = [];
+      galleryNode.forEach((child, _offset, index) => {
+        if (index !== selectedIndex) remainingImages.push(child);
+      });
+
+      if (remainingImages.length === 1) {
+        transaction = transaction.replaceWith(
+          galleryPosition,
+          galleryPosition + galleryNode.nodeSize,
+          remainingImages[0],
+        );
+      } else if (remainingImages.length === 0) {
+        transaction = transaction.delete(galleryPosition, galleryPosition + galleryNode.nodeSize);
+      } else {
+        transaction = transaction.delete(selection.from, selection.to);
+      }
+    }
+  }
+
+  event.preventDefault();
+  view.dispatch(transaction.scrollIntoView());
+  return true;
+}
+
+const NewsletterImageEditing = Extension.create({
+  name: "newsletterImageEditing",
+  priority: 1000,
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: newsletterImageEditingKey,
+        state: {
+          init: (_configuration, state) => buildImageCaptionDecorations(state.doc),
+          apply: (transaction, decorations) => (
+            transaction.docChanged
+              ? buildImageCaptionDecorations(transaction.doc)
+              : decorations.map(transaction.mapping, transaction.doc)
+          ),
+        },
+        props: {
+          decorations: (state) => newsletterImageEditingKey.getState(state),
+          handleKeyDown: deleteSelectedImageAndFrame,
+        },
+      }),
+    ];
+  },
+});
+
 const NewsletterImage = Image.extend({
   addAttributes() {
     return {
@@ -244,7 +334,7 @@ const NewsletterImage = Image.extend({
     const imageAttributes = { ...HTMLAttributes };
     imageAttributes["data-progressive-image"] = "false";
 
-    if (!legacyFigure) return ["img", imageAttributes];
+    if (!legacyFigure && !caption) return ["img", imageAttributes];
 
     delete imageAttributes["data-image-align"];
     const figureAttributes = {};
@@ -300,6 +390,7 @@ const EDITOR_EXTENSIONS = [
   NewsletterGallery,
   NewsletterImage,
   NewsletterImagePairing,
+  NewsletterImageEditing,
   Placeholder.configure({ placeholder: "본문을 작성하세요." }),
 ];
 
@@ -513,6 +604,16 @@ export function NewsletterTiptapEditor({
   }, [disabled, editor, isUploading]);
 
   const isDisabled = disabled || isUploading || !editor;
+  const isImageSelected = Boolean(editor?.isActive("image"));
+  const selectedImageCaption = isImageSelected
+    ? String(editor?.getAttributes("image").caption || "")
+    : "";
+
+  function updateImageCaption(value) {
+    if (!editor || !editor.isActive("image")) return;
+    editor.commands.updateAttributes("image", { caption: value });
+  }
+
   function updateLink() {
     if (!editor) return;
     const previousUrl = String(editor.getAttributes("link").href || "");
@@ -655,6 +756,28 @@ export function NewsletterTiptapEditor({
           onChange={uploadImage}
         />
       </div>
+      {isImageSelected ? (
+        <div className="newsletter-admin-image-caption-editor" aria-label="선택한 사진 캡션">
+          <label htmlFor="newsletterImageCaption">사진 캡션</label>
+          <input
+            id="newsletterImageCaption"
+            type="text"
+            value={selectedImageCaption}
+            placeholder="사진 캡션을 입력하세요."
+            disabled={isDisabled}
+            onChange={(event) => updateImageCaption(event.target.value)}
+          />
+          {selectedImageCaption ? (
+            <button
+              type="button"
+              disabled={isDisabled}
+              onClick={() => updateImageCaption("")}
+            >
+              캡션 삭제
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <EditorContent editor={editor} className="newsletter-admin-editor-content" />
       {isUploading ? <p className="newsletter-admin-upload-status" role="status">{uploadStatus || "이미지 업로드 중..."}</p> : null}
     </>

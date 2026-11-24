@@ -78,7 +78,7 @@ test("Newsletter detail uses the center grid with gallery and image zoom", async
     read("runtime/storefront/styles/newsletter-20260818-01.css"),
   ]);
 
-  assert.match(html, /newsletter-20260818-03\.css\?v=20261124-01/);
+  assert.match(html, /newsletter-20260818-03\.css\?v=20261124-02/);
   assert.match(html, /newsletter-20260818-02\.js\?v=20261114-01/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 634px\) minmax\(0, 1fr\)/);
   assert.match(layoutStylesheet, /\.newsletter-entry-mode \.newsletter-entry > \*[\s\S]*grid-column:\s*2/);

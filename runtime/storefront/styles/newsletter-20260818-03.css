@@ -190,20 +190,40 @@
   margin: 32px 0;
 }
 
-.newsletter-entry__content figure[data-image-gallery="true"] > img {
+.newsletter-entry__content figure[data-image-gallery="true"] > img,
+.newsletter-entry__content figure[data-image-gallery="true"] > figure > img {
   width: 100%;
   height: auto;
   aspect-ratio: auto;
   object-fit: contain;
 }
 
-.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="3"] > img:first-child,
-.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="5"] > img:first-child,
-.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="7"] > img:first-child,
-.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="9"] > img:first-child,
-.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="11"] > img:first-child {
+.newsletter-entry__content figure[data-image-gallery="true"] > figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="3"] > :first-child,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="5"] > :first-child,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="7"] > :first-child,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="9"] > :first-child,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="11"] > :first-child {
   grid-column: 1 / -1;
+}
+
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="3"] > :first-child img,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="5"] > :first-child img,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="7"] > :first-child img,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="9"] > :first-child img,
+.newsletter-entry__content figure[data-image-gallery="true"][data-image-count="11"] > :first-child img {
   aspect-ratio: auto;
+}
+
+.newsletter-entry__content figcaption {
+  margin-top: 8px;
+  color: rgba(17, 17, 17, 0.62);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .newsletter-entry__content img[data-newsletter-zoom] {

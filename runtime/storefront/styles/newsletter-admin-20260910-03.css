@@ -305,6 +305,51 @@
   overflow: visible;
 }
 
+.newsletter-admin-image-caption-editor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.24);
+  padding: 10px 12px;
+  background: #fff;
+  color: rgba(17, 17, 17, 0.85);
+  font-family: "Pretendard", sans-serif;
+  font-size: 12px;
+}
+
+.newsletter-admin-image-caption-editor input {
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.34);
+  border-radius: 0;
+  padding: 6px 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: 0;
+}
+
+.newsletter-admin-image-caption-editor input::placeholder {
+  color: rgba(17, 17, 17, 0.42);
+}
+
+.newsletter-admin-image-caption-editor input:focus {
+  border-bottom-color: #111;
+}
+
+.newsletter-admin-image-caption-editor button {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 .newsletter-admin-tool {
   flex: 0 0 auto;
   width: 44px;
@@ -682,11 +727,17 @@
 
 .newsletter-admin-editor figure[data-image-gallery="true"] > img,
 .newsletter-admin-preview figure[data-image-gallery="true"] > img,
+.newsletter-admin-preview figure[data-image-gallery="true"] > figure > img,
 .newsletter-admin-editor figure[data-image-gallery="true"] > [data-resize-container] img {
   width: 100%;
   height: auto;
   aspect-ratio: auto;
   object-fit: contain;
+}
+
+.newsletter-admin-preview figure[data-image-gallery="true"] > figure {
+  min-width: 0;
+  margin: 0;
 }
 
 .newsletter-admin-editor figure[data-image-gallery="true"] > [data-resize-container] {
@@ -895,6 +946,31 @@
 .newsletter-admin-editor [data-resize-container].ProseMirror-selectednode [data-resize-wrapper] {
   outline: 1px solid #111;
   outline-offset: 4px;
+}
+
+.newsletter-admin-editor [data-resize-container][data-image-caption] {
+  flex-wrap: wrap;
+}
+
+.newsletter-admin-editor [data-resize-container][data-image-caption]::after {
+  content: attr(data-image-caption);
+  flex: 0 0 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  color: rgba(17, 17, 17, 0.62);
+  font-family: "Pretendard", sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+  white-space: pre-wrap;
+}
+
+.newsletter-admin-editor [data-resize-container][data-image-caption]:has(img[data-image-align="left"])::after {
+  text-align: left;
+}
+
+.newsletter-admin-editor [data-resize-container][data-image-caption]:has(img[data-image-align="right"])::after {
+  text-align: right;
 }
 
 .newsletter-admin-editor figcaption,

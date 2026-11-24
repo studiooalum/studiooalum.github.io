@@ -23,6 +23,23 @@ test("newsletter image pairs preserve each source image aspect ratio", () => {
   }
 });
 
+test("newsletter image captions appear only for a selected image and persist in article HTML", () => {
+  assert.match(editorSource, /isImageSelected = Boolean\(editor\?\.isActive\("image"\)\)/);
+  assert.match(editorSource, /aria-label="선택한 사진 캡션"/);
+  assert.match(editorSource, /updateAttributes\("image", \{ caption: value \}\)/);
+  assert.match(editorSource, /if \(!legacyFigure && !caption\) return \["img", imageAttributes\]/);
+  assert.match(adminStyles, /\[data-resize-container\]\[data-image-caption\]::after[\s\S]*content:\s*attr\(data-image-caption\)/);
+  assert.match(articleStyles, /\.newsletter-entry__content figcaption[\s\S]*font-size:\s*12px/);
+});
+
+test("deleting a newsletter image also removes or unwraps its gallery frame", () => {
+  assert.match(editorSource, /function deleteSelectedImageAndFrame\(view, event\)/);
+  assert.match(editorSource, /name: "newsletterImageEditing",\s*priority: 1000/);
+  assert.match(editorSource, /selection\.node\.type\.name === "newsletterGallery"[\s\S]*transaction\.delete\(selection\.from, selection\.to\)/);
+  assert.match(editorSource, /remainingImages\.length === 1[\s\S]*transaction\.replaceWith/);
+  assert.match(editorSource, /handleKeyDown:\s*deleteSelectedImageAndFrame/);
+});
+
 test("newsletter sanitizer preserves supported Tiptap font styles", () => {
   const html = sanitizeNewsletterHtml(`
     <p><span style="font-family: Pretendard; font-size: 18px">한글</span></p>
