@@ -184,6 +184,7 @@
 .newsletter-entry__content figure[data-image-gallery="true"] {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: var(--grid-gap);
   width: 100%;
   margin: 32px 0;
@@ -191,9 +192,9 @@
 
 .newsletter-entry__content figure[data-image-gallery="true"] > img {
   width: 100%;
-  height: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
 }
 
 .newsletter-entry__content figure[data-image-gallery="true"][data-image-count="3"] > img:first-child,
@@ -202,7 +203,7 @@
 .newsletter-entry__content figure[data-image-gallery="true"][data-image-count="9"] > img:first-child,
 .newsletter-entry__content figure[data-image-gallery="true"][data-image-count="11"] > img:first-child {
   grid-column: 1 / -1;
-  aspect-ratio: 2 / 1;
+  aspect-ratio: auto;
 }
 
 .newsletter-entry__content img[data-newsletter-zoom] {

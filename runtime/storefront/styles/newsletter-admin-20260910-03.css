@@ -675,6 +675,7 @@
 .newsletter-admin-preview figure[data-image-gallery="true"] {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: var(--grid-gap);
   width: 100%;
 }
@@ -683,21 +684,21 @@
 .newsletter-admin-preview figure[data-image-gallery="true"] > img,
 .newsletter-admin-editor figure[data-image-gallery="true"] > [data-resize-container] img {
   width: 100%;
-  height: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
 }
 
 .newsletter-admin-editor figure[data-image-gallery="true"] > [data-resize-container] {
   width: 100%;
   min-width: 0;
-  height: 100%;
+  height: auto;
   margin: 0;
 }
 
 .newsletter-admin-editor figure[data-image-gallery="true"] > [data-resize-container] [data-resize-wrapper] {
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
 }
 
 .newsletter-admin-editor figure[data-image-gallery="true"] [data-resize-handle] {
@@ -727,7 +728,7 @@
 .newsletter-admin-preview figure[data-image-gallery="true"][data-image-count="9"] > img:first-child,
 .newsletter-admin-editor figure[data-image-gallery="true"][data-image-count="11"] > :first-child img,
 .newsletter-admin-preview figure[data-image-gallery="true"][data-image-count="11"] > img:first-child {
-  aspect-ratio: 2 / 1;
+  aspect-ratio: auto;
 }
 
 .newsletter-admin-editor figure[data-image-gallery="true"].ProseMirror-selectednode {

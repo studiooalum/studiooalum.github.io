@@ -1,7 +1,8 @@
 import { Component, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Node as TiptapNode } from "@tiptap/core";
+import { Extension, Node as TiptapNode } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -67,6 +68,90 @@ const NewsletterGallery = TiptapNode.create({
         "data-image-count": String(node.childCount),
       },
       0,
+    ];
+  },
+});
+
+function imageElementFromPointer(event) {
+  const pointed = document.elementFromPoint(event.clientX, event.clientY) || event.target;
+  if (!(pointed instanceof Element)) return null;
+  if (pointed.matches("img[src]")) return pointed;
+  return pointed.closest("[data-resize-container]")?.querySelector("img[src]")
+    || pointed.closest("img[src]");
+}
+
+function findTopLevelImage(view, imageElement) {
+  if (!imageElement) return null;
+  let domPosition;
+  try {
+    domPosition = view.posAtDOM(imageElement, 0);
+  } catch {
+    return null;
+  }
+
+  for (const position of [domPosition, domPosition - 1, domPosition + 1]) {
+    if (position < 0 || position > view.state.doc.content.size) continue;
+    const node = view.state.doc.nodeAt(position);
+    if (node?.type.name !== "image") continue;
+    if (view.state.doc.resolve(position).depth !== 0) continue;
+    return { node, position };
+  }
+  return null;
+}
+
+const NewsletterImagePairing = Extension.create({
+  name: "newsletterImagePairing",
+
+  addProseMirrorPlugins() {
+    let draggedImagePosition = null;
+    return [
+      new Plugin({
+        key: new PluginKey("newsletterImagePairing"),
+        props: {
+          handleDOMEvents: {
+            dragstart(view, event) {
+              const source = findTopLevelImage(view, imageElementFromPointer(event));
+              draggedImagePosition = source?.position ?? null;
+              if (draggedImagePosition !== null && event.dataTransfer) {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("application/x-newsletter-image", "move");
+              }
+              return false;
+            },
+            dragend() {
+              draggedImagePosition = null;
+              return false;
+            },
+          },
+          handleDrop(view, event) {
+            const sourcePosition = draggedImagePosition;
+            const target = findTopLevelImage(view, imageElementFromPointer(event));
+            draggedImagePosition = null;
+            if (sourcePosition === null || !target || target.position === sourcePosition) return false;
+
+            const sourceNode = view.state.doc.nodeAt(sourcePosition);
+            if (sourceNode?.type.name !== "image") return false;
+            const targetRect = imageElementFromPointer(event)?.getBoundingClientRect();
+            const sourceFirst = Boolean(targetRect && event.clientX < targetRect.left + (targetRect.width / 2));
+
+            let transaction = view.state.tr.delete(sourcePosition, sourcePosition + sourceNode.nodeSize);
+            const targetPosition = target.position - (sourcePosition < target.position ? sourceNode.nodeSize : 0);
+            const targetNode = transaction.doc.nodeAt(targetPosition);
+            if (targetNode?.type.name !== "image") return false;
+
+            const gallery = view.state.schema.nodes.newsletterGallery.create(
+              null,
+              sourceFirst ? [sourceNode, targetNode] : [targetNode, sourceNode],
+            );
+            transaction = transaction
+              .replaceWith(targetPosition, targetPosition + targetNode.nodeSize, gallery)
+              .scrollIntoView();
+            event.preventDefault();
+            view.dispatch(transaction);
+            return true;
+          },
+        },
+      }),
     ];
   },
 });
@@ -214,6 +299,7 @@ const EDITOR_EXTENSIONS = [
   }),
   NewsletterGallery,
   NewsletterImage,
+  NewsletterImagePairing,
   Placeholder.configure({ placeholder: "본문을 작성하세요." }),
 ];
 
@@ -487,24 +573,22 @@ export function NewsletterTiptapEditor({
         throw new Error("글이 변경되어 업로드한 이미지를 본문에 삽입하지 않았습니다.");
       }
       const position = Math.min(uploadPositionRef.current ?? editor.state.selection.anchor, editor.state.doc.content.size);
-      const chain = editor.chain().focus().setTextSelection(position);
-      if (imageUrls.length === 1) {
-        chain.setImage({ src: imageUrls[0], alt: "", imageAlign: "center" }).run();
-      } else {
-        chain.insertContent({
-          type: "newsletterGallery",
-          content: imageUrls.map((src) => ({
-            type: "image",
-            attrs: { src, alt: "", imageAlign: "center" },
-          })),
-        }).run();
-      }
+      editor.chain()
+        .focus()
+        .setTextSelection(position)
+        .insertContent(imageUrls.map((src) => ({
+          type: "image",
+          attrs: { src, alt: "", imageAlign: "center" },
+        })))
+        .run();
 
       if (failures.length) {
         callbacksRef.current.onStatus?.(`${imageUrls.length}장을 추가했고 ${failures.length}장은 업로드하지 못했습니다.`, "error");
       } else {
         callbacksRef.current.onStatus?.(
-          imageUrls.length > 1 ? `${imageUrls.length}장을 갤러리로 추가했습니다.` : "본문 이미지를 추가했습니다.",
+          imageUrls.length > 1
+            ? `${imageUrls.length}장을 각각 추가했습니다. 사진을 다른 사진 옆으로 드래그하면 나란히 배치됩니다.`
+            : "본문 이미지를 추가했습니다. 다른 사진 옆으로 드래그하면 나란히 배치됩니다.",
           "success",
         );
       }

@@ -1,7 +1,27 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { sanitizeNewsletterHtml } from "../cloudflare/lib/newsletters.js";
+
+const editorSource = readFileSync(new URL("../runtime/storefront/scripts/components/newsletter-tiptap-editor.jsx", import.meta.url), "utf8");
+const adminStyles = readFileSync(new URL("../runtime/storefront/styles/newsletter-admin-20260910-03.css", import.meta.url), "utf8");
+const articleStyles = readFileSync(new URL("../runtime/storefront/styles/newsletter-20260818-03.css", import.meta.url), "utf8");
+
+test("newsletter uploads images separately and pairs two only after a drag gesture", () => {
+  assert.match(editorSource, /name: "newsletterImagePairing"/);
+  assert.match(editorSource, /handleDrop\(view, event\)/);
+  assert.match(editorSource, /replaceWith\(targetPosition, targetPosition \+ targetNode\.nodeSize, gallery\)/);
+  assert.match(editorSource, /insertContent\(imageUrls\.map/);
+  assert.doesNotMatch(editorSource, /type: "newsletterGallery",\s*content: imageUrls\.map/);
+});
+
+test("newsletter image pairs preserve each source image aspect ratio", () => {
+  for (const stylesheet of [adminStyles, articleStyles]) {
+    assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*?align-items:\s*start/);
+    assert.match(stylesheet, /figure\[data-image-gallery="true"\][\s\S]*?height:\s*auto;[\s\S]*?aspect-ratio:\s*auto;[\s\S]*?object-fit:\s*contain/);
+  }
+});
 
 test("newsletter sanitizer preserves supported Tiptap font styles", () => {
   const html = sanitizeNewsletterHtml(`
